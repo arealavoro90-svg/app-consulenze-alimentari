@@ -1309,98 +1309,64 @@ function TabUE({ p, ue, specificGravity, full }: { p: CalcResult; ue: UEServing;
     ].filter(m => full || (m.val / m.ref * 100 >= 15));
     return (
         <div style={{ background: 'white', padding: full ? 20 : 0, borderRadius: 8 }}>
-            <div style={{ maxWidth: 480 }}>
-                {/* EU official header */}
-                <div style={{ background: '#000', color: '#fff', padding: '6px 10px', fontWeight: 900, fontSize: 16, letterSpacing: '0.04em', textTransform: 'uppercase' }}>
-                    Dichiarazione Nutrizionale
-                </div>
-                <div style={{ background: '#000', color: '#fff', padding: '4px 10px', fontWeight: 700, fontSize: 11 }}>
-                    Valori nutrizionali medi per 100 {specificGravity && specificGravity > 0 ? 'ml' : 'g'} di prodotto
-                </div>
+            <div style={{ maxWidth: 500 }}>
+                {/* EU official header - 2 column layout */}
+                <table style={{ width: '100%', borderCollapse: 'collapse', border: '2px solid #999' }}>
+                    <thead>
+                        <tr>
+                            <th style={{ background: '#f5f5f5', border: '1px solid #999', padding: '8px 10px', textAlign: 'left', fontWeight: 700, fontSize: 14 }}>
+                                DICHIARAZIONE NUTRIZIONALE
+                            </th>
+                            <th style={{ background: '#f5f5f5', border: '1px solid #999', padding: '8px 10px', textAlign: 'center', fontWeight: 700, fontSize: 13, width: '100px' }}>
+                                % AR *
+                            </th>
+                        </tr>
+                        <tr>
+                            <td style={{ background: '#f5f5f5', border: '1px solid #999', padding: '5px 10px', fontSize: 11, fontWeight: 600 }}>
+                                Valori nutrizionali medi per 100 {specificGravity && specificGravity > 0 ? 'ml' : 'g'} di prodotto
+                            </td>
+                            <td style={{ background: '#f5f5f5', border: '1px solid #999', padding: '5px 10px' }}></td>
+                        </tr>
+                    </thead>
+                </table>
+
                 <div style={{ overflowX: 'auto' }}>
-                    <table style={{ ...TS.table, border: '1px solid #000', borderTop: 'none' }}>
-                        <thead>
-                            <tr style={{ background: '#000', color: '#fff' }}>
-                                <th style={{ ...TS.th, background: 'inherit', borderRight: '1px solid #333' }}></th>
-                                <th style={{ ...TS.thR, background: 'inherit', borderRight: '1px solid #333' }}>per 100 g</th>
-                                {hasExtra && ue.porzione && <th style={{ ...TS.thR, background: 'inherit', borderRight: '1px solid #333' }}>per {ue.porzione} g</th>}
-                                {hasExtra && ue.confezione && <th style={{ ...TS.thR, background: 'inherit', borderRight: '1px solid #333' }}>per conf. {ue.confezione} g</th>}
-                                {hasExtra && ue.pezzo && <th style={{ ...TS.thR, background: 'inherit', borderRight: '1px solid #333' }}>per pz. {ue.pezzo} g</th>}
-                                <th style={{ ...TS.thR, background: 'inherit' }}>% AR*</th>
-                            </tr>
-                        </thead>
+                    <table style={{ ...TS.table, border: '2px solid #999', borderTop: '1px solid #999', width: '100%' }}>
                         <tbody>
                             {rows.map((r, i) => (
                                 <tr key={i} style={{ borderBottom: '1px solid #ccc' }}>
-                                    <td style={r.indent ? { ...TS.tdSub, borderRight: '1px solid #ccc' } : r.bold ? { ...TS.tdB, borderRight: '1px solid #ccc' } : { ...TS.td, borderRight: '1px solid #ccc' }}>{r.label}</td>
-                                    <td style={r.bold ? { ...TS.tdBR, borderRight: '1px solid #ccc' } : { ...TS.tdR, borderRight: '1px solid #ccc' }}>{r.per100}</td>
-                                    {hasExtra && ue.porzione && <td style={{ ...TS.tdR, borderRight: '1px solid #ccc' }}>{r.portion || '—'}</td>}
-                                    {hasExtra && ue.confezione && <td style={{ ...TS.tdR, borderRight: '1px solid #ccc' }}>{r.conf || '—'}</td>}
-                                    {hasExtra && ue.pezzo && <td style={{ ...TS.tdR, borderRight: '1px solid #ccc' }}>{r.pezzo || '—'}</td>}
-                                    <td style={TS.tdR}>{r.arPct}</td>
+                                    <td style={{
+                                        padding: '6px 10px',
+                                        fontSize: r.bold ? 13 : 12,
+                                        fontWeight: r.bold ? 700 : r.indent ? 400 : 400,
+                                        paddingLeft: r.indent ? 24 : 10,
+                                        color: r.label === 'fibre' ? '#0066cc' : 'inherit',
+                                        borderRight: '1px solid #999',
+                                        width: 'auto'
+                                    }}>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
+                                            <span>{r.label}</span>
+                                            <span style={{ marginLeft: 20, fontWeight: 600 }}>{r.per100}</span>
+                                        </div>
+                                    </td>
+                                    <td style={{
+                                        padding: '6px 10px',
+                                        fontSize: 12,
+                                        fontWeight: r.bold ? 700 : 400,
+                                        textAlign: 'center',
+                                        width: '100px'
+                                    }}>
+                                        {r.arPct}
+                                    </td>
                                 </tr>
                             ))}
-                            {micros.map((m, i) => {
-                                const pKey = Object.keys(p).find(k => (p as unknown as Record<string, number>)[k] === m.val) as keyof CalcResult;
-                                return (
-                                    <tr key={'m' + i} style={{ borderBottom: '1px solid #ccc' }}>
-                                        <td style={{ ...TS.td, borderRight: '1px solid #ccc' }}>{m.label}</td>
-                                        <td style={{ ...TS.tdR, borderRight: '1px solid #ccc' }}>{m.fmt(m.val)} {m.unit}</td>
-                                        {hasExtra && ue.porzione && <td style={{ ...TS.tdR, borderRight: '1px solid #ccc' }}>{por && pKey ? `${m.fmt(por[pKey] as number)} ${m.unit}` : '—'}</td>}
-                                        {hasExtra && ue.confezione && <td style={{ ...TS.tdR, borderRight: '1px solid #ccc' }}>{conf && pKey ? `${m.fmt(conf[pKey] as number)} ${m.unit}` : '—'}</td>}
-                                        {hasExtra && ue.pezzo && <td style={{ ...TS.tdR, borderRight: '1px solid #ccc' }}>{pez && pKey ? `${m.fmt(pez[pKey] as number)} ${m.unit}` : '—'}</td>}
-                                        <td style={TS.tdR}>{rUE_pct(m.val, m.ref) !== null ? `${rUE_pct(m.val, m.ref)}%` : '—'}</td>
-                                    </tr>
-                                );
-                            })}
                         </tbody>
                     </table>
                 </div>
 
-                {/* Nutritional Claims Section */}
-                {(() => {
-                    const claims: string[] = [];
-                    const AR_UE = { fiber: 25, protein: 50, salt: 6, calcium: 800, iron: 14, potassium: 3500 };
-
-                    // Fibre: "FONTE" ≥3g, "RICCO" ≥6g
-                    if (p.fibre >= 6) claims.push('RICCO DI FIBRE');
-                    else if (p.fibre >= 3) claims.push('FONTE DI FIBRE');
-
-                    // Protein: "FONTE" ≥15% AR, "RICCO" ≥30% AR
-                    const proteinPct = (p.proteine / AR_UE.protein) * 100;
-                    if (proteinPct >= 30) claims.push('RICCO DI PROTEINE');
-                    else if (proteinPct >= 15) claims.push('FONTE DI PROTEINE');
-
-                    // Sugar: "A BASSO CONTENUTO DI ZUCCHERI" ≤5g
-                    if (p.zuccheri <= 5) claims.push('A BASSO CONTENUTO DI ZUCCHERI');
-
-                    // Fat: "A BASSO CONTENUTO DI GRASSI" ≤3g
-                    if (p.grassi <= 3) claims.push('A BASSO CONTENUTO DI GRASSI');
-
-                    // Salt: "A BASSO CONTENUTO DI SALE" <0.1g
-                    if (p.sale < 0.1) claims.push('A BASSO CONTENUTO DI SALE');
-
-                    // Calcium: "FONTE" ≥15% AR
-                    const calPct = (p.calcio / AR_UE.calcium) * 100;
-                    if (calPct >= 30) claims.push('RICCO DI CALCIO');
-                    else if (calPct >= 15) claims.push('FONTE DI CALCIO');
-
-                    // Iron: "FONTE" ≥15% AR
-                    const iroPct = (p.ferro / AR_UE.iron) * 100;
-                    if (iroPct >= 30) claims.push('RICCO DI FERRO');
-                    else if (iroPct >= 15) claims.push('FONTE DI FERRO');
-
-                    return claims.length > 0 ? (
-                        <div style={{ marginTop: 12, paddingTop: 8, borderTop: '1px solid #ddd', fontSize: 12, lineHeight: 1.6 }}>
-                            <strong style={{ display: 'block', marginBottom: 6 }}>Proprietà Nutrizionali:</strong>
-                            {claims.map((claim, i) => (
-                                <div key={i} style={{ paddingLeft: 10, marginBottom: 2 }}>• {claim}</div>
-                            ))}
-                        </div>
-                    ) : null;
-                })()}
-
-                <p style={{ fontSize: 10, color: '#444', marginTop: 5, lineHeight: 1.4 }}>* Assunzioni di riferimento di un adulto medio (8400 kJ / 2000 kcal).</p>
+                <p style={{ fontSize: 10, color: '#666', marginTop: 8, lineHeight: 1.4, fontWeight: 500 }}>
+                    *Assunzioni di riferimento di un adulto medio (8400 kJ / 2000 kcal).
+                </p>
             </div>
         </div>
     );
