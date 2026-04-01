@@ -1213,7 +1213,7 @@ export function NutrizionaleCalc() {
                     </div>
 
                     <div ref={tableRef} style={{ background: 'white', borderRadius: 8, boxShadow: '0 2px 8px rgba(0,0,0,0.05)', padding: 20 }}>
-                        {activeTab === 'UE' && <TabUE p={per100g} ue={ue} full={false} />}
+                        {activeTab === 'UE' && <TabUE p={per100g} ue={ue} specificGravity={parseFloat(specificGravity) || 0} full={false} />}
                         {activeTab === 'USA' && <TabUSA p={per100g} usa={usa} subTab={subTab} setSubTab={setSubTab} full={false} />}
                         {activeTab === 'Canada' && <TabCanada p={per100g} ca={ca} subTab={subTab} setSubTab={setSubTab} full={false} />}
                         {activeTab === 'Australia' && <TabAustralia p={per100g} au={au} showDI={auShowDI} setShowDI={setAuShowDI} full={false} />}
@@ -1273,7 +1273,7 @@ const TS = {
 };
 
 // ─── TabUE ──────────────────────────────────────────────────────────────────
-function TabUE({ p, ue, full }: { p: CalcResult; ue: UEServing; full?: boolean }) {
+function TabUE({ p, ue, specificGravity, full }: { p: CalcResult; ue: UEServing; specificGravity?: number; full?: boolean }) {
     const por = ue.porzione ? scaleResult(p, ue.porzione) : null;
     const conf = ue.confezione ? scaleResult(p, ue.confezione) : null;
     const pez = ue.pezzo ? scaleResult(p, ue.pezzo) : null;
@@ -1322,7 +1322,7 @@ function TabUE({ p, ue, full }: { p: CalcResult; ue: UEServing; full?: boolean }
                     Dichiarazione Nutrizionale
                 </div>
                 <div style={{ background: '#000', color: '#fff', padding: '4px 10px', fontWeight: 700, fontSize: 11 }}>
-                    Valori nutrizionali medi per 100 g di prodotto
+                    Valori nutrizionali medi per 100 {specificGravity && specificGravity > 0 ? 'ml' : 'g'} di prodotto
                 </div>
                 <div style={{ overflowX: 'auto' }}>
                     <table style={{ ...TS.table, border: '1px solid #000', borderTop: 'none' }}>
