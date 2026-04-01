@@ -746,7 +746,7 @@ export function NutrizionaleCalc() {
                 pz_uv: c.pzUV,
                 ingredienti: c.rows.map(r => ({ nome: r.ing.nome, grammi: r.grams }))
             })),
-            additivi: additives.filter(a => a.trim() !== ''),
+            additivi: additiveChips.map(a => a.nome),
             peso_finito_pz: fw,
             serving_sizes: { UE: ue, USA: usa, Canada: ca, Australia: au, Arabi: arabi }
         });
@@ -1065,34 +1065,16 @@ export function NutrizionaleCalc() {
                 <button className="btn btn-outline" style={{ marginBottom: 16 }} onClick={addComp}>+ Aggiungi componente</button>
             )}
 
-            {/* Additives — mod 8: chip-based from DB */}
+            {/* Additives — mod 8: chip-based from DB ONLY (no free text) */}
             <div className="card" style={{ marginBottom: 16 }}>
                 <h3 style={{ marginTop: 0 }}>⚗️ Additivi <span style={{ fontSize: 12, fontWeight: 400, color: 'var(--color-text-muted)' }}>(solo etichetta, non influenzano i calcoli)</span></h3>
+                <div style={{ fontSize: 13, color: 'var(--color-text-muted)', marginBottom: 10 }}>Seleziona gli additivi dal database:</div>
                 <AdditiveSearch
                     chips={additiveChips}
                     onAdd={ing => setAdditiveChips(prev => [...prev, ing])}
                     onRemove={i => setAdditiveChips(prev => prev.filter((_, j) => j !== i))}
                     db={db}
                 />
-                <div style={{ marginTop: 10, borderTop: '1px solid var(--color-border)', paddingTop: 10 }}>
-                    <div style={{ fontSize: 12, color: 'var(--color-text-muted)', marginBottom: 6 }}>Oppure inserisci testo libero (additivi non presenti nel database):</div>
-                    {additives.map((add, i) => (
-                        <div key={i} style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
-                            <div style={{ flex: 1 }}>
-                                <input type="text" placeholder={`Additivo ${i + 1} (es. conservante: acido sorbico E200)`}
-                                    value={add} onChange={e => { const a = [...additives]; a[i] = e.target.value; setAdditives(a); }}
-                                    className="form-input" />
-                            </div>
-                            {additives.length > 1 && (
-                                <button onClick={() => setAdditives(prev => prev.filter((_, j) => j !== i))}
-                                    style={{ background: 'transparent', border: 'none', color: '#e53e3e', cursor: 'pointer', fontSize: 16 }}>✕</button>
-                            )}
-                        </div>
-                    ))}
-                    {additives.length < 5 && (
-                        <button className="btn btn-outline" style={{ fontSize: 12 }} onClick={() => setAdditives(prev => [...prev, ''])}>+ Testo libero</button>
-                    )}
-                </div>
             </div>
 
             </div>{/* end INSERIMENTO RICETTA wrapper */}
