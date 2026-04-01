@@ -1254,15 +1254,15 @@ function AllergenSection({ present, cross }: { present: string[]; cross: string[
 }
 // ─── Shared table styling ───────────────────────────────────────────────────
 const TS = {
-    table: { borderCollapse: 'collapse' as const, width: '100%', fontSize: 13 },
-    th: { background: '#1a1a2e', color: 'white', padding: '6px 10px', textAlign: 'left' as const, fontSize: 12 },
-    thR: { background: '#1a1a2e', color: 'white', padding: '6px 10px', textAlign: 'right' as const, fontSize: 12 },
-    td: { padding: '5px 10px', borderBottom: '1px solid #e2e8f0', fontSize: 13 },
-    tdR: { padding: '5px 10px', borderBottom: '1px solid #e2e8f0', textAlign: 'right' as const, fontSize: 13 },
-    tdB: { padding: '5px 10px', borderBottom: '1px solid #e2e8f0', fontSize: 13, fontWeight: 700 as const },
-    tdBR: { padding: '5px 10px', borderBottom: '1px solid #e2e8f0', textAlign: 'right' as const, fontSize: 13, fontWeight: 700 as const },
-    tdSub: { padding: '5px 10px 5px 24px', borderBottom: '1px solid #e2e8f0', fontSize: 13, color: '#555' },
-    tdSubR: { padding: '5px 10px 5px 24px', borderBottom: '1px solid #e2e8f0', textAlign: 'right' as const, fontSize: 13, color: '#555' },
+    table: { borderCollapse: 'collapse' as const, width: '100%', fontSize: 12 },
+    th: { background: '#000', color: 'white', padding: '5px 8px', textAlign: 'left' as const, fontSize: 11, fontWeight: 600 as const },
+    thR: { background: '#000', color: 'white', padding: '5px 8px', textAlign: 'right' as const, fontSize: 11, fontWeight: 600 as const },
+    td: { padding: '4px 8px', borderBottom: '1px solid #ddd', fontSize: 12 },
+    tdR: { padding: '4px 8px', borderBottom: '1px solid #ddd', textAlign: 'right' as const, fontSize: 12 },
+    tdB: { padding: '4px 8px', borderBottom: '1px solid #ddd', fontSize: 12, fontWeight: 700 as const },
+    tdBR: { padding: '4px 8px', borderBottom: '1px solid #ddd', textAlign: 'right' as const, fontSize: 12, fontWeight: 700 as const },
+    tdSub: { padding: '4px 8px 4px 20px', borderBottom: '1px solid #ddd', fontSize: 12, color: '#666' },
+    tdSubR: { padding: '4px 8px 4px 20px', borderBottom: '1px solid #ddd', textAlign: 'right' as const, fontSize: 12, color: '#666' },
 };
 
 // ─── TabUE ──────────────────────────────────────────────────────────────────
