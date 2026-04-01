@@ -1,0 +1,28 @@
+{
+  "product": "Crema di carote",
+  "raw_weight_g": 1435.0,
+  "final_weight_g": 100.0,
+  "cooking_loss_pct": 93.0314,
+  "per_100g_raw": {
+    "energyKcal": 4104.836,
+    "energyKj": 16921.548,
+    "fat": 406.314,
+    "saturatedFat": 44.9375,
+    "carbohydrates": 83.85,
+    "sugars": 34.8345,
+    "fibre": 32.825,
+    "protein": 10.84,
+    "salt": 1.508
+  },
+  "per_100g_rounded_EU": {
+    "energyKcal": 4105,
+    "energyKj": 16922,
+    "fat": "406.3",
+    "saturatedFat": "44.9",
+    "carbohydrates": "83.8",
+    "sugars": "34.8",
+    "fibre": "32.8",
+    "protein": "10.8",
+    "salt": "1.5"
+  }
+}

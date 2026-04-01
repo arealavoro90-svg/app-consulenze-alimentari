@@ -1,0 +1,525 @@
+{
+  "total_ingredients": 1068,
+  "noise_rows": [
+    {
+      "row": 9,
+      "E": "aaaacqua",
+      "F": "acqua"
+    },
+    {
+      "row": 11,
+      "E": "acciughe in olio di semi di girasole",
+      "F": "ACCIUGHE"
+    },
+    {
+      "row": 628,
+      "E": "mix di spezie ed erbe aromatiche a base di cumino, finocchio",
+      "F": "miscela di spezie ed erbe aromatiche bio (cumino bio, finocc"
+    }
+  ],
+  "macro_over_100_count": 0,
+  "impossible_values_count": 11,
+  "allergen_flags_count": 331,
+  "macro_over_100": [],
+  "impossible_values": [
+    {
+      "row": 99,
+      "name": "avocado fresco",
+      "field": "Acidi grassi sub-totale > Grassi totali",
+      "value": "grassi=23.0, sub=101.23",
+      "note": "Somma acidi grassi > totale grassi"
+    },
+    {
+      "row": 129,
+      "name": "burro",
+      "field": "Acidi grassi sub-totale > Grassi totali",
+      "value": "grassi=80.0, sub=100.54",
+      "note": "Somma acidi grassi > totale grassi"
+    },
+    {
+      "row": 141,
+      "name": "caffè",
+      "field": "Acidi grassi sub-totale > Grassi totali",
+      "value": "grassi=15.4, sub=99.1",
+      "note": "Somma acidi grassi > totale grassi"
+    },
+    {
+      "row": 141,
+      "name": "caffè",
+      "field": "Saturi > Grassi Totali",
+      "value": "sat=43.99, fat=15.4",
+      "note": "Acidi grassi saturi > Grassi totali"
+    },
+    {
+      "row": 186,
+      "name": "castagne secche",
+      "field": "Acidi grassi sub-totale > Grassi totali",
+      "value": "grassi=3.4, sub=4.14",
+      "note": "Somma acidi grassi > totale grassi"
+    },
+    {
+      "row": 320,
+      "name": "farina di avena",
+      "field": "Acidi grassi sub-totale > Grassi totali",
+      "value": "grassi=6.31, sub=7.8",
+      "note": "Somma acidi grassi > totale grassi"
+    },
+    {
+      "row": 347,
+      "name": "farina di grano tenero tipo \"00\" - 2",
+      "field": "Acidi grassi sub-totale > Grassi totali",
+      "value": "grassi=1.2, sub=1.65",
+      "note": "Somma acidi grassi > totale grassi"
+    },
+    {
+      "row": 376,
+      "name": "farina di soia",
+      "field": "Acidi grassi sub-totale > Grassi totali",
+      "value": "grassi=23.5, sub=101.13",
+      "note": "Somma acidi grassi > totale grassi"
+    },
+    {
+      "row": 384,
+      "name": "fave crude secche decorticate",
+      "field": "Acidi grassi sub-totale > Grassi totali",
+      "value": "grassi=3.0, sub=96.58",
+      "note": "Somma acidi grassi > totale grassi"
+    },
+    {
+      "row": 384,
+      "name": "fave crude secche decorticate",
+      "field": "Saturi > Grassi Totali",
+      "value": "sat=21.37, fat=3.0",
+      "note": "Acidi grassi saturi > Grassi totali"
+    },
+    {
+      "row": 774,
+      "name": "polline di salice",
+      "field": "Acidi grassi sub-totale > Grassi totali",
+      "value": "grassi=5.4, sub=6.7",
+      "note": "Somma acidi grassi > totale grassi"
+    }
+  ],
+  "allergen_flagged": [
+    {
+      "row": 10,
+      "name": "acciughe in olio di oliva",
+      "F": "ACCIUGHE in olio di oliva (acciughe, olio di oliva",
+      "issues": [
+        "acciughe in name but not flagged in ['AJ']"
+      ]
+    },
+    {
+      "row": 12,
+      "name": "acciughe salate",
+      "F": "ACCIUGHE salate (ACCIUGHE,sale)",
+      "issues": [
+        "acciughe in name but not flagged in ['AJ']"
+      ]
+    },
+    {
+      "row": 13,
+      "name": "aceto balsamico di modena 19% di zuccheri",
+      "F": "aceto balsamico di Modena (aceto di vino bianco (c",
+      "issues": [
+        "solfiti in name but not flagged in ['FT']"
+      ]
+    },
+    {
+      "row": 14,
+      "name": "aceto balsamico di modena 21 % di zuccheri",
+      "F": "aceto balsamico di Modena(aceto di vino bianco (co",
+      "issues": [
+        "solfiti in name but not flagged in ['FT']"
+      ]
+    },
+    {
+      "row": 15,
+      "name": "aceto balsamico di modena 34% di zuccheri",
+      "F": "aceto balsamico( aceto di vino bianco (contiene SO",
+      "issues": [
+        "solfiti in name but not flagged in ['FT']"
+      ]
+    },
+    {
+      "row": 16,
+      "name": "aceto balsamico di Modena 46% di zuccheri",
+      "F": "aceto balsamico di Modena(Aceto di vino bianco (co",
+      "issues": [
+        "solfiti in name but not flagged in ['FT']"
+      ]
+    },
+    {
+      "row": 17,
+      "name": "aceto balsamico di modena 55% di zuccheri",
+      "F": "aceto balsamico( aceto di vino bianco (contiene SO",
+      "issues": [
+        "solfiti in name but not flagged in ['FT']"
+      ]
+    },
+    {
+      "row": 18,
+      "name": "aceto di malto di orzo",
+      "F": "aceto di malto di ORZO(acqua, malto di ORZO)",
+      "issues": [
+        "orzo in name but not flagged in ['HS', 'HT']"
+      ]
+    },
+    {
+      "row": 19,
+      "name": "aceto di malto di orzo fermentato",
+      "F": "aceto di malto di ORZO",
+      "issues": [
+        "orzo in name but not flagged in ['HS', 'HT']"
+      ]
+    },
+    {
+      "row": 21,
+      "name": "aceto di vino bianco",
+      "F": "aceto di  vino bianco (contiene SOLFITI)",
+      "issues": [
+        "solfiti in name but not flagged in ['FT']"
+      ]
+    },
+    {
+      "row": 22,
+      "name": "aceto di vino bianco disidratato",
+      "F": "aceto disidratato in polvere (contiene SOLFITI)",
+      "issues": [
+        "solfiti in name but not flagged in ['FT']"
+      ]
+    },
+    {
+      "row": 23,
+      "name": "aceto di vino rosso 6% di acido acetico",
+      "F": "aceto di vino rosso (contiene SOLFITI)",
+      "issues": [
+        "solfiti in name but not flagged in ['FT']"
+      ]
+    },
+    {
+      "row": 24,
+      "name": "aceto di vino rosso 8% di acido acetico",
+      "F": "aceto di vino rosso (contiene SOLFITI)",
+      "issues": [
+        "solfiti in name but not flagged in ['FT']"
+      ]
+    },
+    {
+      "row": 43,
+      "name": "albume d' uovo in polvere",
+      "F": "albume d' UOVO in polvere",
+      "issues": [
+        "uovo in name but not flagged in ['AE', 'AF']",
+        "albume in name but not flagged in ['AE']"
+      ]
+    },
+    {
+      "row": 44,
+      "name": "albume d'uovo",
+      "F": "albume d' UOVO",
+      "issues": [
+        "uovo in name but not flagged in ['AE', 'AF']",
+        "albume in name but not flagged in ['AE']"
+      ]
+    },
+    {
+      "row": 55,
+      "name": "amido di frumento",
+      "F": "amido di FRUMENTO",
+      "issues": [
+        "frumento in name but not flagged in ['HO', 'HP']"
+      ]
+    },
+    {
+      "row": 56,
+      "name": "amido di frumento deglutinato",
+      "F": "amido di frumento deglutinato",
+      "issues": [
+        "frumento in name but not flagged in ['HO', 'HP']"
+      ]
+    },
+    {
+      "row": 61,
+      "name": "anacardi",
+      "F": "ANACARDI",
+      "issues": [
+        "anacardi in name but not flagged in ['FQ']"
+      ]
+    },
+    {
+      "row": 70,
+      "name": "arachidi",
+      "F": "ARACHIDI",
+      "issues": [
+        "arachidi in name but not flagged in ['DC']"
+      ]
+    },
+    {
+      "row": 98,
+      "name": "avena",
+      "F": "AVENA",
+      "issues": [
+        "avena in name but not flagged in ['HU', 'HV']"
+      ]
+    },
+    {
+      "row": 100,
+      "name": "babà secco/savarè secco",
+      "F": "babà(farina di GRANO tenero tipo \"0\"e\"00\", UOVA, m",
+      "issues": [
+        "grano in name but not flagged in ['HO', 'HP']",
+        "uova in name but not flagged in ['AE', 'AF']"
+      ]
+    },
+    {
+      "row": 101,
+      "name": "baccalà dissalato ed ammollato",
+      "F": "BACCALA' disidratato ed ammollato",
+      "issues": [
+        "baccalà in name but not flagged in ['AJ']"
+      ]
+    },
+    {
+      "row": 118,
+      "name": "bignè (non farcito)",
+      "F": "bignè(UOVA, acqua, farina di GRANO tenero tipo \"0\"",
+      "issues": [
+        "grano in name but not flagged in ['HO', 'HP']",
+        "uova in name but not flagged in ['AE', 'AF']"
+      ]
+    },
+    {
+      "row": 119,
+      "name": "birra",
+      "F": "birra(acqua, malto di ORZO, luppolo, lievito)",
+      "issues": [
+        "orzo in name but not flagged in ['HS', 'HT']"
+      ]
+    },
+    {
+      "row": 120,
+      "name": "biscotti senza glutine",
+      "F": "biscotti senza glutine(amido di mais, amido di ris",
+      "issues": [
+        "glutine in name but not flagged in ['HM']",
+        "uova in name but not flagged in ['AE', 'AF']",
+        "latte in name but not flagged in ['DF']",
+        "burro in name but not flagged in ['DF']",
+        "nocciole in name but not flagged in ['FK']"
+      ]
+    },
+    {
+      "row": 122,
+      "name": "bottarga di muggine (uova di cefalo salate ed essi",
+      "F": "bottarga di MUGGINE ( CEFALO, sale)",
+      "issues": [
+        "uova in name but not flagged in ['AE', 'AF']"
+      ]
+    },
+    {
+      "row": 123,
+      "name": "bottarga di tonno (uova di tonno salate ed essicca",
+      "F": "bottarga di TONNO ( TONNO, sale)",
+      "issues": [
+        "uova in name but not flagged in ['AE', 'AF']",
+        "tonno in name but not flagged in ['AJ']"
+      ]
+    },
+    {
+      "row": 128,
+      "name": "burger",
+      "F": "Preparazione alimentare solo ingredienti vegetali ",
+      "issues": [
+        "glutine in name but not flagged in ['HM']",
+        "frumento in name but not flagged in ['HO', 'HP']"
+      ]
+    },
+    {
+      "row": 129,
+      "name": "burro",
+      "F": "BURRO",
+      "issues": [
+        "burro in name but not flagged in ['DF']"
+      ]
+    },
+    {
+      "row": 130,
+      "name": "burro bio",
+      "F": "BURRO bio",
+      "issues": [
+        "burro in name but not flagged in ['DF']"
+      ]
+    },
+    {
+      "row": 131,
+      "name": "burro chiarificato",
+      "F": "BURRO chiarificato",
+      "issues": [
+        "burro in name but not flagged in ['DF']"
+      ]
+    },
+    {
+      "row": 132,
+      "name": "burro delattosato",
+      "F": "BURRO delattosato",
+      "issues": [
+        "burro in name but not flagged in ['DF']"
+      ]
+    },
+    {
+      "row": 133,
+      "name": "burro di arachidi",
+      "F": "pasta di ARACHIDI",
+      "issues": [
+        "arachidi in name but not flagged in ['DC']",
+        "burro in name but not flagged in ['DF']"
+      ]
+    },
+    {
+      "row": 134,
+      "name": "burro di cacao",
+      "F": "burro di cacao",
+      "issues": [
+        "burro in name but not flagged in ['DF']"
+      ]
+    },
+    {
+      "row": 135,
+      "name": "burro di karitè",
+      "F": "grasso di karitè",
+      "issues": [
+        "burro in name but not flagged in ['DF']"
+      ]
+    },
+    {
+      "row": 136,
+      "name": "burro di latte di bufala",
+      "F": "BURRO di LATTE di bufala",
+      "issues": [
+        "latte in name but not flagged in ['DF']",
+        "burro in name but not flagged in ['DF']"
+      ]
+    },
+    {
+      "row": 137,
+      "name": "burro di mandorle",
+      "F": "pasta di MANDORLE",
+      "issues": [
+        "burro in name but not flagged in ['DF']",
+        "mandorle in name but not flagged in ['FE']"
+      ]
+    },
+    {
+      "row": 151,
+      "name": "capperi sott' aceto",
+      "F": "capperi sott' aceto(capperi, aceto di vino bianco(",
+      "issues": [
+        "solfiti in name but not flagged in ['FT']"
+      ]
+    },
+    {
+      "row": 206,
+      "name": "cicciata",
+      "F": "Preparazione alimentare solo ingredienti vegetali(",
+      "issues": [
+        "glutine in name but not flagged in ['HM']",
+        "frumento in name but not flagged in ['HO', 'HP']"
+      ]
+    },
+    {
+      "row": 208,
+      "name": "Cicky crusty",
+      "F": "Preparazione alimentare, solo ingredienti vegetali",
+      "issues": [
+        "glutine in name but not flagged in ['HM']",
+        "frumento in name but not flagged in ['HO', 'HP']"
+      ]
+    },
+    {
+      "row": 215,
+      "name": "cioccolato bianco (55% di zucchero)",
+      "F": "cioccolato bianco (zucchero, burro di cacao, LATTE",
+      "issues": [
+        "latte in name but not flagged in ['DF']",
+        "burro in name but not flagged in ['DF']"
+      ]
+    },
+    {
+      "row": 216,
+      "name": "cioccolato bianco (59% di zucchero)",
+      "F": "cioccolato bianco (zucchero, burro di cacao, LATTE",
+      "issues": [
+        "latte in name but not flagged in ['DF']",
+        "burro in name but not flagged in ['DF']"
+      ]
+    },
+    {
+      "row": 217,
+      "name": "cioccolato bianco bio",
+      "F": "ricopertura di cioccolato bianco bio (zucchero di ",
+      "issues": [
+        "latte in name but not flagged in ['DF']",
+        "burro in name but not flagged in ['DF']"
+      ]
+    },
+    {
+      "row": 218,
+      "name": "cioccolato bianco con mandorle",
+      "F": "cioccolato bianco con mandorle(burro di cacao, zuc",
+      "issues": [
+        "burro in name but not flagged in ['DF']",
+        "mandorle in name but not flagged in ['FE']"
+      ]
+    },
+    {
+      "row": 219,
+      "name": "cioccolato bianco con mandorle e cannella",
+      "F": "cioccolato bianco con mandorle e cannella(burro di",
+      "issues": [
+        "burro in name but not flagged in ['DF']",
+        "mandorle in name but not flagged in ['FE']"
+      ]
+    },
+    {
+      "row": 220,
+      "name": "cioccolato fondente (cacao 45%)",
+      "F": "cioccolato (zucchero, pasta di cacao, burro di cac",
+      "issues": [
+        "burro in name but not flagged in ['DF']"
+      ]
+    },
+    {
+      "row": 221,
+      "name": "cioccolato fondente (cacao 50%)",
+      "F": "cioccolato fondente (zucchero, pasta di cacao, bur",
+      "issues": [
+        "burro in name but not flagged in ['DF']"
+      ]
+    },
+    {
+      "row": 223,
+      "name": "cioccolato fondente (cacao 70%)",
+      "F": "cioccolato (70% cacao)(pasta di cacao, zucchero, b",
+      "issues": [
+        "burro in name but not flagged in ['DF']"
+      ]
+    },
+    {
+      "row": 224,
+      "name": "cioccolato fondente in gocce (cacao minimo 46%)",
+      "F": "gocce di cioccolato (zucchero, pasta di cacao, bur",
+      "issues": [
+        "burro in name but not flagged in ['DF']"
+      ]
+    },
+    {
+      "row": 246,
+      "name": "corn flakes",
+      "F": "corn flakes (farina di  mais(89%), zucchero, estra",
+      "issues": [
+        "orzo in name but not flagged in ['HS', 'HT']"
+      ]
+    }
+  ]
+}
