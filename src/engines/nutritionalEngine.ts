@@ -1,6 +1,5 @@
 import type { IngredientDB } from '../data/ingredientsDB';
-import { getRules } from '../logic/localizationModule';
-import type { Region } from '../logic/localizationModule';
+import { getRules, type Region } from '../logic/localizationModule';
 
 export interface NutritionalValues {
     energyKj: number;
@@ -203,4 +202,97 @@ export function calculateFromRecipe(
         roundedValuePerPortion: roundedValuePerPortion as NutritionalValues,
         portionSize
     };
+}
+
+/**
+ * Generate nutritional claims (es. "FONTE DI PROTEINE", "RICCO DI FIBRE")
+ * Based on Regulation (EU) 2006/1924 on nutrition and health claims
+ */
+export function generateNutritionalClaims(
+    valuePer100g: NutritionalValues
+): string[] {
+    const claims: string[] = [];
+
+    // Reference Intake (RI) per adulto medio according to Reg. 1169/2011 Allegato XIII
+    const refIntakes: Record<string, number> = {
+        energyKcal: 2000,
+        energyKj: 8400,
+        fat: 70,
+        saturatedFat: 20,
+        carbohydrates: 260,
+        sugars: 90,
+        fibre: 0, // No reference for fibre (claims based on fixed amounts)
+        protein: 50,
+        salt: 6,
+        sodium: 2400,
+        calcium: 800,
+        iron: 14,
+        potassium: 3500,
+        magnesium: 375
+    };
+
+    const nutrientNames: Record<string, string> = {
+        energyKcal: 'ENERGIA',
+        fat: 'GRASSI',
+        saturatedFat: 'GRASSI SATURI',
+        carbohydrates: 'CARBOIDRATI',
+        sugars: 'ZUCCHERI',
+        fibre: 'FIBRE',
+        protein: 'PROTEINE',
+        salt: 'SALE',
+        calcium: 'CALCIO',
+        iron: 'FERRO',
+        potassium: 'POTASSIO'
+    };
+
+    // Helper: calculate % RI
+    const getRIPercent = (nutrient: string, value: number): number => {
+        const ri = refIntakes[nutrient];
+        if (!ri || ri === 0) return 0;
+        return (value / ri) * 100;
+    };
+
+    // FONTE DI (≥15% RI) / RICCO DI (≥30% RI)
+    const sourceThresholds: (keyof NutritionalValues)[] = [
+        'fibre', 'protein', 'calcium', 'iron', 'potassium', 'sodium'
+    ];
+
+    for (const nutrient of sourceThresholds) {
+        const value = valuePer100g[nutrient] as number || 0;
+        const name = nutrientNames[nutrient] || nutrient;
+
+        if (nutrient === 'fibre') {
+            // Fibre: "FONTE" if ≥3g, "RICCO" if ≥6g
+            if (value >= 6) {
+                claims.push(`RICCO DI ${name}`);
+            } else if (value >= 3) {
+                claims.push(`FONTE DI ${name}`);
+            }
+        } else if (nutrient === 'sodium') {
+            // Sodium: "A BASSO CONTENUTO" if <120mg (0.12g)
+            if (value < 0.12) {
+                claims.push(`A BASSO CONTENUTO DI ${name}`);
+            }
+        } else {
+            // Standard: ≥15% = FONTE, ≥30% = RICCO
+            const riPercent = getRIPercent(nutrient, value);
+            if (riPercent >= 30) {
+                claims.push(`RICCO DI ${name}`);
+            } else if (riPercent >= 15) {
+                claims.push(`FONTE DI ${name}`);
+            }
+        }
+    }
+
+    // Low sugar claim: "A BASSO CONTENUTO DI ZUCCHERI" if sugars ≤5g per 100g
+    if ((valuePer100g.sugars || 0) <= 5) {
+        claims.push('A BASSO CONTENUTO DI ZUCCHERI');
+    }
+
+    // Low fat claim: "A BASSO CONTENUTO DI GRASSI" if fat ≤3g per 100g
+    if ((valuePer100g.fat || 0) <= 3) {
+        claims.push('A BASSO CONTENUTO DI GRASSI');
+    }
+
+    return claims;
 }

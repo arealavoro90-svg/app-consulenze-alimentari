@@ -1342,6 +1342,50 @@ function TabUE({ p, ue, full }: { p: CalcResult; ue: UEServing; full?: boolean }
                         </tbody>
                     </table>
                 </div>
+
+                {/* Nutritional Claims Section */}
+                {(() => {
+                    const claims: string[] = [];
+                    const AR_UE = { fiber: 25, protein: 50, salt: 6, calcium: 800, iron: 14, potassium: 3500 };
+
+                    // Fibre: "FONTE" ≥3g, "RICCO" ≥6g
+                    if (p.fibre >= 6) claims.push('RICCO DI FIBRE');
+                    else if (p.fibre >= 3) claims.push('FONTE DI FIBRE');
+
+                    // Protein: "FONTE" ≥15% AR, "RICCO" ≥30% AR
+                    const proteinPct = (p.proteine / AR_UE.protein) * 100;
+                    if (proteinPct >= 30) claims.push('RICCO DI PROTEINE');
+                    else if (proteinPct >= 15) claims.push('FONTE DI PROTEINE');
+
+                    // Sugar: "A BASSO CONTENUTO DI ZUCCHERI" ≤5g
+                    if (p.zuccheri <= 5) claims.push('A BASSO CONTENUTO DI ZUCCHERI');
+
+                    // Fat: "A BASSO CONTENUTO DI GRASSI" ≤3g
+                    if (p.grassi <= 3) claims.push('A BASSO CONTENUTO DI GRASSI');
+
+                    // Salt: "A BASSO CONTENUTO DI SALE" <0.1g
+                    if (p.sale < 0.1) claims.push('A BASSO CONTENUTO DI SALE');
+
+                    // Calcium: "FONTE" ≥15% AR
+                    const calPct = (p.calcio / AR_UE.calcium) * 100;
+                    if (calPct >= 30) claims.push('RICCO DI CALCIO');
+                    else if (calPct >= 15) claims.push('FONTE DI CALCIO');
+
+                    // Iron: "FONTE" ≥15% AR
+                    const iroPct = (p.ferro / AR_UE.iron) * 100;
+                    if (iroPct >= 30) claims.push('RICCO DI FERRO');
+                    else if (iroPct >= 15) claims.push('FONTE DI FERRO');
+
+                    return claims.length > 0 ? (
+                        <div style={{ marginTop: 12, paddingTop: 8, borderTop: '1px solid #ddd', fontSize: 12, lineHeight: 1.6 }}>
+                            <strong style={{ display: 'block', marginBottom: 6 }}>Proprietà Nutrizionali:</strong>
+                            {claims.map((claim, i) => (
+                                <div key={i} style={{ paddingLeft: 10, marginBottom: 2 }}>• {claim}</div>
+                            ))}
+                        </div>
+                    ) : null;
+                })()}
+
                 <p style={{ fontSize: 10, color: '#444', marginTop: 5, lineHeight: 1.4 }}>* Assunzioni di riferimento di un adulto medio (8400 kJ / 2000 kcal).</p>
             </div>
         </div>
