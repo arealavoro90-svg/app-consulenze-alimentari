@@ -5,6 +5,7 @@ import { useAuth } from '../../auth/AuthContext';
 import { useArchive } from '../../hooks/useArchive';
 import { useLocalStorage } from '../../hooks/useLocalStorage';
 import { ArchiveModal } from '../../components/ArchiveModal';
+import { calculateWineNutrition, calculateCarbohydratesGL, type WineAnalysis } from '../../engines/wineEngine';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -133,64 +134,23 @@ const CODICI_SMALTIMENTO: Record<string, string> = {
 
 const NOMI_COMPONENTI = ['Bottiglia', 'Capsula', 'Tappo', 'Etichetta', 'Retro-etichetta', 'Scatola'];
 
-// ─── Nutrition Engine ─────────────────────────────────────────────────────────
+// ─── Helpers ──────────────────────────────────────────────────────────────────
 
-interface NutritionResult {
-    kj: number; kcal: number;
-    grassiPer100: number; saturiPer100: number;
-    carboPer100: number; zuccheriPer100: number;
-    proteinePer100: number; salePer100: number;
-}
-
-function calcNutrition(a: AnalyticalData): NutritionResult {
-    const g = (v: string) => parseFloat(v) || 0;
-    const grassi = g(a.grassi); const saturi = g(a.saturi);
-    const alcol = g(a.alcol); const tartarico = g(a.tartarico);
-    const malico = g(a.malico); const volatile = g(a.volatile);
-    const residuo = g(a.residuoZucch); const polialcoli = g(a.polialcoli);
-    const glicerolo = g(a.glicerolo); const fibre = g(a.fibre);
-    const proteine = g(a.proteine); const sale = g(a.sale);
-
-    // Carboidrati auto = residuo + polialcoli + glicerolo (g/litro)
-    const carbo = residuo + polialcoli + glicerolo;
-
-    // Formula esatta replicata dall'Excel (verificata)
-    const kj =
-        (grassi / 10) * 37 +
-        alcol * 22.91 +
-        (tartarico / 10) * 13 +
-        (malico / 10) * 13 +
-        (volatile / 10) * 13 +
-        (residuo / 10) * 17 +
-        (polialcoli / 10) * 10 +
-        (glicerolo / 10) * 17 +
-        (fibre / 10) * 8 +
-        (proteine / 10) * 17;
-
-    const kcal =
-        (grassi / 10) * 9 +
-        alcol * 5.53 +
-        (tartarico / 10) * 3 +
-        (malico / 10) * 3 +
-        (volatile / 10) * 3 +
-        (residuo / 10) * 4 +
-        (polialcoli / 10) * 2.4 +
-        (glicerolo / 10) * 4 +
-        (fibre / 10) * 2 +
-        (proteine / 10) * 4;
-
-    // Arrotondamenti UE
-    const rnd1 = (v: number) => v < 0.5 ? 0 : Math.round(v * 10) / 10;
-    const rndSale = (v: number) => v < 0.0125 ? 0 : Math.round(v * 100) / 100;
-
+function toWineAnalysis(a: AnalyticalData): WineAnalysis {
+    const n = (v: string) => parseFloat(v) || 0;
     return {
-        kj, kcal,
-        grassiPer100: rnd1(grassi / 10),
-        saturiPer100: rnd1(saturi / 10),
-        carboPer100: rnd1(carbo / 10),
-        zuccheriPer100: rnd1(residuo / 10),
-        proteinePer100: rnd1(proteine / 10),
-        salePer100: rndSale(sale / 10),
+        fat: n(a.grassi),
+        saturatedFat: n(a.saturi),
+        alcoholDegree: n(a.alcol),
+        tartaricAcid: n(a.tartarico),
+        malicAcid: n(a.malico),
+        volatileAcidity: n(a.volatile),
+        residualSugar: n(a.residuoZucch),
+        polyols: n(a.polialcoli),
+        glycerol: n(a.glicerolo),
+        fiber: n(a.fibre),
+        proteins: n(a.proteine),
+        salt: n(a.sale),
     };
 }
 
@@ -254,11 +214,12 @@ export function EtichetteViniCalc() {
     const previewRef = useRef<HTMLDivElement>(null);
 
     // Derived
-    const nutrition = calcNutrition(analytical);
-    const isSpumante = analytical.alcol ? label.categoriaVino.includes('SPUMANTE') : false;
-    const carboLitro = (parseFloat(analytical.residuoZucch) || 0) + (parseFloat(analytical.polialcoli) || 0) + (parseFloat(analytical.glicerolo) || 0);
+    const wineAnalysis = toWineAnalysis(analytical);
+    const nutrition = calculateWineNutrition(wineAnalysis);
+    const carboLitro = calculateCarbohydratesGL(wineAnalysis);
+    const isSpumante = label.categoriaVino.includes('SPUMANTE');
     const titoloAlco = analytical.alcol ? `${parseFloat(analytical.alcol).toFixed(1).replace('.', ',')}% vol` : '';
-    const energiaAuto = analytical.alcol ? `E (100 ml) = ${fmt(nutrition.kj, 2)} kJ / ${fmt(nutrition.kcal, 2)} kcal` : '';
+    const energiaAuto = analytical.alcol ? `E (100 ml) = ${fmt(nutrition.kj, 0)} kJ / ${fmt(nutrition.kcal, 0)} kcal` : '';
 
     // Handlers
     const setA = (field: keyof AnalyticalData, val: string) => setAnalytical(p => ({ ...p, [field]: val }));
@@ -334,13 +295,13 @@ export function EtichetteViniCalc() {
 
         section('VALORI NUTRIZIONALI (per 100 ml)');
         [
-            ['Energia', `${fmt(nutrition.kj, 2)} kJ / ${fmt(nutrition.kcal, 2)} kcal`],
-            ['Grassi', `${fmt(nutrition.grassiPer100)} g`],
-            ['di cui acidi grassi saturi', `${fmt(nutrition.saturiPer100)} g`],
-            ['Carboidrati', `${fmt(nutrition.carboPer100)} g`],
-            ['di cui zuccheri', `${fmt(nutrition.zuccheriPer100)} g`],
-            ['Proteine', `${fmt(nutrition.proteinePer100)} g`],
-            ['Sale', `${fmt(nutrition.salePer100, 2)} g`],
+            ['Energia', `${fmt(nutrition.kj, 0)} kJ / ${fmt(nutrition.kcal, 0)} kcal`],
+            ['Grassi', `${fmt(nutrition.fat)} g`],
+            ['di cui acidi grassi saturi', `${fmt(nutrition.saturatedFat)} g`],
+            ['Carboidrati', `${fmt(nutrition.carbohydrates)} g`],
+            ['di cui zuccheri', `${fmt(nutrition.sugars)} g`],
+            ['Proteine', `${fmt(nutrition.proteins)} g`],
+            ['Sale', `${fmt(nutrition.salt, 2)} g`],
         ].forEach(([l, v], i) => row(l, v, i));
         y += 4;
 
@@ -527,13 +488,13 @@ export function EtichetteViniCalc() {
                         <table style={{ width: '100%', borderCollapse: 'collapse', fontFamily: 'inherit' }}>
                             <tbody>
                                 {([
-                                    ['Energia', `${fmt(nutrition.kj, 2)} kJ / ${fmt(nutrition.kcal, 2)} kcal`, true],
-                                    ['Grassi', `${fmt(nutrition.grassiPer100)} g`, true],
-                                    ['di cui acidi grassi saturi', `${fmt(nutrition.saturiPer100)} g`, false],
-                                    ['Carboidrati', `${fmt(nutrition.carboPer100)} g`, true],
-                                    ['di cui zuccheri', `${fmt(nutrition.zuccheriPer100)} g`, false],
-                                    ['Proteine', `${fmt(nutrition.proteinePer100)} g`, true],
-                                    ['Sale', `${fmt(nutrition.salePer100, 2)} g`, true],
+                                    ['Energia', `${fmt(nutrition.kj, 0)} kJ / ${fmt(nutrition.kcal, 0)} kcal`, true],
+                                    ['Grassi', `${fmt(nutrition.fat)} g`, true],
+                                    ['di cui acidi grassi saturi', `${fmt(nutrition.saturatedFat)} g`, false],
+                                    ['Carboidrati', `${fmt(nutrition.carbohydrates)} g`, true],
+                                    ['di cui zuccheri', `${fmt(nutrition.sugars)} g`, false],
+                                    ['Proteine', `${fmt(nutrition.proteins)} g`, true],
+                                    ['Sale', `${fmt(nutrition.salt, 2)} g`, true],
                                 ] as [string, string, boolean][]).map(([name, val, bold], i) => (
                                     <tr key={i} style={{ background: i % 2 === 0 ? '#fafbfc' : 'white', borderBottom: '1px solid var(--color-border)' }}>
                                         <td style={{ padding: '8px 12px', fontSize: 13, fontWeight: bold ? 600 : 400, paddingLeft: bold ? 12 : 24 }}>{name}</td>
@@ -544,7 +505,7 @@ export function EtichetteViniCalc() {
                         </table>
                         <div style={{ marginTop: 16, background: 'linear-gradient(135deg,rgba(255,126,46,0.08),rgba(12,19,38,0.04))', border: '1.5px solid rgba(255,126,46,0.25)', borderRadius: 10, padding: '12px 16px' }}>
                             <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--color-orange)', textTransform: 'uppercase', letterSpacing: '.05em', marginBottom: 4 }}>Energia totale per 100 ml</div>
-                            <div style={{ fontSize: 22, fontWeight: 800, color: 'var(--color-navy)' }}>{fmt(nutrition.kj, 2)} kJ <span style={{ fontSize: 14, fontWeight: 500 }}>/ {fmt(nutrition.kcal, 2)} kcal</span></div>
+                            <div style={{ fontSize: 22, fontWeight: 800, color: 'var(--color-navy)' }}>{fmt(nutrition.kj, 0)} kJ <span style={{ fontSize: 14, fontWeight: 500 }}>/ {fmt(nutrition.kcal, 0)} kcal</span></div>
                         </div>
                     </div>
                 </div>
@@ -743,7 +704,7 @@ export function EtichetteViniCalc() {
                         ) : analytical.alcol && (
                             <div style={{ marginTop: 8, fontSize: 11, background: 'rgba(139,69,19,0.06)', border: '1px solid rgba(139,69,19,0.2)', borderRadius: 6, padding: '8px 10px' }}>
                                 <strong>Valori nutrizionali medi per 100 ml</strong><br />
-                                Energia {fmt(nutrition.kj, 2)} kJ / {fmt(nutrition.kcal, 2)} kcal · Grassi {fmt(nutrition.grassiPer100)} g · Saturi {fmt(nutrition.saturiPer100)} g · Carboidrati {fmt(nutrition.carboPer100)} g · di cui zuccheri {fmt(nutrition.zuccheriPer100)} g · Proteine {fmt(nutrition.proteinePer100)} g · Sale {fmt(nutrition.salePer100, 2)} g
+                                Energia {fmt(nutrition.kj, 0)} kJ / {fmt(nutrition.kcal, 0)} kcal · Grassi {fmt(nutrition.fat)} g · Saturi {fmt(nutrition.saturatedFat)} g · Carboidrati {fmt(nutrition.carbohydrates)} g · di cui zuccheri {fmt(nutrition.sugars)} g · Proteine {fmt(nutrition.proteins)} g · Sale {fmt(nutrition.salt, 2)} g
                             </div>
                         )}
                         {label.allergenici && <div style={{ marginTop: 8, fontSize: 12, fontWeight: 700 }}>Contiene: {label.allergenici}{label.tracce && label.tracceSpecifiche ? `. Può contenere tracce di: ${label.tracceSpecifiche}` : ''}</div>}

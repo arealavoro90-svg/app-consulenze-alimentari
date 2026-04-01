@@ -18,17 +18,25 @@ export const UERules: RoundingRules = {
     roundNutrient: (val, key) => {
         // EU Reg. 1169/2011, Annex XV — specific thresholds per nutrient
         if (key === 'salt') {
-            if (val < 0.0125) return 0;                    // < 0.0125g → "0"
-            if (val < 0.5) return Math.round(val * 100) / 100; // 0.0125–0.5g → 2 decimali
-            return Math.round(val * 10) / 10;              // ≥ 0.5g → 1 decimale
+            if (val <= 0.0125) return 0;
+            if (val < 1) return Math.round(val * 100) / 100;  // 2 decimali
+            return Math.round(val * 10) / 10;                  // 1 decimale
         }
-        if (key === 'fibre') {
-            if (val < 0.5) return 0;
+        if (key === 'sodium') {
+            if (val <= 0.005) return 0;
+            if (val < 1) return Math.round(val * 100) / 100;
             return Math.round(val * 10) / 10;
         }
-        // Grassi, carboidrati, proteine, zuccheri, saturi
-        if (val < 0.5) return 0;
-        return Math.round(val * 10) / 10;
+        // Acidi grassi saturi, monoinsaturi, polinsaturi (fat_sub)
+        if (key === 'saturatedFat' || key === 'monoFat' || key === 'polyFat') {
+            if (val <= 0.1) return 0;
+            if (val < 10) return Math.round(val * 10) / 10;
+            return Math.round(val);
+        }
+        // Grassi, carboidrati, zuccheri, proteine, fibre, polioli, amido
+        if (val <= 0.5) return 0;
+        if (val < 10) return Math.round(val * 10) / 10;
+        return Math.round(val);
     }
 };
 

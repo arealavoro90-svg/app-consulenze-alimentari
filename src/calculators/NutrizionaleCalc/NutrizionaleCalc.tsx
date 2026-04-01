@@ -142,11 +142,9 @@ type SubTab = 'verticale' | 'orizzontale' | 'lineare';
 const fUE = (v: string | number) => v.toString().replace('.', ',');
 function rUE_energy(v: number): string { return Math.round(v).toString(); }
 function rUE_macro(v: number): string {
+    // EU Reg. 1169/2011, Allegato XV: < 0.5g → "0"; < 10g → 1 decimal; ≥ 10g → whole number
+    // Applied to: grassi, carboidrati, zuccheri, proteine, fibre, polioli
     if (v < 0.5) return '0';
-    // User requested: "se ≥ 10g → senza decimali. Se tra 0,5g e 10g → 1 decimale." 
-    // And explicitly for carbs: "Usa: se ≥ 5g e < 10g → senza decimali; se tra 0,5g e 5g → 1 decimale" (but then asked to verify 5,3g, which implies standard <10g 1 decimal rule).
-    // I will stick to standard: >=10 -> 0 dec, <10 -> 1 dec. If it's a special carb exception, I'll pass a flag, but let's stick to standard macro first. 
-    // Actually, user said: "Carboidrati: 5,3 g ... Usa: se >= 5g e < 10g -> senza decimali". I'll use a special one for carbs if needed, but let's see. Let's do standard macro rule for fat, sugars, protein, fibre.
     if (v < 10) return fUE(v.toFixed(1));
     return Math.round(v).toString();
 }
@@ -351,7 +349,7 @@ function InfoTooltip({ text }: { text: string }) {
 }
 
 // ─── IngSearch sub-component ──────────────────────────────────────────────────
-function IngSearch({ onAdd, db, loading }: { onAdd: (ing: DBIngredient) => void; db: DBIngredient[]; loading: boolean }) {
+function IngSearch({ onAdd, db, loading, error }: { onAdd: (ing: DBIngredient) => void; db: DBIngredient[]; loading: boolean; error: string | null }) {
     const [q, setQ] = useState('');
     const [res, setRes] = useState<DBIngredient[]>([]);
     const [open, setOpen] = useState(false);
@@ -368,7 +366,11 @@ function IngSearch({ onAdd, db, loading }: { onAdd: (ing: DBIngredient) => void;
     return (
         <div ref={ref} style={{ position: 'relative', marginBottom: 12 }}>
             <div className="form-field" style={{ marginBottom: 0 }}>
-                {loading ? (
+                {error ? (
+                    <div style={{ padding: '10px 14px', background: '#fff3f3', borderRadius: 6, display: 'flex', alignItems: 'center', gap: 10, border: '1.5px solid #e53935' }}>
+                        <span style={{ fontSize: 13, color: '#c62828' }}>{error}</span>
+                    </div>
+                ) : loading ? (
                     <div style={{ padding: '10px 14px', background: '#f5f5f5', borderRadius: 6, display: 'flex', alignItems: 'center', gap: 10, border: '1.5px solid var(--color-border)' }}>
                         <div className="spinner" style={{ width: 14, height: 14, border: '2px solid #ccc', borderTopColor: 'var(--color-orange)', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
                         <span style={{ fontSize: 13, color: 'var(--color-text-muted)' }}>Caricamento database ingredienti...</span>
@@ -589,6 +591,7 @@ export function NutrizionaleCalc() {
     // Database state — fetched + merged with personal custom ingredients
     const [db, setDb] = useState<DBIngredient[]>([]);
     const [loadingDB, setLoadingDB] = useState(true);
+    const [dbError, setDbError] = useState<string | null>(null);
 
     useEffect(() => {
         fetch('/data/ingredientsDB.json')
@@ -602,7 +605,7 @@ export function NutrizionaleCalc() {
                 setDb(base);
                 setLoadingDB(false);
             })
-            .catch(err => { console.error('Error loading DB:', err); setLoadingDB(false); });
+            .catch(err => { console.error('Error loading DB:', err); setLoadingDB(false); setDbError('Impossibile caricare il database ingredienti. Ricarica la pagina.'); });
     }, []);
 
     const addCustomIngredient = (ing: DBIngredient) => setDb(prev => [...prev, ing]);
@@ -643,29 +646,6 @@ export function NutrizionaleCalc() {
         return [...set];
     }, [allRows, presentAllergens]);
 
-    // Ingredient list string (includes additiveChips in etichetta format)
-    const ingredientListStr = useMemo(() => {
-        if (allRows.length === 0) return '';
-        const parts: string[] = [];
-        if (components.length > 1 || components[0].name) {
-            components.forEach(comp => {
-                if (comp.rows.length === 0) return;
-                const compGrams = comp.rows.reduce((s, r) => s + r.grams, 0);
-                const sorted = [...comp.rows].sort((a, b) => b.grams - a.grams);
-                const ingStr = sorted.map(r => r.ing.etichetta || r.ing.nome).join(', ');
-                if (comp.name && pesoTotale > 0) {
-                    const pct = Math.round(compGrams / pesoTotale * 100);
-                    parts.push(`${comp.name} ${pct}% (${ingStr})`);
-                } else { parts.push(ingStr); }
-            });
-        } else {
-            const sorted = [...allRows].sort((a, b) => b.grams - a.grams);
-            sorted.forEach(r => parts.push(r.ing.etichetta || r.ing.nome));
-        }
-        const addParts = additives.filter(a => a.trim()).map(a => a.trim());
-        const chipParts = additiveChips.map(c => c.etichetta || c.nome);
-        return [...parts, ...addParts, ...chipParts].join(', ');
-    }, [allRows, components, additives, additiveChips, pesoTotale]);
 
     // Component modifiers
     const addComp = () => { if (components.length < 4) setComponents(prev => [...prev, makeComp()]); };
@@ -1001,7 +981,7 @@ export function NutrizionaleCalc() {
                             </div>
                         </div>
                     </div>
-                    <IngSearch onAdd={(ing) => addRowToComp(comp.id, ing)} db={db} loading={loadingDB} />
+                    <IngSearch onAdd={(ing) => addRowToComp(comp.id, ing)} db={db} loading={loadingDB} error={dbError} />
                     {comp.rows.map(row => {
                         const gramsPerPiece = comp.pzUV > 1 ? row.grams / comp.pzUV : null;
                         const fabbReale = row.grams / ((row.resa || 100) / 100);
@@ -1109,7 +1089,7 @@ export function NutrizionaleCalc() {
                             onChange={e => handleFW(e.target.value)}
                             className="form-input" style={fwWarning ? { borderColor: '#e53e3e' } : {}} />
                         <ValidationError message={fieldErrors['finished-weight']} visible={!!fieldErrors['finished-weight']} />
-                        {fwWarning && <div style={{ fontSize: 11, color: '#e53e3e', marginTop: 3 }}>⚠️ Non può superare il peso crudo ({totalGramsRaw.toFixed(0)}g)</div>}
+                        {fwWarning && <div style={{ fontSize: 11, color: '#e53e3e', marginTop: 3 }}>⚠️ Il peso del prodotto finito non può essere superiore al peso del prodotto crudo ({totalGramsRaw.toFixed(0)}g). Inserire un valore uguale o inferiore.</div>}
                     </div>
                     <div className="form-field" style={{ marginBottom: 0 }}>
                         <label className="form-label">
@@ -1155,10 +1135,9 @@ export function NutrizionaleCalc() {
                 })}
             </div>
 
-            {/* Right column: allergens + ingredient list */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, marginBottom: 20 }}>
+            {/* Allergens */}
+            <div style={{ marginBottom: 20 }}>
                 <AllergenSection present={presentAllergens} cross={crossAllergens} />
-                <IngredientListSection str={ingredientListStr} allergens={presentAllergens} />
             </div>
 
             {/* Cost summary card */}
@@ -1259,25 +1238,6 @@ function AllergenSection({ present, cross }: { present: string[]; cross: string[
         </div>
     );
 }
-function IngredientListSection({ str, allergens }: { str: string; allergens: string[] }) {
-    if (!str) return <div />;
-
-    // Regex per evidenziare allergeni (bold)
-    const regexParts = allergens.length > 0 ? str.split(new RegExp(`(${allergens.join('|')})`, 'gi')) : [str];
-
-    return (
-        <div className="card">
-            <h3 style={{ marginTop: 0 }}>📝 Lista Ingredienti per Etichetta</h3>
-            <p style={{ fontSize: 13, fontStyle: 'italic', lineHeight: 1.6, marginBottom: 10 }}>
-                {regexParts.map((p, i) => (
-                    allergens.some(a => a.toLowerCase() === p.toLowerCase()) ? <strong key={i}>{p}</strong> : p
-                ))}
-            </p>
-            <button className="btn btn-outline" style={{ fontSize: 12 }} onClick={() => navigator.clipboard.writeText(str)}>📋 Copia</button>
-        </div>
-    );
-}
-
 // ─── Shared table styling ───────────────────────────────────────────────────
 const TS = {
     table: { borderCollapse: 'collapse' as const, width: '100%', fontSize: 13 },
@@ -1335,76 +1295,86 @@ function TabUE({ p, ue, full }: { p: CalcResult; ue: UEServing; full?: boolean }
     ].filter(m => full || (m.val / m.ref * 100 >= 15));
     return (
         <div style={{ background: 'white', padding: full ? 20 : 0, borderRadius: 8 }}>
-            {!full && <h3 style={{ marginTop: 0, fontSize: 16, color: 'var(--color-navy)', borderBottom: '2px solid var(--color-orange)', paddingBottom: 8, marginBottom: 16 }}>Etichetta Nutrizionale (UE) / Solo obbligatori</h3>}
-            <div style={{ overflowX: 'auto' }}>
-                <table style={{ ...TS.table, border: full ? '1px solid #000' : 'none' }}>
-                    <thead>
-                        <tr style={{ background: 'var(--color-navy)', color: 'white' }}>
-                            <th style={{ ...TS.th, background: 'inherit' }}>Valori medi</th>
-                            <th style={{ ...TS.thR, background: 'inherit' }}>per 100 g</th>
-                            {hasExtra && ue.porzione && <th style={{ ...TS.thR, background: 'inherit' }}>per {ue.porzione}g</th>}
-                            {hasExtra && ue.confezione && <th style={{ ...TS.thR, background: 'inherit' }}>per conf. {ue.confezione}g</th>}
-                            {hasExtra && ue.pezzo && <th style={{ ...TS.thR, background: 'inherit' }}>per pz. {ue.pezzo}g</th>}
-                            {hasExtra && <th style={{ ...TS.thR, background: 'inherit' }}>% AR*</th>}
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {rows.map((r, i) => (
-                            <tr key={i} style={i % 2 === 0 ? { background: '#f8f9fa' } : {}}>
-                                <td style={r.indent ? TS.tdSub : r.bold ? TS.tdB : TS.td}>{r.label}</td>
-                                <td style={r.bold ? TS.tdBR : TS.tdR}>{r.per100}</td>
-                                {hasExtra && ue.porzione && <td style={TS.tdR}>{r.portion || '—'}</td>}
-                                {hasExtra && ue.confezione && <td style={TS.tdR}>{r.conf || '—'}</td>}
-                                {hasExtra && ue.pezzo && <td style={TS.tdR}>{r.pezzo || '—'}</td>}
-                                {hasExtra && <td style={TS.tdR}>{r.arPct}</td>}
+            <div style={{ maxWidth: 480 }}>
+                {/* EU official header */}
+                <div style={{ background: '#000', color: '#fff', padding: '6px 10px', fontWeight: 900, fontSize: 16, letterSpacing: '0.04em', textTransform: 'uppercase' }}>
+                    Dichiarazione Nutrizionale
+                </div>
+                <div style={{ background: '#000', color: '#fff', padding: '4px 10px', fontWeight: 700, fontSize: 11 }}>
+                    Valori nutrizionali medi per 100 g di prodotto
+                </div>
+                <div style={{ overflowX: 'auto' }}>
+                    <table style={{ ...TS.table, border: '1px solid #000', borderTop: 'none' }}>
+                        <thead>
+                            <tr style={{ background: '#000', color: '#fff' }}>
+                                <th style={{ ...TS.th, background: 'inherit', borderRight: '1px solid #333' }}></th>
+                                <th style={{ ...TS.thR, background: 'inherit', borderRight: '1px solid #333' }}>per 100 g</th>
+                                {hasExtra && ue.porzione && <th style={{ ...TS.thR, background: 'inherit', borderRight: '1px solid #333' }}>per {ue.porzione} g</th>}
+                                {hasExtra && ue.confezione && <th style={{ ...TS.thR, background: 'inherit', borderRight: '1px solid #333' }}>per conf. {ue.confezione} g</th>}
+                                {hasExtra && ue.pezzo && <th style={{ ...TS.thR, background: 'inherit', borderRight: '1px solid #333' }}>per pz. {ue.pezzo} g</th>}
+                                <th style={{ ...TS.thR, background: 'inherit' }}>% AR*</th>
                             </tr>
-                        ))}
-                        {micros.map((m, i) => {
-                            const pKey = Object.keys(p).find(k => (p as any)[k] === m.val) as keyof CalcResult;
-                            return (
-                                <tr key={'m' + i} style={(rows.length + i) % 2 === 0 ? { background: '#f8f9fa' } : {}}>
-                                    <td style={TS.td}>{m.label}</td>
-                                    <td style={TS.tdR}>{m.fmt(m.val)} {m.unit}</td>
-                                    {hasExtra && ue.porzione && <td style={TS.tdR}>{por && pKey ? `${m.fmt(por[pKey] as number)} ${m.unit}` : '—'}</td>}
-                                    {hasExtra && ue.confezione && <td style={TS.tdR}>{conf && pKey ? `${m.fmt(conf[pKey] as number)} ${m.unit}` : '—'}</td>}
-                                    {hasExtra && ue.pezzo && <td style={TS.tdR}>{pez && pKey ? `${m.fmt(pez[pKey] as number)} ${m.unit}` : '—'}</td>}
-                                    {hasExtra && <td style={TS.tdR}>{rUE_pct(m.val, m.ref) !== null ? `${rUE_pct(m.val, m.ref)}%` : '—'}</td>}
+                        </thead>
+                        <tbody>
+                            {rows.map((r, i) => (
+                                <tr key={i} style={{ borderBottom: '1px solid #ccc' }}>
+                                    <td style={r.indent ? { ...TS.tdSub, borderRight: '1px solid #ccc' } : r.bold ? { ...TS.tdB, borderRight: '1px solid #ccc' } : { ...TS.td, borderRight: '1px solid #ccc' }}>{r.label}</td>
+                                    <td style={r.bold ? { ...TS.tdBR, borderRight: '1px solid #ccc' } : { ...TS.tdR, borderRight: '1px solid #ccc' }}>{r.per100}</td>
+                                    {hasExtra && ue.porzione && <td style={{ ...TS.tdR, borderRight: '1px solid #ccc' }}>{r.portion || '—'}</td>}
+                                    {hasExtra && ue.confezione && <td style={{ ...TS.tdR, borderRight: '1px solid #ccc' }}>{r.conf || '—'}</td>}
+                                    {hasExtra && ue.pezzo && <td style={{ ...TS.tdR, borderRight: '1px solid #ccc' }}>{r.pezzo || '—'}</td>}
+                                    <td style={TS.tdR}>{r.arPct}</td>
                                 </tr>
-                            );
-                        })}
-                    </tbody>
-                </table>
+                            ))}
+                            {micros.map((m, i) => {
+                                const pKey = Object.keys(p).find(k => (p as unknown as Record<string, number>)[k] === m.val) as keyof CalcResult;
+                                return (
+                                    <tr key={'m' + i} style={{ borderBottom: '1px solid #ccc' }}>
+                                        <td style={{ ...TS.td, borderRight: '1px solid #ccc' }}>{m.label}</td>
+                                        <td style={{ ...TS.tdR, borderRight: '1px solid #ccc' }}>{m.fmt(m.val)} {m.unit}</td>
+                                        {hasExtra && ue.porzione && <td style={{ ...TS.tdR, borderRight: '1px solid #ccc' }}>{por && pKey ? `${m.fmt(por[pKey] as number)} ${m.unit}` : '—'}</td>}
+                                        {hasExtra && ue.confezione && <td style={{ ...TS.tdR, borderRight: '1px solid #ccc' }}>{conf && pKey ? `${m.fmt(conf[pKey] as number)} ${m.unit}` : '—'}</td>}
+                                        {hasExtra && ue.pezzo && <td style={{ ...TS.tdR, borderRight: '1px solid #ccc' }}>{pez && pKey ? `${m.fmt(pez[pKey] as number)} ${m.unit}` : '—'}</td>}
+                                        <td style={TS.tdR}>{rUE_pct(m.val, m.ref) !== null ? `${rUE_pct(m.val, m.ref)}%` : '—'}</td>
+                                    </tr>
+                                );
+                            })}
+                        </tbody>
+                    </table>
+                </div>
+                <p style={{ fontSize: 10, color: '#444', marginTop: 5, lineHeight: 1.4 }}>* Assunzioni di riferimento di un adulto medio (8400 kJ / 2000 kcal).</p>
             </div>
-            {hasExtra && <p style={{ fontSize: 10, color: '#666', marginTop: 6 }}>* AR = Assunzioni di riferimento di un adulto medio (8400 kJ / 2000 kcal).</p>}
         </div>
     );
 }
 
 // ─── TabUSA ─────────────────────────────────────────────────────────────────
 function TabUSA({ p, usa, subTab, setSubTab, full }: { p: CalcResult; usa: ServingSizesNation; subTab: SubTab; setSubTab: (t: SubTab) => void; full?: boolean }) {
-    const sv = (usa.serving && full) ? scaleResult(p, usa.serving) : null;
     const svG = usa.serving || 0;
+    // Always scale to serving size when available (FDA compliance: label shows per-serving values)
+    const sv = svG > 0 ? scaleResult(p, svG) : null;
+    const d = sv || p; // data source: serving if available, else per-100g
     const row = (label: string, val: number, dv: number, unit: string, sub?: boolean, bold?: boolean, isOptional?: boolean) => ({ label, val, dv, unit, sub, bold, isOptional });
     const usaRows = [
-        row('Total Fat', p.grassi, DV_USA.grassi, 'g', false, true),
-        row('Saturated Fat', p.saturi, DV_USA.saturi, 'g', true),
-        row('Trans Fat', p.trans, 0, 'g', true),
-        row('Polyunsaturated Fat', p.polins, 0, 'g', true, false, true),
-        row('Monounsaturated Fat', p.monoins, 0, 'g', true, false, true),
-        row('Cholesterol', p.colesterolo, DV_USA.colesterolo, 'mg', false, true),
-        row('Sodium', p.sodio_mg, DV_USA.sodio_mg, 'mg', false, true),
-        row('Total Carbohydrate', p.carboidratiTot, DV_USA.carboidratiTot, 'g', false, true),
-        row('Dietary Fiber', p.fibre, DV_USA.fibre, 'g', true),
-        row('Total Sugars', p.zuccheri, 0, 'g', true),
-        row('Includes Added Sugars', p.zuccheri_agg, DV_USA.zuccheri_agg, 'g', true),
-        row('Protein', p.proteine, DV_USA.proteine, 'g', false, true),
+        row('Total Fat', d.grassi, DV_USA.grassi, 'g', false, true),
+        row('Saturated Fat', d.saturi, DV_USA.saturi, 'g', true),
+        row('Trans Fat', d.trans, 0, 'g', true),
+        row('Polyunsaturated Fat', d.polins, 0, 'g', true, false, true),
+        row('Monounsaturated Fat', d.monoins, 0, 'g', true, false, true),
+        row('Cholesterol', d.colesterolo, DV_USA.colesterolo, 'mg', false, true),
+        row('Sodium', d.sodio_mg, DV_USA.sodio_mg, 'mg', false, true),
+        row('Total Carbohydrate', d.carboidratiTot, DV_USA.carboidratiTot, 'g', false, true),
+        row('Dietary Fiber', d.fibre, DV_USA.fibre, 'g', true),
+        row('Total Sugars', d.zuccheri, 0, 'g', true),
+        row('Includes Added Sugars', d.zuccheri_agg, DV_USA.zuccheri_agg, 'g', true),
+        row('Protein', d.proteine, DV_USA.proteine, 'g', false, true),
     ].filter(r => full || !r.isOptional);
 
     const vitamins = full ? [
-        { label: 'Vitamin D', val: p.vitD, dv: DV_USA.vitD, unit: 'mcg' },
-        { label: 'Calcium', val: p.calcio, dv: DV_USA.calcio, unit: 'mg' },
-        { label: 'Iron', val: p.ferro, dv: DV_USA.ferro, unit: 'mg' },
-        { label: 'Potassium', val: p.potassio, dv: DV_USA.potassio, unit: 'mg' },
+        { label: 'Vitamin D', val: d.vitD, dv: DV_USA.vitD, unit: 'mcg' },
+        { label: 'Calcium', val: d.calcio, dv: DV_USA.calcio, unit: 'mg' },
+        { label: 'Iron', val: d.ferro, dv: DV_USA.ferro, unit: 'mg' },
+        { label: 'Potassium', val: d.potassio, dv: DV_USA.potassio, unit: 'mg' },
     ] : [];
 
     return (
@@ -1432,7 +1402,7 @@ function TabUSA({ p, usa, subTab, setSubTab, full }: { p: CalcResult; usa: Servi
                     <div style={{ fontSize: 11, fontWeight: 700, borderBottom: '1px solid #000', paddingBottom: 2 }}>Amount per serving</div>
                     <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '5px solid #000' }}>
                         <div style={{ fontSize: 28, fontWeight: 900 }}>Calories</div>
-                        <div style={{ fontSize: 36, fontWeight: 900 }}>{sv ? rUSA_energy(sv.energyKcal) : rUSA_energy(p.energyKcal)}</div>
+                        <div style={{ fontSize: 36, fontWeight: 900 }}>{rUSA_energy(d.energyKcal)}</div>
                     </div>
                     <div style={{ textAlign: 'right', fontSize: 10, borderBottom: '1px solid #000', paddingBottom: 2 }}>% Daily Value*</div>
                     {usaRows.map((r, i) => {
@@ -1464,7 +1434,7 @@ function TabUSA({ p, usa, subTab, setSubTab, full }: { p: CalcResult; usa: Servi
                     <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
                         <div style={{ flex: '0 0 auto' }}>
                             <div style={{ fontSize: 13, fontWeight: 700 }}>Serving size: {svG > 0 ? `${svG} g` : '—'}</div>
-                            <div style={{ fontSize: 28, fontWeight: 900 }}>Calories {sv ? rUSA_energy(sv.energyKcal) : rUSA_energy(p.energyKcal)}</div>
+                            <div style={{ fontSize: 28, fontWeight: 900 }}>Calories {rUSA_energy(d.energyKcal)}</div>
                         </div>
                         <div style={{ flex: 1, borderLeft: '1px solid #000', paddingLeft: 12 }}>
                             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 4 }}>
@@ -1485,7 +1455,7 @@ function TabUSA({ p, usa, subTab, setSubTab, full }: { p: CalcResult; usa: Servi
                 <div style={{ border: '1px solid #000', padding: 8, fontFamily: 'Arial, sans-serif', fontSize: 11 }}>
                     <span style={{ fontWeight: 900, fontSize: 14 }}>Nutrition Facts </span>
                     {svG > 0 && <span>Serving size {svG} g | </span>}
-                    <span>Calories {sv ? rUSA_energy(sv.energyKcal) : rUSA_energy(p.energyKcal)} | </span>
+                    <span>Calories {rUSA_energy(d.energyKcal)} | </span>
                     {usaRows.filter(r => r.unit !== undefined).map((r, i) => (
                         <span key={i}><span style={{ fontWeight: 700 }}>{r.label}</span> {r.unit === 'mg' ? `${rUSA_mg5(r.val)} mg` : `${rUSA_g(r.val)} g`}{r.dv > 0 ? ` (${rUSA_pct(r.val, r.dv)}% DV)` : ''} | </span>
                     ))}
@@ -1497,9 +1467,10 @@ function TabUSA({ p, usa, subTab, setSubTab, full }: { p: CalcResult; usa: Servi
 
 // ─── TabCanada ──────────────────────────────────────────────────────────────
 function TabCanada({ p, ca, subTab, setSubTab, full }: { p: CalcResult; ca: ServingSizesNation; subTab: SubTab; setSubTab: (t: SubTab) => void; full?: boolean }) {
-    const sv = (ca.serving && full) ? scaleResult(p, ca.serving) : null;
     const svG = ca.serving || 0;
-    const satTrans = p.saturi + p.trans;
+    const sv = svG > 0 ? scaleResult(p, svG) : null;
+    const d = sv || p;
+    const satTrans = d.saturi + d.trans;
 
     return (
         <div style={{ background: 'white', padding: full ? 20 : 0, borderRadius: 8 }}>
@@ -1525,21 +1496,21 @@ function TabCanada({ p, ca, subTab, setSubTab, full }: { p: CalcResult; ca: Serv
                             </div>
                             <div style={{ borderBottom: '4px solid #000' }}>
                                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 20, fontWeight: 900 }}>
-                                    <span>Calories</span><span>{sv ? rCA_energy(sv.energyKcal) : rCA_energy(p.energyKcal)}</span>
+                                    <span>Calories</span><span>{rCA_energy(d.energyKcal)}</span>
                                 </div>
                             </div>
                             <div style={{ textAlign: 'right', fontSize: 10 }}>% Daily Value*</div>
                             {[
-                                { label: 'Fat', val: p.grassi, dv: DV_CA.grassi, fmt: rCA_fat, unit: 'g', bold: true },
+                                { label: 'Fat', val: d.grassi, dv: DV_CA.grassi, fmt: rCA_fat, unit: 'g', bold: true },
                                 { label: 'Saturated + Trans', val: satTrans, dv: DV_CA.satTrans, fmt: rCA_fat, unit: 'g', sub: true },
-                                { label: 'Carbohydrate', val: p.carboidratiTot, dv: DV_CA.carboidratiTot, fmt: rCA_carb, unit: 'g', bold: true },
-                                { label: 'Fibre', val: p.fibre, dv: DV_CA.fibre, fmt: rCA_carb, unit: 'g', sub: true },
-                                { label: 'Sugars', val: p.zuccheri, dv: DV_CA.zuccheri, fmt: rCA_carb, unit: 'g', sub: true },
-                                { label: 'Cholesterol', val: p.colesterolo, dv: 300, fmt: rCA_chol, unit: 'mg', bold: true },
-                                { label: 'Sodium', val: p.sodio_mg, dv: DV_CA.sodio_mg, fmt: rCA_na, unit: 'mg', bold: true },
-                                { label: 'Potassium', val: p.potassio, dv: DV_CA.potassio, fmt: rCA_na, unit: 'mg', bold: true, isOptional: true },
-                                { label: 'Calcium', val: p.calcio, dv: DV_CA.calcio, fmt: rCA_na, unit: 'mg', bold: true, isOptional: true },
-                                { label: 'Iron', val: p.ferro, dv: DV_CA.ferro, fmt: rCA_iron, unit: 'mg', bold: true, isOptional: true },
+                                { label: 'Carbohydrate', val: d.carboidratiTot, dv: DV_CA.carboidratiTot, fmt: rCA_carb, unit: 'g', bold: true },
+                                { label: 'Fibre', val: d.fibre, dv: DV_CA.fibre, fmt: rCA_carb, unit: 'g', sub: true },
+                                { label: 'Sugars', val: d.zuccheri, dv: DV_CA.zuccheri, fmt: rCA_carb, unit: 'g', sub: true },
+                                { label: 'Cholesterol', val: d.colesterolo, dv: 300, fmt: rCA_chol, unit: 'mg', bold: true },
+                                { label: 'Sodium', val: d.sodio_mg, dv: DV_CA.sodio_mg, fmt: rCA_na, unit: 'mg', bold: true },
+                                { label: 'Potassium', val: d.potassio, dv: DV_CA.potassio, fmt: rCA_na, unit: 'mg', bold: true, isOptional: true },
+                                { label: 'Calcium', val: d.calcio, dv: DV_CA.calcio, fmt: rCA_na, unit: 'mg', bold: true, isOptional: true },
+                                { label: 'Iron', val: d.ferro, dv: DV_CA.ferro, fmt: rCA_iron, unit: 'mg', bold: true, isOptional: true },
                             ].filter(r => full || !r.isOptional).map((r, i) => (
                                 <div key={i} style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #999', paddingLeft: r.sub ? 12 : 0, fontSize: r.bold ? 13 : 11, fontWeight: r.bold ? 700 : 400 }}>
                                     <span>{r.label} {r.fmt(r.val)} {r.unit}</span>
@@ -1555,21 +1526,21 @@ function TabCanada({ p, ca, subTab, setSubTab, full }: { p: CalcResult; ca: Serv
                             </div>
                             <div style={{ borderBottom: '4px solid #000' }}>
                                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 20, fontWeight: 900 }}>
-                                    <span>Calories</span><span>{sv ? rCA_energy(sv.energyKcal) : rCA_energy(p.energyKcal)}</span>
+                                    <span>Calories</span><span>{rCA_energy(d.energyKcal)}</span>
                                 </div>
                             </div>
                             <div style={{ textAlign: 'right', fontSize: 10 }}>% valeur quotidienne*</div>
                             {[
-                                { label: 'Lipides', val: p.grassi, dv: DV_CA.grassi, fmt: rCA_fat, unit: 'g', bold: true },
+                                { label: 'Lipides', val: d.grassi, dv: DV_CA.grassi, fmt: rCA_fat, unit: 'g', bold: true },
                                 { label: 'Saturés + Trans', val: satTrans, dv: DV_CA.satTrans, fmt: rCA_fat, unit: 'g', sub: true },
-                                { label: 'Glucides', val: p.carboidratiTot, dv: DV_CA.carboidratiTot, fmt: rCA_carb, unit: 'g', bold: true },
-                                { label: 'Fibres', val: p.fibre, dv: DV_CA.fibre, fmt: rCA_carb, unit: 'g', sub: true },
-                                { label: 'Sucres', val: p.zuccheri, dv: DV_CA.zuccheri, fmt: rCA_carb, unit: 'g', sub: true },
-                                { label: 'Cholestérol', val: p.colesterolo, dv: 300, fmt: rCA_chol, unit: 'mg', bold: true },
-                                { label: 'Sodium', val: p.sodio_mg, dv: DV_CA.sodio_mg, fmt: rCA_na, unit: 'mg', bold: true },
-                                { label: 'Potassium', val: p.potassio, dv: DV_CA.potassio, fmt: rCA_na, unit: 'mg', bold: true, isOptional: true },
-                                { label: 'Calcium', val: p.calcio, dv: DV_CA.calcio, fmt: rCA_na, unit: 'mg', bold: true, isOptional: true },
-                                { label: 'Fer', val: p.ferro, dv: DV_CA.ferro, fmt: rCA_iron, unit: 'mg', bold: true, isOptional: true },
+                                { label: 'Glucides', val: d.carboidratiTot, dv: DV_CA.carboidratiTot, fmt: rCA_carb, unit: 'g', bold: true },
+                                { label: 'Fibres', val: d.fibre, dv: DV_CA.fibre, fmt: rCA_carb, unit: 'g', sub: true },
+                                { label: 'Sucres', val: d.zuccheri, dv: DV_CA.zuccheri, fmt: rCA_carb, unit: 'g', sub: true },
+                                { label: 'Cholestérol', val: d.colesterolo, dv: 300, fmt: rCA_chol, unit: 'mg', bold: true },
+                                { label: 'Sodium', val: d.sodio_mg, dv: DV_CA.sodio_mg, fmt: rCA_na, unit: 'mg', bold: true },
+                                { label: 'Potassium', val: d.potassio, dv: DV_CA.potassio, fmt: rCA_na, unit: 'mg', bold: true, isOptional: true },
+                                { label: 'Calcium', val: d.calcio, dv: DV_CA.calcio, fmt: rCA_na, unit: 'mg', bold: true, isOptional: true },
+                                { label: 'Fer', val: d.ferro, dv: DV_CA.ferro, fmt: rCA_iron, unit: 'mg', bold: true, isOptional: true },
                             ].filter(r => full || !r.isOptional).map((r, i) => (
                                 <div key={i} style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #999', paddingLeft: r.sub ? 12 : 0, fontSize: r.bold ? 13 : 11, fontWeight: r.bold ? 700 : 400 }}>
                                     <span>{r.label} {r.fmt(r.val)} {r.unit}</span>
@@ -1590,16 +1561,16 @@ function TabCanada({ p, ca, subTab, setSubTab, full }: { p: CalcResult; ca: Serv
                         <div>
                             <div style={{ fontSize: 22, fontWeight: 900 }}>Nutrition Facts / Valeur nutritive</div>
                             <div style={{ fontSize: 13, fontWeight: 700 }}>Serving / Portion: {svG > 0 ? `${svG} g` : '—'}</div>
-                            <div style={{ fontSize: 22, fontWeight: 900 }}>Calories {sv ? rCA_energy(sv.energyKcal) : rCA_energy(p.energyKcal)}</div>
+                            <div style={{ fontSize: 22, fontWeight: 900 }}>Calories {rCA_energy(d.energyKcal)}</div>
                         </div>
                     </div>
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 8, fontSize: 12 }}>
                         {[
-                            { en: 'Fat', fr: 'Lipides', val: p.grassi, dv: DV_CA.grassi, fmt: rCA_fat, unit: 'g' },
-                            { en: 'Carbs', fr: 'Glucides', val: p.carboidratiTot, dv: DV_CA.carboidratiTot, fmt: rCA_carb, unit: 'g' },
-                            { en: 'Sodium', fr: 'Sodium', val: p.sodio_mg, dv: DV_CA.sodio_mg, fmt: rCA_na, unit: 'mg' },
-                            { en: 'Calcium', fr: 'Calcium', val: p.calcio, dv: DV_CA.calcio, fmt: rCA_na, unit: 'mg' },
-                            { en: 'Iron', fr: 'Fer', val: p.ferro, dv: DV_CA.ferro, fmt: rCA_iron, unit: 'mg' },
+                            { en: 'Fat', fr: 'Lipides', val: d.grassi, dv: DV_CA.grassi, fmt: rCA_fat, unit: 'g' },
+                            { en: 'Carbs', fr: 'Glucides', val: d.carboidratiTot, dv: DV_CA.carboidratiTot, fmt: rCA_carb, unit: 'g' },
+                            { en: 'Sodium', fr: 'Sodium', val: d.sodio_mg, dv: DV_CA.sodio_mg, fmt: rCA_na, unit: 'mg' },
+                            { en: 'Calcium', fr: 'Calcium', val: d.calcio, dv: DV_CA.calcio, fmt: rCA_na, unit: 'mg' },
+                            { en: 'Iron', fr: 'Fer', val: d.ferro, dv: DV_CA.ferro, fmt: rCA_iron, unit: 'mg' },
                         ].map((m, i) => (
                             <div key={i} style={{ textAlign: 'center', borderLeft: '1px solid #ccc', paddingLeft: 8 }}>
                                 <div style={{ fontSize: 18, fontWeight: 900 }}>{rCA_pct(m.val, m.dv)}%</div>
@@ -1615,10 +1586,10 @@ function TabCanada({ p, ca, subTab, setSubTab, full }: { p: CalcResult; ca: Serv
                 <div style={{ border: '1px solid #000', padding: 8, fontFamily: 'Arial, sans-serif', fontSize: 11 }}>
                     <span style={{ fontWeight: 900, fontSize: 14 }}>Nutrition Facts / Valeur nutritive | </span>
                     {svG > 0 && <span>Serving / Portion {svG} g | </span>}
-                    <span>Calories {sv ? rCA_energy(sv.energyKcal) : rCA_energy(p.energyKcal)} | </span>
-                    <span><b>Fat / Lipides</b> {rCA_fat(p.grassi)} g ({rCA_pct(p.grassi, DV_CA.grassi)}% DV) | </span>
-                    <span><b>Carbs / Glucides</b> {rCA_carb(p.carboidratiTot)} g ({rCA_pct(p.carboidratiTot, DV_CA.carboidratiTot)}% DV) | </span>
-                    <span><b>Sodium</b> {rCA_na(p.sodio_mg)} mg ({rCA_pct(p.sodio_mg, DV_CA.sodio_mg)}% DV)</span>
+                    <span>Calories {rCA_energy(d.energyKcal)} | </span>
+                    <span><b>Fat / Lipides</b> {rCA_fat(d.grassi)} g ({rCA_pct(d.grassi, DV_CA.grassi)}% DV) | </span>
+                    <span><b>Carbs / Glucides</b> {rCA_carb(d.carboidratiTot)} g ({rCA_pct(d.carboidratiTot, DV_CA.carboidratiTot)}% DV) | </span>
+                    <span><b>Sodium</b> {rCA_na(d.sodio_mg)} mg ({rCA_pct(d.sodio_mg, DV_CA.sodio_mg)}% DV)</span>
                 </div>
             )}
         </div>
@@ -1701,7 +1672,7 @@ function TabAustralia({ p, au, showDI, setShowDI, full }: { p: CalcResult; au: S
 // ─── TabArabi ────────────────────────────────────────────────────────────────
 function TabArabi({ p, arabi, full }: { p: CalcResult; arabi: ServingSizesNation; full?: boolean }) {
     const svG = arabi.serving || 0;
-    const sv = (svG > 0 && full) ? scaleResult(p, svG) : null;
+    const sv = svG > 0 ? scaleResult(p, svG) : null;
     const hasExtra = full && sv;
 
     interface ARow { label: string; p100: string; pSv?: string; dv: string; indent?: boolean; bold?: boolean; }

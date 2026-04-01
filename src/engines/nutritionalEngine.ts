@@ -87,6 +87,36 @@ export function calculateEnergy(values: Partial<NutritionalValues>): { kcal: num
     return { kcal, kj };
 }
 
+// Maps NutritionalValues keys to their corresponding IngredientDB keys.
+// Keys absent here (iron, energyKj, energyKcal) are not in IngredientDB and return 0.
+const NUTRIENT_KEY_MAP: Partial<Record<keyof NutritionalValues, keyof IngredientDB>> = {
+    fat: 'fat',
+    saturatedFat: 'saturatedFat',
+    monoFat: 'monoFat',
+    polyFat: 'polyFat',
+    transFat: 'transFat',
+    cholesterol: 'cholesterol',
+    carbohydrates: 'carbs', // NutritionalValues uses 'carbohydrates', IngredientDB uses 'carbs'
+    sugars: 'sugars',
+    fibre: 'fibre',
+    polyols: 'polyols',
+    erythritol: 'erythritol',
+    organicAcids: 'organicAcids',
+    protein: 'protein',
+    salt: 'salt',
+    sodium: 'sodium',
+    potassium: 'potassium',
+    calcium: 'calcium',
+    alcohol: 'alcohol',
+};
+
+function getIngredientNutrient(ing: IngredientDB, key: keyof NutritionalValues): number {
+    const ingKey = NUTRIENT_KEY_MAP[key];
+    if (!ingKey) return 0;
+    const val = ing[ingKey];
+    return typeof val === 'number' ? val : 0;
+}
+
 export function calculateFromRecipe(
     items: RecipeIngredient[],
     portionSize: number,
@@ -108,35 +138,31 @@ export function calculateFromRecipe(
         'carbohydrates', 'sugars', 'fibre', 'polyols', 'erythritol', 'organicAcids',
         'protein', 'salt', 'sodium', 'potassium', 'calcium', 'iron', 'alcohol'
     ];
+    const allKeys: (keyof NutritionalValues)[] = ['energyKj', 'energyKcal', ...keys];
 
     // 1. Sum nutrients across all ingredients (TotalNutrientsRaw)
-    const totalNutrientsRaw: any = {};
+    const totalNutrientsRaw: Partial<NutritionalValues> = {};
     for (const { ingredient: ing, grams } of items) {
         for (const key of keys) {
-            let nutrientPer100 = 0;
-            if (key === 'carbohydrates') {
-                nutrientPer100 = (ing as any).carbs || 0;
-            } else {
-                nutrientPer100 = (ing as any)[key] || 0;
-            }
+            const nutrientPer100 = getIngredientNutrient(ing, key);
             const absoluteAmountInIng = p((nutrientPer100 * grams) / 100);
-            totalNutrientsRaw[key] = p((totalNutrientsRaw[key] || 0) + absoluteAmountInIng);
+            totalNutrientsRaw[key] = p((totalNutrientsRaw[key] ?? 0) + absoluteAmountInIng);
         }
     }
 
     // 2. Calculate ValuePer100g_Raw (pre-cooking)
-    const valuePer100gRaw: any = {};
+    const valuePer100gRaw: Partial<NutritionalValues> = {};
     for (const key of keys) {
-        valuePer100gRaw[key] = p((totalNutrientsRaw[key] / totalRecipeWeight) * 100);
+        valuePer100gRaw[key] = p(((totalNutrientsRaw[key] ?? 0) / totalRecipeWeight) * 100);
     }
     const energyRaw = calculateEnergy(valuePer100gRaw);
     valuePer100gRaw.energyKj = energyRaw.kj;
     valuePer100gRaw.energyKcal = energyRaw.kcal;
 
     // 3. Calculate ValuePer100g_Final (post-cooking, high precision)
-    const valuePer100gFinal: any = {};
+    const valuePer100gFinal: Partial<NutritionalValues> = {};
     for (const key of keys) {
-        valuePer100gFinal[key] = p((totalNutrientsRaw[key] / finalProductWeight) * 100);
+        valuePer100gFinal[key] = p(((totalNutrientsRaw[key] ?? 0) / finalProductWeight) * 100);
     }
     const energyFinal = calculateEnergy(valuePer100gFinal);
     valuePer100gFinal.energyKj = energyFinal.kj;
@@ -144,21 +170,22 @@ export function calculateFromRecipe(
 
     // 4. Apply Rounding Rules (Final output for label)
     const rules = getRules(region);
-    const roundedValuePer100gFinal: any = {};
-    for (const key in valuePer100gFinal) {
+    const roundedValuePer100gFinal: Partial<NutritionalValues> = {};
+    for (const key of allKeys) {
+        const val = valuePer100gFinal[key] ?? 0;
         if (key === 'energyKj' || key === 'energyKcal') {
-            roundedValuePer100gFinal[key] = rules.roundEnergy(valuePer100gFinal[key]);
+            roundedValuePer100gFinal[key] = rules.roundEnergy(val);
         } else {
-            roundedValuePer100gFinal[key] = rules.roundNutrient(valuePer100gFinal[key], key);
+            roundedValuePer100gFinal[key] = rules.roundNutrient(val, key);
         }
     }
 
     // 5. Calculate Portion Values
     const ratio = portionSize / 100;
-    const roundedValuePerPortion: any = {};
-    for (const key in roundedValuePer100gFinal) {
+    const roundedValuePerPortion: Partial<NutritionalValues> = {};
+    for (const key of allKeys) {
         // Rounding is applied to the raw portion value
-        const rawPortion = p(valuePer100gFinal[key] * ratio);
+        const rawPortion = p((valuePer100gFinal[key] ?? 0) * ratio);
         if (key === 'energyKj' || key === 'energyKcal') {
             roundedValuePerPortion[key] = rules.roundEnergy(rawPortion);
         } else {
@@ -177,4 +204,3 @@ export function calculateFromRecipe(
         portionSize
     };
 }
-
