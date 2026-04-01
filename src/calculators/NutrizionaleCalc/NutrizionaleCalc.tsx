@@ -177,6 +177,7 @@ function rUE_pct(v: number, ref: number): number | null {
     const p = v / ref * 100;
     return p >= 15 ? Math.round(p) : null;
 }
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 
 // USA
 function rUSA_energy(v: number): number {
