@@ -29,3 +29,7 @@ inspect_*.cjs
 inspection_results.json
 experiments/
 3
+
+# Large reference files
+docs_riferimento/
+PROMPTS/
