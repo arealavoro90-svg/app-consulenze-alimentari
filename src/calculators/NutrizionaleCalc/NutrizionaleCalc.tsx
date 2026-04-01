@@ -583,7 +583,7 @@ export function NutrizionaleCalc() {
     const [activeTab, setActiveTab] = useState<NationTab>('UE');
     const [subTab, setSubTab] = useState<SubTab>('verticale');
     const [auShowDI, setAuShowDI] = useState(true);
-    // const [showOptionals, setShowOptionals] = useState(false);
+    const [showOptionals, setShowOptionals] = useState(false);
 
     // Quick-guide state — using useLocalStorage hook for persistence
     const [guideOpen, setGuideOpen] = useLocalStorage<boolean>('nutri_guide_open', true);
@@ -1026,20 +1026,20 @@ export function NutrizionaleCalc() {
                                     <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
                                         <span style={{ fontSize: 11, color: 'var(--color-text-muted)' }}>€/kg</span>
                                         <InfoTooltip text="Costo dell'ingrediente per kg, IVA esclusa. Inserire 0 se non si vuole calcolare il costo." />
-                                        {/* mod 5: allow zero; mod 6: 90px width */}
+                                        {/* mod 5: allow zero; mod 6: 150px width for better readability */}
                                         <input type="number" min={0} step={0.01}
                                             value={row.eurKg === 0 || row.eurKg ? row.eurKg : ''}
                                             onChange={e => updateEurKg(comp.id, row.id, e.target.value === '' ? 0 : parseFloat(e.target.value) || 0)}
-                                            className="form-input" style={{ width: 90 }} />
+                                            className="form-input" style={{ width: 150 }} />
                                         <ValidationError message={fieldErrors[`${comp.id}-${row.id}-eurkgs`]} visible={!!fieldErrors[`${comp.id}-${row.id}-eurkgs`]} />
                                     </div>
                                     <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
                                         <span style={{ fontSize: 11, color: 'var(--color-text-muted)' }}>Resa%</span>
                                         <InfoTooltip text="Percentuale di prodotto effettivamente utilizzabile dopo pulizia o lavorazione. Es: 70 per verdure con scarti (foglie, bucce). Default: 100" />
-                                        {/* mod 6: 90px width */}
+                                        {/* mod 6: 150px width for better readability */}
                                         <input type="number" min={1} max={100} step={1} value={row.resa || 100}
                                             onChange={e => updateResa(comp.id, row.id, parseFloat(e.target.value) || 100)}
-                                            className="form-input" style={{ width: 90 }} />
+                                            className="form-input" style={{ width: 150 }} />
                                         <ValidationError message={fieldErrors[`${comp.id}-${row.id}-resa`]} visible={!!fieldErrors[`${comp.id}-${row.id}-resa`]} />
                                     </div>
                                     <button onClick={() => removeRow(comp.id, row.id)} style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: '#e53e3e', fontSize: 16 }}>✕</button>
@@ -1102,9 +1102,10 @@ export function NutrizionaleCalc() {
                 <h3 style={{ marginTop: 0 }}>⚖️ Pesi e dati serving</h3>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 12, marginBottom: 16 }}>
                     <div className="form-field" style={{ marginBottom: 0 }}>
-                        <label className="form-label">
-                            Peso prodotto finito (g)
-                        </label>
+                        <div style={{ display: 'flex', alignItems: 'center', marginBottom: 4 }}>
+                            <label className="form-label" style={{ marginBottom: 0 }}>Peso prodotto finito (g)</label>
+                            <InfoTooltip text="Peso del prodotto dopo cottura, disidratazione o evaporazione di acqua. Deve essere inferiore o uguale al peso crudo. Questo valore viene utilizzato per calcolare i nutrienti per 100g del prodotto finito." />
+                        </div>
                         <input type="number" min={0} placeholder={`max ${totalGramsRaw.toFixed(0)}g`} value={finishedWeight}
                             onChange={e => handleFW(e.target.value)}
                             className="form-input" style={fwWarning ? { borderColor: '#e53e3e' } : {}} />
@@ -1112,9 +1113,10 @@ export function NutrizionaleCalc() {
                         {fwWarning && <div style={{ fontSize: 11, color: '#e53e3e', marginTop: 3 }}>⚠️ Il peso del prodotto finito non può essere superiore al peso del prodotto crudo ({totalGramsRaw.toFixed(0)}g). Inserire un valore uguale o inferiore.</div>}
                     </div>
                     <div className="form-field" style={{ marginBottom: 0 }}>
-                        <label className="form-label">
-                            Peso specifico (g/ml)
-                        </label>
+                        <div style={{ display: 'flex', alignItems: 'center', marginBottom: 4 }}>
+                            <label className="form-label" style={{ marginBottom: 0 }}>Peso specifico (g/ml)</label>
+                            <InfoTooltip text="Inserisci il peso specifico SOLO per alimenti liquidi (bevande, vino, birra, succhi, latte, ecc.). Quando compilato, i valori nutrizionali verranno espressi su 100 ml anziché 100 g, e apparirà: 'Valori nutrizionali medi in 100 ml di prodotto'." />
+                        </div>
                         <input type="number" min={0} step={0.01} placeholder="opzionale" value={specificGravity}
                             onChange={e => setSpecificGravity(e.target.value)}
                             className="form-input" />
@@ -1198,7 +1200,7 @@ export function NutrizionaleCalc() {
             {allRows.length > 0 && (
                 <div style={{ marginTop: 0 }}>
                     {/* Tabs */}
-                    <div style={{ display: 'flex', gap: 8, marginBottom: 20, flexWrap: 'wrap' }}>
+                    <div style={{ display: 'flex', gap: 8, marginBottom: 20, flexWrap: 'wrap', alignItems: 'center' }}>
                         {(['UE', 'USA', 'Canada', 'Australia', 'Arabi'] as NationTab[]).map(t => {
                             const labels: Record<NationTab, string> = { UE: '🇪🇺 UE', USA: '🇺🇸 USA', Canada: '🇨🇦 Canada', Australia: '🇦🇺 Australia', Arabi: '🌍 Arabi' };
                             return (
@@ -1210,10 +1212,19 @@ export function NutrizionaleCalc() {
                                 </button>
                             );
                         })}
+                        {/* UI-12: Toggle for optional nutrients (only on UE tab) */}
+                        {activeTab === 'UE' && (
+                            <button
+                                className={`btn ${showOptionals ? 'btn-primary' : 'btn-outline'}`}
+                                style={{ fontSize: 13, fontWeight: 600, padding: '8px 14px', marginLeft: 'auto' }}
+                                onClick={() => setShowOptionals(!showOptionals)}>
+                                {showOptionals ? '👁️ Nascondi facoltativi' : '👀 Mostra facoltativi'}
+                            </button>
+                        )}
                     </div>
 
                     <div ref={tableRef} style={{ background: 'white', borderRadius: 8, boxShadow: '0 2px 8px rgba(0,0,0,0.05)', padding: 20 }}>
-                        {activeTab === 'UE' && <TabUE p={per100g} ue={ue} specificGravity={parseFloat(specificGravity) || 0} full={false} />}
+                        {activeTab === 'UE' && <TabUE p={per100g} ue={ue} specificGravity={parseFloat(specificGravity) || 0} full={showOptionals} />}
                         {activeTab === 'USA' && <TabUSA p={per100g} usa={usa} subTab={subTab} setSubTab={setSubTab} full={false} />}
                         {activeTab === 'Canada' && <TabCanada p={per100g} ca={ca} subTab={subTab} setSubTab={setSubTab} full={false} />}
                         {activeTab === 'Australia' && <TabAustralia p={per100g} au={au} showDI={auShowDI} setShowDI={setAuShowDI} full={false} />}
