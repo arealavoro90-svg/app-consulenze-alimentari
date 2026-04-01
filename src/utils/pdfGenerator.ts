@@ -1,4 +1,5 @@
 import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
 
 export interface PDFReportData {
     title: string;
@@ -138,4 +139,52 @@ export function generatePDFReport(data: PDFReportData): void {
 
     const filename = `AEA_${data.toolName.replace(/\s+/g, '_')}_${data.date.replace(/\//g, '-')}.pdf`;
     doc.save(filename);
+}
+
+/**
+ * Export scheda etichetta (nutritional label sheet) as PDF
+ * Captures the HTML element (typically TabUE) and converts to PDF
+ */
+export async function generateEtichettaPDF(
+    element: HTMLElement,
+    fileName: string = 'scheda_etichetta.pdf'
+): Promise<void> {
+    try {
+        // Capture HTML element as canvas
+        const canvas = await html2canvas(element, {
+            scale: 2,
+            useCORS: true,
+            logging: false,
+        });
+
+        const imgWidth = 210; // A4 width in mm
+        const imgHeight = (canvas.height * imgWidth) / canvas.width;
+        const doc = new jsPDF({
+            orientation: imgHeight > imgWidth ? 'portrait' : 'landscape',
+            unit: 'mm',
+            format: 'a4',
+        });
+
+        const pageWidth = doc.internal.pageSize.getWidth();
+        const pageHeight = doc.internal.pageSize.getHeight();
+        let height = imgHeight;
+        let position = 0;
+
+        // Add image, handling multi-page if necessary
+        const imgData = canvas.toDataURL('image/png');
+        doc.addImage(imgData, 'PNG', 0, position, pageWidth, imgHeight);
+
+        // Handle overflow to multiple pages
+        while (height > pageHeight) {
+            position -= pageHeight;
+            height -= pageHeight;
+            doc.addPage();
+            doc.addImage(imgData, 'PNG', 0, position, pageWidth, imgHeight);
+        }
+
+        doc.save(fileName);
+    } catch (error) {
+        console.error('Error generating PDF:', error);
+        throw new Error('Errore nella generazione del PDF');
+    }
 }

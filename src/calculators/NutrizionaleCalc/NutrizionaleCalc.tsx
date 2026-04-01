@@ -4,6 +4,7 @@ import html2canvas from 'html2canvas';
 import { useArchive } from '../../hooks/useArchive';
 import { useLocalStorage } from '../../hooks/useLocalStorage';
 import { ValidationError } from '../../components/ValidationError';
+import { generateEtichettaPDF } from '../../utils/pdfGenerator';
 import {
     validatePositiveNumber,
     validatePercentage,
@@ -816,6 +817,25 @@ export function NutrizionaleCalc() {
         }
     };
 
+    const handleDownloadEtichettaPDF = async () => {
+        try {
+            // Find the TabUE container in the DOM
+            const etichettaElement = document.querySelector('[data-testid="tab-ue"]') as HTMLElement ||
+                                   document.querySelector('div[style*="maxWidth: 480"]') as HTMLElement;
+
+            if (!etichettaElement) {
+                alert('Errore: tabella etichetta non trovata. Assicurati di essere sulla tab UE.');
+                return;
+            }
+
+            const fileName = `${productName || 'etichetta'}_${new Date().toLocaleDateString('it-IT').replace(/\//g, '-')}.pdf`;
+            await generateEtichettaPDF(etichettaElement, fileName);
+        } catch (error) {
+            console.error('Etichetta PDF export error:', error);
+            alert('Errore durante l\'esportazione della scheda etichetta in PDF.');
+        }
+    };
+
     const handlePDF = () => {
         if (allRows.length === 0 || !productName) { alert('Inserisci almeno il nome del prodotto e un ingrediente prima di scaricare.'); return; }
         const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
@@ -1205,6 +1225,7 @@ export function NutrizionaleCalc() {
             {allRows.length > 0 && (
                 <div style={{ display: 'flex', gap: 10, marginTop: 20, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
                     <button className="btn btn-outline" onClick={handleDownloadPNG}>🖼️ Scarica tabella PNG</button>
+                    <button className="btn btn-primary" onClick={handleDownloadEtichettaPDF}>📋 Scarica Scheda Etichetta PDF</button>
                     <button className="btn btn-primary" onClick={handlePDF}>📄 Scarica PDF completo</button>
                     <button className="btn btn-primary" onClick={handleSave} style={{ background: 'var(--color-navy)' }}>💾 Salva in archivio</button>
                 </div>
