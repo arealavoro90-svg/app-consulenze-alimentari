@@ -1689,7 +1689,7 @@ function TabUE({ p, ue, specificGravity, full }: { p: CalcResult; ue: UEServing;
         { label: 'Zinco', val: p.zinco, ref: AR_UE.zinco, unit: 'mg', fmt: rUE_micro2sig },
     ].filter(m => full || (m.val / m.ref * 100 >= 15));
     return (
-        <div data-table-export style={{ background: 'white', padding: full ? 20 : 0, borderRadius: 8 }}>
+        <div data-table-export style={{ background: 'white', padding: 20, borderRadius: 0 }}>
             <div style={{ maxWidth: 500 }}>
                 {/* EU official header - 2 column layout */}
                 <table style={{ width: '100%', borderCollapse: 'collapse', border: '2px solid #999' }}>
@@ -1783,7 +1783,7 @@ function TabUSA({ p, usa, subTab, setSubTab, full }: { p: CalcResult; usa: Servi
     ] : [];
 
     return (
-        <div data-table-export style={{ background: 'white', padding: full ? 20 : 0, borderRadius: 8 }}>
+        <div data-table-export style={{ background: 'white', padding: 20, borderRadius: 0 }}>
             {!full && (
                 <>
                     <h3 style={{ marginTop: 0, fontSize: 16, color: 'var(--color-navy)', borderBottom: '2px solid var(--color-orange)', paddingBottom: 8, marginBottom: 16 }}>Etichetta Nutrizionale (USA)</h3>
@@ -1878,7 +1878,7 @@ function TabCanada({ p, ca, subTab, setSubTab, full }: { p: CalcResult; ca: Serv
     const satTrans = d.saturi + d.trans;
 
     return (
-        <div data-table-export style={{ background: 'white', padding: full ? 20 : 0, borderRadius: 8 }}>
+        <div data-table-export style={{ background: 'white', padding: 20, borderRadius: 0 }}>
             {!full && (
                 <>
                     <h3 style={{ marginTop: 0, fontSize: 16, color: 'var(--color-navy)', borderBottom: '2px solid var(--color-orange)', paddingBottom: 8, marginBottom: 16 }}>Etichetta Nutrizionale (Canada)</h3>
@@ -2030,7 +2030,7 @@ function TabAustralia({ p, au, showDI, setShowDI, full }: { p: CalcResult; au: S
     }
 
     return (
-        <div data-table-export style={{ background: 'white', padding: full ? 20 : 0, borderRadius: 8 }}>
+        <div data-table-export style={{ background: 'white', padding: 20, borderRadius: 0 }}>
             {!full && (
                 <>
                     <h3 style={{ marginTop: 0, fontSize: 16, color: 'var(--color-navy)', borderBottom: '2px solid var(--color-orange)', paddingBottom: 8, marginBottom: 16 }}>Etichetta Nutrizionale (Australia)</h3>
@@ -2097,7 +2097,7 @@ function TabArabi({ p, arabi, full }: { p: CalcResult; arabi: ServingSizesNation
     ];
 
     return (
-        <div data-table-export style={{ background: 'white', padding: full ? 20 : 0, borderRadius: 8 }}>
+        <div data-table-export style={{ background: 'white', padding: 20, borderRadius: 0 }}>
             {!full && <h3 style={{ marginTop: 0, fontSize: 16, color: 'var(--color-navy)', borderBottom: '2px solid var(--color-orange)', paddingBottom: 8, marginBottom: 16 }}>Etichetta Nutrizionale (Gulf/Arabi)</h3>}
             <div style={{ overflowX: 'auto' }}>
                 <table style={{ ...TS.table, border: full ? '1px solid #000' : 'none' }}>
