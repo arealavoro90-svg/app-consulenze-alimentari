@@ -1064,7 +1064,8 @@ export function NutrizionaleCalc() {
     const handleDownloadPNG = async () => {
         if (!tableRef.current) { alert('Errore: tabella non trovata.'); return; }
         try {
-            const canvas = await html2canvas(tableRef.current, { scale: 2, backgroundColor: '#ffffff', useCORS: true });
+            const target = (tableRef.current.firstElementChild as HTMLElement) ?? tableRef.current;
+            const canvas = await html2canvas(target, { scale: 2, backgroundColor: '#ffffff', useCORS: true });
             const url = canvas.toDataURL('image/png');
             const a = document.createElement('a');
             a.download = `${productName || 'tabella'}_nutrizionale.png`;
