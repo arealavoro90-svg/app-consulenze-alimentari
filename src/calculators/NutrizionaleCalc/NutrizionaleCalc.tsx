@@ -1064,7 +1064,7 @@ export function NutrizionaleCalc() {
     const handleDownloadPNG = async () => {
         if (!tableRef.current) { alert('Errore: tabella non trovata.'); return; }
         try {
-            const target = (tableRef.current.firstElementChild as HTMLElement) ?? tableRef.current;
+            const target = (tableRef.current.querySelector('[data-table-export]') as HTMLElement) ?? tableRef.current;
             const canvas = await html2canvas(target, { scale: 2, backgroundColor: '#ffffff', useCORS: true });
             const url = canvas.toDataURL('image/png');
             const a = document.createElement('a');
@@ -1121,7 +1121,8 @@ export function NutrizionaleCalc() {
 
             // ── Tabella visiva (html2canvas) ──
             if (tableRef.current) {
-                const canvas = await html2canvas(tableRef.current, { scale: 2, backgroundColor: '#ffffff', useCORS: true });
+                const exportTarget = (tableRef.current.querySelector('[data-table-export]') as HTMLElement) ?? tableRef.current;
+                const canvas = await html2canvas(exportTarget, { scale: 2, backgroundColor: '#ffffff', useCORS: true });
                 const imgData = canvas.toDataURL('image/png');
                 const imgH = (canvas.height / canvas.width) * CW;
                 const clampH = Math.min(imgH, 257 - y);
@@ -1130,16 +1131,28 @@ export function NutrizionaleCalc() {
                 y += clampH + 8;
             }
 
-            // ── Lista ingredienti ──
+            // ── Lista ingredienti (raggruppata per componente) ──
             if (y > 255) { doc.addPage(); y = 15; }
             doc.setFontSize(11); doc.setFont('helvetica', 'bold'); doc.setTextColor(12, 19, 38);
             doc.text('Lista Ingredienti', M, y); y += 5;
             doc.setDrawColor(220, 220, 220); doc.line(M, y, W - M, y); y += 5;
-            allRows.forEach(({ ing, grams, eurKg: ek, resa }) => {
-                if (y > 272) { doc.addPage(); y = 15; }
-                doc.setFontSize(8); doc.setFont('helvetica', 'normal'); doc.setTextColor(30, 30, 30);
-                const costStr = ek > 0 ? `  €${ek.toFixed(2)}/kg` : '';
-                doc.text(`• ${ing.nome}   ${grams} g   resa ${resa}%${costStr}`, M + 2, y); y += 5;
+            const totGrams = components.reduce((s, c) => s + c.rows.reduce((rs, r) => rs + r.grams, 0), 0);
+            const multiComp = components.length > 1;
+            components.forEach(comp => {
+                if (multiComp) {
+                    if (y > 272) { doc.addPage(); y = 15; }
+                    const compLabel = comp.name ? `Componente: ${comp.name}  (${comp.pzUV} pz/UV)` : `Componente senza nome  (${comp.pzUV} pz/UV)`;
+                    doc.setFontSize(9); doc.setFont('helvetica', 'bold'); doc.setTextColor(12, 19, 38);
+                    doc.text(compLabel, M + 2, y); y += 5;
+                }
+                comp.rows.forEach(({ ing, grams, eurKg: ek, resa }) => {
+                    if (y > 272) { doc.addPage(); y = 15; }
+                    const pctStr = totGrams > 0 ? ` (${((grams / totGrams) * 100).toFixed(1)}%)` : '';
+                    const costStr = ek > 0 ? `  €${ek.toFixed(2)}/kg` : '';
+                    const label = ing.etichetta || ing.nome;
+                    doc.setFontSize(8); doc.setFont('helvetica', 'normal'); doc.setTextColor(30, 30, 30);
+                    doc.text(`• ${label}   ${grams} g${pctStr}   resa ${resa}%${costStr}`, M + (multiComp ? 6 : 2), y); y += 5;
+                });
             });
             y += 3;
 
@@ -1676,7 +1689,7 @@ function TabUE({ p, ue, specificGravity, full }: { p: CalcResult; ue: UEServing;
         { label: 'Zinco', val: p.zinco, ref: AR_UE.zinco, unit: 'mg', fmt: rUE_micro2sig },
     ].filter(m => full || (m.val / m.ref * 100 >= 15));
     return (
-        <div style={{ background: 'white', padding: full ? 20 : 0, borderRadius: 8 }}>
+        <div data-table-export style={{ background: 'white', padding: full ? 20 : 0, borderRadius: 8 }}>
             <div style={{ maxWidth: 500 }}>
                 {/* EU official header - 2 column layout */}
                 <table style={{ width: '100%', borderCollapse: 'collapse', border: '2px solid #999' }}>
@@ -1770,7 +1783,7 @@ function TabUSA({ p, usa, subTab, setSubTab, full }: { p: CalcResult; usa: Servi
     ] : [];
 
     return (
-        <div style={{ background: 'white', padding: full ? 20 : 0, borderRadius: 8 }}>
+        <div data-table-export style={{ background: 'white', padding: full ? 20 : 0, borderRadius: 8 }}>
             {!full && (
                 <>
                     <h3 style={{ marginTop: 0, fontSize: 16, color: 'var(--color-navy)', borderBottom: '2px solid var(--color-orange)', paddingBottom: 8, marginBottom: 16 }}>Etichetta Nutrizionale (USA)</h3>
@@ -1865,7 +1878,7 @@ function TabCanada({ p, ca, subTab, setSubTab, full }: { p: CalcResult; ca: Serv
     const satTrans = d.saturi + d.trans;
 
     return (
-        <div style={{ background: 'white', padding: full ? 20 : 0, borderRadius: 8 }}>
+        <div data-table-export style={{ background: 'white', padding: full ? 20 : 0, borderRadius: 8 }}>
             {!full && (
                 <>
                     <h3 style={{ marginTop: 0, fontSize: 16, color: 'var(--color-navy)', borderBottom: '2px solid var(--color-orange)', paddingBottom: 8, marginBottom: 16 }}>Etichetta Nutrizionale (Canada)</h3>
@@ -2017,7 +2030,7 @@ function TabAustralia({ p, au, showDI, setShowDI, full }: { p: CalcResult; au: S
     }
 
     return (
-        <div style={{ background: 'white', padding: full ? 20 : 0, borderRadius: 8 }}>
+        <div data-table-export style={{ background: 'white', padding: full ? 20 : 0, borderRadius: 8 }}>
             {!full && (
                 <>
                     <h3 style={{ marginTop: 0, fontSize: 16, color: 'var(--color-navy)', borderBottom: '2px solid var(--color-orange)', paddingBottom: 8, marginBottom: 16 }}>Etichetta Nutrizionale (Australia)</h3>
@@ -2084,7 +2097,7 @@ function TabArabi({ p, arabi, full }: { p: CalcResult; arabi: ServingSizesNation
     ];
 
     return (
-        <div style={{ background: 'white', padding: full ? 20 : 0, borderRadius: 8 }}>
+        <div data-table-export style={{ background: 'white', padding: full ? 20 : 0, borderRadius: 8 }}>
             {!full && <h3 style={{ marginTop: 0, fontSize: 16, color: 'var(--color-navy)', borderBottom: '2px solid var(--color-orange)', paddingBottom: 8, marginBottom: 16 }}>Etichetta Nutrizionale (Gulf/Arabi)</h3>}
             <div style={{ overflowX: 'auto' }}>
                 <table style={{ ...TS.table, border: full ? '1px solid #000' : 'none' }}>
