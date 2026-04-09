@@ -29,16 +29,17 @@ interface DBIngredient {
     vitA_eq?: number; vitD?: number; vitE?: number; vitC?: number;
     vitB1?: number; vitB2?: number; vitB3?: number;
     vitB6?: number; vitB9?: number; vitB12?: number;
+    alcol?: number; eur_kg?: number;
     categoria?: string;
     all_glutine?: string; all_grano?: string; all_crostacei?: string;
     all_uova?: string; all_pesci?: string; all_arachidi?: string;
     all_soia?: string; all_latte?: string; all_frutta_guscio?: string;
-    all_sedano?: string; all_senape?: string; all_sesamo?: string;
+    all_anacardi?: string; all_sedano?: string; all_senape?: string; all_sesamo?: string;
     all_solfiti?: string; all_lupini?: string; all_molluschi?: string;
     cross_glutine?: string; cross_grano?: string; cross_crostacei?: string;
     cross_uova?: string; cross_pesci?: string; cross_arachidi?: string;
     cross_soia?: string; cross_latte?: string; cross_frutta_guscio?: string;
-    cross_sedano?: string; cross_senape?: string; cross_sesamo?: string;
+    cross_anacardi?: string; cross_sedano?: string; cross_senape?: string; cross_sesamo?: string;
     cross_solfiti?: string; cross_lupini?: string; cross_molluschi?: string;
 }
 // const DB = DB_RAW as unknown as DBIngredient[]; // Replaced with fetch state
@@ -51,7 +52,8 @@ const ALLERGEN_FIELDS: { key: keyof DBIngredient; label: string }[] = [
     { key: 'all_pesci', label: 'PESCE' }, { key: 'all_arachidi', label: 'ARACHIDI' },
     { key: 'all_soia', label: 'SOIA' }, { key: 'all_latte', label: 'LATTE' },
     { key: 'all_frutta_guscio', label: 'FRUTTA A GUSCIO' },
-    { key: 'all_solfiti', label: 'SOLFITI' }, { key: 'all_lupini', label: 'LUPINI' },
+    { key: 'all_anacardi', label: 'ANACARDI' },
+    { key: 'all_solfiti', label: 'SOLFITI (>10 ppm)' }, { key: 'all_lupini', label: 'LUPINI' },
     { key: 'all_molluschi', label: 'MOLLUSCHI' },
 ];
 const CROSS_FIELDS: { key: keyof DBIngredient; label: string }[] = [
@@ -60,6 +62,7 @@ const CROSS_FIELDS: { key: keyof DBIngredient; label: string }[] = [
     { key: 'cross_pesci', label: 'PESCE' }, { key: 'cross_arachidi', label: 'ARACHIDI' },
     { key: 'cross_soia', label: 'SOIA' }, { key: 'cross_latte', label: 'LATTE' },
     { key: 'cross_frutta_guscio', label: 'FRUTTA A GUSCIO' },
+    { key: 'cross_anacardi', label: 'ANACARDI' },
     { key: 'cross_sedano', label: 'SEDANO' }, { key: 'cross_senape', label: 'SENAPE' },
     { key: 'cross_sesamo', label: 'SESAMO' }, { key: 'cross_solfiti', label: 'SOLFITI' },
     { key: 'cross_lupini', label: 'LUPINI' }, { key: 'cross_molluschi', label: 'MOLLUSCHI' },
@@ -475,84 +478,339 @@ function AdditiveSearch({ chips, onAdd, onRemove, db }: {
 }
 
 // ─── CustomIngredientModal ─────────────────────────────────────────────────────
-const CI_ALLERGEN_KEYS = ['all_glutine','all_crostacei','all_uova','all_pesci','all_arachidi','all_soia','all_latte','all_frutta_guscio','all_sedano','all_senape','all_sesamo','all_solfiti','all_lupini','all_molluschi'] as const;
+const CI_ALLERGEN_KEYS = [
+    'all_glutine','all_crostacei','all_uova','all_pesci','all_arachidi','all_soia',
+    'all_latte','all_frutta_guscio','all_anacardi','all_sedano','all_senape',
+    'all_sesamo','all_solfiti','all_lupini','all_molluschi',
+] as const;
 const CI_ALLERGEN_LABELS: Record<string, string> = {
-    all_glutine:'GLUTINE',all_crostacei:'CROSTACEI',all_uova:'UOVA',all_pesci:'PESCE',
-    all_arachidi:'ARACHIDI',all_soia:'SOIA',all_latte:'LATTE',all_frutta_guscio:'FRUTTA A GUSCIO',
-    all_sedano:'SEDANO',all_senape:'SENAPE',all_sesamo:'SESAMO',all_solfiti:'SOLFITI',
-    all_lupini:'LUPINI',all_molluschi:'MOLLUSCHI',
+    all_glutine:'GLUTINE', all_crostacei:'CROSTACEI', all_uova:'UOVA', all_pesci:'PESCE',
+    all_arachidi:'ARACHIDI', all_soia:'SOIA', all_latte:'LATTE',
+    all_frutta_guscio:'FRUTTA A GUSCIO', all_anacardi:'ANACARDI',
+    all_sedano:'SEDANO', all_senape:'SENAPE', all_sesamo:'SESAMO',
+    all_solfiti:'SOLFITI (>10 ppm)', all_lupini:'LUPINI', all_molluschi:'MOLLUSCHI',
 };
+const CI_CROSS_KEYS = [
+    'cross_glutine','cross_crostacei','cross_uova','cross_pesci','cross_arachidi','cross_soia',
+    'cross_latte','cross_frutta_guscio','cross_anacardi','cross_sedano','cross_senape',
+    'cross_sesamo','cross_solfiti','cross_lupini','cross_molluschi',
+] as const;
+const CI_CROSS_LABELS: Record<string, string> = {
+    cross_glutine:'GLUTINE', cross_crostacei:'CROSTACEI', cross_uova:'UOVA', cross_pesci:'PESCE',
+    cross_arachidi:'ARACHIDI', cross_soia:'SOIA', cross_latte:'LATTE',
+    cross_frutta_guscio:'FRUTTA A GUSCIO', cross_anacardi:'ANACARDI',
+    cross_sedano:'SEDANO', cross_senape:'SENAPE', cross_sesamo:'SESAMO',
+    cross_solfiti:'SOLFITI (>10 ppm)', cross_lupini:'LUPINI', cross_molluschi:'MOLLUSCHI',
+};
+
 function CustomIngredientModal({ onClose, onSave }: { onClose: () => void; onSave: (ing: DBIngredient) => void }) {
+    // Info base
     const [nome, setNome] = useState('');
     const [etichetta, setEtichetta] = useState('');
     const [categoria, setCategoria] = useState('ingrediente');
-    const [kcal, setKcal] = useState('');
-    const [kj, setKj] = useState('');
+    const [eurKg, setEurKg] = useState('');
+    // Obbligatori
     const [grassi, setGrassi] = useState('');
     const [saturi, setSaturi] = useState('');
     const [carboidrati, setCarboidrati] = useState('');
     const [zuccheri, setZuccheri] = useState('');
-    const [fibre, setFibre] = useState('');
     const [proteine, setProteine] = useState('');
     const [sale, setSale] = useState('');
+    // Facoltativi
+    const [monoins, setMonoins] = useState('');
+    const [polins, setPolins] = useState('');
+    const [trans, setTrans] = useState('');
+    const [colesterolo, setColesterolo] = useState('');
+    const [fibre, setFibre] = useState('');
+    const [polioliS, setPolioli] = useState('');
+    const [amido, setAmido] = useState('');
+    // Obbligatori in certi casi
+    const [alcolS, setAlcol] = useState('');
+    const [potassio, setPotassio] = useState('');
+    const [calcio, setCalcio] = useState('');
+    const [fosforo, setFosforo] = useState('');
+    const [magnesio, setMagnesio] = useState('');
+    const [ferro, setFerro] = useState('');
+    const [zinco, setZinco] = useState('');
+    const [vitA, setVitA] = useState('');
+    const [vitD, setVitD] = useState('');
+    const [vitE, setVitE] = useState('');
+    const [vitC, setVitC] = useState('');
+    const [vitB1, setVitB1] = useState('');
+    const [vitB2, setVitB2] = useState('');
+    const [vitB3, setVitB3] = useState('');
+    const [vitB6, setVitB6] = useState('');
+    const [vitB9, setVitB9] = useState('');
+    const [vitB12, setVitB12] = useState('');
+    // Allergeni
     const [allergens, setAllergens] = useState<Record<string, boolean>>({});
+    const [crossAllergens, setCrossAllergens] = useState<Record<string, boolean>>({});
+    // Validazione
+    const [errors, setErrors] = useState<string[]>([]);
+
+    // Valori calcolati automaticamente (EU Reg 1169/2011)
+    const grassiN    = parseFloat(grassi)      || 0;
+    const satN       = parseFloat(saturi)       || 0;
+    const carbN      = parseFloat(carboidrati)  || 0;
+    const protN      = parseFloat(proteine)     || 0;
+    const saleN      = parseFloat(sale)         || 0;
+    const fibreN     = parseFloat(fibre)        || 0;
+    const polioliN   = parseFloat(polioliS)     || 0;
+    const alcolN     = parseFloat(alcolS)       || 0;
+
+    const kcalCalc = Math.round((grassiN*9 + protN*4 + carbN*4 + fibreN*2 + polioliN*2.4 + alcolN*7) * 10) / 10;
+    const kjCalc   = Math.round((grassiN*37 + protN*17 + carbN*17 + fibreN*8 + polioliN*10 + alcolN*29) * 10) / 10;
+    const sodioCalc = Math.round(saleN * 400 * 10) / 10;
+    const residuoSecco = Math.round((grassiN + carbN + fibreN + protN + saleN + polioliN + alcolN) * 100) / 100;
+    const acquaCalc    = Math.round((100 - residuoSecco) * 100) / 100;
+    const waterError   = residuoSecco > 100 || acquaCalc < 0;
+
+    const clearErrors = () => setErrors([]);
 
     const handleSave = () => {
-        if (!nome.trim()) { alert('Inserire il nome dell\'ingrediente'); return; }
-        const saleVal = parseFloat(sale) || 0;
-        const ing = {
-            nome: nome.trim(), etichetta: etichetta.trim() || nome.trim(), categoria: '_custom',
-            kcal: parseFloat(kcal) || 0, kj: parseFloat(kj) || (parseFloat(kcal) || 0) * 4.184,
-            grassi: parseFloat(grassi) || 0, saturi: parseFloat(saturi) || 0,
-            carboidrati: parseFloat(carboidrati) || 0, zuccheri: parseFloat(zuccheri) || 0,
-            fibre: parseFloat(fibre) || 0, proteine: parseFloat(proteine) || 0, sodio_mg: saleVal * 400,
+        const errs: string[] = [];
+        if (!nome.trim())    errs.push('Nome ingrediente obbligatorio');
+        if (!grassi)         errs.push('Grassi totali *');
+        if (!saturi)         errs.push('Acidi grassi saturi *');
+        if (!carboidrati)    errs.push('Carboidrati totali *');
+        if (!zuccheri)       errs.push('Zuccheri *');
+        if (!proteine)       errs.push('Proteine *');
+        if (!sale)           errs.push('Sale *');
+        if (waterError)      errs.push(`Residuo secco (${residuoSecco}g) supera 100g o acqua negativa (${acquaCalc}g): rivedere i valori`);
+        if (errs.length)     { setErrors(errs); return; }
+
+        const ing: DBIngredient = {
+            nome: nome.trim(),
+            etichetta: etichetta.trim() || nome.trim(),
+            categoria: '_custom',
+            kcal: kcalCalc,
+            kj: kjCalc,
+            acqua: acquaCalc >= 0 ? acquaCalc : 0,
+            grassi: grassiN, saturi: satN,
+            monoins:    monoins    ? parseFloat(monoins)    : undefined,
+            polins:     polins     ? parseFloat(polins)     : undefined,
+            trans:      trans      ? parseFloat(trans)      : undefined,
+            colesterolo:colesterolo? parseFloat(colesterolo): undefined,
+            carboidrati: carbN,
+            zuccheri: parseFloat(zuccheri) || 0,
+            fibre:      fibre      ? fibreN   : undefined,
+            polioli:    polioliS   ? polioliN : undefined,
+            amido:      amido      ? parseFloat(amido)      : undefined,
+            proteine: protN,
+            sodio_mg: sodioCalc,
+            alcol:      alcolS     ? alcolN   : undefined,
+            eur_kg:     eurKg      ? parseFloat(eurKg)      : undefined,
+            potassio:   potassio   ? parseFloat(potassio)   : undefined,
+            calcio:     calcio     ? parseFloat(calcio)     : undefined,
+            fosforo:    fosforo    ? parseFloat(fosforo)    : undefined,
+            magnesio:   magnesio   ? parseFloat(magnesio)   : undefined,
+            ferro:      ferro      ? parseFloat(ferro)      : undefined,
+            zinco:      zinco      ? parseFloat(zinco)      : undefined,
+            vitA_eq:    vitA       ? parseFloat(vitA)       : undefined,
+            vitD:       vitD       ? parseFloat(vitD)       : undefined,
+            vitE:       vitE       ? parseFloat(vitE)       : undefined,
+            vitC:       vitC       ? parseFloat(vitC)       : undefined,
+            vitB1:      vitB1      ? parseFloat(vitB1)      : undefined,
+            vitB2:      vitB2      ? parseFloat(vitB2)      : undefined,
+            vitB3:      vitB3      ? parseFloat(vitB3)      : undefined,
+            vitB6:      vitB6      ? parseFloat(vitB6)      : undefined,
+            vitB9:      vitB9      ? parseFloat(vitB9)      : undefined,
+            vitB12:     vitB12     ? parseFloat(vitB12)     : undefined,
             ...Object.fromEntries(CI_ALLERGEN_KEYS.filter(k => allergens[k]).map(k => [k, '1'])),
-        } as DBIngredient;
-        try { const ex = JSON.parse(localStorage.getItem('custom_ingredients') || '[]'); localStorage.setItem('custom_ingredients', JSON.stringify([...ex, ing])); } catch {}
-        onSave(ing); onClose();
+            ...Object.fromEntries(CI_CROSS_KEYS.filter(k => crossAllergens[k]).map(k => [k, '1'])),
+        };
+        try {
+            const ex = JSON.parse(localStorage.getItem('custom_ingredients') || '[]');
+            localStorage.setItem('custom_ingredients', JSON.stringify([...ex, ing]));
+        } catch {}
+        onSave(ing);
+        onClose();
     };
 
+    // Stili riutilizzabili
     const iS: React.CSSProperties = { width: '100%', padding: '5px 8px', border: '1px solid var(--color-border)', borderRadius: 5, fontSize: 13, boxSizing: 'border-box' };
-    const lS: React.CSSProperties = { fontSize: 12, fontWeight: 600, display: 'block', marginBottom: 3 };
-    const numRows: [string, string, (v:string)=>void][] = [
-        ['Energia (kcal)',kcal,setKcal],['Energia (kJ)',kj,setKj],['Grassi (g)',grassi,setGrassi],
-        ['Saturi (g)',saturi,setSaturi],['Carboidrati (g)',carboidrati,setCarboidrati],['Zuccheri (g)',zuccheri,setZuccheri],
-        ['Fibre (g)',fibre,setFibre],['Proteine (g)',proteine,setProteine],['Sale (g)',sale,setSale],
-    ];
+    const iSRo: React.CSSProperties = { ...iS, background: 'var(--color-bg-secondary,#f0f4ff)', color: 'var(--color-text-muted)', fontWeight: 600, cursor: 'default' };
+    const iSErr: React.CSSProperties = { ...iS, border: '1.5px solid #e53e3e' };
+    const lS: React.CSSProperties = { fontSize: 11, fontWeight: 600, display: 'block', marginBottom: 3, color: 'var(--color-text-muted)' };
+    const secS: React.CSSProperties = { marginBottom: 14, padding: '12px 14px', borderRadius: 8, border: '1px solid var(--color-border)' };
+    const secT = (color: string): React.CSSProperties => ({ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.5, color, marginBottom: 10 });
+    const grid3: React.CSSProperties = { display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 8 };
+    const grid2: React.CSSProperties = { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 };
+
+    const NF = ({ label, value, onChange, unit = 'g/100g', ro = false, err = false }: {
+        label: string; value: string; onChange?: (v: string) => void;
+        unit?: string; ro?: boolean; err?: boolean;
+    }) => (
+        <div>
+            <label style={lS}>{label} <span style={{ fontWeight: 400 }}>{unit}</span></label>
+            <input type="number" min={0} step={0.01}
+                style={ro ? iSRo : err ? iSErr : iS}
+                value={value}
+                onChange={e => { onChange?.(e.target.value); clearErrors(); }}
+                readOnly={ro}
+            />
+        </div>
+    );
+
+    const AllergenRow = ({ keys, labels, state, setState }: {
+        keys: readonly string[]; labels: Record<string, string>;
+        state: Record<string, boolean>; setState: React.Dispatch<React.SetStateAction<Record<string, boolean>>>;
+    }) => (
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+            {keys.map(k => (
+                <label key={k} style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 12, cursor: 'pointer' }}>
+                    <input type="checkbox" checked={!!state[k]} onChange={e => setState(prev => ({ ...prev, [k]: e.target.checked }))} />
+                    {labels[k]}
+                </label>
+            ))}
+        </div>
+    );
 
     return (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.55)', zIndex: 2000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
-            <div className="card" style={{ width: '100%', maxWidth: 600, maxHeight: '90vh', overflowY: 'auto' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-                    <h3 style={{ margin: 0 }}>➕ Aggiungi al database personale</h3>
+            <div className="card" style={{ width: '100%', maxWidth: 700, maxHeight: '92vh', overflowY: 'auto' }}>
+
+                {/* Header */}
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+                    <h3 style={{ margin: 0 }}>➕ Aggiungi ingrediente nel Data Base</h3>
                     <button className="btn btn-outline" onClick={onClose}>✕</button>
                 </div>
-                <div style={{ marginBottom: 8 }}><label style={lS}>Nome ingrediente *</label><input style={iS} value={nome} onChange={e => setNome(e.target.value)} placeholder="es. salsa di soia artigianale" /></div>
-                <div style={{ marginBottom: 8 }}><label style={lS}>Dichiarazione etichetta (allergeni in MAIUSCOLO)</label><input style={iS} value={etichetta} onChange={e => setEtichetta(e.target.value)} placeholder="es. salsa di SOIA (acqua, SOIA, sale)" /></div>
-                <div style={{ marginBottom: 8 }}><label style={lS}>Categoria</label>
-                    <select style={iS} value={categoria} onChange={e => setCategoria(e.target.value)}>
-                        {['ingrediente','semilavorato','prodotto','additivo','aroma'].map(c => <option key={c} value={c}>{c}</option>)}
-                    </select>
+
+                {/* Legenda */}
+                <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap', marginBottom: 14, fontSize: 11, padding: '8px 12px', background: 'var(--color-bg-secondary,#f8f9fb)', borderRadius: 6 }}>
+                    <span><strong style={{ color: '#c53030' }}>*</strong> Obbligatorio</span>
+                    <span><strong style={{ color: '#2b6cb0' }}>◎</strong> Calcolato automaticamente</span>
+                    <span><strong style={{ color: '#718096' }}>○</strong> Facoltativo</span>
+                    <span><strong style={{ color: '#b7791f' }}>△</strong> Obbligatorio in certi casi</span>
                 </div>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8, marginBottom: 12 }}>
-                    {numRows.map(([lbl, val, setter]) => (
-                        <div key={lbl as string}><label style={lS}>{lbl as string}</label>
-                            <input type="number" min={0} step={0.01} style={iS} value={val as string} onChange={e => (setter as (v:string)=>void)(e.target.value)} />
+
+                {/* Errori */}
+                {errors.length > 0 && (
+                    <div style={{ background: '#fff5f5', border: '1px solid #fc8181', borderRadius: 6, padding: '10px 12px', marginBottom: 12 }}>
+                        <div style={{ fontSize: 12, fontWeight: 700, color: '#c53030', marginBottom: 4 }}>Campi mancanti o errori:</div>
+                        {errors.map((e, i) => <div key={i} style={{ fontSize: 12, color: '#c53030' }}>⚠ {e}</div>)}
+                    </div>
+                )}
+
+                {/* Info base */}
+                <div style={secS}>
+                    <div style={secT('#333')}>Informazioni base</div>
+                    <div style={{ marginBottom: 8 }}>
+                        <label style={{ ...lS, color: '#333' }}>Nome ingrediente <span style={{ color: '#c53030' }}>*</span></label>
+                        <input style={!nome.trim() && errors.length > 0 ? iSErr : iS} value={nome}
+                            onChange={e => { setNome(e.target.value); clearErrors(); }}
+                            placeholder="es. salsa di soia artigianale" />
+                    </div>
+                    <div style={{ marginBottom: 8 }}>
+                        <label style={{ ...lS, color: '#333' }}>Dichiarazione etichetta <span style={{ fontWeight: 400 }}>(allergeni in MAIUSCOLO)</span></label>
+                        <textarea style={{ ...iS, minHeight: 80, resize: 'vertical', fontFamily: 'inherit', lineHeight: 1.5 }}
+                            value={etichetta} onChange={e => setEtichetta(e.target.value)}
+                            placeholder="es. salsa di SOIA (acqua, SOIA, sale)" />
+                    </div>
+                    <div style={grid2}>
+                        <div>
+                            <label style={lS}>Categoria</label>
+                            <select style={iS} value={categoria} onChange={e => setCategoria(e.target.value)}>
+                                {['ingrediente','semilavorato','prodotto','additivo','aroma'].map(c => <option key={c} value={c}>{c}</option>)}
+                            </select>
                         </div>
-                    ))}
-                </div>
-                <div style={{ marginBottom: 14 }}>
-                    <label style={lS}>Allergeni presenti</label>
-                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-                        {CI_ALLERGEN_KEYS.map(k => (
-                            <label key={k} style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 12, cursor: 'pointer' }}>
-                                <input type="checkbox" checked={!!allergens[k]} onChange={e => setAllergens(prev => ({ ...prev, [k]: e.target.checked }))} />
-                                {CI_ALLERGEN_LABELS[k]}
-                            </label>
-                        ))}
+                        <NF label="○ Costo" value={eurKg} onChange={setEurKg} unit="€/kg" />
                     </div>
                 </div>
-                <div style={{ display: 'flex', gap: 10 }}>
+
+                {/* Energia calcolata */}
+                <div style={{ ...secS, background: 'var(--color-bg-secondary,#ebf8ff)', borderColor: '#bee3f8' }}>
+                    <div style={secT('#2b6cb0')}>◎ Energia — calcolata automaticamente (EU Reg 1169/2011)</div>
+                    <div style={grid2}>
+                        <NF label="◎ Energia" value={String(kcalCalc)} unit="kcal/100g" ro />
+                        <NF label="◎ Energia" value={String(kjCalc)} unit="kJ/100g" ro />
+                    </div>
+                </div>
+
+                {/* Obbligatori */}
+                <div style={secS}>
+                    <div style={secT('#c53030')}>* Valori nutrizionali obbligatori</div>
+                    <div style={grid3}>
+                        <NF label="* Grassi totali" value={grassi} onChange={setGrassi} err={!grassi && errors.length > 0} />
+                        <NF label="* Acidi grassi saturi" value={saturi} onChange={setSaturi} err={!saturi && errors.length > 0} />
+                        <NF label="* Carboidrati totali" value={carboidrati} onChange={setCarboidrati} err={!carboidrati && errors.length > 0} />
+                        <NF label="* Zuccheri" value={zuccheri} onChange={setZuccheri} err={!zuccheri && errors.length > 0} />
+                        <NF label="* Proteine" value={proteine} onChange={setProteine} err={!proteine && errors.length > 0} />
+                        <NF label="* Sale" value={sale} onChange={setSale} err={!sale && errors.length > 0} />
+                    </div>
+                </div>
+
+                {/* Valori calcolati */}
+                <div style={{ ...secS, background: 'var(--color-bg-secondary,#ebf8ff)', borderColor: waterError ? '#fc8181' : '#bee3f8' }}>
+                    <div style={secT('#2b6cb0')}>◎ Valori calcolati</div>
+                    {waterError && (
+                        <div style={{ background: '#fff5f5', border: '1px solid #fc8181', borderRadius: 6, padding: '8px 10px', marginBottom: 10, fontSize: 12, color: '#c53030' }}>
+                            ⚠ Residuo secco ({residuoSecco} g/100g) supera 100 g oppure acqua risulta negativa ({acquaCalc} g/100g). Rivedere i valori inseriti.
+                        </div>
+                    )}
+                    <div style={grid3}>
+                        <NF label="◎ Acqua" value={String(acquaCalc)} unit="g/100g" ro err={waterError} />
+                        <NF label="◎ Residuo secco" value={String(residuoSecco)} unit="g/100g" ro err={waterError} />
+                        <NF label="◎ Sodio" value={String(sodioCalc)} unit="mg/100g" ro />
+                    </div>
+                </div>
+
+                {/* Facoltativi */}
+                <div style={secS}>
+                    <div style={secT('#718096')}>○ Valori facoltativi</div>
+                    <div style={grid3}>
+                        <NF label="○ Ac. grassi monoinsaturi" value={monoins} onChange={setMonoins} />
+                        <NF label="○ Ac. grassi polinsaturi" value={polins} onChange={setPolins} />
+                        <NF label="○ Ac. grassi trans" value={trans} onChange={setTrans} />
+                        <NF label="○ Colesterolo" value={colesterolo} onChange={setColesterolo} unit="mg/100g" />
+                        <NF label="○ Fibre alimentari" value={fibre} onChange={v => { setFibre(v); clearErrors(); }} />
+                        <NF label="○ Polioli" value={polioliS} onChange={v => { setPolioli(v); clearErrors(); }} />
+                        <NF label="○ Amido" value={amido} onChange={setAmido} />
+                    </div>
+                </div>
+
+                {/* Obbligatori in certi casi */}
+                <div style={secS}>
+                    <div style={secT('#b7791f')}>△ Obbligatori in certi casi</div>
+                    <div style={{ fontSize: 11, color: 'var(--color-text-muted)', marginBottom: 10 }}>
+                        Alcol: obbligatorio per bevande alcoliche. Minerali e vitamine: obbligatori se dichiarati o rivendicati in etichetta.
+                    </div>
+                    <div style={grid3}>
+                        <NF label="△ Alcol" value={alcolS} onChange={v => { setAlcol(v); clearErrors(); }} />
+                        <NF label="△ Potassio" value={potassio} onChange={setPotassio} unit="mg/100g" />
+                        <NF label="△ Calcio" value={calcio} onChange={setCalcio} unit="mg/100g" />
+                        <NF label="△ Fosforo" value={fosforo} onChange={setFosforo} unit="mg/100g" />
+                        <NF label="△ Magnesio" value={magnesio} onChange={setMagnesio} unit="mg/100g" />
+                        <NF label="△ Ferro" value={ferro} onChange={setFerro} unit="mg/100g" />
+                        <NF label="△ Zinco" value={zinco} onChange={setZinco} unit="mg/100g" />
+                        <NF label="△ Vitamina A" value={vitA} onChange={setVitA} unit="μg/100g" />
+                        <NF label="△ Vitamina D" value={vitD} onChange={setVitD} unit="μg/100g" />
+                        <NF label="△ Vitamina E" value={vitE} onChange={setVitE} unit="mg/100g" />
+                        <NF label="△ Vitamina C" value={vitC} onChange={setVitC} unit="mg/100g" />
+                        <NF label="△ Vitamina B1 (Tiamina)" value={vitB1} onChange={setVitB1} unit="mg/100g" />
+                        <NF label="△ Vitamina B2 (Riboflavina)" value={vitB2} onChange={setVitB2} unit="mg/100g" />
+                        <NF label="△ Vitamina B3 (Niacina)" value={vitB3} onChange={setVitB3} unit="mg/100g" />
+                        <NF label="△ Vitamina B6" value={vitB6} onChange={setVitB6} unit="mg/100g" />
+                        <NF label="△ Vitamina B9 (Folati)" value={vitB9} onChange={setVitB9} unit="μg/100g" />
+                        <NF label="△ Vitamina B12" value={vitB12} onChange={setVitB12} unit="μg/100g" />
+                    </div>
+                </div>
+
+                {/* Allergeni presenti */}
+                <div style={secS}>
+                    <div style={secT('#333')}>Allergeni presenti</div>
+                    <AllergenRow keys={CI_ALLERGEN_KEYS} labels={CI_ALLERGEN_LABELS} state={allergens} setState={setAllergens} />
+                </div>
+
+                {/* Cross-contamination */}
+                <div style={secS}>
+                    <div style={secT('#333')}>Sostanze allergeniche probabilmente presenti</div>
+                    <div style={{ fontSize: 11, color: 'var(--color-text-muted)', marginBottom: 8 }}>Per cross contamination presso il sito del fornitore</div>
+                    <AllergenRow keys={CI_CROSS_KEYS} labels={CI_CROSS_LABELS} state={crossAllergens} setState={setCrossAllergens} />
+                </div>
+
+                {/* Footer */}
+                <div style={{ display: 'flex', gap: 10, paddingTop: 4 }}>
                     <button className="btn btn-primary" onClick={handleSave}>💾 Salva nel database personale</button>
                     <button className="btn btn-outline" onClick={onClose}>Annulla</button>
                 </div>
@@ -914,7 +1172,7 @@ export function NutrizionaleCalc() {
                     <p>Etichettatura internazionale (UE, USA, Canada, Australia, Arabi) &amp; Costi Ingredienti</p>
                 </div>
                 <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-                    <button className="btn btn-outline" onClick={() => setShowCustomModal(true)}>➕ Aggiungi ingrediente al DB</button>
+                    <button className="btn btn-outline" onClick={() => setShowCustomModal(true)}>➕ Aggiungi ingrediente nel Data Base</button>
                     <button className="btn btn-outline" onClick={handleNew}>✨ Nuovo</button>
                     <button className="btn btn-outline" onClick={() => setArchiveOpen(true)}>📂 Archivio ({archiveItems.length})</button>
                     <button className="btn btn-accent" onClick={handleSave}>💾 {currentId ? 'Aggiorna in Archivio' : 'Salva in Archivio'}</button>
