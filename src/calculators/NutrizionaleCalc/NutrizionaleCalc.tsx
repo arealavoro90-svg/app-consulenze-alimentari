@@ -1715,12 +1715,12 @@ function TabUE({ p, ue, specificGravity, full }: { p: CalcResult; ue: UEServing;
                     <table style={{ ...TS.table, border: '2px solid #999', borderTop: '1px solid #999', width: '100%' }}>
                         <tbody>
                             {rows.map((r, i) => (
-                                <tr key={i} style={{ borderBottom: '1px solid #ccc' }}>
+                                <tr key={i} style={{ borderBottom: '1px solid #999' }}>
                                     <td style={{
-                                        padding: '6px 10px',
+                                        padding: '10px 12px',
                                         fontSize: r.bold ? 13 : 12,
                                         fontWeight: r.bold ? 700 : r.indent ? 400 : 400,
-                                        paddingLeft: r.indent ? 24 : 10,
+                                        paddingLeft: r.indent ? 28 : 12,
                                         color: r.label === 'fibre' ? '#0066cc' : 'inherit',
                                         borderRight: '1px solid #999',
                                         width: 'auto'
@@ -1731,7 +1731,7 @@ function TabUE({ p, ue, specificGravity, full }: { p: CalcResult; ue: UEServing;
                                         </div>
                                     </td>
                                     <td style={{
-                                        padding: '6px 10px',
+                                        padding: '10px 12px',
                                         fontSize: 12,
                                         fontWeight: r.bold ? 700 : 400,
                                         textAlign: 'center',
