@@ -887,7 +887,7 @@ export function NutrizionaleCalc() {
     const pesoTotale = fw > 0 ? fw : totalGramsRaw;
 
     // All rows combined for rendering
-    const allRows = useMemo(() => components.flatMap(c => c.rows.map(r => ({ ing: r.ing, grams: r.grams }))), [components]);
+    const allRows = useMemo(() => components.flatMap(c => c.rows.map(r => ({ ing: r.ing, grams: r.grams, eurKg: r.eurKg, resa: r.resa }))), [components]);
 
     // Calculation
     const per100g = useMemo(() => calcNutrients(components, fw), [components, fw]);
@@ -1095,35 +1095,143 @@ export function NutrizionaleCalc() {
         }
     };
 
-    const handlePDF = () => {
+    const handlePDF = async () => {
         if (allRows.length === 0 || !productName) { alert('Inserisci almeno il nome del prodotto e un ingrediente prima di scaricare.'); return; }
-        const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
-        doc.setFontSize(18); doc.setFont('helvetica', 'bold');
-        doc.text(`Tabella Nutrizionale`, 15, 20);
-        doc.setFontSize(11); doc.setFont('helvetica', 'normal');
-        doc.text(`Prodotto: ${productName || '—'}`, 15, 30);
-        doc.text(`Data: ${new Date().toLocaleDateString('it-IT')}`, 15, 37);
+        try {
+            const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+            const W = 210;
+            const M = 15;
+            const CW = W - M * 2;
+            let y = 0;
 
-        const p = per100g;
-        let y = 50;
-        const addRow = (label: string, val: string, isBold?: boolean) => {
-            if (y > 270) { doc.addPage(); y = 20; }
-            doc.setFontSize(9);
-            doc.setFont('helvetica', isBold ? 'bold' : 'normal');
-            doc.text(label, 15, y);
-            doc.text(val, 110, y);
-            y += 7;
-        };
+            // ── Header navy ──
+            doc.setFillColor(12, 19, 38);
+            doc.rect(0, 0, W, 20, 'F');
+            doc.setFontSize(11); doc.setFont('helvetica', 'bold'); doc.setTextColor(255, 255, 255);
+            doc.text('AEA Consulenze Alimentari — Scheda Nutrizionale', M, 13);
+            y = 28;
 
-        addRow('Energia', `${p.energyKj.toFixed(0)} kJ / ${p.energyKcal.toFixed(0)} kcal`, true);
-        addRow('Grassi', `${p.grassi.toFixed(1)} g`, true);
-        addRow('  di cui saturi', `${p.saturi.toFixed(1)} g`);
-        addRow('Carboidrati', `${p.carboidrati.toFixed(1)} g`, true);
-        addRow('  di cui zuccheri', `${p.zuccheri.toFixed(1)} g`);
-        addRow('Proteine', `${p.proteine.toFixed(1)} g`, true);
-        addRow('Sale', `${p.sale.toFixed(2)} g`, true);
+            // ── Nome prodotto ──
+            doc.setFontSize(16); doc.setFont('helvetica', 'bold'); doc.setTextColor(12, 19, 38);
+            doc.text(productName, M, y); y += 7;
+            doc.setFontSize(8); doc.setFont('helvetica', 'normal'); doc.setTextColor(120, 120, 120);
+            doc.text(`Data: ${new Date().toLocaleDateString('it-IT')}   |   Regione: ${activeTab}   |   Peso finito: ${finishedWeight || '—'} g`, M, y); y += 6;
+            doc.setDrawColor(220, 220, 220); doc.line(M, y, W - M, y); y += 6;
 
-        doc.save(`${productName || 'ricetta'}_completa.pdf`);
+            // ── Tabella visiva (html2canvas) ──
+            if (tableRef.current) {
+                const canvas = await html2canvas(tableRef.current, { scale: 2, backgroundColor: '#ffffff', useCORS: true });
+                const imgData = canvas.toDataURL('image/png');
+                const imgH = (canvas.height / canvas.width) * CW;
+                const clampH = Math.min(imgH, 257 - y);
+                if (y + clampH > 277) { doc.addPage(); y = 15; }
+                doc.addImage(imgData, 'PNG', M, y, CW, clampH);
+                y += clampH + 8;
+            }
+
+            // ── Lista ingredienti ──
+            if (y > 255) { doc.addPage(); y = 15; }
+            doc.setFontSize(11); doc.setFont('helvetica', 'bold'); doc.setTextColor(12, 19, 38);
+            doc.text('Lista Ingredienti', M, y); y += 5;
+            doc.setDrawColor(220, 220, 220); doc.line(M, y, W - M, y); y += 5;
+            allRows.forEach(({ ing, grams, eurKg: ek, resa }) => {
+                if (y > 272) { doc.addPage(); y = 15; }
+                doc.setFontSize(8); doc.setFont('helvetica', 'normal'); doc.setTextColor(30, 30, 30);
+                const costStr = ek > 0 ? `  €${ek.toFixed(2)}/kg` : '';
+                doc.text(`• ${ing.nome}   ${grams} g   resa ${resa}%${costStr}`, M + 2, y); y += 5;
+            });
+            y += 3;
+
+            // ── Valori nutrizionali dettagliati ──
+            if (y > 245) { doc.addPage(); y = 15; }
+            doc.setFontSize(11); doc.setFont('helvetica', 'bold'); doc.setTextColor(12, 19, 38);
+            doc.text('Valori Nutrizionali per 100g (tutti i dati calcolati)', M, y); y += 5;
+            doc.setDrawColor(220, 220, 220); doc.line(M, y, W - M, y); y += 5;
+            const p = per100g;
+            const rows: [string, string][] = [
+                ['Energia', `${p.energyKj.toFixed(0)} kJ / ${p.energyKcal.toFixed(0)} kcal`],
+                ['Grassi totali', `${p.grassi.toFixed(1)} g`],
+                ['  di cui acidi grassi saturi', `${p.saturi.toFixed(1)} g`],
+                ['  di cui monoinsaturi', p.monoins > 0 ? `${p.monoins.toFixed(1)} g` : '—'],
+                ['  di cui polinsaturi', p.polins > 0 ? `${p.polins.toFixed(1)} g` : '—'],
+                ['  di cui trans', p.trans > 0 ? `${p.trans.toFixed(1)} g` : '—'],
+                ['Colesterolo', p.colesterolo > 0 ? `${p.colesterolo.toFixed(0)} mg` : '—'],
+                ['Carboidrati totali', `${p.carboidrati.toFixed(1)} g`],
+                ['  di cui zuccheri', `${p.zuccheri.toFixed(1)} g`],
+                ['  di cui zuccheri aggiunti', p.zuccheri_agg > 0 ? `${p.zuccheri_agg.toFixed(1)} g` : '—'],
+                ['  di cui polioli', p.polioli > 0 ? `${p.polioli.toFixed(1)} g` : '—'],
+                ['  di cui amido', p.amido > 0 ? `${p.amido.toFixed(1)} g` : '—'],
+                ['Fibre alimentari', p.fibre > 0 ? `${p.fibre.toFixed(1)} g` : '—'],
+                ['Proteine', `${p.proteine.toFixed(1)} g`],
+                ['Sale', `${p.sale.toFixed(2)} g`],
+                ['Sodio', `${p.sodio_mg.toFixed(0)} mg`],
+                ['Potassio', p.potassio > 0 ? `${p.potassio.toFixed(0)} mg` : '—'],
+                ['Calcio', p.calcio > 0 ? `${p.calcio.toFixed(0)} mg` : '—'],
+                ['Fosforo', p.fosforo > 0 ? `${p.fosforo.toFixed(0)} mg` : '—'],
+                ['Magnesio', p.magnesio > 0 ? `${p.magnesio.toFixed(0)} mg` : '—'],
+                ['Ferro', p.ferro > 0 ? `${p.ferro.toFixed(1)} mg` : '—'],
+                ['Zinco', p.zinco > 0 ? `${p.zinco.toFixed(1)} mg` : '—'],
+                ['Vitamina C', p.vitC > 0 ? `${p.vitC.toFixed(1)} mg` : '—'],
+                ['Vitamina B1', p.vitB1 > 0 ? `${p.vitB1.toFixed(2)} mg` : '—'],
+                ['Vitamina B2', p.vitB2 > 0 ? `${p.vitB2.toFixed(2)} mg` : '—'],
+                ['Vitamina B3 (Niacina)', p.vitB3 > 0 ? `${p.vitB3.toFixed(1)} mg` : '—'],
+                ['Vitamina B6', p.vitB6 > 0 ? `${p.vitB6.toFixed(2)} mg` : '—'],
+                ['Vitamina B9 (Folati)', p.vitB9 > 0 ? `${p.vitB9.toFixed(0)} μg` : '—'],
+                ['Vitamina B12', p.vitB12 > 0 ? `${p.vitB12.toFixed(1)} μg` : '—'],
+                ['Vitamina A', p.vitA_eq > 0 ? `${p.vitA_eq.toFixed(0)} μg` : '—'],
+                ['Vitamina D', p.vitD > 0 ? `${p.vitD.toFixed(1)} μg` : '—'],
+                ['Vitamina E', p.vitE > 0 ? `${p.vitE.toFixed(1)} mg` : '—'],
+            ];
+            rows.forEach(([label, val]) => {
+                if (y > 272) { doc.addPage(); y = 15; }
+                const isSub = label.startsWith('  ');
+                doc.setFontSize(8);
+                doc.setFont('helvetica', isSub ? 'normal' : 'bold');
+                doc.setTextColor(isSub ? 80 : 30, isSub ? 80 : 30, isSub ? 80 : 30);
+                doc.text(label, M + (isSub ? 4 : 0), y);
+                doc.setFont('helvetica', 'normal'); doc.setTextColor(30, 30, 30);
+                doc.text(val, M + 100, y);
+                y += 5;
+            });
+            y += 3;
+
+            // ── Allergeni ──
+            if (presentAllergens.length > 0 || crossAllergens.length > 0) {
+                if (y > 255) { doc.addPage(); y = 15; }
+                doc.setFontSize(11); doc.setFont('helvetica', 'bold'); doc.setTextColor(12, 19, 38);
+                doc.text('Allergeni', M, y); y += 5;
+                doc.setDrawColor(220, 220, 220); doc.line(M, y, W - M, y); y += 5;
+                if (presentAllergens.length > 0) {
+                    if (y > 272) { doc.addPage(); y = 15; }
+                    doc.setFontSize(8); doc.setFont('helvetica', 'bold'); doc.setTextColor(197, 48, 48);
+                    doc.text('Contiene:', M + 2, y);
+                    doc.setFont('helvetica', 'normal');
+                    const lines = doc.splitTextToSize(presentAllergens.join(', '), CW - 24);
+                    doc.text(lines, M + 22, y); y += lines.length * 5;
+                }
+                if (crossAllergens.length > 0) {
+                    if (y > 272) { doc.addPage(); y = 15; }
+                    doc.setFontSize(8); doc.setFont('helvetica', 'bold'); doc.setTextColor(183, 121, 31);
+                    doc.text('Può contenere:', M + 2, y);
+                    doc.setFont('helvetica', 'normal'); doc.setTextColor(80, 60, 0);
+                    const lines = doc.splitTextToSize(crossAllergens.join(', '), CW - 30);
+                    doc.text(lines, M + 30, y); y += lines.length * 5;
+                }
+            }
+
+            // ── Footer ──
+            const pageCount = doc.getNumberOfPages();
+            for (let i = 1; i <= pageCount; i++) {
+                doc.setPage(i);
+                doc.setFontSize(7); doc.setFont('helvetica', 'normal'); doc.setTextColor(160, 160, 160);
+                doc.text(`AEA Consulenze Alimentari — pag. ${i}/${pageCount}`, M, 292);
+            }
+
+            doc.save(`${productName || 'ricetta'}_scheda_${activeTab}.pdf`);
+        } catch (e) {
+            console.error('PDF export error:', e);
+            alert('Errore durante la generazione del PDF.');
+        }
     };
 
     return (
@@ -1441,7 +1549,7 @@ export function NutrizionaleCalc() {
             {allRows.length > 0 && (
                 <div style={{ marginTop: 0 }}>
                     {/* Tabs */}
-                    <div style={{ display: 'flex', gap: 8, marginBottom: 20, flexWrap: 'wrap', alignItems: 'center' }}>
+                    <div className="nation-tab-bar" style={{ display: 'flex', gap: 8, marginBottom: 20, flexWrap: 'nowrap', alignItems: 'center', overflowX: 'auto', paddingBottom: 4 }}>
                         {(['UE', 'USA', 'Canada', 'Australia', 'Arabi'] as NationTab[]).map(t => {
                             const labels: Record<NationTab, string> = { UE: '🇪🇺 UE', USA: '🇺🇸 USA', Canada: '🇨🇦 Canada', Australia: '🇦🇺 Australia', Arabi: '🌍 Arabi' };
                             return (
