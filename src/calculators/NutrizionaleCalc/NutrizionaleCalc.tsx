@@ -1303,7 +1303,34 @@ export function NutrizionaleCalc() {
                     <h1>🥗 Creazione tabelle valori nutrizionali</h1>
                     <p>Etichettatura internazionale (UE, USA, Canada, Australia, Arabi) &amp; Costi Ingredienti</p>
                 </div>
-                <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+                <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
+                    {/* Toggle Guidata / Avanzata */}
+                    <div style={{ display: 'flex', background: 'var(--color-surface)', border: '1.5px solid var(--color-border)', borderRadius: 8, padding: 3, gap: 2 }}>
+                        <button
+                            onClick={() => toggleWizardMode(true)}
+                            style={{
+                                padding: '6px 15px', borderRadius: 6, border: 'none', cursor: 'pointer',
+                                fontFamily: 'inherit', fontSize: 12, fontWeight: 700, transition: 'all .2s',
+                                display: 'flex', alignItems: 'center', gap: 5,
+                                background: wizardMode ? 'linear-gradient(135deg, var(--color-orange), var(--color-orange-hover))' : 'transparent',
+                                color: wizardMode ? 'white' : 'var(--color-text-muted)',
+                                boxShadow: wizardMode ? '0 1px 6px rgba(255,126,46,.30)' : 'none',
+                            }}>
+                            🧭 Guidata
+                        </button>
+                        <button
+                            onClick={() => toggleWizardMode(false)}
+                            style={{
+                                padding: '6px 15px', borderRadius: 6, border: 'none', cursor: 'pointer',
+                                fontFamily: 'inherit', fontSize: 12, fontWeight: 700, transition: 'all .2s',
+                                display: 'flex', alignItems: 'center', gap: 5,
+                                background: !wizardMode ? 'linear-gradient(135deg, var(--color-orange), var(--color-orange-hover))' : 'transparent',
+                                color: !wizardMode ? 'white' : 'var(--color-text-muted)',
+                                boxShadow: !wizardMode ? '0 1px 6px rgba(255,126,46,.30)' : 'none',
+                            }}>
+                            ⚙ Avanzata
+                        </button>
+                    </div>
                     <button className="btn btn-outline" onClick={() => setShowCustomModal(true)}>➕ Aggiungi ingrediente nel Data Base</button>
                     <button className="btn btn-outline" onClick={handleNew}>✨ Nuovo</button>
                     <button className="btn btn-outline" onClick={() => setArchiveOpen(true)}>📂 Archivio ({archiveItems.length})</button>
