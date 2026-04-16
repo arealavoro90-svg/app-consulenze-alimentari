@@ -26,19 +26,19 @@ export function Sidebar({ isOpen = false, onClose }: SidebarProps) {
     return (
         <aside className={`sidebar${isOpen ? ' open' : ''}`}>
             <div className="sidebar-brand">
-                <div className="sidebar-brand-icon">🌿</div>
-                <div className="sidebar-brand-text">
-                    <h2>AEA Consulenze</h2>
-                    <span>Portale Clienti</span>
-                </div>
+                <img
+                    src="/aea-logo.png"
+                    alt="AEA Consulenze Alimentari"
+                    className="sidebar-logo"
+                />
                 {/* Close button — visible only on mobile */}
                 {onClose && (
                     <button
                         onClick={onClose}
                         style={{
-                            marginLeft: 'auto', background: 'none', border: 'none',
-                            color: 'rgba(255,255,255,0.6)', fontSize: 20, cursor: 'pointer',
-                            lineHeight: 1, padding: '0 4px',
+                            background: 'none', border: 'none',
+                            color: 'rgba(255,255,255,0.5)', fontSize: 18, cursor: 'pointer',
+                            lineHeight: 1, padding: '0 2px', flexShrink: 0,
                         }}
                         aria-label="Chiudi menu"
                     >

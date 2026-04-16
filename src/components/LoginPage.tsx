@@ -35,62 +35,111 @@ export function LoginPage() {
 
     return (
         <div className="login-page">
-            <div className="login-card">
-                <div className="login-logo">
-                    <div className="login-logo-icon">🌿</div>
-                    <div className="login-logo-text">
-                        <h1>AEA Consulenze Alimentari</h1>
-                        <span>Portale Clienti Sicuro</span>
+            {/* Left brand panel */}
+            <div className="login-panel-left">
+                <img
+                    src="/aea-logo.png"
+                    alt="AEA Consulenze Alimentari"
+                    className="login-panel-logo"
+                />
+                <div className="login-panel-tagline">
+                    <h2>Consulenza<br />Alimentare</h2>
+                    <div className="login-panel-divider" />
+                    <p>Strumenti professionali per etichettatura, nutrizione e conformità normativa.</p>
+                </div>
+                <div className="login-panel-features">
+                    <div className="login-panel-feature">
+                        <span className="login-panel-feature-dot" />
+                        Calcolo nutrizionale EU Reg 1169/2011
+                    </div>
+                    <div className="login-panel-feature">
+                        <span className="login-panel-feature-dot" />
+                        Etichette vini e prodotti alimentari
+                    </div>
+                    <div className="login-panel-feature">
+                        <span className="login-panel-feature-dot" />
+                        Trattamento termico e rintracciabilità
                     </div>
                 </div>
+            </div>
 
-                <h2 className="login-title">Accedi al tuo portale</h2>
-                <p className="login-subtitle">Inserisci le credenziali ricevute da AEA</p>
+            {/* Right form panel */}
+            <div className="login-panel-right">
+                <div className="login-card">
+                    <h2 className="login-title">Accedi al portale</h2>
+                    <p className="login-subtitle">Inserisci le credenziali ricevute da AEA</p>
 
-                {/* Demo credentials banner — credenziali da env var, non hardcoded */}
-                <div style={{ background: '#fff3cd', border: '1px solid #ffc107', borderRadius: 8, padding: '12px 16px', marginBottom: 20, fontSize: 14 }}>
-                    <strong>🎯 Accesso Demo</strong><br/>
-                    <span style={{ fontSize: 12, color: '#666' }}>Usa il bottone qui sotto per accedere con account demo</span>
-                    <button type="button" style={{ marginTop: 8, display: 'block', background: '#ffc107', border: 'none', borderRadius: 5, padding: '5px 14px', cursor: 'pointer', fontWeight: 700, fontSize: 13 }} onClick={() => fillDemo(demoEmail, demoPassword)}>
-                        🔓 Entra come Demo →
-                    </button>
-                </div>
-
-                {error && <div className="login-error">⚠️ {error}</div>}
-
-                <form onSubmit={handleSubmit}>
-                    <div className="form-group">
-                        <label htmlFor="email">Email</label>
-                        <input
-                            id="email"
-                            type="email"
-                            value={email}
-                            onChange={(e) => setEmail(e.target.value)}
-                            placeholder="tuaemail@azienda.it"
-                            required
-                            autoComplete="email"
-                        />
+                    {/* Demo credentials banner */}
+                    <div style={{
+                        background: 'rgba(255, 126, 46, 0.06)',
+                        border: '1px solid rgba(255, 126, 46, 0.22)',
+                        borderRadius: 8,
+                        padding: '12px 16px',
+                        marginBottom: 24,
+                        fontSize: 13,
+                    }}>
+                        <strong style={{ color: 'var(--color-navy)' }}>Accesso Demo</strong>
+                        <span style={{ display: 'block', fontSize: 12, color: 'var(--color-text-muted)', marginTop: 3 }}>
+                            Usa il bottone per accedere con account demo
+                        </span>
+                        <button
+                            type="button"
+                            style={{
+                                marginTop: 10,
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: 6,
+                                background: 'var(--color-navy)',
+                                border: 'none',
+                                borderRadius: 6,
+                                padding: '6px 14px',
+                                cursor: 'pointer',
+                                fontWeight: 700,
+                                fontSize: 12,
+                                color: '#fff',
+                                letterSpacing: '0.02em',
+                                fontFamily: 'inherit',
+                            }}
+                            onClick={() => fillDemo(demoEmail, demoPassword)}
+                        >
+                            Entra come Demo →
+                        </button>
                     </div>
-                    <div className="form-group">
-                        <label htmlFor="password">Password</label>
-                        <input
-                            id="password"
-                            type="password"
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                            placeholder="••••••••"
-                            required
-                            autoComplete="current-password"
-                        />
-                    </div>
-                    <button type="submit" className="btn-primary" disabled={loading}>
-                        {loading ? 'Accesso in corso...' : 'Accedi →'}
-                    </button>
-                </form>
 
-                <div className="login-info">
-                    <p style={{ fontSize: 12, color: '#666', textAlign: 'center', marginTop: 20 }}>
-                        💡 Contatta AEA Consulenze per ricevere le tue credenziali
+                    {error && <div className="login-error">{error}</div>}
+
+                    <form onSubmit={handleSubmit}>
+                        <div className="form-group">
+                            <label htmlFor="email">Email</label>
+                            <input
+                                id="email"
+                                type="email"
+                                value={email}
+                                onChange={(e) => setEmail(e.target.value)}
+                                placeholder="tuaemail@azienda.it"
+                                required
+                                autoComplete="email"
+                            />
+                        </div>
+                        <div className="form-group">
+                            <label htmlFor="password">Password</label>
+                            <input
+                                id="password"
+                                type="password"
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
+                                placeholder="••••••••"
+                                required
+                                autoComplete="current-password"
+                            />
+                        </div>
+                        <button type="submit" className="btn-primary" disabled={loading}>
+                            {loading ? 'Accesso in corso...' : 'Accedi →'}
+                        </button>
+                    </form>
+
+                    <p style={{ fontSize: 12, color: 'var(--color-text-dim)', textAlign: 'center', marginTop: 24 }}>
+                        Contatta AEA per ricevere le credenziali di accesso
                     </p>
                 </div>
             </div>

@@ -1,0 +1,273 @@
+<style>
+  .directions-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+    margin-top: 16px;
+  }
+  .dir-card {
+    border: 2px solid #e2e8f0;
+    border-radius: 14px;
+    overflow: hidden;
+    cursor: pointer;
+    transition: all 0.2s;
+    background: #fff;
+  }
+  .dir-card:hover { border-color: #ff7e2e; transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,0.1); }
+  .dir-card.selected { border-color: #ff7e2e; box-shadow: 0 0 0 4px rgba(255,126,46,0.2); }
+  .dir-preview {
+    height: 260px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* PREVIEW A — Polished Refined */
+  .preview-a {
+    background: #f4f6f9;
+    display: flex;
+  }
+  .pa-sidebar {
+    width: 72px;
+    background: #0c1326;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 14px 0;
+    gap: 8px;
+  }
+  .pa-logo { width: 36px; height: 36px; background: #ff7e2e; border-radius: 8px; margin-bottom: 8px; }
+  .pa-nav-dot { width: 36px; height: 30px; border-radius: 6px; background: rgba(255,255,255,0.08); }
+  .pa-nav-dot.active { background: rgba(255,126,46,0.25); }
+  .pa-main { flex: 1; padding: 12px; }
+  .pa-header { font-size: 11px; font-weight: 800; color: #0c1326; margin-bottom: 8px; font-family: Georgia, serif; }
+  .pa-card { background: #fff; border-radius: 10px; padding: 10px; margin-bottom: 8px; box-shadow: 0 1px 4px rgba(12,19,38,0.06), 0 4px 12px rgba(12,19,38,0.05); border: 1px solid #eef1f5; }
+  .pa-stat { display: flex; align-items: center; gap: 8px; }
+  .pa-stat-icon { width: 28px; height: 28px; background: rgba(255,126,46,0.1); border-radius: 7px; }
+  .pa-stat-text { }
+  .pa-stat-text small { display: block; font-size: 8px; color: #5e6b80; }
+  .pa-stat-text strong { font-size: 14px; font-weight: 800; color: #ff7e2e; }
+  .pa-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+  .pa-tool { background: #fff; border-radius: 8px; padding: 8px; border: 1px solid #eef1f5; font-size: 8px; color: #5e6b80; box-shadow: 0 1px 3px rgba(12,19,38,0.04); }
+  .pa-tool strong { display: block; font-size: 9px; color: #0c1326; font-weight: 700; margin-bottom: 2px; }
+
+  /* PREVIEW B — Collassata / Icon sidebar */
+  .preview-b {
+    background: #f0f2f7;
+    display: flex;
+  }
+  .pb-sidebar {
+    width: 200px;
+    background: linear-gradient(160deg, #111b35 0%, #0c1326 100%);
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    padding: 12px 10px;
+  }
+  .pb-logo-area { display: flex; align-items: center; gap: 6px; margin-bottom: 14px; padding-bottom: 12px; border-bottom: 1px solid rgba(255,255,255,0.08); }
+  .pb-logo { width: 26px; height: 26px; background: #ff7e2e; border-radius: 6px; }
+  .pb-logo-text { font-size: 9px; font-weight: 800; color: #fff; letter-spacing: -0.02em; }
+  .pb-logo-text small { display: block; font-size: 7px; color: rgba(255,255,255,0.4); font-weight: 400; }
+  .pb-user { display: flex; align-items: center; gap: 6px; margin-bottom: 14px; }
+  .pb-avatar { width: 22px; height: 22px; background: #ff7e2e; border-radius: 50%; flex-shrink: 0; }
+  .pb-user-text small { display: block; font-size: 7px; color: rgba(255,255,255,0.35); }
+  .pb-user-text strong { display: block; font-size: 9px; color: rgba(255,255,255,0.85); font-weight: 600; }
+  .pb-label { font-size: 7px; font-weight: 700; color: rgba(255,255,255,0.25); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 4px; padding-left: 6px; }
+  .pb-nav { display: flex; flex-direction: column; gap: 2px; margin-bottom: 10px; }
+  .pb-item { display: flex; align-items: center; gap: 6px; padding: 5px 7px; border-radius: 5px; font-size: 8.5px; color: rgba(255,255,255,0.45); font-weight: 500; }
+  .pb-item.active { background: rgba(255,126,46,0.18); color: #ff9f4f; font-weight: 600; }
+  .pb-dot { width: 12px; height: 12px; border-radius: 3px; background: rgba(255,255,255,0.1); flex-shrink: 0; }
+  .pb-dot.active-dot { background: rgba(255,126,46,0.4); }
+  .pb-main { flex: 1; padding: 12px; }
+  .pb-header { font-size: 11px; font-weight: 800; color: #0c1326; margin-bottom: 6px; font-family: Georgia, serif; }
+  .pb-sub { font-size: 8px; color: #5e6b80; margin-bottom: 10px; }
+  .pb-card { background: #fff; border-radius: 10px; padding: 10px; margin-bottom: 8px; box-shadow: 0 2px 12px rgba(12,19,38,0.07); border: 1px solid rgba(12,19,38,0.06); }
+  .pb-tool-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+  .pb-tool { background: #fff; border-radius: 8px; padding: 8px; border: 1px solid rgba(12,19,38,0.07); transition: box-shadow 0.2s; }
+  .pb-tool strong { display: block; font-size: 8px; color: #0c1326; font-weight: 700; }
+  .pb-tool small { font-size: 7px; color: #5e6b80; }
+
+  /* PREVIEW C — Bold accent header */
+  .preview-c {
+    background: #f4f6f9;
+    display: flex;
+    flex-direction: column;
+  }
+  .pc-topbar {
+    height: 40px;
+    background: #0c1326;
+    display: flex;
+    align-items: center;
+    padding: 0 14px;
+    gap: 10px;
+    flex-shrink: 0;
+  }
+  .pc-logo-area { display: flex; align-items: center; gap: 6px; }
+  .pc-logo { width: 22px; height: 22px; background: #ff7e2e; border-radius: 5px; }
+  .pc-logo-text { font-size: 10px; font-weight: 800; color: #fff; }
+  .pc-spacer { flex: 1; }
+  .pc-avatar { width: 22px; height: 22px; background: #ff7e2e; border-radius: 50%; }
+  .pc-body { display: flex; flex: 1; overflow: hidden; }
+  .pc-sidebar { width: 56px; background: #0c1326; display: flex; flex-direction: column; align-items: center; padding: 10px 0; gap: 6px; }
+  .pc-icon { width: 32px; height: 26px; border-radius: 6px; background: rgba(255,255,255,0.07); }
+  .pc-icon.active { background: rgba(255,126,46,0.3); }
+  .pc-main { flex: 1; padding: 12px; overflow-y: auto; }
+  .pc-welcome { background: linear-gradient(135deg, #0c1326, #1a2f58); border-radius: 10px; padding: 12px 14px; margin-bottom: 10px; }
+  .pc-welcome h3 { font-size: 11px; font-weight: 800; color: #fff; margin-bottom: 2px; }
+  .pc-welcome small { font-size: 8px; color: rgba(255,255,255,0.45); }
+  .pc-badge { display: inline-block; background: rgba(255,126,46,0.25); color: #ff9f4f; font-size: 7px; font-weight: 700; border-radius: 3px; padding: 2px 5px; margin-top: 4px; text-transform: uppercase; letter-spacing: 0.06em; }
+  .pc-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+  .pc-card { background: #fff; border-radius: 8px; padding: 8px; border: 1px solid rgba(12,19,38,0.07); }
+  .pc-card strong { display: block; font-size: 8px; color: #0c1326; font-weight: 700; }
+  .pc-card small { font-size: 7px; color: #5e6b80; }
+
+  .dir-info { padding: 14px 16px; }
+  .dir-name { font-size: 14px; font-weight: 700; color: #0c1326; margin-bottom: 4px; }
+  .dir-desc { font-size: 12px; color: #5e6b80; line-height: 1.5; }
+  .dir-tags { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 8px; }
+  .dir-tag { font-size: 10px; background: #f0f2f7; color: #5e6b80; border-radius: 4px; padding: 2px 7px; font-weight: 500; }
+  .dir-tag.highlight { background: rgba(255,126,46,0.1); color: #dd5c0c; }
+</style>
+
+<h2>Qual è la direzione visiva giusta?</h2>
+<p class="subtitle">Scegli l'approccio che preferisci per modernizzare l'UI. I colori AEA restano invariati in tutte le opzioni.</p>
+
+<div class="directions-grid">
+
+  <!-- OPZIONE A -->
+  <div class="option dir-card" data-choice="a" onclick="toggleSelect(this)">
+    <div class="letter">A</div>
+    <div class="dir-preview preview-a">
+      <div class="pa-sidebar">
+        <div class="pa-logo"></div>
+        <div class="pa-nav-dot active"></div>
+        <div class="pa-nav-dot"></div>
+        <div class="pa-nav-dot"></div>
+        <div class="pa-nav-dot"></div>
+      </div>
+      <div class="pa-main">
+        <div class="pa-header">Buongiorno, Marco 👋</div>
+        <div class="pa-card">
+          <div class="pa-stat">
+            <div class="pa-stat-icon"></div>
+            <div class="pa-stat-text"><small>Strumenti</small><strong>5</strong></div>
+          </div>
+        </div>
+        <div style="font-size:8px;color:#5e6b80;margin-bottom:5px;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;">I tuoi strumenti</div>
+        <div class="pa-grid">
+          <div class="pa-tool"><strong>🧪 Nutrizionale</strong>Calcolo EU 1169</div>
+          <div class="pa-tool"><strong>🏷️ Etichette</strong>Generatore</div>
+          <div class="pa-tool"><strong>🍷 Vini</strong>Etichette DOC</div>
+          <div class="pa-tool"><strong>🔥 Termico</strong>Trattamenti</div>
+        </div>
+      </div>
+    </div>
+    <div class="dir-info">
+      <div class="dir-name">Sidebar Icone + Hover Fluido</div>
+      <div class="dir-desc">Sidebar sinistra ridotta a 72px con solo icone + tooltip. Più spazio al contenuto, animazioni di hover curate, transizioni smooth.</div>
+      <div class="dir-tags">
+        <span class="dir-tag highlight">+ spazio contenuto</span>
+        <span class="dir-tag">animazioni fluide</span>
+        <span class="dir-tag">compatto</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- OPZIONE B -->
+  <div class="option dir-card" data-choice="b" onclick="toggleSelect(this)">
+    <div class="letter">B</div>
+    <div class="dir-preview preview-b">
+      <div class="pb-sidebar">
+        <div class="pb-logo-area">
+          <div class="pb-logo"></div>
+          <div class="pb-logo-text">AEA<small>Consulenze</small></div>
+        </div>
+        <div class="pb-user">
+          <div class="pb-avatar"></div>
+          <div class="pb-user-text"><strong>Marco R.</strong><small>Azienda Srl</small></div>
+        </div>
+        <div class="pb-label">Navigazione</div>
+        <div class="pb-nav">
+          <div class="pb-item active"><div class="pb-dot active-dot"></div>Dashboard</div>
+          <div class="pb-item"><div class="pb-dot"></div>I tuoi strumenti</div>
+        </div>
+        <div class="pb-label">Strumenti</div>
+        <div class="pb-nav">
+          <div class="pb-item active"><div class="pb-dot active-dot"></div>Nutrizionale</div>
+          <div class="pb-item"><div class="pb-dot"></div>Etichette</div>
+          <div class="pb-item"><div class="pb-dot"></div>Vini</div>
+        </div>
+      </div>
+      <div class="pb-main">
+        <div class="pb-header">Dashboard</div>
+        <div class="pb-sub">Portale strumenti AEA</div>
+        <div class="pb-card">
+          <div style="display:flex;align-items:center;gap:6px;">
+            <div style="width:22px;height:22px;background:rgba(255,126,46,0.12);border-radius:6px;"></div>
+            <div><div style="font-size:8px;color:#5e6b80;">Strumenti acquistati</div><div style="font-size:14px;font-weight:800;color:#ff7e2e;">5</div></div>
+          </div>
+        </div>
+        <div class="pb-tool-grid">
+          <div class="pb-tool"><strong>🧪 Nutrizionale</strong><small>Calcolo EU 1169</small></div>
+          <div class="pb-tool"><strong>🏷️ Etichette</strong><small>Generatore</small></div>
+        </div>
+      </div>
+    </div>
+    <div class="dir-info">
+      <div class="dir-name">Sidebar Testo Raffinata (invariata)</div>
+      <div class="dir-desc">Struttura attuale rifinita: card con ombra migliorata, transizioni CSS più morbide, scroll smooth, micro-interazioni sugli item. Nessun cambio strutturale.</div>
+      <div class="dir-tags">
+        <span class="dir-tag highlight">meno rischio</span>
+        <span class="dir-tag">più raffinato</span>
+        <span class="dir-tag">fedele all'attuale</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- OPZIONE C -->
+  <div class="option dir-card" data-choice="c" onclick="toggleSelect(this)">
+    <div class="letter">C</div>
+    <div class="dir-preview preview-c">
+      <div class="pc-topbar">
+        <div class="pc-logo-area">
+          <div class="pc-logo"></div>
+          <div class="pc-logo-text">AEA</div>
+        </div>
+        <div class="pc-spacer"></div>
+        <div style="font-size:8px;color:rgba(255,255,255,0.4);margin-right:6px;">Marco R.</div>
+        <div class="pc-avatar"></div>
+      </div>
+      <div class="pc-body">
+        <div class="pc-sidebar">
+          <div class="pc-icon active"></div>
+          <div class="pc-icon"></div>
+          <div class="pc-icon"></div>
+          <div class="pc-icon"></div>
+        </div>
+        <div class="pc-main">
+          <div class="pc-welcome">
+            <h3>Buongiorno, Marco 👋</h3>
+            <small>Portale AEA Consulenze Alimentari</small>
+            <div><span class="pc-badge">Admin</span></div>
+          </div>
+          <div class="pc-cards">
+            <div class="pc-card"><strong>🧪 Nutrizionale</strong><small>Calcolo EU 1169</small></div>
+            <div class="pc-card"><strong>🏷️ Etichette</strong><small>Generatore</small></div>
+            <div class="pc-card"><strong>🍷 Vini</strong><small>DOC/DOCG</small></div>
+            <div class="pc-card"><strong>🔥 Termico</strong><small>Trattamenti</small></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="dir-info">
+      <div class="dir-name">Topbar + Sidebar Icone (app-style)</div>
+      <div class="dir-desc">Navigazione in alto per brand/utente + sidebar icone a sinistra. Pattern moderno tipo SaaS. Massima area lavoro per i calcolatori.</div>
+      <div class="dir-tags">
+        <span class="dir-tag highlight">massima area lavoro</span>
+        <span class="dir-tag">cambio strutturale</span>
+        <span class="dir-tag">SaaS moderno</span>
+      </div>
+    </div>
+  </div>
+
+</div>

@@ -37,6 +37,14 @@ approvazione esplicita. Leggere sempre il file prima di proporre modifiche.
 
 ---
 
+## Workflow deploy (regola permanente)
+Al termine di OGNI richiesta o modifica al codice, chiedere sempre:
+> "Vuoi caricare le modifiche su Vercel per verificarne le funzionalità?"
+
+Se la risposta è affermativa, eseguire un deploy preview con `vercel` dalla directory del progetto.
+
+---
+
 ## Vincoli fissi (non negoziabili senza discussione)
 - Nessun CSS framework esterno
 - Nessun nuovo state manager (Context API è sufficiente)
