@@ -1,4 +1,4 @@
-import { useState, useMemo, useRef, useEffect, useCallback } from 'react';
+import React, { useState, useMemo, useRef, useEffect, useCallback } from 'react';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import { useArchive } from '../../hooks/useArchive';
@@ -1258,6 +1258,447 @@ export function NutrizionaleCalc() {
         }
     };
 
+    // ─── Wizard renderer ──────────────────────────────────────────────────────
+    const WIZ_STEPS: { label: string }[] = [
+        { label: 'Prodotto' },
+        { label: 'Ingredienti' },
+        { label: 'Mercati' },
+        { label: 'Export' },
+    ];
+
+    const wizNav = (dir: -1 | 1) => {
+        if (dir === 1) {
+            if (wizardStep === 0 && !productName.trim()) {
+                setFieldErrors(prev => ({ ...prev, wizardNome: 'Inserisci il nome del prodotto per continuare.' }));
+                return;
+            }
+            if (wizardStep === 1 && allRows.length === 0) {
+                setFieldErrors(prev => ({ ...prev, wizardIng: 'Aggiungi almeno un ingrediente per continuare.' }));
+                return;
+            }
+        }
+        setFieldErrors({});
+        setWizardStep(prev => Math.max(0, Math.min(3, prev + dir)) as 0 | 1 | 2 | 3);
+    };
+
+    const renderWizard = (): React.ReactNode => {
+        const pct = ((wizardStep + 1) / 4 * 100).toFixed(0) + '%';
+
+        return (
+            <div className="card" style={{ overflow: 'hidden', padding: 0 }}>
+
+                {/* ── Progress bar ── */}
+                <div style={{ padding: '22px 28px 0', borderBottom: '1px solid var(--color-border)' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', marginBottom: 16 }}>
+                        {WIZ_STEPS.map((s, i) => (
+                            <React.Fragment key={i}>
+                                {i > 0 && (
+                                    <div style={{
+                                        flex: 1, height: 2, margin: '0 6px',
+                                        background: i <= wizardStep ? 'var(--color-green)' : 'var(--color-border)',
+                                        transition: 'background .3s',
+                                    }} />
+                                )}
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                                    <div style={{
+                                        width: 30, height: 30, borderRadius: '50%',
+                                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                        fontSize: 11, fontWeight: 800, flexShrink: 0,
+                                        transition: 'all .3s',
+                                        background: i < wizardStep ? 'var(--color-green)'
+                                            : i === wizardStep ? 'linear-gradient(135deg, var(--color-orange), var(--color-orange-hover))'
+                                            : 'var(--color-surface)',
+                                        border: `2px solid ${i < wizardStep ? 'var(--color-green)' : i === wizardStep ? 'var(--color-orange)' : 'var(--color-border)'}`,
+                                        color: i <= wizardStep ? 'white' : 'var(--color-text-dim)',
+                                        boxShadow: i === wizardStep ? '0 0 0 4px rgba(255,126,46,.18)' : 'none',
+                                    }}>
+                                        {i < wizardStep ? '✓' : i + 1}
+                                    </div>
+                                    <span style={{
+                                        fontSize: 12, fontWeight: 700,
+                                        color: i < wizardStep ? 'var(--color-green)' : i === wizardStep ? 'var(--color-navy)' : 'var(--color-text-dim)',
+                                        whiteSpace: 'nowrap',
+                                    }}>
+                                        {s.label}
+                                    </span>
+                                </div>
+                            </React.Fragment>
+                        ))}
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 12, paddingBottom: 14 }}>
+                        <div style={{ flex: 1, height: 4, background: 'var(--color-surface)', borderRadius: 2, overflow: 'hidden' }}>
+                            <div style={{
+                                height: '100%', borderRadius: 2,
+                                background: 'linear-gradient(90deg, var(--color-orange), var(--color-orange-hover))',
+                                width: pct, transition: 'width .45s cubic-bezier(.4,0,.2,1)',
+                            }} />
+                        </div>
+                        <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--color-text-muted)', whiteSpace: 'nowrap' }}>
+                            Passo {wizardStep + 1} di 4
+                        </span>
+                    </div>
+                </div>
+
+                {/* ── Step content ── */}
+                <div style={{ padding: 28, minHeight: 340 }}>
+
+                    {/* Step 0 — Prodotto */}
+                    {wizardStep === 0 && (
+                        <div>
+                            <h2 style={{ fontFamily: 'Fraunces, serif', fontSize: 18, fontWeight: 900, color: 'var(--color-navy)', marginBottom: 4 }}>
+                                📦 Il tuo prodotto
+                            </h2>
+                            <p style={{ fontSize: 13, color: 'var(--color-text-muted)', marginBottom: 22, lineHeight: 1.55 }}>
+                                Inserisci le informazioni base. Il nome apparirà nella testata di ogni tabella nutrizionale generata.
+                            </p>
+                            <div className="card" style={{ marginBottom: 16, background: 'rgba(255,126,46,0.04)', border: '2px solid var(--color-orange)', padding: '14px 18px' }}>
+                                <label style={{ fontWeight: 800, fontSize: 15, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--color-orange)', display: 'block', marginBottom: 10 }}>
+                                    PRODOTTO <span style={{ color: 'var(--color-danger)' }}>*</span>
+                                </label>
+                                <input
+                                    type="text"
+                                    className="form-input"
+                                    placeholder="Nome prodotto (es. Torta di mele, Salsa al pomodoro…)"
+                                    value={productName}
+                                    onChange={e => { setProductName(e.target.value); setFieldErrors({}); }}
+                                    style={{ fontSize: 15, fontWeight: 600, borderColor: fieldErrors.wizardNome ? 'var(--color-danger)' : undefined }}
+                                />
+                                {fieldErrors.wizardNome && (
+                                    <span style={{ fontSize: 12, color: 'var(--color-danger)', fontWeight: 600, marginTop: 4, display: 'block' }}>
+                                        ⚠ {fieldErrors.wizardNome}
+                                    </span>
+                                )}
+                            </div>
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14, marginBottom: 14 }}>
+                                <div className="form-field" style={{ marginBottom: 0 }}>
+                                    <label className="form-label">Peso finito (g/pz)</label>
+                                    <input
+                                        type="number" min={0} className="form-input"
+                                        placeholder="es. 120"
+                                        value={finishedWeight}
+                                        onChange={e => setFinishedWeight(e.target.value)}
+                                    />
+                                    <span className="hint">Peso netto dopo lavorazione/cottura.</span>
+                                </div>
+                                <div className="form-field" style={{ marginBottom: 0 }}>
+                                    <label className="form-label">Peso specifico (g/ml)</label>
+                                    <input
+                                        type="number" min={0} className="form-input"
+                                        placeholder="Solo per liquidi"
+                                        value={specificGravity}
+                                        onChange={e => setSpecificGravity(e.target.value)}
+                                    />
+                                    <span className="hint">Facoltativo.</span>
+                                </div>
+                            </div>
+                            <div className="form-field" style={{ maxWidth: 220 }}>
+                                <label className="form-label">N. pezzi per UV (Componente 1)</label>
+                                <input
+                                    type="number" min={1} step={0.1} className="form-input"
+                                    value={components[0]?.pzUV ?? 1}
+                                    onChange={e => updateCompPzUV(components[0].id, parseFloat(e.target.value) || 1)}
+                                />
+                                <span className="hint">Pezzi contenuti nell'unità di vendita (1 = prodotto sfuso).</span>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Step 1 — Ingredienti */}
+                    {wizardStep === 1 && (
+                        <div>
+                            <h2 style={{ fontFamily: 'Fraunces, serif', fontSize: 18, fontWeight: 900, color: 'var(--color-navy)', marginBottom: 4 }}>
+                                🥗 Ingredienti della ricetta
+                            </h2>
+                            <p style={{ fontSize: 13, color: 'var(--color-text-muted)', marginBottom: 22, lineHeight: 1.55 }}>
+                                Cerca ogni ingrediente nel database e inserisci i grammi per l'intera ricetta. Puoi gestire fino a 4 componenti separati.
+                            </p>
+                            {fieldErrors.wizardIng && (
+                                <div style={{ background: 'rgba(229,62,62,.07)', border: '1px solid rgba(229,62,62,.22)', borderRadius: 'var(--radius-sm)', padding: '8px 12px', marginBottom: 14, fontSize: 12, color: 'var(--color-danger)', fontWeight: 600 }}>
+                                    ⚠ {fieldErrors.wizardIng}
+                                </div>
+                            )}
+                            <div style={{ background: 'var(--color-navy)', color: 'white', borderRadius: '10px 10px 0 0', padding: '10px 20px', fontWeight: 800, fontSize: 14, letterSpacing: '0.06em' }}>
+                                📋 INSERIMENTO RICETTA
+                            </div>
+                            <div style={{ border: '2px solid var(--color-navy)', borderTop: 'none', borderRadius: '0 0 12px 12px', padding: '16px 16px 4px', marginBottom: 16 }}>
+                                {components.map((comp, ci) => {
+                                    const isCompOpen = compOpen[comp.id] !== false;
+                                    return (
+                                        <div key={comp.id} className="card" style={{ marginBottom: 12 }}>
+                                            <div
+                                                style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer', userSelect: 'none' }}
+                                                onClick={() => setCompOpen(prev => ({ ...prev, [comp.id]: !isCompOpen }))}
+                                            >
+                                                <h3 style={{ margin: 0 }}>🧾 Componente {ci + 1}{comp.name ? ` — ${comp.name}` : ''}</h3>
+                                                <span style={{ fontSize: 12, color: 'var(--color-text-muted)' }}>{isCompOpen ? '▲' : '▼'}</span>
+                                            </div>
+                                            {isCompOpen && (
+                                                <div style={{ marginTop: 12 }}>
+                                                    <div className="form-field">
+                                                        <label className="form-label">Nome componente (facoltativo)</label>
+                                                        <input className="form-input" placeholder="es. Pasta frolla, Farcitura…" value={comp.name} onChange={e => updateCompName(comp.id, e.target.value)} />
+                                                    </div>
+                                                    <div className="form-field">
+                                                        <label className="form-label">N. pezzi per UV</label>
+                                                        <input type="number" min={1} step={0.1} className="form-input" value={comp.pzUV}
+                                                            onChange={e => updateCompPzUV(comp.id, parseFloat(e.target.value) || 1)} />
+                                                    </div>
+                                                    <IngSearch onAdd={(ing) => addRowToComp(comp.id, ing)} db={db} loading={loadingDB} error={dbError} />
+                                                    {comp.rows.length > 0 && (
+                                                        <div style={{ overflowX: 'auto' }}>
+                                                            <table className="table" style={{ width: '100%', minWidth: 520 }}>
+                                                                <thead>
+                                                                    <tr>
+                                                                        <th>Ingrediente</th><th>g / ricetta</th><th>Kcal/100g</th>
+                                                                        <th>Kcal tot</th><th>%</th><th></th>
+                                                                    </tr>
+                                                                </thead>
+                                                                <tbody>
+                                                                    {comp.rows.map(row => {
+                                                                        const kcalTot = (row.ing.kcal * row.grams) / 100;
+                                                                        const totGrams = comp.rows.reduce((s, r) => s + r.grams, 0);
+                                                                        const pct = totGrams > 0 ? ((row.grams / totGrams) * 100).toFixed(1) : '—';
+                                                                        return (
+                                                                            <tr key={row.id}>
+                                                                                <td style={{ fontWeight: 600 }}>{row.ing.etichetta || row.ing.nome}</td>
+                                                                                <td>
+                                                                                    <input
+                                                                                        type="number" min={0} step={0.1}
+                                                                                        className="form-input" style={{ width: 90, padding: '4px 8px' }}
+                                                                                        value={row.grams}
+                                                                                        onChange={e => updateGrams(comp.id, row.id, parseFloat(e.target.value) || 0)}
+                                                                                    />
+                                                                                </td>
+                                                                                <td>{row.ing.kcal.toFixed(1)}</td>
+                                                                                <td>{kcalTot.toFixed(1)}</td>
+                                                                                <td>{pct}%</td>
+                                                                                <td><button className="btn btn-danger" style={{ padding: '2px 8px', fontSize: 12 }} onClick={() => removeRow(comp.id, row.id)}>✕</button></td>
+                                                                            </tr>
+                                                                        );
+                                                                    })}
+                                                                </tbody>
+                                                            </table>
+                                                        </div>
+                                                    )}
+                                                    {components.length > 1 && (
+                                                        <button className="btn btn-danger" style={{ fontSize: 12, marginTop: 8 }} onClick={() => removeComp(comp.id)}>🗑 Rimuovi componente</button>
+                                                    )}
+                                                </div>
+                                            )}
+                                        </div>
+                                    );
+                                })}
+                                {components.length < 4 && (
+                                    <button className="btn btn-outline" onClick={addComp} style={{ marginBottom: 12 }}>
+                                        ➕ Aggiungi componente
+                                    </button>
+                                )}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Step 2 — Mercati & Serving size */}
+                    {wizardStep === 2 && (
+                        <div>
+                            <h2 style={{ fontFamily: 'Fraunces, serif', fontSize: 18, fontWeight: 900, color: 'var(--color-navy)', marginBottom: 4 }}>
+                                🌍 Mercati & Serving size
+                            </h2>
+                            <p style={{ fontSize: 13, color: 'var(--color-text-muted)', marginBottom: 22, lineHeight: 1.55 }}>
+                                Seleziona il mercato di destinazione e configura le porzioni di riferimento (facoltativo).
+                            </p>
+                            <div style={{ display: 'flex', gap: 8, marginBottom: 20, flexWrap: 'wrap' }}>
+                                {(['UE', 'USA', 'Canada', 'Australia', 'Arabi'] as NationTab[]).map(t => {
+                                    const labels: Record<NationTab, string> = { UE: '🇪🇺 UE', USA: '🇺🇸 USA', Canada: '🇨🇦 Canada', Australia: '🇦🇺 Australia', Arabi: '🌍 Arabi' };
+                                    return (
+                                        <button
+                                            key={t}
+                                            className={`btn ${activeTab === t ? 'btn-primary' : 'btn-outline'}`}
+                                            style={{ fontSize: 13, fontWeight: 600, padding: '9px 16px' }}
+                                            onClick={() => setActiveTab(t)}>
+                                            {labels[t]}
+                                        </button>
+                                    );
+                                })}
+                            </div>
+                            <div style={{ background: 'white', borderRadius: 8, boxShadow: '0 2px 8px rgba(0,0,0,0.05)', padding: '16px 20px', marginBottom: 16 }}>
+                                <div style={{ fontSize: 11, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '.05em', color: 'var(--color-navy)', marginBottom: 12 }}>
+                                    Serving size per {activeTab}
+                                </div>
+                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: 8 }}>
+                                    {activeTab === 'UE' && (
+                                        <>
+                                            {(['porzione', 'confezione', 'pezzo'] as const).map((k, i) => {
+                                                const labels = ['Porzione (g/ml)', 'Confezione (g/ml)', 'Pezzo (g/ml)'];
+                                                return (
+                                                    <div key={k} className="form-field" style={{ marginBottom: 0 }}>
+                                                        <label className="form-label">{labels[i]}</label>
+                                                        <input type="number" min={0} placeholder="—" value={ue[k] || ''}
+                                                            onChange={e => setUE(prev => ({ ...prev, [k]: parseFloat(e.target.value) || undefined }))}
+                                                            className="form-input" />
+                                                    </div>
+                                                );
+                                            })}
+                                        </>
+                                    )}
+                                    {activeTab === 'USA' && (
+                                        <>
+                                            {(['cup', 'cucchiaio', 'serving', 'confezione', 'pezzo'] as const).map((k, i) => {
+                                                const labels = ['CUP 240ml (g)', 'Cucchiaio 15ml (g)', 'Serving Size (g/ml)', 'Confezione/UV (g/ml)', 'Pezzo (g/ml)'];
+                                                return (
+                                                    <div key={k} className="form-field" style={{ marginBottom: 0 }}>
+                                                        <label className="form-label">{labels[i]}</label>
+                                                        <input type="number" min={0} placeholder="—" value={usa[k] || ''}
+                                                            onChange={e => setUSA(prev => ({ ...prev, [k]: parseFloat(e.target.value) || undefined }))}
+                                                            className="form-input" />
+                                                    </div>
+                                                );
+                                            })}
+                                        </>
+                                    )}
+                                    {activeTab === 'Canada' && (
+                                        <>
+                                            {(['cup', 'cucchiaio', 'serving', 'confezione', 'pezzo'] as const).map((k, i) => {
+                                                const labels = ['CUP 250ml (g)', 'Cucchiaio 15ml (g)', 'Serving Size (g/ml)', 'Confezione/UV (g/ml)', 'Pezzo (g/ml)'];
+                                                return (
+                                                    <div key={k} className="form-field" style={{ marginBottom: 0 }}>
+                                                        <label className="form-label">{labels[i]}</label>
+                                                        <input type="number" min={0} placeholder="—" value={ca[k] || ''}
+                                                            onChange={e => setCA(prev => ({ ...prev, [k]: parseFloat(e.target.value) || undefined }))}
+                                                            className="form-input" />
+                                                    </div>
+                                                );
+                                            })}
+                                        </>
+                                    )}
+                                    {activeTab === 'Australia' && (
+                                        <>
+                                            {(['serving', 'confezione', 'pezzo'] as const).map((k, i) => {
+                                                const labels = ['Serving Size (g/ml)', 'Confezione/UV (g/ml)', 'Pezzo (g/ml)'];
+                                                return (
+                                                    <div key={k} className="form-field" style={{ marginBottom: 0 }}>
+                                                        <label className="form-label">{labels[i]}</label>
+                                                        <input type="number" min={0} placeholder="—" value={au[k] || ''}
+                                                            onChange={e => setAU(prev => ({ ...prev, [k]: parseFloat(e.target.value) || undefined }))}
+                                                            className="form-input" />
+                                                    </div>
+                                                );
+                                            })}
+                                        </>
+                                    )}
+                                    {activeTab === 'Arabi' && (
+                                        <>
+                                            {(['cup', 'cucchiaio', 'serving', 'confezione', 'pezzo'] as const).map((k, i) => {
+                                                const labels = ['CUP 240ml (g)', 'Cucchiaio 15ml (g)', 'Serving Size (g/ml)', 'Confezione/UV (g/ml)', 'Pezzo (g/ml)'];
+                                                return (
+                                                    <div key={k} className="form-field" style={{ marginBottom: 0 }}>
+                                                        <label className="form-label">{labels[i]}</label>
+                                                        <input type="number" min={0} placeholder="—" value={arabi[k] || ''}
+                                                            onChange={e => setArabi(prev => ({ ...prev, [k]: parseFloat(e.target.value) || undefined }))}
+                                                            className="form-input" />
+                                                    </div>
+                                                );
+                                            })}
+                                        </>
+                                    )}
+                                </div>
+                            </div>
+                            <div style={{ background: 'rgba(67,130,28,.06)', border: '1px solid rgba(67,130,28,.18)', borderRadius: 'var(--radius-sm)', padding: '10px 14px', fontSize: 12, color: 'var(--color-green)', fontWeight: 600 }}>
+                                ✅ Serving size facoltativo — se non specificato la tabella mostrerà solo i valori per 100 g.
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Step 3 — Anteprima & Export */}
+                    {wizardStep === 3 && (
+                        <div>
+                            <h2 style={{ fontFamily: 'Fraunces, serif', fontSize: 18, fontWeight: 900, color: 'var(--color-navy)', marginBottom: 4 }}>
+                                🎉 Tabella pronta!
+                            </h2>
+                            <p style={{ fontSize: 13, color: 'var(--color-text-muted)', marginBottom: 18, lineHeight: 1.55 }}>
+                                Anteprima calcolata · Normativa <strong>{activeTab}</strong>
+                            </p>
+                            {allRows.length === 0 && (
+                                <div style={{ background: 'rgba(217,119,6,.08)', border: '1px solid rgba(217,119,6,.25)', borderRadius: 'var(--radius-sm)', padding: '12px 16px', fontSize: 13, color: 'var(--color-warning)', fontWeight: 600, marginBottom: 16 }}>
+                                    ⚠ Nessun ingrediente inserito. Torna al passo precedente e aggiungi almeno un ingrediente.
+                                </div>
+                            )}
+                            <div style={{ display: 'flex', gap: 8, marginBottom: 16, alignItems: 'center', overflowX: 'auto', paddingBottom: 4 }}>
+                                {(['UE', 'USA', 'Canada', 'Australia', 'Arabi'] as NationTab[]).map(t => {
+                                    const labels: Record<NationTab, string> = { UE: '🇪🇺 UE', USA: '🇺🇸 USA', Canada: '🇨🇦 Canada', Australia: '🇦🇺 Australia', Arabi: '🌍 Arabi' };
+                                    return (
+                                        <button key={t}
+                                            className={`btn ${activeTab === t ? 'btn-primary' : 'btn-outline'}`}
+                                            style={{ fontSize: 14, fontWeight: 600, padding: '8px 0', flex: 1, textAlign: 'center', minWidth: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}
+                                            onClick={() => setActiveTab(t)}>
+                                            {labels[t]}
+                                        </button>
+                                    );
+                                })}
+                            </div>
+                            <div style={{ background: 'white', borderRadius: 8, boxShadow: '0 2px 8px rgba(0,0,0,0.05)', padding: '16px 20px', marginBottom: 16 }}>
+                                <div ref={tableRef}>
+                                    {activeTab === 'UE' && <TabUE p={per100g} ue={ue} specificGravity={parseFloat(specificGravity) || 0} full={showOptionals} />}
+                                    {activeTab === 'USA' && <TabUSA p={per100g} usa={usa} subTab={subTab} setSubTab={setSubTab} full={false} />}
+                                    {activeTab === 'Canada' && <TabCanada p={per100g} ca={ca} subTab={subTab} setSubTab={setSubTab} full={false} />}
+                                    {activeTab === 'Australia' && <TabAustralia p={per100g} au={au} showDI={auShowDI} setShowDI={setAuShowDI} full={false} />}
+                                    {activeTab === 'Arabi' && <TabArabi p={per100g} arabi={arabi} full={false} />}
+                                </div>
+                                {activeTab === 'UE' && (
+                                    <div style={{ marginTop: 12, display: 'flex', justifyContent: 'flex-end' }}>
+                                        <button
+                                            className={`btn ${showOptionals ? 'btn-primary' : 'btn-outline'}`}
+                                            style={{ fontSize: 13, fontWeight: 600, padding: '8px 14px' }}
+                                            onClick={() => setShowOptionals(!showOptionals)}>
+                                            {showOptionals ? '👁️ Nascondi facoltativi' : '👀 Mostra facoltativi'}
+                                        </button>
+                                    </div>
+                                )}
+                            </div>
+                            <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+                                <button className="btn btn-outline" onClick={handleDownloadPNG}>🖼️ Scarica tabella PNG</button>
+                                <button className="btn btn-primary" onClick={handleDownloadEtichettaPDF}>📋 Scarica Scheda Etichetta PDF</button>
+                                <button className="btn btn-primary" onClick={handlePDF}>📄 Scarica PDF completo</button>
+                                <button className="btn btn-primary" onClick={handleSave} style={{ background: 'var(--color-navy)' }}>💾 Salva in archivio</button>
+                            </div>
+                        </div>
+                    )}
+                </div>
+
+                {/* ── Footer navigazione ── */}
+                <div style={{
+                    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                    padding: '14px 28px', borderTop: '1px solid var(--color-border)',
+                    background: 'var(--color-surface)',
+                }}>
+                    <button
+                        className="btn btn-outline"
+                        onClick={() => wizNav(-1)}
+                        disabled={wizardStep === 0}
+                        style={{ opacity: wizardStep === 0 ? 0.4 : 1 }}>
+                        ← Indietro
+                    </button>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                        {fieldErrors.wizardNome && wizardStep === 0 && (
+                            <span style={{ fontSize: 12, color: 'var(--color-danger)', fontWeight: 600 }}>
+                                ⚠ {fieldErrors.wizardNome}
+                            </span>
+                        )}
+                        {fieldErrors.wizardIng && wizardStep === 1 && (
+                            <span style={{ fontSize: 12, color: 'var(--color-danger)', fontWeight: 600 }}>
+                                ⚠ {fieldErrors.wizardIng}
+                            </span>
+                        )}
+                        <button
+                            className="btn btn-accent"
+                            onClick={() => wizardStep === 3 ? toggleWizardMode(false) : wizNav(1)}>
+                            {wizardStep === 3 ? '⚙ Apri modalità Avanzata' : 'Avanti →'}
+                        </button>
+                    </div>
+                </div>
+            </div>
+        );
+    };
+
     return (
         <div style={{ fontSize: 15 }}>
             {/* Custom ingredient modal */}
@@ -1338,6 +1779,7 @@ export function NutrizionaleCalc() {
                 </div>
             </div>
 
+            {!wizardMode && (<>
             {/* Quick Guide — mod 1 (Step 3 text updated) */}
             <div style={{ marginBottom: 20, border: '1.5px solid var(--color-border)', borderRadius: 12, overflow: 'hidden' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 18px', background: 'var(--color-bg-secondary, #f8f9fb)', borderBottom: guideOpen ? '1px solid var(--color-border)' : 'none' }}>
@@ -1749,6 +2191,8 @@ export function NutrizionaleCalc() {
                     <button className="btn btn-primary" onClick={handleSave} style={{ background: 'var(--color-navy)' }}>💾 Salva in archivio</button>
                 </div>
             )}
+            </>)}
+            {wizardMode && renderWizard()}
         </div>
     );
 }
