@@ -1494,6 +1494,28 @@ export function NutrizionaleCalc() {
                                     </button>
                                 )}
                             </div>
+
+                            {/* Additivi */}
+                            <div className="card" style={{ marginBottom: 16 }}>
+                                <div
+                                    onClick={() => setAdditiveOpen(v => !v)}
+                                    style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer', userSelect: 'none' }}
+                                >
+                                    <h3 style={{ margin: 0 }}>⚗️ Additivi <span style={{ fontSize: 12, fontWeight: 400, color: 'var(--color-text-muted)' }}>(solo etichetta, non influenzano i calcoli)</span></h3>
+                                    <span style={{ fontSize: 12, transform: additiveOpen ? 'rotate(90deg)' : 'rotate(0deg)', transition: 'transform 0.2s', display: 'inline-block', color: 'var(--color-text-muted)' }}>▶</span>
+                                </div>
+                                {additiveOpen && (
+                                    <div style={{ marginTop: 12 }}>
+                                        <div style={{ fontSize: 13, color: 'var(--color-text-muted)', marginBottom: 10 }}>Seleziona gli additivi dal database:</div>
+                                        <AdditiveSearch
+                                            chips={additiveChips}
+                                            onAdd={ing => setAdditiveChips(prev => [...prev, ing])}
+                                            onRemove={i => setAdditiveChips(prev => prev.filter((_, j) => j !== i))}
+                                            db={db}
+                                        />
+                                    </div>
+                                )}
+                            </div>
                         </div>
                     )}
 
@@ -1510,10 +1532,9 @@ export function NutrizionaleCalc() {
                                 {(['UE', 'USA', 'Canada', 'Australia', 'Arabi'] as NationTab[]).map(t => {
                                     const labels: Record<NationTab, string> = { UE: '🇪🇺 UE', USA: '🇺🇸 USA', Canada: '🇨🇦 Canada', Australia: '🇦🇺 Australia', Arabi: '🌍 Arabi' };
                                     return (
-                                        <button
-                                            key={t}
+                                        <button key={t}
                                             className={`btn ${activeTab === t ? 'btn-primary' : 'btn-outline'}`}
-                                            style={{ fontSize: 13, fontWeight: 600, padding: '9px 16px' }}
+                                            style={{ fontSize: 14, fontWeight: 600, padding: '8px 0', flex: 1, textAlign: 'center', minWidth: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}
                                             onClick={() => setActiveTab(t)}>
                                             {labels[t]}
                                         </button>
@@ -1521,10 +1542,7 @@ export function NutrizionaleCalc() {
                                 })}
                             </div>
                             <div style={{ background: 'white', borderRadius: 8, boxShadow: '0 2px 8px rgba(0,0,0,0.05)', padding: '16px 20px', marginBottom: 16 }}>
-                                <div style={{ fontSize: 11, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '.05em', color: 'var(--color-navy)', marginBottom: 12 }}>
-                                    Serving size per {activeTab}
-                                </div>
-                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: 8 }}>
+                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: 8, marginBottom: 16 }}>
                                     {activeTab === 'UE' && (
                                         <>
                                             {(['porzione', 'confezione', 'pezzo'] as const).map((k, i) => {
