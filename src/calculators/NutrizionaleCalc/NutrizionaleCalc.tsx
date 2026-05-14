@@ -1060,7 +1060,12 @@ export function NutrizionaleCalc() {
                 }),
             };
         });
-        setComponents(loadedComps.length ? loadedComps : [makeComp()]);
+        const compsToSet = loadedComps.length ? loadedComps : [makeComp()];
+        setComponents(compsToSet);
+        // Ripristina pzUVRaw con i valori caricati (i nuovi ID non combacerebbero altrimenti)
+        const restoredPzUVRaw: Record<string, string> = {};
+        compsToSet.forEach(c => { restoredPzUVRaw[c.id] = String(c.pzUV); });
+        setPzUVRaw(restoredPzUVRaw);
         setCurrentId(item.id);
         setCurrentName(item.name);
         setArchiveOpen(false);
