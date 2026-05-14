@@ -336,7 +336,7 @@ function InfoTooltip({ text }: { text: string }) {
                     fontSize: 13, color: 'var(--color-orange)', lineHeight: 1,
                     display: 'inline-flex', alignItems: 'center',
                 }}
-            >ℹ</button>
+            >ⓘ</button>
             {visible && (
                 <span style={{
                     position: 'absolute', bottom: 'calc(100% + 6px)', left: '50%',
@@ -508,7 +508,7 @@ function CustomIngredientModal({ onClose, onSave }: { onClose: () => void; onSav
     const [nome, setNome] = useState('');
     const [etichetta, setEtichetta] = useState('');
     const [categoria, setCategoria] = useState('ingrediente');
-    const [eurKg, setEurKg] = useState('');
+    const [eurKg, setEurKg] = useState('0');
     // Obbligatori
     const [grassi, setGrassi] = useState('');
     const [saturi, setSaturi] = useState('');
@@ -637,12 +637,15 @@ function CustomIngredientModal({ onClose, onSave }: { onClose: () => void; onSav
     const grid3: React.CSSProperties = { display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 8 };
     const grid2: React.CSSProperties = { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 };
 
-    const NF = ({ label, value, onChange, unit = 'g/100g', ro = false, err = false }: {
+    const NF = ({ label, value, onChange, unit = 'g/100g', ro = false, err = false, tooltip }: {
         label: string; value: string; onChange?: (v: string) => void;
-        unit?: string; ro?: boolean; err?: boolean;
+        unit?: string; ro?: boolean; err?: boolean; tooltip?: string;
     }) => (
         <div>
-            <label style={lS}>{label} <span style={{ fontWeight: 400 }}>{unit}</span></label>
+            <label style={{ ...lS, display: 'flex', alignItems: 'center', gap: 2 }}>
+                <span>{label} <span style={{ fontWeight: 400 }}>{unit}</span></span>
+                {tooltip && <InfoTooltip text={tooltip} />}
+            </label>
             <input type="number" min={0} step={0.01}
                 style={ro ? iSRo : err ? iSErr : iS}
                 value={value}
@@ -714,7 +717,7 @@ function CustomIngredientModal({ onClose, onSave }: { onClose: () => void; onSav
                                 {['ingrediente','semilavorato','prodotto','additivo','aroma'].map(c => <option key={c} value={c}>{c}</option>)}
                             </select>
                         </div>
-                        <NF label="○ Costo" value={eurKg} onChange={setEurKg} unit="€/kg" />
+                        <NF label="○ Costo" value={eurKg} onChange={setEurKg} unit="€/kg" tooltip="Inserire il costo dell'ingrediente per kg. Di default è riportato 0." />
                     </div>
                 </div>
 
@@ -845,6 +848,7 @@ export function NutrizionaleCalc() {
     const [showOptionals, setShowOptionals] = useState(false);
     const [pesoCardOpen, setPesoCardOpen] = useState(true);
     const [compOpen, setCompOpen] = useState<Record<string, boolean>>({});
+    const [pzUVRaw, setPzUVRaw] = useState<Record<string, string>>({});
     const [additiveOpen, setAdditiveOpen] = useState(true);
     const [riepilogoOpen, setRiepilogoOpen] = useState(true);
 
@@ -917,7 +921,7 @@ export function NutrizionaleCalc() {
 
 
     // Component modifiers
-    const addComp = () => { if (components.length < 4) setComponents(prev => [...prev, makeComp()]); };
+    const addComp = () => { setComponents(prev => [...prev, makeComp()]); };
     const removeComp = (id: string) => setComponents(prev => prev.filter(c => c.id !== id));
     const updateCompName = (id: string, name: string) => setComponents(prev => prev.map(c => c.id === id ? { ...c, name } : c));
     const updateCompPzUV = (id: string, pzUV: number) => {
@@ -1276,6 +1280,16 @@ export function NutrizionaleCalc() {
                 setFieldErrors(prev => ({ ...prev, wizardIng: 'Aggiungi almeno un ingrediente per continuare.' }));
                 return;
             }
+            if (wizardStep === 1) {
+                for (const comp of components) {
+                    const raw = pzUVRaw[comp.id] ?? '';
+                    const v = parseFloat(raw.replace(',', '.'));
+                    if (!raw.trim() || isNaN(v) || v < 0.001) {
+                        setFieldErrors(prev => ({ ...prev, [`pzuv-${comp.id}`]: 'Inserisci il numero di pezzi per UV per continuare.' }));
+                        return;
+                    }
+                }
+            }
         }
         setFieldErrors({});
         setWizardStep(prev => Math.max(0, Math.min(3, prev + dir)) as 0 | 1 | 2 | 3);
@@ -1371,34 +1385,36 @@ export function NutrizionaleCalc() {
                             </div>
                             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14, marginBottom: 14 }}>
                                 <div className="form-field" style={{ marginBottom: 0 }}>
-                                    <label className="form-label">Peso finito (g/pz)</label>
+                                    <div style={{ display: 'flex', alignItems: 'center', marginBottom: 4 }}>
+                                        <label className="form-label" style={{ marginBottom: 0 }}>Peso prodotto finito (g/pz)</label>
+                                        <InfoTooltip text="Peso del prodotto dopo cottura, disidratazione o evaporazione di acqua. Deve essere uguale o inferiore al peso del prodotto processato." />
+                                    </div>
                                     <input
                                         type="number" min={0} className="form-input"
                                         placeholder="es. 120"
                                         value={finishedWeight}
-                                        onChange={e => setFinishedWeight(e.target.value)}
+                                        onChange={e => handleFW(e.target.value)}
+                                        style={fwWarning ? { borderColor: '#e53e3e' } : {}}
                                     />
-                                    <span className="hint">Peso netto dopo lavorazione/cottura.</span>
+                                    {fwWarning && (
+                                        <div style={{ fontSize: 11, color: '#e53e3e', marginTop: 3, fontWeight: 600 }}>
+                                            ⚠️ Il valore deve essere uguale o inferiore al peso del prodotto processato ({totalGramsRaw.toFixed(0)}g).
+                                        </div>
+                                    )}
+                                    {!fwWarning && <span className="hint">Peso netto dopo lavorazione/cottura.</span>}
                                 </div>
                                 <div className="form-field" style={{ marginBottom: 0 }}>
-                                    <label className="form-label">Peso specifico (g/ml)</label>
+                                    <div style={{ display: 'flex', alignItems: 'center', marginBottom: 4 }}>
+                                        <label className="form-label" style={{ marginBottom: 0 }}>Peso specifico (g/ml)</label>
+                                        <InfoTooltip text="Inserisci il peso specifico SOLO per alimenti liquidi (bevande, vino, birra, succhi, latte, ecc.). Quando compilato, i valori nutrizionali verranno espressi su 100 ml anziché 100 g, e apparirà: 'Valori nutrizionali medi in 100 ml di prodotto'." />
+                                    </div>
                                     <input
-                                        type="number" min={0} className="form-input"
-                                        placeholder="Solo per liquidi"
+                                        type="number" min={0} step={0.01} className="form-input"
+                                        placeholder="opzionale"
                                         value={specificGravity}
                                         onChange={e => setSpecificGravity(e.target.value)}
                                     />
-                                    <span className="hint">Facoltativo.</span>
                                 </div>
-                            </div>
-                            <div className="form-field" style={{ maxWidth: 220 }}>
-                                <label className="form-label">N. pezzi per UV (Componente 1)</label>
-                                <input
-                                    type="number" min={1} step={0.1} className="form-input"
-                                    value={components[0]?.pzUV ?? 1}
-                                    onChange={e => updateCompPzUV(components[0].id, parseFloat(e.target.value) || 1)}
-                                />
-                                <span className="hint">Pezzi contenuti nell'unità di vendita (1 = prodotto sfuso).</span>
                             </div>
                         </div>
                     )}
@@ -1410,7 +1426,7 @@ export function NutrizionaleCalc() {
                                 🥗 Ingredienti della ricetta
                             </h2>
                             <p style={{ fontSize: 13, color: 'var(--color-text-muted)', marginBottom: 22, lineHeight: 1.55 }}>
-                                Cerca ogni ingrediente nel database e inserisci i grammi per l'intera ricetta. Puoi gestire fino a 4 componenti separati.
+                                Cerca ogni ingrediente nel database e inserisci i grammi per l'intera ricetta. Puoi aggiungere più componenti separati.
                             </p>
                             {fieldErrors.wizardIng && (
                                 <div style={{ background: 'rgba(229,62,62,.07)', border: '1px solid rgba(229,62,62,.22)', borderRadius: 'var(--radius-sm)', padding: '8px 12px', marginBottom: 14, fontSize: 12, color: 'var(--color-danger)', fontWeight: 600 }}>
@@ -1440,8 +1456,35 @@ export function NutrizionaleCalc() {
                                                     </div>
                                                     <div className="form-field">
                                                         <label className="form-label">N. pezzi per UV</label>
-                                                        <input type="number" min={1} step={0.1} className="form-input" value={comp.pzUV}
-                                                            onChange={e => updateCompPzUV(comp.id, parseFloat(e.target.value) || 1)} />
+                                                        <input
+                                                            type="text"
+                                                            inputMode="decimal"
+                                                            placeholder="Obbligatorio per procedere"
+                                                            className="form-input"
+                                                            value={pzUVRaw[comp.id] ?? ''}
+                                                            onChange={e => {
+                                                                const raw = e.target.value;
+                                                                setPzUVRaw(prev => ({ ...prev, [comp.id]: raw }));
+                                                                const v = parseFloat(raw.replace(',', '.'));
+                                                                if (!isNaN(v) && v >= 0.001) {
+                                                                    updateCompPzUV(comp.id, v);
+                                                                    setFieldErrors(prev => ({ ...prev, [`pzuv-${comp.id}`]: '' }));
+                                                                }
+                                                            }}
+                                                            onBlur={e => {
+                                                                const raw = e.target.value.trim();
+                                                                const v = parseFloat(raw.replace(',', '.'));
+                                                                if (!raw || isNaN(v) || v < 0.001) {
+                                                                    setFieldErrors(prev => ({ ...prev, [`pzuv-${comp.id}`]: 'Inserisci il numero di pezzi per UV per continuare.' }));
+                                                                } else {
+                                                                    updateCompPzUV(comp.id, v);
+                                                                    setFieldErrors(prev => ({ ...prev, [`pzuv-${comp.id}`]: '' }));
+                                                                }
+                                                            }}
+                                                        />
+                                                        {fieldErrors[`pzuv-${comp.id}`] && (
+                                                            <div style={{ fontSize: 12, color: 'var(--color-danger)', marginTop: 4, fontWeight: 600 }}>⚠ {fieldErrors[`pzuv-${comp.id}`]}</div>
+                                                        )}
                                                     </div>
                                                     <IngSearch onAdd={(ing) => addRowToComp(comp.id, ing)} db={db} loading={loadingDB} error={dbError} />
                                                     {comp.rows.length > 0 && (
@@ -1464,7 +1507,7 @@ export function NutrizionaleCalc() {
                                                                                 <td>
                                                                                     <input
                                                                                         type="number" min={0} step={0.1}
-                                                                                        className="form-input" style={{ width: 90, padding: '4px 8px' }}
+                                                                                        className="form-input" style={{ width: 110, padding: '4px 8px' }}
                                                                                         value={row.grams}
                                                                                         onChange={e => updateGrams(comp.id, row.id, parseFloat(e.target.value) || 0)}
                                                                                     />
@@ -1488,7 +1531,7 @@ export function NutrizionaleCalc() {
                                         </div>
                                     );
                                 })}
-                                {components.length < 4 && (
+                                {(
                                     <button className="btn btn-outline" onClick={addComp} style={{ marginBottom: 12 }}>
                                         ➕ Aggiungi componente
                                     </button>
@@ -1516,6 +1559,28 @@ export function NutrizionaleCalc() {
                                     </div>
                                 )}
                             </div>
+
+                            {/* Riepilogo ingredienti */}
+                            {allRows.length > 0 && (
+                                <div style={{ background: 'var(--color-surface)', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-sm)', padding: '12px 16px', marginTop: 8 }}>
+                                    <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--color-navy)', marginBottom: 8 }}>
+                                        📋 Riepilogo ingredienti <span style={{ fontWeight: 400, color: 'var(--color-text-muted)' }}>({allRows.length})</span>
+                                    </div>
+                                    {allRows.map((row, i) => {
+                                        const pct = totalGramsRaw > 0 ? (row.grams / totalGramsRaw * 100) : 0;
+                                        return (
+                                            <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '5px 0', borderBottom: i < allRows.length - 1 ? '1px solid var(--color-border)' : 'none' }}>
+                                                <span style={{ flex: 1, fontSize: 13, fontWeight: 500 }}>{(row.ing.nome || '').trim()}</span>
+                                                <span style={{ fontSize: 13, color: 'var(--color-text-muted)', minWidth: 60, textAlign: 'right' }}>{row.grams} g</span>
+                                                <span style={{ fontSize: 12, color: 'var(--color-text-dim)', minWidth: 44, textAlign: 'right' }}>{pct.toFixed(1)}%</span>
+                                            </div>
+                                        );
+                                    })}
+                                    <div style={{ marginTop: 8, paddingTop: 8, display: 'flex', justifyContent: 'flex-end', fontSize: 13, fontWeight: 700 }}>
+                                        <span>Totale: {totalGramsRaw.toFixed(0)} g</span>
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     )}
 
@@ -1663,12 +1728,15 @@ export function NutrizionaleCalc() {
                                 </div>
                                 {activeTab === 'UE' && (
                                     <div style={{ marginTop: 12, display: 'flex', justifyContent: 'flex-end' }}>
-                                        <button
-                                            className={`btn ${showOptionals ? 'btn-primary' : 'btn-outline'}`}
-                                            style={{ fontSize: 13, fontWeight: 600, padding: '8px 14px' }}
-                                            onClick={() => setShowOptionals(!showOptionals)}>
-                                            {showOptionals ? '👁️ Nascondi facoltativi' : '👀 Mostra facoltativi'}
-                                        </button>
+                                        <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, fontWeight: 600, cursor: 'pointer', color: 'var(--color-text-muted)' }}>
+                                            <input
+                                                type="checkbox"
+                                                checked={showOptionals}
+                                                onChange={e => setShowOptionals(e.target.checked)}
+                                                style={{ width: 15, height: 15, cursor: 'pointer', accentColor: 'var(--color-orange)' }}
+                                            />
+                                            Mostra valori facoltativi
+                                        </label>
                                     </div>
                                 )}
                             </div>
@@ -1846,6 +1914,41 @@ export function NutrizionaleCalc() {
                 </div>
             </div>
 
+            {/* Weight card — collapsible */}
+            <div className="card" style={{ marginBottom: 20 }}>
+                <div
+                    onClick={() => setPesoCardOpen(v => !v)}
+                    style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer', userSelect: 'none' }}
+                >
+                    <h3 style={{ margin: 0 }}>⚖️ Peso prodotto</h3>
+                    <span style={{ fontSize: 12, transform: pesoCardOpen ? 'rotate(90deg)' : 'rotate(0deg)', transition: 'transform 0.2s', display: 'inline-block', color: 'var(--color-text-muted)' }}>▶</span>
+                </div>
+                <div style={{ maxHeight: pesoCardOpen ? '400px' : '0', overflow: 'hidden', transition: 'max-height 0.3s ease' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 12, marginTop: 16 }}>
+                        <div className="form-field" style={{ marginBottom: 0 }}>
+                            <div style={{ display: 'flex', alignItems: 'center', marginBottom: 4 }}>
+                                <label className="form-label" style={{ marginBottom: 0 }}>Peso prodotto finito (g)</label>
+                                <InfoTooltip text="Peso del prodotto dopo cottura, disidratazione o evaporazione di acqua. Deve essere uguale o inferiore al peso del prodotto processato." />
+                            </div>
+                            <input type="number" min={0} placeholder={`max ${totalGramsRaw.toFixed(0)}g`} value={finishedWeight}
+                                onChange={e => handleFW(e.target.value)}
+                                className="form-input" style={fwWarning ? { borderColor: '#e53e3e' } : {}} />
+                            <ValidationError message={fieldErrors['finished-weight']} visible={!!fieldErrors['finished-weight']} />
+                            {fwWarning && <div style={{ fontSize: 11, color: '#e53e3e', marginTop: 3, fontWeight: 600 }}>⚠️ Inserire un valore uguale o inferiore al peso del prodotto processato ({totalGramsRaw.toFixed(0)}g).</div>}
+                        </div>
+                        <div className="form-field" style={{ marginBottom: 0 }}>
+                            <div style={{ display: 'flex', alignItems: 'center', marginBottom: 4 }}>
+                                <label className="form-label" style={{ marginBottom: 0 }}>Peso specifico (g/ml)</label>
+                                <InfoTooltip text="Inserisci il peso specifico SOLO per alimenti liquidi (bevande, vino, birra, succhi, latte, ecc.). Quando compilato, i valori nutrizionali verranno espressi su 100 ml anziché 100 g, e apparirà: 'Valori nutrizionali medi in 100 ml di prodotto'." />
+                            </div>
+                            <input type="number" min={0} step={0.01} placeholder="opzionale" value={specificGravity}
+                                onChange={e => setSpecificGravity(e.target.value)}
+                                className="form-input" />
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             {/* Components — mod 3, 4, 5, 6: PZ/UV decimals, tooltips, €/kg zero fix, wider fields */}
             {components.map((comp, ci) => {
                 const isCompOpen = compOpen[comp.id] !== false;
@@ -1868,7 +1971,7 @@ export function NutrizionaleCalc() {
                         <div className="form-field" style={{ marginBottom: 0 }}>
                             <div style={{ display: 'flex', alignItems: 'center', marginBottom: 4 }}>
                                 <label className="form-label" style={{ marginBottom: 0 }}>Nome componente</label>
-                                <InfoTooltip text="Inserisci il nome del componente (es: pasta, farcitura, ricopertura). Un prodotto può avere fino a 4 componenti." />
+                                <InfoTooltip text="Inserisci il nome del componente (es: pasta, farcitura, ricopertura)." />
                             </div>
                             <input type="text" placeholder="Nome componente opzionale (es. impasto, crema)" value={comp.name}
                                 onChange={e => updateCompName(comp.id, e.target.value)} className="form-input" />
@@ -1877,12 +1980,35 @@ export function NutrizionaleCalc() {
                             <div>
                                 <div style={{ display: 'flex', alignItems: 'center', marginBottom: 4 }}>
                                     <label className="form-label" style={{ whiteSpace: 'nowrap', marginBottom: 0, fontSize: 13 }}>Fabbisogno per PZ/U.V.</label>
-                                    <InfoTooltip text="Inserisci il numero di pezzi (o unità di vendita) che si ottengono dalla ricetta inserita. Esempio: se la ricetta produce 15,944 vasetti da 100g, inserire 15.944" />
+                                    <InfoTooltip text="Numero di pezzi (o unità di vendita) ottenuti dalla ricetta. Es: 15.944 se la ricetta produce 15,944 vasetti. Obbligatorio per procedere." />
                                 </div>
-                                <div style={{ width: 100 }}>
-                                    <input type="number" min={0.001} step={0.001} value={comp.pzUV}
-                                        onChange={e => updateCompPzUV(comp.id, parseFloat(e.target.value) || 1)}
-                                        className="form-input" />
+                                <div style={{ width: 120 }}>
+                                    <input
+                                        type="text"
+                                        inputMode="decimal"
+                                        placeholder="Obbligatorio"
+                                        value={pzUVRaw[comp.id] ?? ''}
+                                        onChange={e => {
+                                            const raw = e.target.value;
+                                            setPzUVRaw(prev => ({ ...prev, [comp.id]: raw }));
+                                            const v = parseFloat(raw.replace(',', '.'));
+                                            if (!isNaN(v) && v >= 0.001) {
+                                                updateCompPzUV(comp.id, v);
+                                                setFieldErrors(prev => ({ ...prev, [`${comp.id}-pzuv`]: '' }));
+                                            }
+                                        }}
+                                        onBlur={e => {
+                                            const raw = e.target.value.trim();
+                                            const v = parseFloat(raw.replace(',', '.'));
+                                            if (!raw || isNaN(v) || v < 0.001) {
+                                                setFieldErrors(prev => ({ ...prev, [`${comp.id}-pzuv`]: 'Inserisci il numero di pezzi per UV.' }));
+                                            } else {
+                                                updateCompPzUV(comp.id, v);
+                                                setFieldErrors(prev => ({ ...prev, [`${comp.id}-pzuv`]: '' }));
+                                            }
+                                        }}
+                                        className="form-input"
+                                    />
                                 </div>
                                 <ValidationError message={fieldErrors[`${comp.id}-pzuv`]} visible={!!fieldErrors[`${comp.id}-pzuv`]} />
                             </div>
@@ -1901,7 +2027,7 @@ export function NutrizionaleCalc() {
                                         <div style={{ display: 'flex', alignItems: 'center' }}>
                                             <InfoTooltip text="Grammi dell'ingrediente nella ricetta totale, per tutti i pezzi" />
                                         </div>
-                                        <div style={{ width: 80 }}>
+                                        <div style={{ width: 110 }}>
                                             <input type="number" min={0} value={row.grams}
                                                 onChange={e => updateGrams(comp.id, row.id, parseFloat(e.target.value) || 0)}
                                                 className="form-input" />
@@ -1912,9 +2038,10 @@ export function NutrizionaleCalc() {
                                     {gramsPerPiece !== null && <span style={{ fontSize: 11, color: 'var(--color-text-muted)' }}>({gramsPerPiece.toFixed(1)}g/pz)</span>}
                                     <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
                                         <span style={{ fontSize: 11, color: 'var(--color-text-muted)' }}>€/kg</span>
-                                        <InfoTooltip text="Costo dell'ingrediente per kg, IVA esclusa. Inserire 0 se non si vuole calcolare il costo." />
+                                        <InfoTooltip text="Costo dell'ingrediente per kg, IVA esclusa. Non è obbligatorio: se non inserisci nulla, il valore predefinito è 0 e il costo non verrà calcolato." />
                                         {/* mod 5: allow zero; mod 6: 150px width for better readability */}
                                         <input type="number" min={0} step={0.01}
+                                            placeholder="default: 0"
                                             value={row.eurKg === 0 || row.eurKg ? row.eurKg : ''}
                                             onChange={e => updateEurKg(comp.id, row.id, e.target.value === '' ? 0 : parseFloat(e.target.value) || 0)}
                                             className="form-input" style={{ width: 150 }} />
@@ -1950,9 +2077,7 @@ export function NutrizionaleCalc() {
                 );
             })}
 
-            {components.length < 4 && (
-                <button className="btn btn-outline" style={{ marginBottom: 16 }} onClick={addComp}>+ Aggiungi componente</button>
-            )}
+            <button className="btn btn-outline" style={{ marginBottom: 16 }} onClick={addComp}>+ Aggiungi componente</button>
 
             {/* Additives — mod 8: chip-based from DB ONLY (no free text) */}
             <div className="card" style={{ marginBottom: 16 }}>
@@ -2008,40 +2133,6 @@ export function NutrizionaleCalc() {
                 </div>
             )}
 
-            {/* Weight card — collapsible */}
-            <div className="card" style={{ marginBottom: 20 }}>
-                <div
-                    onClick={() => setPesoCardOpen(v => !v)}
-                    style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer', userSelect: 'none' }}
-                >
-                    <h3 style={{ margin: 0 }}>⚖️ Pesi prodotto</h3>
-                    <span style={{ fontSize: 12, transform: pesoCardOpen ? 'rotate(90deg)' : 'rotate(0deg)', transition: 'transform 0.2s', display: 'inline-block', color: 'var(--color-text-muted)' }}>▶</span>
-                </div>
-                <div style={{ maxHeight: pesoCardOpen ? '400px' : '0', overflow: 'hidden', transition: 'max-height 0.3s ease' }}>
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 12, marginTop: 16 }}>
-                        <div className="form-field" style={{ marginBottom: 0 }}>
-                            <div style={{ display: 'flex', alignItems: 'center', marginBottom: 4 }}>
-                                <label className="form-label" style={{ marginBottom: 0 }}>Peso prodotto finito (g)</label>
-                                <InfoTooltip text="Peso del prodotto dopo cottura, disidratazione o evaporazione di acqua. Deve essere inferiore o uguale al peso crudo. Questo valore viene utilizzato per calcolare i nutrienti per 100g del prodotto finito." />
-                            </div>
-                            <input type="number" min={0} placeholder={`max ${totalGramsRaw.toFixed(0)}g`} value={finishedWeight}
-                                onChange={e => handleFW(e.target.value)}
-                                className="form-input" style={fwWarning ? { borderColor: '#e53e3e' } : {}} />
-                            <ValidationError message={fieldErrors['finished-weight']} visible={!!fieldErrors['finished-weight']} />
-                            {fwWarning && <div style={{ fontSize: 11, color: '#e53e3e', marginTop: 3 }}>⚠️ Il peso del prodotto finito non può essere superiore al peso del prodotto crudo ({totalGramsRaw.toFixed(0)}g). Inserire un valore uguale o inferiore.</div>}
-                        </div>
-                        <div className="form-field" style={{ marginBottom: 0 }}>
-                            <div style={{ display: 'flex', alignItems: 'center', marginBottom: 4 }}>
-                                <label className="form-label" style={{ marginBottom: 0 }}>Peso specifico (g/ml)</label>
-                                <InfoTooltip text="Inserisci il peso specifico SOLO per alimenti liquidi (bevande, vino, birra, succhi, latte, ecc.). Quando compilato, i valori nutrizionali verranno espressi su 100 ml anziché 100 g, e apparirà: 'Valori nutrizionali medi in 100 ml di prodotto'." />
-                            </div>
-                            <input type="number" min={0} step={0.01} placeholder="opzionale" value={specificGravity}
-                                onChange={e => setSpecificGravity(e.target.value)}
-                                className="form-input" />
-                        </div>
-                    </div>
-                </div>
-            </div>
 
             {/* Allergens */}
             <div style={{ marginBottom: 20 }}>
@@ -2189,12 +2280,15 @@ export function NutrizionaleCalc() {
                         </div>
                         {activeTab === 'UE' && (
                             <div style={{ marginTop: 12, display: 'flex', justifyContent: 'flex-end' }}>
-                                <button
-                                    className={`btn ${showOptionals ? 'btn-primary' : 'btn-outline'}`}
-                                    style={{ fontSize: 13, fontWeight: 600, padding: '8px 14px' }}
-                                    onClick={() => setShowOptionals(!showOptionals)}>
-                                    {showOptionals ? '👁️ Nascondi facoltativi' : '👀 Mostra facoltativi'}
-                                </button>
+                                <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, fontWeight: 600, cursor: 'pointer', color: 'var(--color-text-muted)' }}>
+                                    <input
+                                        type="checkbox"
+                                        checked={showOptionals}
+                                        onChange={e => setShowOptionals(e.target.checked)}
+                                        style={{ width: 15, height: 15, cursor: 'pointer', accentColor: 'var(--color-orange)' }}
+                                    />
+                                    Mostra valori facoltativi
+                                </label>
                             </div>
                         )}
                     </div>

@@ -13,7 +13,11 @@
       "Bash(git add:*)",
       "Bash(git commit:*)",
       "Bash(vercel --prod --yes)",
-      "Bash(npx tsc:*)"
+      "Bash(npx tsc:*)",
+      "Read(//Users/novanta/Desktop/APP/**)",
+      "Bash(npx create-video@latest --yes --blank --no-tailwind nutrizionale-intro)",
+      "Bash(npm i:*)",
+      "Bash(npx remotion:*)"
     ]
   }
 }
