@@ -905,6 +905,12 @@ export function NutrizionaleCalc() {
     // Calculation
     const per100g = useMemo(() => calcNutrients(components, fw), [components, fw]);
 
+    // Se peso specifico inserito, i valori per 100ml = valori per 100g × densità
+    const per100display = useMemo(() => {
+        const sgVal = parseFloat(specificGravity) || 0;
+        return sgVal > 0 ? scaleResult(per100g, sgVal * 100) : per100g;
+    }, [per100g, specificGravity]);
+
     // Allergens
     const presentAllergens = useMemo(() => {
         const set = new Set<string>();
@@ -1173,9 +1179,11 @@ export function NutrizionaleCalc() {
             // ── Valori nutrizionali dettagliati ──
             if (y > 245) { doc.addPage(); y = 15; }
             doc.setFontSize(11); doc.setFont('helvetica', 'bold'); doc.setTextColor(12, 19, 38);
-            doc.text('Valori Nutrizionali per 100g (tutti i dati calcolati)', M, y); y += 5;
+            const p = per100display;
+            const sgVal = parseFloat(specificGravity) || 0;
+            const pdfLabel = sgVal > 0 ? `Valori Nutrizionali per 100ml (peso specifico: ${sgVal})` : 'Valori Nutrizionali per 100g';
+            doc.text(pdfLabel + ' (tutti i dati calcolati)', M, y); y += 5;
             doc.setDrawColor(220, 220, 220); doc.line(M, y, W - M, y); y += 5;
-            const p = per100g;
             const rows: [string, string][] = [
                 ['Energia', `${p.energyKj.toFixed(0)} kJ / ${p.energyKcal.toFixed(0)} kcal`],
                 ['Grassi totali', `${p.grassi.toFixed(1)} g`],
@@ -1720,11 +1728,11 @@ export function NutrizionaleCalc() {
                             </div>
                             <div style={{ background: 'white', borderRadius: 8, boxShadow: '0 2px 8px rgba(0,0,0,0.05)', padding: '16px 20px', marginBottom: 16 }}>
                                 <div ref={tableRef}>
-                                    {activeTab === 'UE' && <TabUE p={per100g} ue={ue} specificGravity={parseFloat(specificGravity) || 0} full={showOptionals} />}
-                                    {activeTab === 'USA' && <TabUSA p={per100g} usa={usa} subTab={subTab} setSubTab={setSubTab} full={false} />}
-                                    {activeTab === 'Canada' && <TabCanada p={per100g} ca={ca} subTab={subTab} setSubTab={setSubTab} full={false} />}
-                                    {activeTab === 'Australia' && <TabAustralia p={per100g} au={au} showDI={auShowDI} setShowDI={setAuShowDI} full={false} />}
-                                    {activeTab === 'Arabi' && <TabArabi p={per100g} arabi={arabi} full={false} />}
+                                    {activeTab === 'UE' && <TabUE p={per100display} ue={ue} specificGravity={parseFloat(specificGravity) || 0} full={showOptionals} />}
+                                    {activeTab === 'USA' && <TabUSA p={per100display} usa={usa} subTab={subTab} setSubTab={setSubTab} full={false} />}
+                                    {activeTab === 'Canada' && <TabCanada p={per100display} ca={ca} subTab={subTab} setSubTab={setSubTab} full={false} />}
+                                    {activeTab === 'Australia' && <TabAustralia p={per100display} au={au} showDI={auShowDI} setShowDI={setAuShowDI} full={false} />}
+                                    {activeTab === 'Arabi' && <TabArabi p={per100display} arabi={arabi} full={false} />}
                                 </div>
                                 {activeTab === 'UE' && (
                                     <div style={{ marginTop: 12, display: 'flex', justifyContent: 'flex-end' }}>
@@ -2272,11 +2280,11 @@ export function NutrizionaleCalc() {
                         </div>
                         <hr style={{ border: 'none', borderTop: '1px solid var(--color-border)', marginBottom: 16 }} />
                         <div ref={tableRef}>
-                            {activeTab === 'UE' && <TabUE p={per100g} ue={ue} specificGravity={parseFloat(specificGravity) || 0} full={showOptionals} />}
-                            {activeTab === 'USA' && <TabUSA p={per100g} usa={usa} subTab={subTab} setSubTab={setSubTab} full={false} />}
-                            {activeTab === 'Canada' && <TabCanada p={per100g} ca={ca} subTab={subTab} setSubTab={setSubTab} full={false} />}
-                            {activeTab === 'Australia' && <TabAustralia p={per100g} au={au} showDI={auShowDI} setShowDI={setAuShowDI} full={false} />}
-                            {activeTab === 'Arabi' && <TabArabi p={per100g} arabi={arabi} full={false} />}
+                            {activeTab === 'UE' && <TabUE p={per100display} ue={ue} specificGravity={parseFloat(specificGravity) || 0} full={showOptionals} />}
+                            {activeTab === 'USA' && <TabUSA p={per100display} usa={usa} subTab={subTab} setSubTab={setSubTab} full={false} />}
+                            {activeTab === 'Canada' && <TabCanada p={per100display} ca={ca} subTab={subTab} setSubTab={setSubTab} full={false} />}
+                            {activeTab === 'Australia' && <TabAustralia p={per100display} au={au} showDI={auShowDI} setShowDI={setAuShowDI} full={false} />}
+                            {activeTab === 'Arabi' && <TabArabi p={per100display} arabi={arabi} full={false} />}
                         </div>
                         {activeTab === 'UE' && (
                             <div style={{ marginTop: 12, display: 'flex', justifyContent: 'flex-end' }}>
