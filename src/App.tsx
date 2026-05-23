@@ -12,6 +12,7 @@ import { RintracciabilitaCalc } from './calculators/RintracciabilitaCalc/Rintrac
 import { TrattamentoTermicoCalc } from './calculators/TrattamentoTermicoCalc/TrattamentoTermicoCalc';
 import { SchedeCompleteCalc } from './calculators/SchedeCompleteCalc/SchedeCompleteCalc';
 import { SchedaProcessoCalc } from './calculators/SchedaProcessoCalc/SchedaProcessoCalc';
+import { RisorseLinks } from './components/RisorseLinks';
 
 export default function App() {
   return (
@@ -29,6 +30,7 @@ export default function App() {
           >
             <Route index element={<Navigate to="/dashboard" replace />} />
             <Route path="dashboard" element={<Dashboard />} />
+            <Route path="risorse" element={<RisorseLinks />} />
             <Route
               path="tool/nutrizionale"
               element={

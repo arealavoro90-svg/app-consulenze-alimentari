@@ -1,7 +1,22 @@
 
 import { NavLink, useNavigate } from 'react-router-dom';
+import {
+    Home, LogOut, Salad, Tag, Wine, Package,
+    Thermometer, FileText, Settings2, LayoutGrid, BookOpen,
+} from 'lucide-react';
 import { useAuth } from '../auth/AuthContext';
 import { TOOLS_CATALOG } from '../data/mockUsers';
+import type { ToolId } from '../data/mockUsers';
+
+const TOOL_ICONS: Record<ToolId, React.ReactNode> = {
+    'nutrizionale':       <Salad size={16} />,
+    'etichette':          <Tag size={16} />,
+    'etichette-vini':     <Wine size={16} />,
+    'rintracciabilita':   <Package size={16} />,
+    'trattamento-termico':<Thermometer size={16} />,
+    'schede-complete':    <FileText size={16} />,
+    'scheda-processo':    <Settings2 size={16} />,
+};
 
 interface SidebarProps {
     isOpen?: boolean;
@@ -62,8 +77,16 @@ export function Sidebar({ isOpen = false, onClose }: SidebarProps) {
                     className={({ isActive }) => `sidebar-nav-item${isActive ? ' active' : ''}`}
                     onClick={onClose}
                 >
-                    <span className="sidebar-nav-icon">🏠</span>
+                    <span className="sidebar-nav-icon"><Home size={16} /></span>
                     Dashboard
+                </NavLink>
+                <NavLink
+                    to="/risorse"
+                    className={({ isActive }) => `sidebar-nav-item${isActive ? ' active' : ''}`}
+                    onClick={onClose}
+                >
+                    <span className="sidebar-nav-icon"><BookOpen size={16} /></span>
+                    Links e Risorse
                 </NavLink>
 
                 <div className="sidebar-section-label" style={{ marginTop: 16 }}>I tuoi strumenti</div>
@@ -76,7 +99,7 @@ export function Sidebar({ isOpen = false, onClose }: SidebarProps) {
                             className={({ isActive }) => `sidebar-nav-item${isActive ? ' active' : ''}`}
                             onClick={onClose}
                         >
-                            <span className="sidebar-nav-icon">{tool.icon}</span>
+                            <span className="sidebar-nav-icon">{TOOL_ICONS[toolId]}</span>
                             {tool.label}
                         </NavLink>
                     );
@@ -85,7 +108,7 @@ export function Sidebar({ isOpen = false, onClose }: SidebarProps) {
 
             <div className="sidebar-footer">
                 <button className="sidebar-logout-btn" onClick={handleLogout}>
-                    <span>🚪</span>
+                    <LogOut size={15} />
                     Esci dall'account
                 </button>
             </div>

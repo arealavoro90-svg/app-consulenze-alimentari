@@ -444,7 +444,7 @@ export function EtichetteViniCalc() {
 
             {/* ── TAB 1: VALORI NUTRIZIONALI ───────────────────────────────── */}
             {activeTab === 'nutrizionale' && (
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 20 }}>
                     {/* Input */}
                     <div className="card">
                         <h3 style={{ fontWeight: 700, fontSize: 15, marginBottom: 18 }}>🔬 Dati Analitici di Laboratorio</h3>
@@ -485,7 +485,8 @@ export function EtichetteViniCalc() {
                     <div className="card" style={{ alignSelf: 'start' }}>
                         <h3 style={{ fontWeight: 700, fontSize: 15, marginBottom: 18 }}>📊 Tabella Nutrizionale Calcolata</h3>
                         <div style={{ fontSize: 11, color: 'var(--color-text-muted)', marginBottom: 10 }}>Valori nutrizionali medi per 100 ml</div>
-                        <table style={{ width: '100%', borderCollapse: 'collapse', fontFamily: 'inherit' }}>
+                        <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' as any }}>
+                        <table style={{ width: '100%', borderCollapse: 'collapse', fontFamily: 'inherit', minWidth: 260 }}>
                             <tbody>
                                 {([
                                     ['Energia', `${fmt(nutrition.kj, 0)} kJ / ${fmt(nutrition.kcal, 0)} kcal`, true],
@@ -503,6 +504,7 @@ export function EtichetteViniCalc() {
                                 ))}
                             </tbody>
                         </table>
+                        </div>
                         <div style={{ marginTop: 16, background: 'linear-gradient(135deg,rgba(255,126,46,0.08),rgba(12,19,38,0.04))', border: '1.5px solid rgba(255,126,46,0.25)', borderRadius: 10, padding: '12px 16px' }}>
                             <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--color-orange)', textTransform: 'uppercase', letterSpacing: '.05em', marginBottom: 4 }}>Energia totale per 100 ml</div>
                             <div style={{ fontSize: 22, fontWeight: 800, color: 'var(--color-navy)' }}>{fmt(nutrition.kj, 0)} kJ <span style={{ fontSize: 14, fontWeight: 500 }}>/ {fmt(nutrition.kcal, 0)} kcal</span></div>
@@ -619,7 +621,7 @@ export function EtichetteViniCalc() {
                     </LabelRow>
 
                     <LabelRow label="Lotto — Volume nominale — Titolo alcolometrico" badge={<Badge text="obbligatorio" color="orange" />}>
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10 }}>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: 10 }}>
                             <div><label className="form-label" style={{ fontSize: 11 }}>Lotto</label><input className="form-input" type="text" value={label.lotto} onChange={e => setL('lotto', e.target.value)} placeholder="L123" /></div>
                             <div><label className="form-label" style={{ fontSize: 11 }}>Volume nominale</label><input className="form-input" type="text" value={label.volumeNominale} onChange={e => setL('volumeNominale', e.target.value)} placeholder="750 ml" /></div>
                             <div><label className="form-label" style={{ fontSize: 11 }}>Titolo alcolometrico</label><input className="form-input" type="text" readOnly value={titoloAlco} style={{ background: '#f5f5f5', color: 'var(--color-text-muted)' }} /></div>
@@ -674,7 +676,7 @@ export function EtichetteViniCalc() {
             {activeTab === 'anteprima' && (
                 <div>
                     {/* Preview */}
-                    <div ref={previewRef} style={{ background: '#faf8f0', border: '2.5px solid #8b4513', borderRadius: 10, padding: '28px 32px', fontFamily: 'Georgia, "Times New Roman", serif', color: '#111', maxWidth: 520, marginBottom: 20, lineHeight: 1.8 }}>
+                    <div ref={previewRef} style={{ background: '#faf8f0', border: '2.5px solid #8b4513', borderRadius: 10, padding: '28px 32px', fontFamily: 'Georgia, "Times New Roman", serif', color: '#111', maxWidth: 'min(520px, 100%)', marginBottom: 20, lineHeight: 1.8 }}>
                         {label.nomeCommerciale && <div style={{ fontSize: 22, fontWeight: 700, textAlign: 'center', marginBottom: 4, letterSpacing: '.03em' }}>{label.nomeCommerciale}</div>}
                         {label.categoriaVino && <div style={{ textAlign: 'center', fontSize: 12, textTransform: 'uppercase', letterSpacing: '.1em', marginBottom: 4 }}>{label.categoriaVino}</div>}
                         {label.tenoreZuccheri && isSpumante && <div style={{ textAlign: 'center', fontSize: 11, color: '#555', marginBottom: 4 }}>{label.tenoreZuccheri}</div>}

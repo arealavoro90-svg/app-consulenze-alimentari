@@ -648,7 +648,7 @@ export function TrattamentoTermicoCalc() {
                 </div>
 
                 {showRefTable && (
-                    <div style={{ marginBottom: 20, border: '1px solid var(--color-border)', borderRadius: 8, overflow: 'hidden' }}>
+                    <div style={{ marginBottom: 20, border: '1px solid var(--color-border)', borderRadius: 8, overflowX: 'auto', overflowY: 'hidden' }}>
                         <div style={{ background: 'var(--color-navy)', color: 'white', padding: '8px 14px', fontSize: 12, fontWeight: 700 }}>
                             {mode === 'sterilizzazione' ? '🧪 Riferimenti Sterilizzazione' : '🌡️ Riferimenti Pastorizzazione'}
                         </div>
@@ -681,7 +681,7 @@ export function TrattamentoTermicoCalc() {
                         <input className="form-input" type="text" value={microorg.microrganismo} onChange={e => setMicroorg(m => ({ ...m, microrganismo: e.target.value }))} />
                     </div>
                 </div>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: 14, marginBottom: 16 }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: 14, marginBottom: 16 }}>
                     <div className="form-field" style={{ marginBottom: 0 }}>
                         <label className="form-label">T riferimento (°C)</label>
                         <input className="form-input" type="number" step={0.1} value={microorg.tRif} onChange={e => setMicroorg(m => ({ ...m, tRif: e.target.value }))} />

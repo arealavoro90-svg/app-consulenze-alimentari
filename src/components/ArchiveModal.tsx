@@ -25,9 +25,9 @@ export function ArchiveModal<T>({
         <div style={{
             position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
             backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 1000,
-            display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20
+            display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16
         }}>
-            <div className="card" style={{ width: '100%', maxWidth: 600, maxHeight: '80vh', display: 'flex', flexDirection: 'column' }}>
+            <div className="card" style={{ width: '100%', maxWidth: 'min(600px, calc(100vw - 32px))', maxHeight: '85vh', display: 'flex', flexDirection: 'column' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
                     <h2 style={{ margin: 0 }}>📂 Archivio Dati</h2>
                     <button className="btn btn-outline" onClick={onClose} style={{ padding: '6px 12px' }}>✕ Chiudi</button>
@@ -54,6 +54,7 @@ export function ArchiveModal<T>({
                                     border: currentId === item.id ? '2px solid var(--color-accent)' : '1px solid var(--color-border)',
                                     borderRadius: 8, padding: 16,
                                     display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                                    flexWrap: 'wrap', gap: 10,
                                     background: currentId === item.id ? 'rgba(0,163,108,0.05)' : 'var(--color-surface)',
                                 }}>
                                     <div style={{ flex: 1 }}>

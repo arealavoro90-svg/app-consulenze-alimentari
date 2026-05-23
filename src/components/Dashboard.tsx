@@ -1,7 +1,22 @@
 
 import { Link } from 'react-router-dom';
+import {
+    BarChart2, ArrowRight, Crown,
+    Salad, Tag, Wine, Package, Thermometer, FileText, Settings2,
+} from 'lucide-react';
 import { useAuth } from '../auth/AuthContext';
 import { TOOLS_CATALOG } from '../data/mockUsers';
+import type { ToolId } from '../data/mockUsers';
+
+const TOOL_ICONS: Record<ToolId, React.ReactNode> = {
+    'nutrizionale':        <Salad size={28} />,
+    'etichette':           <Tag size={28} />,
+    'etichette-vini':      <Wine size={28} />,
+    'rintracciabilita':    <Package size={28} />,
+    'trattamento-termico': <Thermometer size={28} />,
+    'schede-complete':     <FileText size={28} />,
+    'scheda-processo':     <Settings2 size={28} />,
+};
 
 export function Dashboard() {
     const { user } = useAuth();
@@ -16,7 +31,7 @@ export function Dashboard() {
     return (
         <div>
             <div className="page-header">
-                <h1>{greeting()}, {user?.name.split(' ')[0]} 👋</h1>
+                <h1>{greeting()}, {user?.name.split(' ')[0]}</h1>
                 <p>Portale strumenti AEA · {user?.company}</p>
             </div>
 
@@ -27,9 +42,9 @@ export function Dashboard() {
                         background: 'linear-gradient(135deg, rgba(0,163,108,0.2), rgba(30,58,92,0.3))',
                         borderRadius: 12,
                         display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        fontSize: 26, border: '1px solid rgba(0,163,108,0.2)'
+                        color: 'var(--color-accent-light)', border: '1px solid rgba(0,163,108,0.2)'
                     }}>
-                        📊
+                        <BarChart2 size={26} />
                     </div>
                     <div>
                         <div style={{ fontSize: 13, color: 'var(--color-text-muted)', marginBottom: 2 }}>Strumenti acquistati</div>
@@ -53,8 +68,8 @@ export function Dashboard() {
                     const tool = TOOLS_CATALOG[toolId];
                     return (
                         <Link key={toolId} to={`/tool/${toolId}`} className="tool-card">
-                            <span className="tool-card-arrow">→</span>
-                            <div className="tool-card-icon">{tool.icon}</div>
+                            <span className="tool-card-arrow"><ArrowRight size={16} /></span>
+                            <div className="tool-card-icon">{TOOL_ICONS[toolId]}</div>
                             <h3>{tool.label}</h3>
                             <p>{tool.description}</p>
                         </Link>
@@ -63,8 +78,9 @@ export function Dashboard() {
             </div>
 
             {user?.role === 'admin' && (
-                <div className="alert alert-info" style={{ marginTop: 24 }}>
-                    👑 Sei loggato come <strong>Admin</strong> — hai accesso a tutti gli strumenti disponibili.
+                <div className="alert alert-info" style={{ marginTop: 24, display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <Crown size={16} />
+                    Sei loggato come <strong>Admin</strong> — hai accesso a tutti gli strumenti disponibili.
                 </div>
             )}
         </div>

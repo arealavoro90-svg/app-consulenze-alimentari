@@ -353,7 +353,7 @@ export function EtichetteCalc() {
                                     <div style={{
                                         position: 'relative',
                                         width: '100%',
-                                        maxWidth: `${data.widthMm}mm`,
+                                        maxWidth: `min(${data.widthMm}mm, 100%)`,
                                         aspectRatio: `${data.widthMm} / ${data.heightMm}`,
                                         background: data.bgImageUrl
                                             ? `url(${data.bgImageUrl}) ${data.bgPosX}% ${data.bgPosY}% / ${data.bgScale}% no-repeat`

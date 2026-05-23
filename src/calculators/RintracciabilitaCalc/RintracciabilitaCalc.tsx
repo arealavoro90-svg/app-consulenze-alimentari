@@ -553,8 +553,9 @@ export function RintracciabilitaCalc() {
             {/* ── Riepilogo finale ── */}
             <div className="card" style={{ marginBottom: 20, border: '2px solid var(--color-orange)', background: 'linear-gradient(135deg,rgba(255,126,46,0.04),rgba(12,19,38,0.02))' }}>
                 <h3 style={{ fontWeight: 800, fontSize: 16, marginBottom: 20 }}>📊 Riepilogo Costi</h3>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24 }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 24 }}>
                     <div>
+                        <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
                         <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
                             <thead>
                                 <tr style={{ borderBottom: '2px solid var(--color-border)' }}>
@@ -588,8 +589,9 @@ export function RintracciabilitaCalc() {
                                 </tr>
                             </tbody>
                         </table>
+                        </div>
 
-                        <div style={{ marginTop: 16, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                        <div style={{ marginTop: 16, display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: 12 }}>
                             <div style={{ background: 'linear-gradient(135deg,rgba(255,126,46,0.1),rgba(255,126,46,0.04))', borderRadius: 10, padding: '12px 16px', textAlign: 'center' }}>
                                 <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--color-orange)', textTransform: 'uppercase', marginBottom: 4 }}>€ per confezione</div>
                                 <div style={{ fontSize: 24, fontWeight: 800, color: 'var(--color-navy)' }}>{f3(result.totalePerConf)} €</div>
