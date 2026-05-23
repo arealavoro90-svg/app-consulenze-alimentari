@@ -2328,14 +2328,45 @@ export function NutrizionaleCalc() {
                             </div>
                             <div className="nutri-results-wrapper" style={{ background: 'white', borderRadius: 8, boxShadow: '0 2px 8px rgba(0,0,0,0.05)', padding: '16px 20px', marginBottom: 16 }}>
                                 <div ref={tableRef}>
-                                    {activeTab === 'UE' && <TabUE p={per100display} ue={ue} specificGravity={parseFloat(specificGravity) || 0} full={showOptionals} />}
+                                    {activeTab === 'UE' && (
+                                        <>
+                                            {(ue.porzione != null || ue.confezione != null || ue.pezzo != null) ? (
+                                                <div style={{ display: 'flex', gap: 4, marginBottom: 10, flexWrap: 'wrap' }}>
+                                                    {([
+                                                        { key: '100g' as EUSubTab, label: 'Per 100g', disabled: false },
+                                                        { key: 'uv' as EUSubTab, label: 'Per U.V.', disabled: !ue.confezione },
+                                                        { key: 'porzione' as EUSubTab, label: 'Per porzione', disabled: !ue.porzione },
+                                                        { key: 'pezzo' as EUSubTab, label: 'Per pezzo', disabled: !ue.pezzo },
+                                                    ] as { key: EUSubTab; label: string; disabled: boolean }[]).map(t => (
+                                                        <button
+                                                            key={t.key}
+                                                            disabled={t.disabled}
+                                                            onClick={() => setEuSubTab(t.key)}
+                                                            className={`btn ${euSubTab === t.key ? 'btn-accent' : 'btn-outline'}`}
+                                                            style={{ fontSize: 11, padding: '4px 10px', opacity: t.disabled ? 0.4 : 1 }}
+                                                        >
+                                                            {t.label}
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                            ) : null}
+                                            <TabUE
+                                                p={per100display}
+                                                ue={ue}
+                                                specificGravity={parseFloat(specificGravity) || 0}
+                                                selectedOptionals={selectedOptionals}
+                                                showOptionals={showOptionals}
+                                                activeSubTab={euSubTab}
+                                            />
+                                        </>
+                                    )}
                                     {activeTab === 'USA' && <TabUSA p={per100display} usa={usa} subTab={subTab} setSubTab={setSubTab} full={false} />}
                                     {activeTab === 'Canada' && <TabCanada p={per100display} ca={ca} subTab={subTab} setSubTab={setSubTab} full={false} />}
                                     {activeTab === 'Australia' && <TabAustralia p={per100display} au={au} showDI={auShowDI} setShowDI={setAuShowDI} full={false} />}
                                     {activeTab === 'Arabi' && <TabArabi p={per100display} arabi={arabi} full={false} />}
                                 </div>
                                 {activeTab === 'UE' && (
-                                    <div style={{ marginTop: 12, display: 'flex', justifyContent: 'flex-end' }}>
+                                    <div style={{ marginTop: 12, display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: 10 }}>
                                         <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, fontWeight: 600, cursor: 'pointer', color: 'var(--color-text-muted)' }}>
                                             <input
                                                 type="checkbox"
@@ -2345,6 +2376,15 @@ export function NutrizionaleCalc() {
                                             />
                                             Mostra valori facoltativi
                                         </label>
+                                        {showOptionals && (
+                                            <button
+                                                onClick={() => setNutrModalOpen(true)}
+                                                className="btn btn-outline"
+                                                style={{ fontSize: 11, padding: '4px 10px', display: 'flex', alignItems: 'center', gap: 5 }}
+                                            >
+                                                ⚙ Configura nutrienti
+                                            </button>
+                                        )}
                                     </div>
                                 )}
                             </div>
@@ -3017,14 +3057,45 @@ export function NutrizionaleCalc() {
                         </div>
                         <hr style={{ border: 'none', borderTop: '1px solid var(--color-border)', marginBottom: 16 }} />
                         <div ref={tableRef}>
-                            {activeTab === 'UE' && <TabUE p={per100display} ue={ue} specificGravity={parseFloat(specificGravity) || 0} full={showOptionals} />}
+                            {activeTab === 'UE' && (
+                                <>
+                                    {(ue.porzione != null || ue.confezione != null || ue.pezzo != null) ? (
+                                        <div style={{ display: 'flex', gap: 4, marginBottom: 10, flexWrap: 'wrap' }}>
+                                            {([
+                                                { key: '100g' as EUSubTab, label: 'Per 100g', disabled: false },
+                                                { key: 'uv' as EUSubTab, label: 'Per U.V.', disabled: !ue.confezione },
+                                                { key: 'porzione' as EUSubTab, label: 'Per porzione', disabled: !ue.porzione },
+                                                { key: 'pezzo' as EUSubTab, label: 'Per pezzo', disabled: !ue.pezzo },
+                                            ] as { key: EUSubTab; label: string; disabled: boolean }[]).map(t => (
+                                                <button
+                                                    key={t.key}
+                                                    disabled={t.disabled}
+                                                    onClick={() => setEuSubTab(t.key)}
+                                                    className={`btn ${euSubTab === t.key ? 'btn-accent' : 'btn-outline'}`}
+                                                    style={{ fontSize: 11, padding: '4px 10px', opacity: t.disabled ? 0.4 : 1 }}
+                                                >
+                                                    {t.label}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    ) : null}
+                                    <TabUE
+                                        p={per100display}
+                                        ue={ue}
+                                        specificGravity={parseFloat(specificGravity) || 0}
+                                        selectedOptionals={selectedOptionals}
+                                        showOptionals={showOptionals}
+                                        activeSubTab={euSubTab}
+                                    />
+                                </>
+                            )}
                             {activeTab === 'USA' && <TabUSA p={per100display} usa={usa} subTab={subTab} setSubTab={setSubTab} full={false} />}
                             {activeTab === 'Canada' && <TabCanada p={per100display} ca={ca} subTab={subTab} setSubTab={setSubTab} full={false} />}
                             {activeTab === 'Australia' && <TabAustralia p={per100display} au={au} showDI={auShowDI} setShowDI={setAuShowDI} full={false} />}
                             {activeTab === 'Arabi' && <TabArabi p={per100display} arabi={arabi} full={false} />}
                         </div>
                         {activeTab === 'UE' && (
-                            <div style={{ marginTop: 12, display: 'flex', justifyContent: 'flex-end' }}>
+                            <div style={{ marginTop: 12, display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: 10 }}>
                                 <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, fontWeight: 600, cursor: 'pointer', color: 'var(--color-text-muted)' }}>
                                     <input
                                         type="checkbox"
@@ -3034,6 +3105,15 @@ export function NutrizionaleCalc() {
                                     />
                                     Mostra valori facoltativi
                                 </label>
+                                {showOptionals && (
+                                    <button
+                                        onClick={() => setNutrModalOpen(true)}
+                                        className="btn btn-outline"
+                                        style={{ fontSize: 11, padding: '4px 10px', display: 'flex', alignItems: 'center', gap: 5 }}
+                                    >
+                                        ⚙ Configura nutrienti
+                                    </button>
+                                )}
                             </div>
                         )}
                     </div>
