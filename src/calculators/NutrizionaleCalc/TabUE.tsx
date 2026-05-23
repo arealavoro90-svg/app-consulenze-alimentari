@@ -121,6 +121,18 @@ function scaleResult(r: CalcResult, grams: number): CalcResult {
     return s;
 }
 
+// ─── Local interfaces (moved to module level) ─────────────────────────────────
+interface UERow {
+    label: string; indent?: boolean; bold?: boolean;
+    value: string; arPct: string;
+    isOptional?: boolean; optionalKey?: keyof SelectedOptionals;
+}
+
+interface MicroRow {
+    label: string; val: number; ref: number;
+    unit: string; fmt: (v: number) => string; key: keyof SelectedOptionals;
+}
+
 // ─── TabUE component ──────────────────────────────────────────────────────────
 interface TabUEProps {
   p: CalcResult;
@@ -147,12 +159,6 @@ export function TabUE({ p, ue, specificGravity, selectedOptionals, showOptionals
         return `100 ${unit}`;
     })();
 
-    interface UERow {
-        label: string; indent?: boolean; bold?: boolean;
-        value: string; arPct: string;
-        isOptional?: boolean; optionalKey?: keyof SelectedOptionals;
-    }
-
     const rows: UERow[] = [
         { label: 'Energia', bold: true, value: `${rUE_energy(scaled.energyKj)} kJ / ${rUE_energy(scaled.energyKcal)} kcal`, arPct: `${Math.round(p.energyKcal / AR_UE.energyKcal * 100)}%` },
         { label: 'Grassi', bold: true, value: `${rUE_macro(scaled.grassi)} g`, arPct: `${Math.round(p.grassi / AR_UE.grassi * 100)}%` },
@@ -171,11 +177,6 @@ export function TabUE({ p, ue, specificGravity, selectedOptionals, showOptionals
         if (!r.isOptional) return true;
         return showOptionals && r.optionalKey ? selectedOptionals[r.optionalKey] : false;
     });
-
-    interface MicroRow {
-        label: string; val: number; ref: number;
-        unit: string; fmt: (v: number) => string; key: keyof SelectedOptionals;
-    }
 
     const microRows: MicroRow[] = [
         { label: 'Vitamina A', val: scaled.vitA_eq, ref: AR_UE.vitA_eq, unit: 'µg', fmt: rUE_micro3sig, key: 'vitA' },
@@ -200,7 +201,7 @@ export function TabUE({ p, ue, specificGravity, selectedOptionals, showOptionals
         { label: 'Manganese', val: scaled.manganese ?? 0, ref: AR_UE.manganese, unit: 'mg', fmt: rUE_micro3sig, key: 'manganese' },
         { label: 'Selenio', val: scaled.selenio ?? 0, ref: AR_UE.selenio, unit: 'µg', fmt: rUE_micro3sig, key: 'selenio' },
         { label: 'Iodio', val: scaled.iodio ?? 0, ref: AR_UE.iodio, unit: 'µg', fmt: rUE_micro3sig, key: 'iodio' },
-    ].filter(m => showOptionals && selectedOptionals[m.key]);
+    ].filter(m => showOptionals && selectedOptionals[m.key] && m.val > 0);
 
     return (
         <div data-table-export style={{ background: 'white', padding: 12, borderRadius: 0 }}>
