@@ -1176,11 +1176,6 @@ export function NutrizionaleCalc() {
     const [euSubTab, setEuSubTab] = useState<EUSubTab>('100g');
     const [selectedOptionals, setSelectedOptionals] = useState<SelectedOptionals>({ ...DEFAULT_OPTIONALS });
     const [nutrModalOpen, setNutrModalOpen] = useState(false);
-    useEffect(() => {
-      if (euSubTab === 'uv' && ue.confezione == null) setEuSubTab('100g');
-      if (euSubTab === 'porzione' && ue.porzione == null) setEuSubTab('100g');
-      if (euSubTab === 'pezzo' && ue.pezzo == null) setEuSubTab('100g');
-    }, [euSubTab, ue.confezione, ue.porzione, ue.pezzo]);
     const [pesoCardOpen, setPesoCardOpen] = useState(true);
     const [compOpen, setCompOpen] = useState<Record<string, boolean>>({});
     const [pzUVRaw, setPzUVRaw] = useState<Record<string, string>>({});
@@ -1226,6 +1221,11 @@ export function NutrizionaleCalc() {
     const [au, setAU] = useState<ServingSizesNation>({});
     const [arabi, setArabi] = useState<ServingSizesNation>({});
     const [ue, setUE] = useState<UEServing>({});
+    useEffect(() => {
+      if (euSubTab === 'uv' && ue.confezione == null) setEuSubTab('100g');
+      if (euSubTab === 'porzione' && ue.porzione == null) setEuSubTab('100g');
+      if (euSubTab === 'pezzo' && ue.pezzo == null) setEuSubTab('100g');
+    }, [euSubTab, ue.confezione, ue.porzione, ue.pezzo]);
     const tableRef = useRef<HTMLDivElement>(null);
 
     const { items: archiveItems, saveItem, deleteItem } = useArchive<ArchiveData>('nutrizionale-v3');

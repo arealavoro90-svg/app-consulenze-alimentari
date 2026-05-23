@@ -1,5 +1,6 @@
 import React from 'react';
-import { SelectedOptionals, DEFAULT_OPTIONALS } from './TabUE';
+import { DEFAULT_OPTIONALS } from './TabUE';
+import type { SelectedOptionals } from './TabUE';
 
 interface NutrientSelectModalProps {
   open: boolean;
