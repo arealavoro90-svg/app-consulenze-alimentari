@@ -2222,7 +2222,7 @@ export function NutrizionaleCalc() {
                                     {activeTab === 'UE' && (
                                         <>
                                             {(['porzione', 'confezione', 'pezzo'] as const).map((k, i) => {
-                                                const labels = ['Porzione (g/ml)', 'Confezione (g/ml)', 'Pezzo (g/ml)'];
+                                                const labels = ['Porzione (g/ml)', 'U.V. / Confezione (g/ml)', 'Pezzo (g/ml)'];
                                                 return (
                                                     <div key={k} className="form-field" style={{ marginBottom: 0 }}>
                                                         <label className="form-label">{labels[i]}</label>
@@ -2987,7 +2987,7 @@ export function NutrizionaleCalc() {
                             {activeTab === 'UE' && (
                                 <>
                                     {(['porzione', 'confezione', 'pezzo'] as const).map((k, i) => {
-                                        const labels = ['Porzione (g/ml)', 'Confezione (g/ml)', 'Pezzo (g/ml)'];
+                                        const labels = ['Porzione (g/ml)', 'U.V. / Confezione (g/ml)', 'Pezzo (g/ml)'];
                                         return (
                                             <div key={k} className="form-field" style={{ marginBottom: 0 }}>
                                                 <label className="form-label">{labels[i]}</label>
