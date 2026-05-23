@@ -24,7 +24,7 @@ export const DEFAULT_OPTIONALS: SelectedOptionals = {
 };
 
 // ─── DV / AR References ───────────────────────────────────────────────────────
-export const AR_UE = {
+const AR_UE = {
     energyKj: 8400, energyKcal: 2000, grassi: 70, saturi: 20, carboidrati: 260,
     zuccheri: 90, fibre: 25, proteine: 50, sale: 6, potassio: 2000, calcio: 800,
     fosforo: 700, magnesio: 375, ferro: 14, zinco: 10, vitC: 80, vitB1: 1.1,
@@ -34,7 +34,7 @@ export const AR_UE = {
 };
 
 // ─── Shared table styling ─────────────────────────────────────────────────────
-export const TS = {
+const TS = {
     table: { borderCollapse: 'collapse' as const, width: '100%', fontSize: 12 },
     th: { background: '#000', color: 'white', padding: '5px 8px', textAlign: 'left' as const, fontSize: 11, fontWeight: 600 as const },
     thR: { background: '#000', color: 'white', padding: '5px 8px', textAlign: 'right' as const, fontSize: 11, fontWeight: 600 as const },
@@ -160,19 +160,19 @@ export function TabUE({ p, ue, specificGravity, selectedOptionals, showOptionals
     })();
 
     const rows: UERow[] = [
-        { label: 'Energia', bold: true, value: `${rUE_energy(scaled.energyKj)} kJ / ${rUE_energy(scaled.energyKcal)} kcal`, arPct: `${Math.round(p.energyKcal / AR_UE.energyKcal * 100)}%` },
-        { label: 'Grassi', bold: true, value: `${rUE_macro(scaled.grassi)} g`, arPct: `${Math.round(p.grassi / AR_UE.grassi * 100)}%` },
-        { label: 'di cui acidi grassi saturi', indent: true, value: `${rUE_sat(scaled.saturi)} g`, arPct: `${Math.round(p.saturi / AR_UE.saturi * 100)}%` },
+        { label: 'Energia', bold: true, value: `${rUE_energy(scaled.energyKj)} kJ / ${rUE_energy(scaled.energyKcal)} kcal`, arPct: `${Math.round(scaled.energyKcal / AR_UE.energyKcal * 100)}%` },
+        { label: 'Grassi', bold: true, value: `${rUE_macro(scaled.grassi)} g`, arPct: `${Math.round(scaled.grassi / AR_UE.grassi * 100)}%` },
+        { label: 'di cui acidi grassi saturi', indent: true, value: `${rUE_sat(scaled.saturi)} g`, arPct: `${Math.round(scaled.saturi / AR_UE.saturi * 100)}%` },
         { label: 'di cui acidi grassi monoinsaturi', indent: true, value: `${rUE_sat(scaled.monoins)} g`, arPct: '—', isOptional: true, optionalKey: 'monoins' },
         { label: 'di cui acidi grassi polinsaturi', indent: true, value: `${rUE_sat(scaled.polins)} g`, arPct: '—', isOptional: true, optionalKey: 'polins' },
-        { label: 'Carboidrati', bold: true, value: `${rUE_macro(scaled.carboidrati)} g`, arPct: `${Math.round(p.carboidrati / AR_UE.carboidrati * 100)}%` },
-        { label: 'di cui zuccheri', indent: true, value: `${rUE_macro(scaled.zuccheri)} g`, arPct: `${Math.round(p.zuccheri / AR_UE.zuccheri * 100)}%` },
+        { label: 'Carboidrati', bold: true, value: `${rUE_macro(scaled.carboidrati)} g`, arPct: `${Math.round(scaled.carboidrati / AR_UE.carboidrati * 100)}%` },
+        { label: 'di cui zuccheri', indent: true, value: `${rUE_macro(scaled.zuccheri)} g`, arPct: `${Math.round(scaled.zuccheri / AR_UE.zuccheri * 100)}%` },
         { label: 'di cui polioli', indent: true, value: `${rUE_macro(scaled.polioli)} g`, arPct: '—', isOptional: true, optionalKey: 'polioli' },
         { label: 'di cui amido', indent: true, value: `${rUE_macro(scaled.amido)} g`, arPct: '—', isOptional: true, optionalKey: 'amido' },
         // BUG FIX: fibre non ha % AR normativa EU → '—'
         { label: 'Fibre', bold: true, value: `${rUE_macro(scaled.fibre)} g`, arPct: '—' },
-        { label: 'Proteine', bold: true, value: `${rUE_macro(scaled.proteine)} g`, arPct: `${Math.round(p.proteine / AR_UE.proteine * 100)}%` },
-        { label: 'Sale', bold: true, value: `${rUE_sale(scaled.sale)} g`, arPct: `${Math.round(p.sale / AR_UE.sale * 100)}%` },
+        { label: 'Proteine', bold: true, value: `${rUE_macro(scaled.proteine)} g`, arPct: `${Math.round(scaled.proteine / AR_UE.proteine * 100)}%` },
+        { label: 'Sale', bold: true, value: `${rUE_sale(scaled.sale)} g`, arPct: `${Math.round(scaled.sale / AR_UE.sale * 100)}%` },
     ].filter(r => {
         if (!r.isOptional) return true;
         return showOptionals && r.optionalKey ? selectedOptionals[r.optionalKey] : false;
