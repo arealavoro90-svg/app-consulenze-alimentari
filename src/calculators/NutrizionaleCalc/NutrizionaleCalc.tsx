@@ -1176,6 +1176,11 @@ export function NutrizionaleCalc() {
     const [euSubTab, setEuSubTab] = useState<EUSubTab>('100g');
     const [selectedOptionals, setSelectedOptionals] = useState<SelectedOptionals>({ ...DEFAULT_OPTIONALS });
     const [nutrModalOpen, setNutrModalOpen] = useState(false);
+    useEffect(() => {
+      if (euSubTab === 'uv' && ue.confezione == null) setEuSubTab('100g');
+      if (euSubTab === 'porzione' && ue.porzione == null) setEuSubTab('100g');
+      if (euSubTab === 'pezzo' && ue.pezzo == null) setEuSubTab('100g');
+    }, [euSubTab, ue.confezione, ue.porzione, ue.pezzo]);
     const [pesoCardOpen, setPesoCardOpen] = useState(true);
     const [compOpen, setCompOpen] = useState<Record<string, boolean>>({});
     const [pzUVRaw, setPzUVRaw] = useState<Record<string, string>>({});
@@ -2334,9 +2339,9 @@ export function NutrizionaleCalc() {
                                                 <div style={{ display: 'flex', gap: 4, marginBottom: 10, flexWrap: 'wrap' }}>
                                                     {([
                                                         { key: '100g' as EUSubTab, label: 'Per 100g', disabled: false },
-                                                        { key: 'uv' as EUSubTab, label: 'Per U.V.', disabled: !ue.confezione },
-                                                        { key: 'porzione' as EUSubTab, label: 'Per porzione', disabled: !ue.porzione },
-                                                        { key: 'pezzo' as EUSubTab, label: 'Per pezzo', disabled: !ue.pezzo },
+                                                        { key: 'uv' as EUSubTab, label: 'Per U.V.', disabled: ue.confezione == null },
+                                                        { key: 'porzione' as EUSubTab, label: 'Per porzione', disabled: ue.porzione == null },
+                                                        { key: 'pezzo' as EUSubTab, label: 'Per pezzo', disabled: ue.pezzo == null },
                                                     ] as { key: EUSubTab; label: string; disabled: boolean }[]).map(t => (
                                                         <button
                                                             key={t.key}
@@ -3063,9 +3068,9 @@ export function NutrizionaleCalc() {
                                         <div style={{ display: 'flex', gap: 4, marginBottom: 10, flexWrap: 'wrap' }}>
                                             {([
                                                 { key: '100g' as EUSubTab, label: 'Per 100g', disabled: false },
-                                                { key: 'uv' as EUSubTab, label: 'Per U.V.', disabled: !ue.confezione },
-                                                { key: 'porzione' as EUSubTab, label: 'Per porzione', disabled: !ue.porzione },
-                                                { key: 'pezzo' as EUSubTab, label: 'Per pezzo', disabled: !ue.pezzo },
+                                                { key: 'uv' as EUSubTab, label: 'Per U.V.', disabled: ue.confezione == null },
+                                                { key: 'porzione' as EUSubTab, label: 'Per porzione', disabled: ue.porzione == null },
+                                                { key: 'pezzo' as EUSubTab, label: 'Per pezzo', disabled: ue.pezzo == null },
                                             ] as { key: EUSubTab; label: string; disabled: boolean }[]).map(t => (
                                                 <button
                                                     key={t.key}
