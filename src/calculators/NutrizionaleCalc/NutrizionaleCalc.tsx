@@ -1373,13 +1373,14 @@ export function NutrizionaleCalc() {
         }
 
         if (parsed > 0 && totGrammiXpzuv > 0 && parsed > totGrammiXpzuv) {
-            setFwWarning(true);
-            setFieldErrors(prev => ({...prev, [errorKey]: `VALORE NON VALIDO! Hai inserito un valore superiore al peso del prodotto crudo per pezzo (${totGrammiXpzuv.toFixed(0)}g). Inserisci un valore uguale o inferiore.`}));
+            setFwWarning(false);
+            setFieldErrors(prev => ({...prev, [errorKey]: ''}));
+            setFinishedWeight(String(Math.round(totGrammiXpzuv)));
         } else {
             setFwWarning(false);
             setFieldErrors(prev => ({...prev, [errorKey]: ''}));
+            setFinishedWeight(val);
         }
-        setFinishedWeight(val);
     };
 
     // Re-valida peso finito ogni volta che cambia totGrammiXpzuv (es. si aggiungono ingredienti)
@@ -1388,8 +1389,9 @@ export function NutrizionaleCalc() {
         const parsed = parseFloat(finishedWeight) || 0;
         if (parsed <= 0 || totGrammiXpzuv <= 0) { setFwWarning(false); setFieldErrors(prev => ({...prev, [errorKey]: ''})); return; }
         if (parsed > totGrammiXpzuv) {
-            setFwWarning(true);
-            setFieldErrors(prev => ({...prev, [errorKey]: `VALORE NON VALIDO! Hai inserito un valore superiore al peso del prodotto crudo per pezzo (${totGrammiXpzuv.toFixed(0)}g). Inserisci un valore uguale o inferiore.`}));
+            setFwWarning(false);
+            setFieldErrors(prev => ({...prev, [errorKey]: ''}));
+            setFinishedWeight(String(Math.round(totGrammiXpzuv)));
         } else {
             setFwWarning(false);
             setFieldErrors(prev => ({...prev, [errorKey]: ''}));
