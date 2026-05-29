@@ -16,6 +16,7 @@ export function ModeToggle({ mode, onChange }: ModeToggleProps) {
     return (
         <div className="mode-toggle" role="group" aria-label="Modalità inserimento">
             <button
+                type="button"
                 className={mode === 'guided' ? 'active-guidato' : ''}
                 onClick={() => onChange('guided')}
                 aria-pressed={mode === 'guided'}
@@ -23,6 +24,7 @@ export function ModeToggle({ mode, onChange }: ModeToggleProps) {
                 Guidato
             </button>
             <button
+                type="button"
                 className={mode === 'expert' ? 'active-esperto' : ''}
                 onClick={() => onChange('expert')}
                 aria-pressed={mode === 'expert'}
