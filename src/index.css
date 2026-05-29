@@ -504,7 +504,7 @@ body {
   letter-spacing: 0.6px;
   text-transform: uppercase;
 }
-.ingredient-row {
+.split-ingredient-row {
   display: flex;
   align-items: center;
   gap: 6px;
