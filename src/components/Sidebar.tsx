@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import {
     Home, LogOut, Salad, Tag, Wine, Package,
@@ -29,6 +29,12 @@ export function Sidebar({ isOpen = false, onClose }: SidebarProps) {
     const navigate = useNavigate();
     const [flyoutOpen, setFlyoutOpen] = useState(false);
     const leaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+    useEffect(() => {
+        return () => {
+            if (leaveTimer.current) clearTimeout(leaveTimer.current);
+        };
+    }, []);
 
     const handleLogout = () => { logout(); navigate('/login'); };
 

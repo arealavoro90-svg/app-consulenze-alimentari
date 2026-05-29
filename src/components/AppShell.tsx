@@ -25,7 +25,13 @@ export function AppShell() {
     return (
         <div className={`app-shell${sidebarOpen ? ' sidebar-open' : ''}`}>
             {/* Backdrop mobile */}
-            <div className="sidebar-backdrop" onClick={() => setSidebarOpen(false)} />
+            <div
+                    className="sidebar-backdrop"
+                    onClick={() => setSidebarOpen(false)}
+                    onKeyDown={(e) => { if (e.key === 'Escape') setSidebarOpen(false); }}
+                    role="presentation"
+                    aria-hidden="true"
+                />
 
             <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
