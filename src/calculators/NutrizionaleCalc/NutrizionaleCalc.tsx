@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useRef, useEffect, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import {
     Save, FolderOpen, Plus, PlusCircle, Search, Database,
     ClipboardList, Scale, Layers, FlaskConical, Table2, Euro,
@@ -25,6 +26,8 @@ import { NutrientSelectModal } from './NutrientSelectModal';
 import type { EUSubTab, SelectedOptionals } from './TabUE';
 import { TabUSA } from './TabUSA';
 import type { USAServingRef, USAMeasure } from './TabUSA';
+import { ModeToggle, useModeToggle } from '../../components/ModeToggle';
+import { SplitShell } from './SplitShell';
 
 
 // ─── DB Types ─────────────────────────────────────────────────────────────────
@@ -858,8 +861,8 @@ function CustomIngredientModal({ onClose, onSave }: { onClose: () => void; onSav
     const lS: React.CSSProperties = { fontSize: 11, fontWeight: 600, display: 'block', marginBottom: 3, color: 'var(--color-text-muted)' };
     const secS: React.CSSProperties = { marginBottom: 14, padding: '12px 14px', borderRadius: 8, border: '1px solid var(--color-border)' };
     const secT = (color: string): React.CSSProperties => ({ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.5, color, marginBottom: 10 });
-    const grid3: React.CSSProperties = { display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 8 };
-    const grid2: React.CSSProperties = { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 };
+    const grid3: React.CSSProperties = { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))', gap: 8 };
+    const grid2: React.CSSProperties = { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: 8 };
 
     const NF = ({ label, value, onChange, unit = 'g/100g', ro = false, err = false, tooltip }: {
         label: string; value: string; onChange?: (v: string) => void;
@@ -1179,7 +1182,10 @@ export function NutrizionaleCalc() {
     const toggleGuide = () => setGuideOpen(prev => !prev);
 
     // Wizard mode state
-    const [wizardMode, setWizardMode] = useLocalStorage<boolean>('nutri_wizard_mode', true);
+    const [uiMode, setUiMode] = useModeToggle();
+    // Alias for backward compatibility with existing code
+    const wizardMode = uiMode === 'guided';
+    const setWizardMode = (val: boolean) => setUiMode(val ? 'guided' : 'expert');
     const [wizardStep, setWizardStep] = useState<0 | 1 | 2 | 3>(0);
     const toggleWizardMode = (mode: boolean) => { setWizardMode(mode); setWizardStep(0); };
 
@@ -1213,8 +1219,24 @@ export function NutrizionaleCalc() {
         if (usaMeasure === 'pezzi' && usa.pezzo == null) setUsaMeasure('g');
     }, [usaServingRef, usaMeasure, usa.confezione, usa.cup, usa.cucchiaio, usa.pezzo]);
     const [ca, setCA] = useState<ServingSizesNation>({});
+    const [caServingRef, setCaServingRef] = useState<USAServingRef>('serving');
+    const [caMeasure, setCaMeasure] = useState<USAMeasure>('g');
+    useEffect(() => {
+        if (caServingRef === 'confezione' && (ca.confezione == null || ca.confezione === 0)) setCaServingRef('serving');
+        if (caMeasure === 'tazze' && ca.cup == null) setCaMeasure('g');
+        if (caMeasure === 'cucchiai' && ca.cucchiaio == null) setCaMeasure('g');
+        if (caMeasure === 'pezzi' && ca.pezzo == null) setCaMeasure('g');
+    }, [caServingRef, caMeasure, ca.confezione, ca.cup, ca.cucchiaio, ca.pezzo]);
     const [au, setAU] = useState<ServingSizesNation>({});
     const [arabi, setArabi] = useState<ServingSizesNation>({});
+    const [arabiServingRef, setArabiServingRef] = useState<USAServingRef>('serving');
+    const [arabiMeasure, setArabiMeasure] = useState<USAMeasure>('g');
+    useEffect(() => {
+        if (arabiServingRef === 'confezione' && (arabi.confezione == null || arabi.confezione === 0)) setArabiServingRef('serving');
+        if (arabiMeasure === 'tazze' && arabi.cup == null) setArabiMeasure('g');
+        if (arabiMeasure === 'cucchiai' && arabi.cucchiaio == null) setArabiMeasure('g');
+        if (arabiMeasure === 'pezzi' && arabi.pezzo == null) setArabiMeasure('g');
+    }, [arabiServingRef, arabiMeasure, arabi.confezione, arabi.cup, arabi.cucchiaio, arabi.pezzo]);
     const [ue, setUE] = useState<UEServing>({});
     useEffect(() => {
       if (euSubTab === 'uv' && ue.confezione == null) setEuSubTab('100g');
@@ -2364,6 +2386,15 @@ export function NutrizionaleCalc() {
                                     )}
                                     {activeTab === 'USA' && (
                                         <>
+                                            <div style={{ display: 'flex', gap: 4, marginBottom: 6, flexWrap: 'wrap' }}>
+                                                {(['verticale', 'orizzontale', 'lineare'] as SubTab[]).map(t => (
+                                                    <button key={t} onClick={() => setSubTab(t)}
+                                                        className={`btn ${subTab === t ? 'btn-accent' : 'btn-outline'}`}
+                                                        style={{ fontSize: 11, padding: '4px 10px' }}>
+                                                        {t.charAt(0).toUpperCase() + t.slice(1)}
+                                                    </button>
+                                                ))}
+                                            </div>
                                             {(usa.confezione != null && usa.confezione > 0) ? (
                                                 <div style={{ display: 'flex', gap: 4, marginBottom: 6, flexWrap: 'wrap' }}>
                                                     {(['serving', 'confezione'] as USAServingRef[]).map(ref => (
@@ -2393,9 +2424,67 @@ export function NutrizionaleCalc() {
                                                 servingRef={usaServingRef} measure={usaMeasure} subTab={subTab} />
                                         </>
                                     )}
-                                    {activeTab === 'Canada' && <TabCanada p={per100display} ca={ca} subTab={subTab} setSubTab={setSubTab} full={false} />}
+                                    {activeTab === 'Canada' && (
+                                        <>
+                                            {(ca.confezione != null && ca.confezione > 0) && (
+                                                <div style={{ display: 'flex', gap: 4, marginBottom: 6, flexWrap: 'wrap' }}>
+                                                    {(['serving', 'confezione'] as USAServingRef[]).map(ref => (
+                                                        <button key={ref} onClick={() => setCaServingRef(ref)}
+                                                            className={`btn ${caServingRef === ref ? 'btn-accent' : 'btn-outline'}`}
+                                                            style={{ fontSize: 11, padding: '4px 10px' }}>
+                                                            {ref === 'serving' ? 'Per Serving' : 'Per Confezione'}
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                            )}
+                                            <div style={{ display: 'flex', gap: 4, marginBottom: 10, flexWrap: 'wrap' }}>
+                                                {([
+                                                    { key: 'g' as USAMeasure, label: 'g / ml', disabled: false },
+                                                    { key: 'tazze' as USAMeasure, label: 'Tazze (250ml)', disabled: ca.cup == null },
+                                                    { key: 'cucchiai' as USAMeasure, label: 'Cucchiai', disabled: ca.cucchiaio == null },
+                                                    { key: 'pezzi' as USAMeasure, label: 'Pezzi', disabled: ca.pezzo == null },
+                                                ] as { key: USAMeasure; label: string; disabled: boolean }[]).map(t => (
+                                                    <button key={t.key} disabled={t.disabled} onClick={() => setCaMeasure(t.key)}
+                                                        className={`btn ${caMeasure === t.key ? 'btn-accent' : 'btn-outline'}`}
+                                                        style={{ fontSize: 11, padding: '4px 10px', opacity: t.disabled ? 0.4 : 1 }}>
+                                                        {t.label}
+                                                    </button>
+                                                ))}
+                                            </div>
+                                            <TabCanada p={per100display} ca={ca} servingRef={caServingRef} measure={caMeasure} subTab={subTab} setSubTab={setSubTab} full={false} />
+                                        </>
+                                    )}
                                     {activeTab === 'Australia' && <TabAustralia p={per100display} au={au} showDI={auShowDI} setShowDI={setAuShowDI} full={false} />}
-                                    {activeTab === 'Arabi' && <TabArabi p={per100display} arabi={arabi} full={false} />}
+                                    {activeTab === 'Arabi' && (
+                                        <>
+                                            {(arabi.confezione != null && arabi.confezione > 0) ? (
+                                                <div style={{ display: 'flex', gap: 4, marginBottom: 6, flexWrap: 'wrap' }}>
+                                                    {(['serving', 'confezione'] as USAServingRef[]).map(ref => (
+                                                        <button key={ref} onClick={() => setArabiServingRef(ref)}
+                                                            className={`btn ${arabiServingRef === ref ? 'btn-accent' : 'btn-outline'}`}
+                                                            style={{ fontSize: 11, padding: '4px 10px' }}>
+                                                            {ref === 'serving' ? 'Per Serving' : 'Per Confezione'}
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                            ) : null}
+                                            <div style={{ display: 'flex', gap: 4, marginBottom: 10, flexWrap: 'wrap' }}>
+                                                {([
+                                                    { key: 'g' as USAMeasure, label: 'g / ml', disabled: false },
+                                                    { key: 'tazze' as USAMeasure, label: 'Tazze', disabled: arabi.cup == null },
+                                                    { key: 'cucchiai' as USAMeasure, label: 'Cucchiai', disabled: arabi.cucchiaio == null },
+                                                    { key: 'pezzi' as USAMeasure, label: 'Pezzi', disabled: arabi.pezzo == null },
+                                                ] as { key: USAMeasure; label: string; disabled: boolean }[]).map(t => (
+                                                    <button key={t.key} disabled={t.disabled} onClick={() => setArabiMeasure(t.key)}
+                                                        className={`btn ${arabiMeasure === t.key ? 'btn-accent' : 'btn-outline'}`}
+                                                        style={{ fontSize: 11, padding: '4px 10px', opacity: t.disabled ? 0.4 : 1 }}>
+                                                        {t.label}
+                                                    </button>
+                                                ))}
+                                            </div>
+                                            <TabArabi p={per100display} arabi={arabi} servingRef={arabiServingRef} measure={arabiMeasure} specificGravity={parseFloat(specificGravity) || 0} full={false} />
+                                        </>
+                                    )}
                                 </div>
                                 {activeTab === 'UE' && (
                                     <div style={{ marginTop: 12, display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: 10 }}>
@@ -2464,9 +2553,229 @@ export function NutrizionaleCalc() {
         );
     };
 
+    const renderTablePanel = (): React.ReactNode => {
+        return (
+            <div style={{ padding: '14px', display: 'flex', flexDirection: 'column', height: '100%' }}>
+                {/* Tab switcher */}
+                <div style={{ display: 'flex', gap: '4px', marginBottom: '12px', background: 'var(--color-surface)', borderRadius: '7px', padding: '3px' }}>
+                    {(['UE', 'USA', 'Canada', 'Australia', 'Arabi'] as NationTab[]).map(t => {
+                        const labels: Record<NationTab, string> = { UE: 'EU', USA: 'USA', Canada: 'Canada', Australia: 'Australia', Arabi: 'Arabi' };
+                        return (
+                            <button
+                                key={t}
+                                type="button"
+                                onClick={() => setActiveTab(t)}
+                                style={{
+                                    padding: '4px 10px',
+                                    borderRadius: '5px',
+                                    border: 'none',
+                                    background: activeTab === t ? 'white' : 'transparent',
+                                    boxShadow: activeTab === t ? '0 1px 2px rgba(0,0,0,0.07)' : 'none',
+                                    color: activeTab === t ? 'var(--color-text)' : 'var(--color-text-dim)',
+                                    fontWeight: activeTab === t ? 600 : 400,
+                                    fontSize: '11px',
+                                    cursor: 'pointer',
+                                }}
+                            >
+                                {labels[t]}
+                            </button>
+                        );
+                    })}
+                </div>
+
+                {/* Active tab */}
+                <div ref={tableRef} style={{ flex: 1, overflowY: 'auto' }}>
+                    {activeTab === 'UE' && (
+                        <>
+                            {(ue.porzione != null || ue.confezione != null || ue.pezzo != null) ? (
+                                <div style={{ display: 'flex', gap: 4, marginBottom: 10, flexWrap: 'wrap' }}>
+                                    {([
+                                        { key: '100g' as EUSubTab, label: 'Per 100g', disabled: false },
+                                        { key: 'uv' as EUSubTab, label: 'Per U.V.', disabled: ue.confezione == null },
+                                        { key: 'porzione' as EUSubTab, label: 'Per porzione', disabled: ue.porzione == null },
+                                        { key: 'pezzo' as EUSubTab, label: 'Per pezzo', disabled: ue.pezzo == null },
+                                    ] as { key: EUSubTab; label: string; disabled: boolean }[]).map(tab => (
+                                        <button
+                                            key={tab.key}
+                                            disabled={tab.disabled}
+                                            onClick={() => setEuSubTab(tab.key)}
+                                            className={`btn ${euSubTab === tab.key ? 'btn-accent' : 'btn-outline'}`}
+                                            style={{ fontSize: 11, padding: '4px 10px', opacity: tab.disabled ? 0.4 : 1 }}
+                                        >
+                                            {tab.label}
+                                        </button>
+                                    ))}
+                                </div>
+                            ) : null}
+                            <TabUE
+                                p={per100display}
+                                ue={ue}
+                                specificGravity={parseFloat(specificGravity) || 0}
+                                selectedOptionals={selectedOptionals}
+                                showOptionals={showOptionals}
+                                activeSubTab={euSubTab}
+                            />
+                            <div style={{ marginTop: 12, display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: 10 }}>
+                                <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, fontWeight: 600, cursor: 'pointer', color: 'var(--color-text-muted)' }}>
+                                    <input
+                                        type="checkbox"
+                                        checked={showOptionals}
+                                        onChange={e => setShowOptionals(e.target.checked)}
+                                        style={{ width: 15, height: 15, cursor: 'pointer', accentColor: 'var(--color-orange)' }}
+                                    />
+                                    Mostra valori facoltativi
+                                </label>
+                                {showOptionals && (
+                                    <button
+                                        onClick={() => setNutrModalOpen(true)}
+                                        className="btn btn-outline"
+                                        style={{ fontSize: 11, padding: '4px 10px', display: 'flex', alignItems: 'center', gap: 5 }}
+                                    >
+                                        ⚙ Configura nutrienti
+                                    </button>
+                                )}
+                            </div>
+                        </>
+                    )}
+                    {activeTab === 'USA' && (
+                        <>
+                            <div style={{ display: 'flex', gap: 4, marginBottom: 6, flexWrap: 'wrap' }}>
+                                {(['verticale', 'orizzontale', 'lineare'] as SubTab[]).map(t => (
+                                    <button key={t} onClick={() => setSubTab(t)}
+                                        className={`btn ${subTab === t ? 'btn-accent' : 'btn-outline'}`}
+                                        style={{ fontSize: 11, padding: '4px 10px' }}>
+                                        {t.charAt(0).toUpperCase() + t.slice(1)}
+                                    </button>
+                                ))}
+                            </div>
+                            {(usa.confezione != null && usa.confezione > 0) ? (
+                                <div style={{ display: 'flex', gap: 4, marginBottom: 6, flexWrap: 'wrap' }}>
+                                    {(['serving', 'confezione'] as USAServingRef[]).map(ref => (
+                                        <button key={ref} onClick={() => setUsaServingRef(ref)}
+                                            className={`btn ${usaServingRef === ref ? 'btn-accent' : 'btn-outline'}`}
+                                            style={{ fontSize: 11, padding: '4px 10px' }}>
+                                            {ref === 'serving' ? 'Per Serving' : 'Per Confezione'}
+                                        </button>
+                                    ))}
+                                </div>
+                            ) : null}
+                            <div style={{ display: 'flex', gap: 4, marginBottom: 10, flexWrap: 'wrap' }}>
+                                {([
+                                    { key: 'g' as USAMeasure, label: 'g / ml', disabled: false },
+                                    { key: 'tazze' as USAMeasure, label: 'Tazze', disabled: usa.cup == null },
+                                    { key: 'cucchiai' as USAMeasure, label: 'Cucchiai', disabled: usa.cucchiaio == null },
+                                    { key: 'pezzi' as USAMeasure, label: 'Pezzi', disabled: usa.pezzo == null },
+                                ] as { key: USAMeasure; label: string; disabled: boolean }[]).map(tab => (
+                                    <button key={tab.key} disabled={tab.disabled} onClick={() => setUsaMeasure(tab.key)}
+                                        className={`btn ${usaMeasure === tab.key ? 'btn-accent' : 'btn-outline'}`}
+                                        style={{ fontSize: 11, padding: '4px 10px', opacity: tab.disabled ? 0.4 : 1 }}>
+                                        {tab.label}
+                                    </button>
+                                ))}
+                            </div>
+                            <TabUSA p={per100display} usa={usa} specificGravity={parseFloat(specificGravity) || 0}
+                                servingRef={usaServingRef} measure={usaMeasure} subTab={subTab} />
+                        </>
+                    )}
+                    {activeTab === 'Canada' && (
+                        <>
+                            {(ca.confezione != null && ca.confezione > 0) && (
+                                <div style={{ display: 'flex', gap: 4, marginBottom: 6, flexWrap: 'wrap' }}>
+                                    {(['serving', 'confezione'] as USAServingRef[]).map(ref => (
+                                        <button key={ref} onClick={() => setCaServingRef(ref)}
+                                            className={`btn ${caServingRef === ref ? 'btn-accent' : 'btn-outline'}`}
+                                            style={{ fontSize: 11, padding: '4px 10px' }}>
+                                            {ref === 'serving' ? 'Per Serving' : 'Per Confezione'}
+                                        </button>
+                                    ))}
+                                </div>
+                            )}
+                            <div style={{ display: 'flex', gap: 4, marginBottom: 10, flexWrap: 'wrap' }}>
+                                {([
+                                    { key: 'g' as USAMeasure, label: 'g / ml', disabled: false },
+                                    { key: 'tazze' as USAMeasure, label: 'Tazze (250ml)', disabled: ca.cup == null },
+                                    { key: 'cucchiai' as USAMeasure, label: 'Cucchiai', disabled: ca.cucchiaio == null },
+                                    { key: 'pezzi' as USAMeasure, label: 'Pezzi', disabled: ca.pezzo == null },
+                                ] as { key: USAMeasure; label: string; disabled: boolean }[]).map(tab => (
+                                    <button key={tab.key} disabled={tab.disabled} onClick={() => setCaMeasure(tab.key)}
+                                        className={`btn ${caMeasure === tab.key ? 'btn-accent' : 'btn-outline'}`}
+                                        style={{ fontSize: 11, padding: '4px 10px', opacity: tab.disabled ? 0.4 : 1 }}>
+                                        {tab.label}
+                                    </button>
+                                ))}
+                            </div>
+                            <TabCanada p={per100display} ca={ca} servingRef={caServingRef} measure={caMeasure} subTab={subTab} setSubTab={setSubTab} full={false} />
+                        </>
+                    )}
+                    {activeTab === 'Australia' && <TabAustralia p={per100display} au={au} showDI={auShowDI} setShowDI={setAuShowDI} full={false} />}
+                    {activeTab === 'Arabi' && (
+                        <>
+                            {(arabi.confezione != null && arabi.confezione > 0) ? (
+                                <div style={{ display: 'flex', gap: 4, marginBottom: 6, flexWrap: 'wrap' }}>
+                                    {(['serving', 'confezione'] as USAServingRef[]).map(ref => (
+                                        <button key={ref} onClick={() => setArabiServingRef(ref)}
+                                            className={`btn ${arabiServingRef === ref ? 'btn-accent' : 'btn-outline'}`}
+                                            style={{ fontSize: 11, padding: '4px 10px' }}>
+                                            {ref === 'serving' ? 'Per Serving' : 'Per Confezione'}
+                                        </button>
+                                    ))}
+                                </div>
+                            ) : null}
+                            <div style={{ display: 'flex', gap: 4, marginBottom: 10, flexWrap: 'wrap' }}>
+                                {([
+                                    { key: 'g' as USAMeasure, label: 'g / ml', disabled: false },
+                                    { key: 'tazze' as USAMeasure, label: 'Tazze', disabled: arabi.cup == null },
+                                    { key: 'cucchiai' as USAMeasure, label: 'Cucchiai', disabled: arabi.cucchiaio == null },
+                                    { key: 'pezzi' as USAMeasure, label: 'Pezzi', disabled: arabi.pezzo == null },
+                                ] as { key: USAMeasure; label: string; disabled: boolean }[]).map(tab => (
+                                    <button key={tab.key} disabled={tab.disabled} onClick={() => setArabiMeasure(tab.key)}
+                                        className={`btn ${arabiMeasure === tab.key ? 'btn-accent' : 'btn-outline'}`}
+                                        style={{ fontSize: 11, padding: '4px 10px', opacity: tab.disabled ? 0.4 : 1 }}>
+                                        {tab.label}
+                                    </button>
+                                ))}
+                            </div>
+                            <TabArabi p={per100display} arabi={arabi} servingRef={arabiServingRef} measure={arabiMeasure} specificGravity={parseFloat(specificGravity) || 0} full={false} />
+                        </>
+                    )}
+                </div>
+
+                {/* Export PDF */}
+                <button
+                    type="button"
+                    onClick={handlePDF}
+                    style={{
+                        marginTop: '10px',
+                        width: '100%',
+                        padding: '8px',
+                        borderRadius: '7px',
+                        background: 'var(--color-navy)',
+                        color: 'white',
+                        border: 'none',
+                        fontSize: '12px',
+                        fontWeight: 600,
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '6px',
+                    }}
+                >
+                    Esporta PDF
+                </button>
+            </div>
+        );
+    };
+
     return (
-        <div style={{ fontSize: 15 }}>
-            {/* Custom ingredient modal */}
+        <>
+            {/* Inject ModeToggle into topbar slot */}
+            {createPortal(
+                <ModeToggle mode={uiMode} onChange={setUiMode} />,
+                document.getElementById('topbar-mode-toggle-slot') ?? document.body
+            )}
+
+            {/* Modals */}
             {showCustomModal && (
                 <CustomIngredientModal
                     onClose={() => setShowCustomModal(false)}
@@ -2509,40 +2818,14 @@ export function NutrizionaleCalc() {
                 </div>
             )}
 
-            {/* Header — mod 1 */}
+            <div style={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - var(--topbar-height, 56px))' }}>
+            {/* Header — with action buttons (toggle moved to topbar portal) */}
             <div className="page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 12 }}>
                 <div>
                     <h1 style={{ display: 'flex', alignItems: 'center', gap: 8 }}><Salad size={22} /> Creazione tabelle valori nutrizionali</h1>
                     <p>Etichettatura internazionale (UE, USA, Canada, Australia, Arabi) &amp; Costi Ingredienti</p>
                 </div>
                 <div className="header-actions" style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
-                    {/* Toggle Guidata / Avanzata */}
-                    <div style={{ display: 'flex', background: 'var(--color-surface)', border: '1.5px solid var(--color-border)', borderRadius: 8, padding: 3, gap: 2 }}>
-                        <button
-                            onClick={() => toggleWizardMode(true)}
-                            style={{
-                                padding: '6px 15px', borderRadius: 6, border: 'none', cursor: 'pointer',
-                                fontFamily: 'inherit', fontSize: 12, fontWeight: 700, transition: 'all .2s',
-                                display: 'flex', alignItems: 'center', gap: 5,
-                                background: wizardMode ? 'linear-gradient(135deg, var(--color-orange), var(--color-orange-hover))' : 'transparent',
-                                color: wizardMode ? 'white' : 'var(--color-text-muted)',
-                                boxShadow: wizardMode ? '0 1px 6px rgba(255,126,46,.30)' : 'none',
-                            }}>
-                            <Compass size={13} /> Guidata
-                        </button>
-                        <button
-                            onClick={() => toggleWizardMode(false)}
-                            style={{
-                                padding: '6px 15px', borderRadius: 6, border: 'none', cursor: 'pointer',
-                                fontFamily: 'inherit', fontSize: 12, fontWeight: 700, transition: 'all .2s',
-                                display: 'flex', alignItems: 'center', gap: 5,
-                                background: !wizardMode ? 'linear-gradient(135deg, var(--color-orange), var(--color-orange-hover))' : 'transparent',
-                                color: !wizardMode ? 'white' : 'var(--color-text-muted)',
-                                boxShadow: !wizardMode ? '0 1px 6px rgba(255,126,46,.30)' : 'none',
-                            }}>
-                            <SlidersHorizontal size={13} /> Avanzata
-                        </button>
-                    </div>
                     <button className="btn btn-outline" onClick={() => setShowCustomModal(true)} style={{ display: 'flex', alignItems: 'center', gap: 6 }}><Database size={14} /> Aggiungi ingrediente al DB</button>
                     <button className="btn btn-outline" onClick={handleNew} style={{ display: 'flex', alignItems: 'center', gap: 6 }}><Plus size={14} /> Nuovo</button>
                     <button className="btn btn-outline" onClick={() => setArchiveOpen(true)} style={{ display: 'flex', alignItems: 'center', gap: 6 }}><FolderOpen size={14} /> Archivio ({archiveItems.length})</button>
@@ -2550,7 +2833,34 @@ export function NutrizionaleCalc() {
                 </div>
             </div>
 
-            {!wizardMode && (<>
+            {/* Step indicator — guided mode only */}
+            {wizardMode && (
+                <div className="step-indicator">
+                    {[
+                        { label: 'Ricetta', step: 0 },
+                        { label: 'Ingredienti', step: 1 },
+                        { label: 'Mercati', step: 2 },
+                        { label: 'Tabelle', step: 3 },
+                    ].map(({ label, step }, i) => (
+                        <React.Fragment key={step}>
+                            {i > 0 && (
+                                <div className={`step-indicator-connector${wizardStep >= step ? ' done' : ''}`} />
+                            )}
+                            <div className={`step-dot ${wizardStep === step ? 'active' : wizardStep > step ? 'done' : 'pending'}`}>
+                                {wizardStep > step ? <Check size={10} /> : step + 1}
+                            </div>
+                            <span className={`step-label${wizardStep === step ? ' active' : wizardStep > step ? ' done' : ''}`}>
+                                {label}
+                            </span>
+                        </React.Fragment>
+                    ))}
+                </div>
+            )}
+
+            <SplitShell
+                left={
+                    <div style={{ padding: '14px', fontSize: 15, overflowY: 'auto' }}>
+                        {wizardMode ? renderWizard() : (<>
             {/* Quick Guide — mod 1 (Step 3 text updated) */}
             <div style={{ marginBottom: 20, border: '1.5px solid var(--color-border)', borderRadius: 12, overflow: 'hidden' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 18px', background: 'var(--color-bg-secondary, #f8f9fb)', borderBottom: guideOpen ? '1px solid var(--color-border)' : 'none' }}>
@@ -3123,6 +3433,15 @@ export function NutrizionaleCalc() {
                             )}
                             {activeTab === 'USA' && (
                                 <>
+                                    <div style={{ display: 'flex', gap: 4, marginBottom: 6, flexWrap: 'wrap' }}>
+                                        {(['verticale', 'orizzontale', 'lineare'] as SubTab[]).map(t => (
+                                            <button key={t} onClick={() => setSubTab(t)}
+                                                className={`btn ${subTab === t ? 'btn-accent' : 'btn-outline'}`}
+                                                style={{ fontSize: 11, padding: '4px 10px' }}>
+                                                {t.charAt(0).toUpperCase() + t.slice(1)}
+                                            </button>
+                                        ))}
+                                    </div>
                                     {(usa.confezione != null && usa.confezione > 0) ? (
                                         <div style={{ display: 'flex', gap: 4, marginBottom: 6, flexWrap: 'wrap' }}>
                                             {(['serving', 'confezione'] as USAServingRef[]).map(ref => (
@@ -3152,9 +3471,67 @@ export function NutrizionaleCalc() {
                                         servingRef={usaServingRef} measure={usaMeasure} subTab={subTab} />
                                 </>
                             )}
-                            {activeTab === 'Canada' && <TabCanada p={per100display} ca={ca} subTab={subTab} setSubTab={setSubTab} full={false} />}
+                            {activeTab === 'Canada' && (
+                                <>
+                                    {(ca.confezione != null && ca.confezione > 0) && (
+                                        <div style={{ display: 'flex', gap: 4, marginBottom: 6, flexWrap: 'wrap' }}>
+                                            {(['serving', 'confezione'] as USAServingRef[]).map(ref => (
+                                                <button key={ref} onClick={() => setCaServingRef(ref)}
+                                                    className={`btn ${caServingRef === ref ? 'btn-accent' : 'btn-outline'}`}
+                                                    style={{ fontSize: 11, padding: '4px 10px' }}>
+                                                    {ref === 'serving' ? 'Per Serving' : 'Per Confezione'}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    )}
+                                    <div style={{ display: 'flex', gap: 4, marginBottom: 10, flexWrap: 'wrap' }}>
+                                        {([
+                                            { key: 'g' as USAMeasure, label: 'g / ml', disabled: false },
+                                            { key: 'tazze' as USAMeasure, label: 'Tazze (250ml)', disabled: ca.cup == null },
+                                            { key: 'cucchiai' as USAMeasure, label: 'Cucchiai', disabled: ca.cucchiaio == null },
+                                            { key: 'pezzi' as USAMeasure, label: 'Pezzi', disabled: ca.pezzo == null },
+                                        ] as { key: USAMeasure; label: string; disabled: boolean }[]).map(t => (
+                                            <button key={t.key} disabled={t.disabled} onClick={() => setCaMeasure(t.key)}
+                                                className={`btn ${caMeasure === t.key ? 'btn-accent' : 'btn-outline'}`}
+                                                style={{ fontSize: 11, padding: '4px 10px', opacity: t.disabled ? 0.4 : 1 }}>
+                                                {t.label}
+                                            </button>
+                                        ))}
+                                    </div>
+                                    <TabCanada p={per100display} ca={ca} servingRef={caServingRef} measure={caMeasure} subTab={subTab} setSubTab={setSubTab} full={false} />
+                                </>
+                            )}
                             {activeTab === 'Australia' && <TabAustralia p={per100display} au={au} showDI={auShowDI} setShowDI={setAuShowDI} full={false} />}
-                            {activeTab === 'Arabi' && <TabArabi p={per100display} arabi={arabi} full={false} />}
+                            {activeTab === 'Arabi' && (
+                                <>
+                                    {(arabi.confezione != null && arabi.confezione > 0) ? (
+                                        <div style={{ display: 'flex', gap: 4, marginBottom: 6, flexWrap: 'wrap' }}>
+                                            {(['serving', 'confezione'] as USAServingRef[]).map(ref => (
+                                                <button key={ref} onClick={() => setArabiServingRef(ref)}
+                                                    className={`btn ${arabiServingRef === ref ? 'btn-accent' : 'btn-outline'}`}
+                                                    style={{ fontSize: 11, padding: '4px 10px' }}>
+                                                    {ref === 'serving' ? 'Per Serving' : 'Per Confezione'}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    ) : null}
+                                    <div style={{ display: 'flex', gap: 4, marginBottom: 10, flexWrap: 'wrap' }}>
+                                        {([
+                                            { key: 'g' as USAMeasure, label: 'g / ml', disabled: false },
+                                            { key: 'tazze' as USAMeasure, label: 'Tazze', disabled: arabi.cup == null },
+                                            { key: 'cucchiai' as USAMeasure, label: 'Cucchiai', disabled: arabi.cucchiaio == null },
+                                            { key: 'pezzi' as USAMeasure, label: 'Pezzi', disabled: arabi.pezzo == null },
+                                        ] as { key: USAMeasure; label: string; disabled: boolean }[]).map(t => (
+                                            <button key={t.key} disabled={t.disabled} onClick={() => setArabiMeasure(t.key)}
+                                                className={`btn ${arabiMeasure === t.key ? 'btn-accent' : 'btn-outline'}`}
+                                                style={{ fontSize: 11, padding: '4px 10px', opacity: t.disabled ? 0.4 : 1 }}>
+                                                {t.label}
+                                            </button>
+                                        ))}
+                                    </div>
+                                    <TabArabi p={per100display} arabi={arabi} servingRef={arabiServingRef} measure={arabiMeasure} specificGravity={parseFloat(specificGravity) || 0} full={false} />
+                                </>
+                            )}
                         </div>
                         {activeTab === 'UE' && (
                             <div style={{ marginTop: 12, display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: 10 }}>
@@ -3189,8 +3566,13 @@ export function NutrizionaleCalc() {
                 </div>
             )}
             </>)}
-            {wizardMode && renderWizard()}
-        </div>
+                    </div>
+                }
+                right={renderTablePanel()}
+                rightOpacity={wizardMode && wizardStep === 0 ? 0.45 : 1}
+            />
+            </div>
+        </>
     );
 }
 
@@ -3233,11 +3615,49 @@ const TS = {
 };
 
 // ─── TabCanada ──────────────────────────────────────────────────────────────
-function TabCanada({ p, ca, subTab, setSubTab, full }: { p: CalcResult; ca: ServingSizesNation; subTab: SubTab; setSubTab: (t: SubTab) => void; full?: boolean }) {
-    const svG = ca.serving || 0;
+function TabCanada({ p, ca, servingRef, measure, subTab, setSubTab, full }: {
+    p: CalcResult; ca: ServingSizesNation;
+    servingRef: USAServingRef; measure: USAMeasure;
+    subTab: SubTab; setSubTab: (t: SubTab) => void; full?: boolean
+}) {
+    const refGrams = servingRef === 'confezione' ? (ca.confezione ?? 0) : (ca.serving ?? 0);
+    const svG = refGrams;
     const sv = svG > 0 ? scaleResult(p, svG) : null;
     const d = sv || p;
     const satTrans = d.saturi + d.trans;
+
+    // Serving size label (Canada)
+    const caUnitSize = measure === 'tazze' ? (ca.cup ?? 250) : measure === 'cucchiai' ? (ca.cucchiaio ?? 15) : (ca.pezzo ?? (svG || 1));
+    const caQty = svG > 0 ? (svG / caUnitSize).toFixed(1).replace('.', ',') : '0';
+    const caEnUnit = measure === 'tazze' ? 'cup' : measure === 'cucchiai' ? 'tablespoon' : 'pieces';
+    const caFrUnit = measure === 'tazze' ? 'tasse' : measure === 'cucchiai' ? 'cuillerée' : 'morceaux';
+    const caServN = (ca.serving && ca.serving > 0 && svG > 0) ? Math.round(svG / ca.serving) : 0;
+
+    let caEnLeft: string, caEnRight: string, caFrLeft: string, caFrRight: string;
+    if (measure === 'g') {
+        if (servingRef === 'confezione' && caServN > 0) {
+            caEnLeft = `Per ${caServN} serving`; caEnRight = `(1container${svG}g)`;
+            caFrLeft = `pour ${caServN} partie`; caFrRight = `(1emballage${svG}g)`;
+        } else {
+            caEnLeft = `Per ${svG}g`; caEnRight = '';
+            caFrLeft = `pour ${svG}g`; caFrRight = '';
+        }
+    } else {
+        caEnLeft = `Per ${caQty} ${caEnUnit}`;
+        caEnRight = `(${servingRef === 'serving' ? '1 serving' : '1container'} ${svG}g)`;
+        caFrLeft = `pour ${caQty} ${caFrUnit}`;
+        caFrRight = `(${servingRef === 'serving' ? '1 partie' : '1emballage'} ${svG}g)`;
+    }
+
+    const caLinearServing = (() => {
+        if (!svG) return '';
+        if (measure === 'g') {
+            if (servingRef === 'confezione' && caServN > 0) return `Per ${caServN} serving  (1container${svG}g)`;
+            return `Per ${svG}g`;
+        }
+        const ref = servingRef === 'serving' ? `1serving${svG}g` : `1container${svG}g`;
+        return `Per ${caQty} ${caEnUnit}  (${ref})`;
+    })();
 
     return (
         <div style={{ background: 'white' }}>
@@ -3251,243 +3671,379 @@ function TabCanada({ p, ca, subTab, setSubTab, full }: { p: CalcResult; ca: Serv
                     </div>
                 </>
             )}
-            <div data-table-export style={{ background: 'white', padding: 12, borderRadius: 0 }}>
-            {subTab === 'verticale' && (
-                <div style={{ maxWidth: 420, border: '1px solid #000', padding: 8, fontFamily: 'Arial, sans-serif' }}>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
-                        {/* English */}
-                        <div>
-                            <div style={{ fontSize: 24, fontWeight: 900 }}>Nutrition Facts</div>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '6px solid #000' }}>
-                                <div><span style={{ fontWeight: 700 }}>Serving Size</span> {svG > 0 ? `${svG} g` : '—'}</div>
-                            </div>
-                            <div style={{ borderBottom: '4px solid #000' }}>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 20, fontWeight: 900 }}>
-                                    <span>Calories</span><span>{rCA_energy(d.energyKcal)}</span>
-                                </div>
-                            </div>
-                            <div style={{ textAlign: 'right', fontSize: 10 }}>% Daily Value*</div>
-                            {[
-                                { label: 'Fat', val: d.grassi, dv: DV_CA.grassi, fmt: rCA_fat, unit: 'g', bold: true },
-                                { label: 'Saturated + Trans', val: satTrans, dv: DV_CA.satTrans, fmt: rCA_fat, unit: 'g', sub: true },
-                                { label: 'Carbohydrate', val: d.carboidratiTot, dv: DV_CA.carboidratiTot, fmt: rCA_carb, unit: 'g', bold: true },
-                                { label: 'Fibre', val: d.fibre, dv: DV_CA.fibre, fmt: rCA_carb, unit: 'g', sub: true },
-                                { label: 'Sugars', val: d.zuccheri, dv: DV_CA.zuccheri, fmt: rCA_carb, unit: 'g', sub: true },
-                                { label: 'Cholesterol', val: d.colesterolo, dv: 300, fmt: rCA_chol, unit: 'mg', bold: true },
-                                { label: 'Sodium', val: d.sodio_mg, dv: DV_CA.sodio_mg, fmt: rCA_na, unit: 'mg', bold: true },
-                                { label: 'Potassium', val: d.potassio, dv: DV_CA.potassio, fmt: rCA_na, unit: 'mg', bold: true, isOptional: true },
-                                { label: 'Calcium', val: d.calcio, dv: DV_CA.calcio, fmt: rCA_na, unit: 'mg', bold: true, isOptional: true },
-                                { label: 'Iron', val: d.ferro, dv: DV_CA.ferro, fmt: rCA_iron, unit: 'mg', bold: true, isOptional: true },
-                            ].filter(r => full || !r.isOptional).map((r, i) => (
-                                <div key={i} style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #999', paddingLeft: r.sub ? 12 : 0, fontSize: r.bold ? 13 : 11, fontWeight: r.bold ? 700 : 400 }}>
-                                    <span>{r.label} {r.fmt(r.val)} {r.unit}</span>
-                                    <span>{rCA_pct(r.val, r.dv)}%</span>
-                                </div>
-                            ))}
-                        </div>
-                        {/* French */}
-                        <div style={{ borderLeft: '1px solid #000', paddingLeft: 8 }}>
-                            <div style={{ fontSize: 24, fontWeight: 900 }}>Valeur nutritive</div>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '6px solid #000' }}>
-                                <div><span style={{ fontWeight: 700 }}>Portion</span> {svG > 0 ? `${svG} g` : '—'}</div>
-                            </div>
-                            <div style={{ borderBottom: '4px solid #000' }}>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 20, fontWeight: 900 }}>
-                                    <span>Calories</span><span>{rCA_energy(d.energyKcal)}</span>
-                                </div>
-                            </div>
-                            <div style={{ textAlign: 'right', fontSize: 10 }}>% valeur quotidienne*</div>
-                            {[
-                                { label: 'Lipides', val: d.grassi, dv: DV_CA.grassi, fmt: rCA_fat, unit: 'g', bold: true },
-                                { label: 'Saturés + Trans', val: satTrans, dv: DV_CA.satTrans, fmt: rCA_fat, unit: 'g', sub: true },
-                                { label: 'Glucides', val: d.carboidratiTot, dv: DV_CA.carboidratiTot, fmt: rCA_carb, unit: 'g', bold: true },
-                                { label: 'Fibres', val: d.fibre, dv: DV_CA.fibre, fmt: rCA_carb, unit: 'g', sub: true },
-                                { label: 'Sucres', val: d.zuccheri, dv: DV_CA.zuccheri, fmt: rCA_carb, unit: 'g', sub: true },
-                                { label: 'Cholestérol', val: d.colesterolo, dv: 300, fmt: rCA_chol, unit: 'mg', bold: true },
-                                { label: 'Sodium', val: d.sodio_mg, dv: DV_CA.sodio_mg, fmt: rCA_na, unit: 'mg', bold: true },
-                                { label: 'Potassium', val: d.potassio, dv: DV_CA.potassio, fmt: rCA_na, unit: 'mg', bold: true, isOptional: true },
-                                { label: 'Calcium', val: d.calcio, dv: DV_CA.calcio, fmt: rCA_na, unit: 'mg', bold: true, isOptional: true },
-                                { label: 'Fer', val: d.ferro, dv: DV_CA.ferro, fmt: rCA_iron, unit: 'mg', bold: true, isOptional: true },
-                            ].filter(r => full || !r.isOptional).map((r, i) => (
-                                <div key={i} style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #999', paddingLeft: r.sub ? 12 : 0, fontSize: r.bold ? 13 : 11, fontWeight: r.bold ? 700 : 400 }}>
-                                    <span>{r.label} {r.fmt(r.val)} {r.unit}</span>
-                                    <span>{rCA_pct(r.val, r.dv)}%</span>
-                                </div>
-                            ))}
-                        </div>
+            <div data-table-export style={{ background: 'white', padding: 12, borderRadius: 0, display: 'inline-block' }}>
+            {subTab === 'verticale' && (() => {
+                const F = '"Arial Black", "Arial Bold", Arial, sans-serif';
+                const Fn = 'Arial, sans-serif';
+                const ROW = (label: string, val: string, pct: string | null, sub: boolean, bold: boolean, border: string) => (
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', borderBottom: `1px solid ${border}`, paddingLeft: sub ? 16 : 0, paddingTop: 1, paddingBottom: 1 }}>
+                        <span style={{ fontSize: bold ? 14 : 12, fontWeight: bold ? 900 : 400, fontFamily: bold ? F : Fn }}>{label}{' '}{val}</span>
+                        {pct !== null ? <span style={{ fontSize: 13, fontWeight: 900, fontFamily: F }}>{pct}%</span> : <span />}
                     </div>
-                    <div style={{ fontSize: 9, borderTop: '1px solid #000', marginTop: 6, paddingTop: 4 }}>
-                        * 5% or less is a little, 15% or more is a lot / 5% ou moins c'est peu, 15% ou plus c'est beaucoup
+                );
+                return (
+                    <div style={{ width: 340, border: '2px solid #000', padding: '6px 8px', fontFamily: F }}>
+                        <div style={{ fontSize: 30, fontWeight: 900, lineHeight: 1.05 }}>
+                            Nutrition Facts<br />Valeur nutritive
+                        </div>
+                        <div style={{ fontSize: 11, fontFamily: Fn, borderBottom: '5px solid #000', paddingBottom: 3, margin: '3px 0 0 0' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                                <span>{caEnLeft}</span>
+                                {caEnRight ? <span>{caEnRight}</span> : null}
+                            </div>
+                            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                                <span>{caFrLeft}</span>
+                                {caFrRight ? <span>{caFrRight}</span> : null}
+                            </div>
+                        </div>
+                        <div style={{ borderBottom: '8px solid #000', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', paddingTop: 3, paddingBottom: 4 }}>
+                            <div style={{ fontSize: 24, fontWeight: 900, fontFamily: F }}>Calories{'\u2002'}{rCA_energy(d.energyKcal)}</div>
+                            <div style={{ textAlign: 'right', fontSize: 9, fontFamily: Fn, lineHeight: 1.5 }}>% Daily Value*<br />% valeur quotidienne*</div>
+                        </div>
+                        {ROW('Fat / Lipides', `${rCA_fat(d.grassi)}g`, rCA_pct(d.grassi, DV_CA.grassi), false, true, '#aaa')}
+                        {ROW('Saturated / saturés', `${rCA_fat(d.saturi)}g`, null, true, false, '#ddd')}
+                        {ROW('+ Trans / trans', `${rCA_fat(d.trans)}g`, rCA_pct(satTrans, DV_CA.satTrans), true, false, '#aaa')}
+                        {ROW('Carbohydrate / Glucides', `${rCA_carb(d.carboidratiTot)}g`, null, false, true, '#aaa')}
+                        {ROW('Fibre / Fibres', `${rCA_carb(d.fibre)}g`, rCA_pct(d.fibre, DV_CA.fibre), true, false, '#ddd')}
+                        {ROW('Sugars / Sucres', `${rCA_carb(d.zuccheri)}g`, rCA_pct(d.zuccheri, DV_CA.zuccheri), true, false, '#aaa')}
+                        {ROW('Protein / Protéines', `${rCA_carb(d.proteine)}g`, null, false, true, '#aaa')}
+                        {ROW('Cholesterol / Cholestérol', `${rCA_chol(d.colesterolo)}mg`, null, false, true, '#aaa')}
+                        {ROW('Sodium', `${rCA_na(d.sodio_mg)}mg`, rCA_pct(d.sodio_mg, DV_CA.sodio_mg), false, true, '#000')}
+                        <div style={{ height: 5, background: '#000', margin: '2px 0' }} />
+                        {ROW('Potassium', `${rCA_na(d.potassio)}mg`, rCA_pct(d.potassio, DV_CA.potassio), false, false, '#ddd')}
+                        {ROW('Calcium', `${rCA_na(d.calcio)}mg`, rCA_pct(d.calcio, DV_CA.calcio), false, false, '#ddd')}
+                        {ROW('Iron / Fer', `${rCA_iron(d.ferro)}mg`, rCA_pct(d.ferro, DV_CA.ferro), false, false, '#000')}
+                        <div style={{ height: 5, background: '#000', margin: '2px 0' }} />
+                        <div style={{ fontSize: 9, fontFamily: Fn }}>* 5% or less is a <b>little</b>, 15% or more is a <b>lot</b></div>
+                        <div style={{ fontSize: 9, fontFamily: Fn }}>* 5% ou moins c'est <b>peu</b>, 15% ou plus c'est <b>beaucoup</b></div>
                     </div>
-                </div>
-            )}
+                );
+            })()}
 
-            {subTab === 'orizzontale' && (
-                <div style={{ border: '1px solid #000', padding: 8, fontFamily: 'Arial, sans-serif' }}>
-                    <div style={{ display: 'flex', gap: 16, borderBottom: '3px solid #000', paddingBottom: 8, marginBottom: 8 }}>
-                        <div>
-                            <div style={{ fontSize: 22, fontWeight: 900 }}>Nutrition Facts / Valeur nutritive</div>
-                            <div style={{ fontSize: 13, fontWeight: 700 }}>Serving / Portion: {svG > 0 ? `${svG} g` : '—'}</div>
-                            <div style={{ fontSize: 22, fontWeight: 900 }}>Calories {rCA_energy(d.energyKcal)}</div>
+            {subTab === 'orizzontale' && (() => {
+                const F = '"Arial Black", "Arial Bold", Arial, sans-serif';
+                const Fn = 'Arial, sans-serif';
+                const NROW = (label: string, val: string, pct: string | null, sub: boolean, bold: boolean, topBorder?: boolean) => (
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', paddingLeft: sub ? 12 : 0, paddingTop: 1, paddingBottom: 1, borderTop: topBorder ? '3px solid #000' : undefined, borderBottom: '1px solid #ddd' }}>
+                        <span style={{ fontSize: 11, fontWeight: bold ? 700 : 400, fontFamily: Fn }}>{label} {val}</span>
+                        {pct !== null ? <span style={{ fontSize: 11, fontWeight: 700, fontFamily: F }}>{pct}%</span> : null}
+                    </div>
+                );
+                return (
+                    <div style={{ border: '2px solid #000', fontFamily: Fn, display: 'flex', flexDirection: 'column', minWidth: 480 }}>
+                        <div style={{ display: 'flex' }}>
+                            {/* Left: title + serving + Calories */}
+                            <div style={{ padding: '4px 8px', borderRight: '5px solid #000', minWidth: 185 }}>
+                                <div style={{ fontSize: 20, fontWeight: 900, fontFamily: F, lineHeight: 1.1 }}>Nutrition Facts<br />Valeur nutritive</div>
+                                <div style={{ fontSize: 10, fontFamily: Fn, marginTop: 2 }}>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', gap: 6 }}>
+                                        <span>{caEnLeft}</span>
+                                        {caEnRight ? <span>{caEnRight}</span> : null}
+                                    </div>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', gap: 6 }}>
+                                        <span>{caFrLeft}</span>
+                                        {caFrRight ? <span>{caFrRight}</span> : null}
+                                    </div>
+                                </div>
+                                <div style={{ fontSize: 20, fontWeight: 900, fontFamily: F, marginTop: 3 }}>Calories {rCA_energy(d.energyKcal)}</div>
+                                <div style={{ fontSize: 8, fontFamily: Fn, marginTop: 2 }}>* DV = Daily Value<br />* VQ = Valeur Quotidienne</div>
+                            </div>
+                            {/* Middle: fat/carb group */}
+                            <div style={{ flex: 1, padding: '2px 6px', borderRight: '3px solid #000' }}>
+                                <div style={{ textAlign: 'right', fontSize: 9, fontFamily: Fn, paddingBottom: 2, borderBottom: '1px solid #000' }}>%DV* / %VQ*</div>
+                                {NROW('Fat/Lipides', `${rCA_fat(d.grassi)}g`, rCA_pct(d.grassi, DV_CA.grassi), false, true)}
+                                {NROW('Saturated/Saturés', `${rCA_fat(d.saturi)}g`, null, true, false)}
+                                {NROW('+Trans/Trans', `${rCA_fat(d.trans)}g`, rCA_pct(satTrans, DV_CA.satTrans), true, false)}
+                                {NROW('Carbohydrate/Glucides', `${rCA_carb(d.carboidratiTot)}g`, null, false, true)}
+                                {NROW('Fibre/Fibres', `${rCA_carb(d.fibre)}g`, rCA_pct(d.fibre, DV_CA.fibre), true, false)}
+                                {NROW('Sugars/Sucres', `${rCA_carb(d.zuccheri)}g`, rCA_pct(d.zuccheri, DV_CA.zuccheri), true, false)}
+                            </div>
+                            {/* Right: protein/minerals group */}
+                            <div style={{ flex: 1, padding: '2px 6px' }}>
+                                <div style={{ textAlign: 'right', fontSize: 9, fontFamily: Fn, paddingBottom: 2, borderBottom: '1px solid #000' }}>%DV* / %VQ*</div>
+                                {NROW('Protein/Protéines', `${rCA_carb(d.proteine)}g`, null, false, false)}
+                                {NROW('Cholesterol/Cholestérol', `${rCA_chol(d.colesterolo)}mg`, null, false, true, true)}
+                                {NROW('Sodium', `${rCA_na(d.sodio_mg)}mg`, rCA_pct(d.sodio_mg, DV_CA.sodio_mg), false, true, true)}
+                                {NROW('Potassium', `${rCA_na(d.potassio)}mg`, rCA_pct(d.potassio, DV_CA.potassio), false, false)}
+                                {NROW('Calcium', `${rCA_na(d.calcio)}mg`, rCA_pct(d.calcio, DV_CA.calcio), false, false)}
+                                {NROW('Iron/Fer', `${rCA_iron(d.ferro)}mg`, rCA_pct(d.ferro, DV_CA.ferro), false, false)}
+                            </div>
+                        </div>
+                        <div style={{ fontSize: 9, fontFamily: Fn, padding: '2px 6px', borderTop: '2px solid #000' }}>
+                            *5% or less is a <b>little</b>, 15% or more is a <b>lot</b> / *5% ou moins c'est <b>peu</b>, 15 ou plus c'est <b>beaucoup</b>
                         </div>
                     </div>
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 8, fontSize: 12 }}>
-                        {[
-                            { en: 'Fat', fr: 'Lipides', val: d.grassi, dv: DV_CA.grassi, fmt: rCA_fat, unit: 'g' },
-                            { en: 'Carbs', fr: 'Glucides', val: d.carboidratiTot, dv: DV_CA.carboidratiTot, fmt: rCA_carb, unit: 'g' },
-                            { en: 'Sodium', fr: 'Sodium', val: d.sodio_mg, dv: DV_CA.sodio_mg, fmt: rCA_na, unit: 'mg' },
-                            { en: 'Calcium', fr: 'Calcium', val: d.calcio, dv: DV_CA.calcio, fmt: rCA_na, unit: 'mg' },
-                            { en: 'Iron', fr: 'Fer', val: d.ferro, dv: DV_CA.ferro, fmt: rCA_iron, unit: 'mg' },
-                        ].map((m, i) => (
-                            <div key={i} style={{ textAlign: 'center', borderLeft: '1px solid #ccc', paddingLeft: 8 }}>
-                                <div style={{ fontSize: 18, fontWeight: 900 }}>{rCA_pct(m.val, m.dv)}%</div>
-                                <div style={{ fontSize: 11 }}>{m.en} / {m.fr}</div>
-                                <div style={{ fontSize: 11 }}>{m.fmt(m.val)} {m.unit}</div>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-            )}
+                );
+            })()}
 
-            {subTab === 'lineare' && (
-                <div style={{ border: '1px solid #000', padding: 8, fontFamily: 'Arial, sans-serif', fontSize: 11 }}>
-                    <span style={{ fontWeight: 900, fontSize: 14 }}>Nutrition Facts / Valeur nutritive | </span>
-                    {svG > 0 && <span>Serving / Portion {svG} g | </span>}
-                    <span>Calories {rCA_energy(d.energyKcal)} | </span>
-                    <span><b>Fat / Lipides</b> {rCA_fat(d.grassi)} g ({rCA_pct(d.grassi, DV_CA.grassi)}% DV) | </span>
-                    <span><b>Carbs / Glucides</b> {rCA_carb(d.carboidratiTot)} g ({rCA_pct(d.carboidratiTot, DV_CA.carboidratiTot)}% DV) | </span>
-                    <span><b>Sodium</b> {rCA_na(d.sodio_mg)} mg ({rCA_pct(d.sodio_mg, DV_CA.sodio_mg)}% DV)</span>
-                </div>
-            )}
+            {subTab === 'lineare' && (() => {
+                const F = '"Arial Black", "Arial Bold", Arial, sans-serif';
+                const Fn = 'Arial, sans-serif';
+                const pctCA = (v: number, dv: number) => `( ${Math.round(v / dv * 100)}% )`;
+                return (
+                    <div style={{ border: '1px solid #000', padding: '4px 8px', fontFamily: Fn, fontSize: 11, display: 'inline-block' }}>
+                        <div>
+                            <span style={{ fontWeight: 900, fontSize: 14, fontFamily: F }}>Nutrition Facts</span>
+                            {caLinearServing ? <span>{'  '}{caLinearServing}</span> : null}
+                            <span>{'  '}:{'  '}<b>Calories</b>{' '}{rCA_energy(d.energyKcal)} .</span>
+                        </div>
+                        <div>
+                            <b>Fat</b>{' '}{rCA_fat(d.grassi)}g{' '}{pctCA(d.grassi, DV_CA.grassi)},{' '}
+                            <b>Saturated Fat</b>{' '}{rCA_fat(d.saturi)}g + Trans{' '}{rCA_fat(d.trans)}g{' '}{pctCA(satTrans, DV_CA.satTrans)},{' '}
+                            Cholesterol{' '}{rCA_chol(d.colesterolo)}mg
+                        </div>
+                        <div>
+                            Carbohydrate{' '}{rCA_carb(d.carboidratiTot)}g,{' '}
+                            Fibre{' '}{rCA_carb(d.fibre)}g{' '}{pctCA(d.fibre, DV_CA.fibre)},{' '}
+                            Sugars{' '}{rCA_carb(d.zuccheri)}g{' '}{pctCA(d.zuccheri, DV_CA.zuccheri)},{' '}
+                            Protein{' '}{rCA_carb(d.proteine)}g,{' '}
+                            Sodium{' '}{rCA_na(d.sodio_mg)}mg{' '}{pctCA(d.sodio_mg, DV_CA.sodio_mg)}
+                        </div>
+                        <div>
+                            Potassium{' '}{rCA_na(d.potassio)}mg{' '}{pctCA(d.potassio, DV_CA.potassio)},{' '}
+                            Calcium{' '}{rCA_na(d.calcio)}mg{' '}{pctCA(d.calcio, DV_CA.calcio)},{' '}
+                            Iron{' '}{rCA_iron(d.ferro)}mg{' '}{pctCA(d.ferro, DV_CA.ferro)} .
+                        </div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 2 }}>
+                            <span style={{ fontSize: 9 }}>% = % Daily Value*</span>
+                            <span style={{ fontSize: 9 }}>*5% or less is a <b>little</b>, 15% or more is a <b>lot</b>.</span>
+                        </div>
+                    </div>
+                );
+            })()}
             </div>
         </div>
     );
 }
 
 // ─── TabAustralia ─────────────────────────────────────────────────────────────
-function TabAustralia({ p, au, showDI, setShowDI, full }: { p: CalcResult; au: ServingSizesNation; showDI: boolean; setShowDI: (v: boolean) => void; full?: boolean }) {
+function TabAustralia({ p, au, showDI: _showDI, setShowDI: _setShowDI, full }: { p: CalcResult; au: ServingSizesNation; showDI: boolean; setShowDI: (v: boolean) => void; full?: boolean }) {
     const svG = au.serving || 0;
-    const sv = (svG > 0 && (full || true)) ? scaleResult(p, svG) : null; // Australia always shows per serving if possible
-    const auRows: { label: string; per100kj?: string; per100kcal?: string; svKj?: string; svKcal?: string; di?: string; g100?: string; gSv?: string; isCal?: boolean; isOptional?: boolean }[] = [];
+    const sv = svG > 0 ? scaleResult(p, svG) : null;
+    const pkgG = au.confezione || 0;
+    const servingsPerPkg = (svG > 0 && pkgG > 0) ? pkgG / svG : null;
+
+    const diPct = (val: number, ref: number) => `${Math.round(val / ref * 100)} %`;
+
+    interface AURow { label: string; svVal: string; di: string; p100: string; isSub?: boolean; }
+    const rows: AURow[] = [];
 
     if (sv) {
-        const diPct = (val: number, ref: number) => `${Math.round(val / ref * 100)}%`;
-        auRows.push({ label: 'Energy', svKj: rAU_kj(sv.energyKj), svKcal: rAU_kcal(sv.energyKcal), di: diPct(sv.energyKj, DV_AU.energyKj), g100: `${rAU_kj(p.energyKj)} kJ`, isCal: true });
+        rows.push({
+            label: 'Energy',
+            svVal: `${rAU_kj(sv.energyKj)} kJ  ( ${rAU_kcal(sv.energyKcal)} Cal )`,
+            di: diPct(sv.energyKj, DV_AU.energyKj),
+            p100: `${rAU_kj(p.energyKj)} kJ  ( ${rAU_kcal(p.energyKcal)} Cal )`,
+        });
         [
-            { label: 'Protein', svVal: sv.proteine, p100: p.proteine, ref: DV_AU.proteine },
-            { label: 'Fat — total', svVal: sv.grassi, p100: p.grassi, ref: DV_AU.grassi },
-            { label: '— saturated', svVal: sv.saturi, p100: p.saturi, ref: DV_AU.saturi },
-            { label: 'Protein', svVal: sv.proteine, p100: p.proteine, ref: DV_AU.proteine, isOptional: false },
-            { label: 'Fat — total', svVal: sv.grassi, p100: p.grassi, ref: DV_AU.grassi, isOptional: false },
-            { label: '— saturated', svVal: sv.saturi, p100: p.saturi, ref: DV_AU.saturi, isOptional: false },
-            { label: 'Carbohydrate — total', svVal: sv.carboidrati, p100: p.carboidrati, ref: DV_AU.carboidrati, isOptional: false },
-            { label: '— sugars', svVal: sv.zuccheri, p100: p.zuccheri, ref: DV_AU.zuccheri, isOptional: false },
-            { label: 'Dietary Fibre', svVal: sv.fibre, p100: p.fibre, ref: DV_AU.fibre },
-            { label: 'Sodium', svVal: sv.sodio_mg, p100: p.sodio_mg, ref: DV_AU.sodio_mg },
+            { label: 'Protein',       svVal: sv.proteine,  p100: p.proteine,  ref: DV_AU.proteine,     unit: 'g' },
+            { label: 'Fat, total',    svVal: sv.grassi,    p100: p.grassi,    ref: DV_AU.grassi,       unit: 'g' },
+            { label: '- saturated',   svVal: sv.saturi,    p100: p.saturi,    ref: DV_AU.saturi,       unit: 'g', isSub: true },
+            { label: 'Carbohydrate',  svVal: sv.carboidrati, p100: p.carboidrati, ref: DV_AU.carboidrati, unit: 'g' },
+            { label: '- sugars',      svVal: sv.zuccheri,  p100: p.zuccheri,  ref: DV_AU.zuccheri,     unit: 'g', isSub: true },
+            { label: 'Dietary fibre', svVal: sv.fibre,     p100: p.fibre,     ref: DV_AU.fibre,        unit: 'g' },
+            { label: 'Sodium',        svVal: sv.sodio_mg,  p100: p.sodio_mg,  ref: DV_AU.sodio_mg,     unit: 'mg' },
         ].forEach(r => {
-            const unit = r.label.includes('Sodium') ? 'mg' : 'g';
-            const fmtSv = unit === 'mg' ? rAU_mg(r.svVal) : rAU_g1(r.svVal);
-            const fmt100 = unit === 'mg' ? rAU_mg(r.p100) : rAU_g1(r.p100);
-            auRows.push({ label: r.label, gSv: `${fmtSv} ${unit}`, g100: `${fmt100} ${unit}`, di: diPct(r.svVal, r.ref) });
+            const fmt = (v: number) => r.unit === 'mg' ? `${rAU_mg(v)} mg` : `${rAU_g1(v)} g`;
+            rows.push({ label: r.label, svVal: fmt(r.svVal), di: diPct(r.svVal, r.ref), p100: fmt(r.p100), isSub: r.isSub });
         });
     }
+
+    const bOut = '2px solid #000';
+    const bHdr = '1px solid #000';
+    const thStyle: React.CSSProperties = { padding: '5px 10px', fontWeight: 700, fontSize: 12, borderBottom: bHdr, verticalAlign: 'bottom' };
+    const tdStyle: React.CSSProperties = { padding: '2px 10px', fontSize: 12, fontWeight: 700, color: '#000' };
 
     return (
         <div style={{ background: 'white' }}>
             {!full && (
-                <>
-                    <h3 style={{ marginTop: 0, fontSize: 16, color: 'var(--color-navy)', borderBottom: '2px solid var(--color-orange)', paddingBottom: 8, marginBottom: 16 }}>Etichetta Nutrizionale (Australia)</h3>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 14 }}>
-                        <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, cursor: 'pointer' }}>
-                            <input type="checkbox" checked={showDI} onChange={e => setShowDI(e.target.checked)} />
-                            Show % Daily Intake
-                        </label>
-                    </div>
-                </>
+                <h3 style={{ marginTop: 0, fontSize: 16, color: 'var(--color-navy)', borderBottom: '2px solid var(--color-orange)', paddingBottom: 8, marginBottom: 16 }}>Etichetta Nutrizionale (Australia)</h3>
             )}
-            <div data-table-export style={{ background: 'white', padding: 12, borderRadius: 0 }}>
-            <h3 style={{ marginTop: 0 }}>Nutrition Information</h3>
-            <div style={{ overflowX: 'auto' }}>
-                <table style={TS.table}>
-                    <thead>
-                        <tr>
-                            <th style={TS.th}>Nutrient</th>
-                            <th style={TS.thR}>Servings per package: —</th>
-                            <th style={TS.thR}>Average Quantity per Serving {svG > 0 ? `(${svG}g)` : ''}</th>
-                            {showDI && <th style={TS.thR}>% Daily Intake per Serving†</th>}
-                            <th style={TS.thR}>Average Quantity per 100 g</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {svG > 0 && sv ? auRows.map((r, i) => (
-                            <tr key={i} style={i % 2 === 0 ? { background: '#f8f9fa' } : {}}>
-                                <td style={r.label.startsWith('—') ? TS.tdSub : TS.tdB}>{r.label}</td>
-                                <td style={TS.tdR}></td>
-                                <td style={TS.tdR}>{r.isCal ? `${r.svKj} kJ (${r.svKcal} Cal)` : r.gSv}</td>
-                                {showDI && <td style={TS.tdR}>{r.di}</td>}
-                                <td style={TS.tdR}>{r.g100}</td>
-                            </tr>
-                        )) : (
-                            <tr><td colSpan={4} style={{ ...TS.td, color: '#888' }}>Inserire il valore serving size sopra per calcolare le quantità per porzione.</td></tr>
+            <div data-table-export style={{ background: 'white', padding: 12, borderRadius: 0, display: 'inline-block', minWidth: 440 }}>
+                <div style={{ border: bOut, fontFamily: 'Arial, sans-serif', fontSize: 12 }}>
+                    {/* Titolo */}
+                    <div style={{ textAlign: 'center', padding: '8px 12px 6px', borderBottom: bHdr }}>
+                        <span style={{ fontSize: 24, fontWeight: 900 }}>NUTRITION INFORMATION</span>
+                    </div>
+                    {/* Serving info */}
+                    <div style={{ padding: '10px 12px', borderBottom: bHdr, lineHeight: 1.8, fontWeight: 700 }}>
+                        {servingsPerPkg !== null && (
+                            <div style={{ fontSize: 12, fontWeight: 700 }}>
+                                Servings per Package: {servingsPerPkg.toFixed(1).replace('.', ',')}
+                            </div>
                         )}
-                    </tbody>
-                </table>
-            </div>
-            {showDI && <p style={{ fontSize: 10, color: '#666', marginTop: 6 }}>† % Daily Intake based on an average adult diet of 8700 kJ. Your daily intake may be higher or lower depending on your energy needs.</p>}
+                        <div style={{ fontSize: 12, fontWeight: 700 }}>
+                            Serving Size:&nbsp;&nbsp;{svG > 0 ? `${svG} g` : '—'}
+                        </div>
+                    </div>
+                    {/* Tabella: nessuna linea verticale, solo bordo sotto intestazione */}
+                    <table style={{ borderCollapse: 'collapse', width: '100%' }}>
+                        <thead>
+                            <tr>
+                                <th style={{ ...thStyle, textAlign: 'left', width: '34%' }}></th>
+                                <th style={{ ...thStyle, textAlign: 'left' }}>Average Quantity<br/>per Serving</th>
+                                <th style={{ ...thStyle, textAlign: 'left' }}>% Daily Intake*<br/>(per Serving)</th>
+                                <th style={{ ...thStyle, textAlign: 'left' }}>Average Quantity<br/>per 100 g</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {svG > 0 && sv ? rows.map((r, i) => (
+                                <tr key={i}>
+                                    <td style={{ ...tdStyle, paddingTop: i === 0 ? 8 : 2, paddingLeft: r.isSub ? 22 : 10 }}>{r.label}</td>
+                                    <td style={{ ...tdStyle, paddingTop: i === 0 ? 8 : 2 }}>{r.svVal}</td>
+                                    <td style={{ ...tdStyle, paddingTop: i === 0 ? 8 : 2 }}>{r.di}</td>
+                                    <td style={{ ...tdStyle, paddingTop: i === 0 ? 8 : 2 }}>{r.p100}</td>
+                                </tr>
+                            )) : (
+                                <tr><td colSpan={4} style={{ ...tdStyle, color: '#888' }}>Inserire il valore serving size sopra per calcolare le quantità per porzione.</td></tr>
+                            )}
+                        </tbody>
+                    </table>
+                    {/* Footer */}
+                    <div style={{ padding: '6px 10px 8px' }}>
+                        <span style={{ fontSize: 10, fontWeight: 700 }}>* Percentage daily intakes are based on an average adult diet of 8700 kJ</span>
+                    </div>
+                </div>
             </div>
         </div>
     );
 }
 
 // ─── TabArabi ────────────────────────────────────────────────────────────────
-function TabArabi({ p, arabi, full }: { p: CalcResult; arabi: ServingSizesNation; full?: boolean }) {
-    const svG = arabi.serving || 0;
-    const sv = svG > 0 ? scaleResult(p, svG) : null;
-    const hasExtra = full && sv;
+const DV_GULF = {
+    energyKcal: 2000, grassi: 70, saturi: 20, colesterolo: 300,
+    sodio_mg: 2400, carboidratiTot: 260, fibre: 28, zuccheri_agg: 50,
+};
 
-    interface ARow { label: string; p100: string; pSv?: string; dv: string; indent?: boolean; bold?: boolean; }
+function arRndE(v: number): number { if (v < 5) return 0; if (v <= 50) return Math.round(v / 5) * 5; return Math.round(v / 10) * 10; }
+function arRndG(v: number): number { return v < 0.5 ? 0 : Math.round(v); }
+function arRndMg(v: number): number { return v < 5 ? 0 : Math.round(v / 5) * 5; }
+function arPct(v: number, dv: number): number { return Math.round(v / dv * 100); }
+function arDec1(n: number): string { return n.toFixed(1).replace('.', ','); }
+function arCupFmt(qty: number): string {
+    const fracs: [number, string][] = [[0.25,'1/4'],[1/3,'1/3'],[0.5,'1/2'],[2/3,'2/3'],[0.75,'3/4']];
+    const whole = Math.floor(qty);
+    const frac = qty - whole;
+    for (const [v, s] of fracs) { if (Math.abs(frac - v) < 0.07) return whole > 0 ? `${whole} ${s}` : s; }
+    return arDec1(qty);
+}
 
-    const arRows: ARow[] = [
-        { label: 'Calories / السعرات الحرارية', bold: true, p100: rArabi_energy(p.energyKcal), pSv: sv ? rArabi_energy(sv.energyKcal) : undefined, dv: `${Math.round(p.energyKcal / AR_ARABI.energyKcal * 100)}%` },
-        { label: 'Total Fat / إجمالي الدهون', bold: true, p100: `${rArabi_g(p.grassi)} g`, pSv: sv ? `${rArabi_g(sv.grassi)} g` : undefined, dv: `${Math.round(p.grassi / AR_ARABI.grassi * 100)}%` },
-        { label: 'Saturated Fat / الدهون المشبعة', indent: true, p100: `${rArabi_g(p.saturi)} g`, pSv: sv ? `${rArabi_g(sv.saturi)} g` : undefined, dv: `${Math.round(p.saturi / AR_ARABI.saturi * 100)}%` },
-        { label: 'Trans Fat / الدهون المتحولة', indent: true, p100: `${rArabi_g(p.trans)} g`, pSv: sv ? `${rArabi_g(sv.trans)} g` : undefined, dv: '—' },
-        { label: 'Cholesterol / الكوليسترول', bold: true, p100: `${rArabi_mg(p.colesterolo)} mg`, pSv: sv ? `${rArabi_mg(sv.colesterolo)} mg` : undefined, dv: `${Math.round(p.colesterolo / 300 * 100)}%` },
-        { label: 'Sodium / الصوديوم', bold: true, p100: `${rArabi_mg(p.sodio_mg)} mg`, pSv: sv ? `${rArabi_mg(sv.sodio_mg)} mg` : undefined, dv: `${Math.round(p.sodio_mg / AR_ARABI.sodio_mg * 100)}%` },
-        { label: 'Total Carbohydrate / إجمالي الكربوهيدرات', bold: true, p100: `${rArabi_g(p.carboidratiTot)} g`, pSv: sv ? `${rArabi_g(sv.carboidratiTot)} g` : undefined, dv: `${Math.round(p.carboidratiTot / AR_ARABI.carboidrati * 100)}%` },
-        { label: 'Dietary Fiber / الألياف الغذائية', indent: true, p100: `${rArabi_g(p.fibre)} g`, pSv: sv ? `${rArabi_g(sv.fibre)} g` : undefined, dv: `${Math.round(p.fibre / AR_ARABI.fibre * 100)}%` },
-        { label: 'Total Sugars / إجمالي السكريات', indent: true, p100: `${rArabi_g(p.zuccheri)} g`, pSv: sv ? `${rArabi_g(sv.zuccheri)} g` : undefined, dv: '—' },
-        { label: 'Includes Added Sugars / سكريات مضافة', indent: true, p100: `${rArabi_g(p.zuccheri_agg)} g`, pSv: sv ? `${rArabi_g(sv.zuccheri_agg)} g` : undefined, dv: `${Math.round(p.zuccheri_agg / 50 * 100)}%` },
-        { label: 'Protein / البروتين', bold: true, p100: `${rArabi_g(p.proteine)} g`, pSv: sv ? `${rArabi_g(sv.proteine)} g` : undefined, dv: '—' },
+function buildArabiSI(arabi: ServingSizesNation, servingRef: USAServingRef, measure: USAMeasure, unit: string) {
+    const pkgG = arabi.confezione ?? 0;
+    const svG  = arabi.serving ?? 0;
+    const refGrams = servingRef === 'confezione' ? pkgG : svG;
+    const servingsPerContainer = (pkgG > 0 && svG > 0) ? arDec1(pkgG / svG) : '1';
+    const sizeLabel   = servingRef === 'confezione' ? 'container' : 'Serving size';
+    const amountLabel = servingRef === 'confezione' ? 'Amount per container' : 'Amount per serving';
+
+    let sizeValue: string;
+    if (servingRef === 'confezione') {
+        switch (measure) {
+            case 'tazze':    { const c = arabi.cup ?? 240;      sizeValue = `${arCupFmt(pkgG / c)} cup (${pkgG}${unit})`; break; }
+            case 'cucchiai': { const t = arabi.cucchiaio ?? 15; sizeValue = `${arDec1(pkgG / t)} tablespoon (${pkgG}${unit})`; break; }
+            case 'pezzi':    { const p = arabi.pezzo ?? (svG || pkgG); sizeValue = `${arDec1(pkgG / p)} pieces (${pkgG}${unit})`; break; }
+            default: sizeValue = svG > 0 ? `${Math.round(pkgG / svG)} serving (${pkgG}${unit})` : `${pkgG}${unit}`;
+        }
+    } else {
+        switch (measure) {
+            case 'tazze':    { const c = arabi.cup ?? 240;      sizeValue = `${arCupFmt(svG / c)} cup (${svG}${unit})`; break; }
+            case 'cucchiai': { const t = arabi.cucchiaio ?? 15; sizeValue = `${arDec1(svG / t)} tablespoon (${svG}${unit})`; break; }
+            case 'pezzi':    { const p = arabi.pezzo ?? svG;    sizeValue = `${arDec1(svG / p)} pieces (${svG}${unit})`; break; }
+            default: sizeValue = `${svG}${unit}`;
+        }
+    }
+    return { refGrams, servingsPerContainer, sizeLabel, sizeValue, amountLabel };
+}
+
+function TabArabi({ p, arabi, servingRef, measure, specificGravity, full }: {
+    p: CalcResult; arabi: ServingSizesNation;
+    servingRef: USAServingRef; measure: USAMeasure;
+    specificGravity?: number; full?: boolean;
+}) {
+    const unit = (specificGravity ?? 0) > 0 ? 'ml' : 'g';
+    const si = buildArabiSI(arabi, servingRef, measure, unit);
+    const d  = si.refGrams > 0 ? scaleResult(p, si.refGrams) : p;
+    const F  = 'Arial, Helvetica, sans-serif';
+
+    const addedSugarsG   = arRndG(d.zuccheri_agg);
+    const addedSugarsPct = arPct(addedSugarsG, DV_GULF.zuccheri_agg);
+
+    const nutriRows = [
+        { label: 'Total Fat',         val: d.grassi,       dvRef: DV_GULF.grassi,       unit: 'g',  bold: true,  indent: 0, italic: false },
+        { label: 'Saturated Fat',     val: d.saturi,       dvRef: DV_GULF.saturi,       unit: 'g',  bold: false, indent: 1, italic: false },
+        { label: 'Trans Fat',         val: d.trans,        dvRef: 0,                    unit: 'g',  bold: false, indent: 1, italic: true  },
+        { label: 'Cholesterol',       val: d.colesterolo,  dvRef: DV_GULF.colesterolo,  unit: 'mg', bold: true,  indent: 0, italic: false },
+        { label: 'Sodium',            val: d.sodio_mg,     dvRef: DV_GULF.sodio_mg,     unit: 'mg', bold: true,  indent: 0, italic: false },
+        { label: 'Total Carbohydrate',val: d.carboidratiTot,dvRef: DV_GULF.carboidratiTot,unit:'g', bold: true,  indent: 0, italic: false },
+        { label: 'Dietary Fiber',     val: d.fibre,        dvRef: DV_GULF.fibre,        unit: 'g',  bold: false, indent: 1, italic: false },
+        { label: 'Total Sugars',      val: d.zuccheri,     dvRef: 0,                    unit: 'g',  bold: false, indent: 1, italic: false },
+        { label: 'Protein',           val: d.proteine,     dvRef: 0,                    unit: 'g',  bold: true,  indent: 0, italic: false },
     ];
 
     return (
         <div style={{ background: 'white' }}>
-            {!full && <h3 style={{ marginTop: 0, fontSize: 16, color: 'var(--color-navy)', borderBottom: '2px solid var(--color-orange)', paddingBottom: 8, marginBottom: 16 }}>Etichetta Nutrizionale (Gulf/Arabi)</h3>}
-            <div data-table-export style={{ background: 'white', padding: 12, borderRadius: 0 }}>
-            <div style={{ overflowX: 'auto' }}>
-                <table style={{ ...TS.table, border: full ? '1px solid #000' : 'none' }}>
-                    <thead>
-                        <tr style={{ background: 'var(--color-navy)', color: 'white' }}>
-                            <th style={{ ...TS.th, background: 'inherit' }}>Nutrients / العناصر الغذائية</th>
-                            <th style={{ ...TS.thR, background: 'inherit' }}>per 100 g</th>
-                            {hasExtra && sv && <th style={{ ...TS.thR, background: 'inherit' }}>Serving ({svG}g)</th>}
-                            <th style={{ ...TS.thR, background: 'inherit' }}>%DV*</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {arRows.map((r, i) => (
-                            <tr key={i} style={i % 2 === 0 ? { background: '#f8f9fa' } : {}}>
-                                <td style={r.indent ? TS.tdSub : r.bold ? TS.tdB : TS.td}>{r.label}</td>
-                                <td style={r.bold ? TS.tdBR : TS.tdR}>{r.p100}</td>
-                                {hasExtra && sv && <td style={TS.tdR}>{r.pSv || '—'}</td>}
-                                <td style={TS.tdR}>{r.dv}</td>
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
-            </div>
-            <p style={{ fontSize: 10, color: '#666', marginTop: 6 }}>* % DV based on a 2,000 calorie diet.</p>
+            {!full && (
+                <h3 style={{ marginTop: 0, fontSize: 16, color: 'var(--color-navy)', borderBottom: '2px solid var(--color-orange)', paddingBottom: 8, marginBottom: 16 }}>
+                    Etichetta Nutrizionale (Gulf/Arabi)
+                </h3>
+            )}
+            <div data-table-export style={{ background: 'white', padding: 12, display: 'inline-block' }}>
+                <div style={{ maxWidth: 310, border: '3px solid #000', padding: '8px 8px 6px 8px', fontFamily: F }}>
+
+                    {/* Title */}
+                    <div style={{ fontSize: 38, fontWeight: 900, lineHeight: 1, letterSpacing: '-0.5px' }}>Nutrition Facts</div>
+
+                    {/* Servings per container */}
+                    <div style={{ fontSize: 11, borderBottom: '1px solid #000', paddingBottom: 2, marginBottom: 2 }}>
+                        {si.servingsPerContainer} servings per container
+                    </div>
+
+                    {/* Serving size — barra spessa sopra */}
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', borderTop: '8px solid #000', paddingTop: 2, paddingBottom: 2 }}>
+                        <span style={{ fontSize: 13, fontWeight: 700 }}>{si.sizeLabel}</span>
+                        <span style={{ fontSize: 13, fontWeight: 700 }}>{si.sizeValue}</span>
+                    </div>
+
+                    {/* Amount + Calories */}
+                    <div style={{ borderTop: '4px solid #000', paddingTop: 1 }}>
+                        <div style={{ fontSize: 10, fontWeight: 700 }}>{si.amountLabel}</div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', borderBottom: '4px solid #000', paddingBottom: 2 }}>
+                            <span style={{ fontSize: 28, fontWeight: 900 }}>Calories</span>
+                            <span style={{ fontSize: 48, fontWeight: 900, lineHeight: 1 }}>{arRndE(d.energyKcal)}</span>
+                        </div>
+                    </div>
+
+                    {/* % DV header */}
+                    <div style={{ textAlign: 'right', fontSize: 10, fontWeight: 700, borderBottom: '1px solid #000', paddingBottom: 1, marginBottom: 1 }}>
+                        % Daily Value*
+                    </div>
+
+                    {/* Nutrient rows */}
+                    {nutriRows.map((r, i) => {
+                        const fmtV = r.unit === 'mg' ? `${arRndMg(r.val)}mg` : `${arRndG(r.val)}g`;
+                        const pct  = r.dvRef > 0 ? arPct(r.unit === 'mg' ? arRndMg(r.val) : arRndG(r.val), r.dvRef) : null;
+                        const labelNode = r.italic
+                            ? <><em>Trans</em>{' Fat '}{fmtV}</>
+                            : <>{r.label} {fmtV}</>;
+                        return (
+                            <div key={i} style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #aaa', paddingLeft: r.indent * 16, paddingTop: 1, paddingBottom: 1 }}>
+                                <span style={{ fontSize: r.bold ? 13 : 12, fontWeight: r.bold ? 700 : 400 }}>{labelNode}</span>
+                                {pct !== null ? <span style={{ fontSize: 12, fontWeight: 700 }}>{pct}%</span> : <span />}
+                            </div>
+                        );
+                    })}
+
+                    {/* Includes Added Sugars */}
+                    <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #aaa', paddingLeft: 32, fontSize: 11, paddingTop: 1, paddingBottom: 1 }}>
+                        <span>Includes {addedSugarsG}g Added Sugars</span>
+                        <span style={{ fontWeight: 700 }}>{addedSugarsPct}%</span>
+                    </div>
+
+                    {/* Footnote */}
+                    <div style={{ fontSize: 9, paddingTop: 4, borderTop: '1px solid #000' }}>
+                        *The % Daily Value (DV) tells you how much a nutrient in a serving of food contributes to a daily diet. 2,000 calories a day is used for general nutrition advice.
+                    </div>
+                </div>
             </div>
         </div>
     );
