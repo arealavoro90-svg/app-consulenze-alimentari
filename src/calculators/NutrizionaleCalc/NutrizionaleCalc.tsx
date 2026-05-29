@@ -1902,7 +1902,7 @@ export function NutrizionaleCalc() {
                                 {components.map((comp, ci) => {
                                     const isCompOpen = compOpen[comp.id] !== false;
                                     return (
-                                        <div key={comp.id} className="comp-card card" style={{ marginBottom: 12 }}>
+                                        <div key={comp.id} className="comp-card" style={{ marginBottom: 12 }}>
                                             <div
                                                 className="comp-card-header"
                                                 onClick={() => setCompOpen(prev => ({ ...prev, [comp.id]: !isCompOpen }))}
@@ -3004,7 +3004,7 @@ export function NutrizionaleCalc() {
             {components.map((comp, ci) => {
                 const isCompOpen = compOpen[comp.id] !== false;
                 return (
-                <div key={comp.id} className="comp-card card" style={{ marginBottom: 16 }}>
+                <div key={comp.id} className="comp-card" style={{ marginBottom: 16 }}>
                     <div
                         className="comp-card-header"
                         onClick={() => setCompOpen(prev => ({ ...prev, [comp.id]: !isCompOpen }))}
