@@ -1792,6 +1792,16 @@ export function NutrizionaleCalc() {
 
                     {/* Step 0 — Prodotto */}
                     {wizardStep === 0 && (
+                        <>
+                        <div className="guided-callout">
+                            <span className="guided-callout-icon">💡</span>
+                            <div>
+                                <div className="guided-callout-title">STEP 1 — DATI RICETTA</div>
+                                <div className="guided-callout-text">
+                                    Inserisci il nome del prodotto e i pesi. Il peso finito include il calo cottura.
+                                </div>
+                            </div>
+                        </div>
                         <div>
                             <h2 style={{ fontFamily: 'Fraunces, serif', fontSize: 18, fontWeight: 900, color: 'var(--color-navy)', marginBottom: 4, display: 'flex', alignItems: 'center', gap: 7 }}>
                                 <Package size={18} /> Il tuo prodotto
@@ -1847,10 +1857,21 @@ export function NutrizionaleCalc() {
                                 </div>
                             </div>
                         </div>
+                        </>
                     )}
 
                     {/* Step 1 — Ingredienti */}
                     {wizardStep === 1 && (
+                        <>
+                        <div className="guided-callout">
+                            <span className="guided-callout-icon">🥗</span>
+                            <div>
+                                <div className="guided-callout-title">STEP 2 — INGREDIENTI</div>
+                                <div className="guided-callout-text">
+                                    Cerca gli ingredienti nel database e inserisci i grammi. La tabella si aggiorna in tempo reale.
+                                </div>
+                            </div>
+                        </div>
                         <div>
                             <h2 style={{ fontFamily: 'Fraunces, serif', fontSize: 18, fontWeight: 900, color: 'var(--color-navy)', marginBottom: 4, display: 'flex', alignItems: 'center', gap: 7 }}>
                                 <Salad size={18} /> Ingredienti della ricetta
@@ -2210,10 +2231,21 @@ export function NutrizionaleCalc() {
                                 );
                             })()}
                         </div>
+                        </>
                     )}
 
                     {/* Step 2 — Mercati & Serving size */}
                     {wizardStep === 2 && (
+                        <>
+                        <div className="guided-callout">
+                            <span className="guided-callout-icon">🧪</span>
+                            <div>
+                                <div className="guided-callout-title">STEP 3 — ADDITIVI</div>
+                                <div className="guided-callout-text">
+                                    Aggiungi additivi se presenti nella ricetta. Puoi saltare questo step se non ne hai.
+                                </div>
+                            </div>
+                        </div>
                         <div>
                             <h2 style={{ fontFamily: 'Fraunces, serif', fontSize: 18, fontWeight: 900, color: 'var(--color-navy)', marginBottom: 4, display: 'flex', alignItems: 'center', gap: 7 }}>
                                 <Globe size={18} /> Mercati & Serving size
@@ -2319,10 +2351,21 @@ export function NutrizionaleCalc() {
                                 ✅ Serving size facoltativo — se non specificato la tabella mostrerà solo i valori per 100 g.
                             </div>
                         </div>
+                        </>
                     )}
 
                     {/* Step 3 — Anteprima & Export */}
                     {wizardStep === 3 && (
+                        <>
+                        <div className="guided-callout">
+                            <span className="guided-callout-icon">📋</span>
+                            <div>
+                                <div className="guided-callout-title">STEP 4 — TABELLE</div>
+                                <div className="guided-callout-text">
+                                    Rivedi i valori e imposta le porzioni. Esporta il PDF dalla colonna destra.
+                                </div>
+                            </div>
+                        </div>
                         <div>
                             <h2 style={{ fontFamily: 'Fraunces, serif', fontSize: 18, fontWeight: 900, color: 'var(--color-navy)', marginBottom: 4, display: 'flex', alignItems: 'center', gap: 7 }}>
                                 <CheckCircle size={18} /> Tabella pronta!
@@ -2514,6 +2557,7 @@ export function NutrizionaleCalc() {
                                 <button className="btn btn-primary" onClick={handleSave} title="Salva la ricetta nell'archivio locale" style={{ background: 'var(--color-navy)', display: 'flex', alignItems: 'center', gap: 6 }}><Save size={14} /> Salva in archivio</button>
                             </div>
                         </div>
+                        </>
                     )}
                 </div>
 
