@@ -61,6 +61,17 @@
   --shadow-card: 0 1px 4px rgba(12, 19, 38, 0.06), 0 4px 16px rgba(12, 19, 38, 0.08);
   --shadow-glow: 0 0 20px rgba(255, 126, 46, 0.15);
   --transition: 0.2s ease;
+
+  /* ── Redesign 2026-05 ── */
+  --sidebar-collapsed-width: 48px;
+  --sidebar-expanded-width: 220px;
+  --sidebar-flyout-bg: #111d35;
+  --topbar-height: 52px;
+  --toggle-bg: #eef1f5;
+  --toggle-active-guidato: #ff7e2e;
+  --toggle-active-esperto: #0c1326;
+  --shadow-sidebar: 2px 0 12px rgba(12,19,38,0.18);
+  --shadow-flyout: 4px 0 20px rgba(12,19,38,0.25);
 }
 
 /* ===================== RESET ===================== */
@@ -389,6 +400,180 @@ body {
   max-width: 100%;
 }
 
+/* ── Topbar ── */
+.topbar {
+  height: var(--topbar-height);
+  background: white;
+  border-bottom: 1px solid #eaecf0;
+  box-shadow: 0 1px 3px rgba(12,19,38,0.04);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 20px;
+  flex-shrink: 0;
+}
+.topbar-left {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+}
+.topbar-breadcrumb-sep { color: #dde2ea; }
+.topbar-breadcrumb-current { font-weight: 600; color: var(--color-text); }
+.topbar-breadcrumb-parent { color: var(--color-text-muted); }
+.topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.topbar-btn-ghost {
+  display: flex; align-items: center; gap: 5px;
+  padding: 6px 12px; border-radius: 7px;
+  border: 1px solid var(--color-border);
+  background: white; color: var(--color-text-muted);
+  font-size: 12px; cursor: pointer;
+  transition: background var(--transition);
+}
+.topbar-btn-ghost:hover { background: var(--color-surface); }
+.topbar-btn-primary {
+  display: flex; align-items: center; gap: 5px;
+  padding: 6px 14px; border-radius: 7px;
+  border: none; background: var(--color-orange);
+  color: white; font-size: 12px; font-weight: 600; cursor: pointer;
+  box-shadow: 0 2px 8px rgba(255,126,46,0.3);
+  transition: background var(--transition);
+}
+.topbar-btn-primary:hover { background: var(--color-orange-hover); }
+
+/* ── Mode toggle ── */
+.mode-toggle {
+  display: flex;
+  background: var(--toggle-bg);
+  border-radius: 8px;
+  padding: 3px;
+  gap: 2px;
+}
+.mode-toggle button {
+  padding: 5px 14px;
+  border-radius: 6px;
+  border: none;
+  background: transparent;
+  color: var(--color-text-muted);
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.mode-toggle button.active-guidato {
+  background: var(--toggle-active-guidato);
+  color: white;
+  font-weight: 700;
+  box-shadow: 0 1px 4px rgba(255,126,46,0.4);
+}
+.mode-toggle button.active-esperto {
+  background: var(--toggle-active-esperto);
+  color: white;
+  font-weight: 700;
+  box-shadow: 0 1px 4px rgba(12,19,38,0.3);
+}
+
+/* ── Split panel ── */
+.split-panel {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  padding: 16px;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+.split-panel-left,
+.split-panel-right {
+  background: white;
+  border-radius: 12px;
+  box-shadow: var(--shadow-card);
+  overflow-y: auto;
+  min-height: 0;
+}
+
+/* ── Form sections inside split panel ── */
+.form-section-title {
+  color: var(--color-orange);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+}
+.ingredient-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: #f8f9fb;
+  border-radius: 7px;
+  padding: 6px 8px;
+  border: 1px solid var(--color-surface);
+}
+
+/* ── Step indicator (guided mode) ── */
+.step-indicator {
+  display: flex;
+  align-items: center;
+  padding: 10px 16px;
+  background: white;
+  border-bottom: 1px solid #eef1f5;
+  flex-shrink: 0;
+}
+.step-indicator-connector {
+  flex: 1;
+  height: 2px;
+  background: var(--color-border);
+  margin: 0 6px;
+}
+.step-indicator-connector.done { background: var(--color-orange); }
+.step-dot {
+  width: 22px; height: 22px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 9px; font-weight: 700; flex-shrink: 0;
+}
+.step-dot.pending {
+  background: var(--color-surface);
+  border: 2px solid var(--color-border);
+  color: var(--color-text-dim);
+}
+.step-dot.active {
+  background: var(--color-orange);
+  color: white;
+  box-shadow: 0 0 0 4px rgba(255,126,46,0.18);
+}
+.step-dot.done {
+  background: var(--color-green);
+  color: white;
+}
+.step-label {
+  font-size: 10px;
+  font-weight: 500;
+  color: var(--color-text-dim);
+  white-space: nowrap;
+  margin-left: 5px;
+}
+.step-label.active { color: var(--color-orange); font-weight: 700; }
+.step-label.done   { color: var(--color-green); }
+
+/* ── Guided callout ── */
+.guided-callout {
+  background: rgba(255,126,46,0.06);
+  border: 1px solid rgba(255,126,46,0.2);
+  border-radius: 7px;
+  padding: 8px 10px;
+  margin-bottom: 12px;
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+}
+.guided-callout-icon { font-size: 14px; flex-shrink: 0; line-height: 1.4; }
+.guided-callout-title { color: var(--color-orange); font-size: 9px; font-weight: 700; margin-bottom: 2px; letter-spacing: 0.5px; }
+.guided-callout-text  { color: var(--color-text-muted); font-size: 10px; line-height: 1.4; }
+
 /* ===================== SIDEBAR (navy brand) ===================== */
 .sidebar {
   width: var(--sidebar-width);
@@ -571,7 +756,7 @@ body {
 
 /* ===================== MAIN CONTENT ===================== */
 .main-content {
-  margin-left: var(--sidebar-width);
+  margin-left: var(--sidebar-collapsed-width);
   flex: 1;
   min-height: 100vh;
   padding: 36px 40px;
@@ -579,7 +764,7 @@ body {
   flex-direction: column;
   background: var(--color-bg);
   min-width: 0;
-  max-width: calc(100vw - var(--sidebar-width));
+  max-width: calc(100vw - var(--sidebar-collapsed-width));
 }
 
 /* ===================== PAGE HEADER ===================== */
@@ -1289,6 +1474,10 @@ body {
   .grid-responsive-2 { grid-template-columns: 1fr !important; }
   .grid-responsive-3 { grid-template-columns: 1fr !important; }
   .grid-responsive-4 { grid-template-columns: 1fr 1fr !important; }
+
+  /* Form grid: collassa a colonna singola */
+  .form-row { grid-template-columns: 1fr !important; }
+  .form-row-3 { grid-template-columns: 1fr !important; }
 
   /* Result tables: padding compatto per rientrare su mobile */
   .result-table th, .result-table td { padding: 6px 8px !important; font-size: 11px !important; }
