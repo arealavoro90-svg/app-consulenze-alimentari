@@ -2806,10 +2806,10 @@ export function NutrizionaleCalc() {
                     )}
                 </div>
 
-                {/* Export PDF */}
+                {/* Export PNG */}
                 <button
                     type="button"
-                    onClick={handlePDF}
+                    onClick={handleDownloadPNG}
                     style={{
                         marginTop: '6px',
                         width: '100%',
@@ -2827,7 +2827,7 @@ export function NutrizionaleCalc() {
                         gap: '6px',
                     }}
                 >
-                    Esporta PDF
+                    <ImageDown size={13} /> Esporta PNG
                 </button>
             </div>
         );
