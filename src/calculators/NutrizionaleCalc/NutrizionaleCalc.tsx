@@ -2597,6 +2597,7 @@ export function NutrizionaleCalc() {
                                     ] as { key: EUSubTab; label: string; disabled: boolean }[]).map(tab => (
                                         <button
                                             key={tab.key}
+                                            type="button"
                                             disabled={tab.disabled}
                                             onClick={() => setEuSubTab(tab.key)}
                                             className={`btn ${euSubTab === tab.key ? 'btn-accent' : 'btn-outline'}`}
@@ -2627,6 +2628,7 @@ export function NutrizionaleCalc() {
                                 </label>
                                 {showOptionals && (
                                     <button
+                                        type="button"
                                         onClick={() => setNutrModalOpen(true)}
                                         className="btn btn-outline"
                                         style={{ fontSize: 11, padding: '4px 10px', display: 'flex', alignItems: 'center', gap: 5 }}
@@ -2641,7 +2643,7 @@ export function NutrizionaleCalc() {
                         <>
                             <div style={{ display: 'flex', gap: 4, marginBottom: 6, flexWrap: 'wrap' }}>
                                 {(['verticale', 'orizzontale', 'lineare'] as SubTab[]).map(t => (
-                                    <button key={t} onClick={() => setSubTab(t)}
+                                    <button key={t} type="button" onClick={() => setSubTab(t)}
                                         className={`btn ${subTab === t ? 'btn-accent' : 'btn-outline'}`}
                                         style={{ fontSize: 11, padding: '4px 10px' }}>
                                         {t.charAt(0).toUpperCase() + t.slice(1)}
@@ -2651,7 +2653,7 @@ export function NutrizionaleCalc() {
                             {(usa.confezione != null && usa.confezione > 0) ? (
                                 <div style={{ display: 'flex', gap: 4, marginBottom: 6, flexWrap: 'wrap' }}>
                                     {(['serving', 'confezione'] as USAServingRef[]).map(ref => (
-                                        <button key={ref} onClick={() => setUsaServingRef(ref)}
+                                        <button key={ref} type="button" onClick={() => setUsaServingRef(ref)}
                                             className={`btn ${usaServingRef === ref ? 'btn-accent' : 'btn-outline'}`}
                                             style={{ fontSize: 11, padding: '4px 10px' }}>
                                             {ref === 'serving' ? 'Per Serving' : 'Per Confezione'}
@@ -2666,7 +2668,7 @@ export function NutrizionaleCalc() {
                                     { key: 'cucchiai' as USAMeasure, label: 'Cucchiai', disabled: usa.cucchiaio == null },
                                     { key: 'pezzi' as USAMeasure, label: 'Pezzi', disabled: usa.pezzo == null },
                                 ] as { key: USAMeasure; label: string; disabled: boolean }[]).map(tab => (
-                                    <button key={tab.key} disabled={tab.disabled} onClick={() => setUsaMeasure(tab.key)}
+                                    <button key={tab.key} type="button" disabled={tab.disabled} onClick={() => setUsaMeasure(tab.key)}
                                         className={`btn ${usaMeasure === tab.key ? 'btn-accent' : 'btn-outline'}`}
                                         style={{ fontSize: 11, padding: '4px 10px', opacity: tab.disabled ? 0.4 : 1 }}>
                                         {tab.label}
@@ -2682,7 +2684,7 @@ export function NutrizionaleCalc() {
                             {(ca.confezione != null && ca.confezione > 0) && (
                                 <div style={{ display: 'flex', gap: 4, marginBottom: 6, flexWrap: 'wrap' }}>
                                     {(['serving', 'confezione'] as USAServingRef[]).map(ref => (
-                                        <button key={ref} onClick={() => setCaServingRef(ref)}
+                                        <button key={ref} type="button" onClick={() => setCaServingRef(ref)}
                                             className={`btn ${caServingRef === ref ? 'btn-accent' : 'btn-outline'}`}
                                             style={{ fontSize: 11, padding: '4px 10px' }}>
                                             {ref === 'serving' ? 'Per Serving' : 'Per Confezione'}
@@ -2697,7 +2699,7 @@ export function NutrizionaleCalc() {
                                     { key: 'cucchiai' as USAMeasure, label: 'Cucchiai', disabled: ca.cucchiaio == null },
                                     { key: 'pezzi' as USAMeasure, label: 'Pezzi', disabled: ca.pezzo == null },
                                 ] as { key: USAMeasure; label: string; disabled: boolean }[]).map(tab => (
-                                    <button key={tab.key} disabled={tab.disabled} onClick={() => setCaMeasure(tab.key)}
+                                    <button key={tab.key} type="button" disabled={tab.disabled} onClick={() => setCaMeasure(tab.key)}
                                         className={`btn ${caMeasure === tab.key ? 'btn-accent' : 'btn-outline'}`}
                                         style={{ fontSize: 11, padding: '4px 10px', opacity: tab.disabled ? 0.4 : 1 }}>
                                         {tab.label}
@@ -2713,7 +2715,7 @@ export function NutrizionaleCalc() {
                             {(arabi.confezione != null && arabi.confezione > 0) ? (
                                 <div style={{ display: 'flex', gap: 4, marginBottom: 6, flexWrap: 'wrap' }}>
                                     {(['serving', 'confezione'] as USAServingRef[]).map(ref => (
-                                        <button key={ref} onClick={() => setArabiServingRef(ref)}
+                                        <button key={ref} type="button" onClick={() => setArabiServingRef(ref)}
                                             className={`btn ${arabiServingRef === ref ? 'btn-accent' : 'btn-outline'}`}
                                             style={{ fontSize: 11, padding: '4px 10px' }}>
                                             {ref === 'serving' ? 'Per Serving' : 'Per Confezione'}
@@ -2728,7 +2730,7 @@ export function NutrizionaleCalc() {
                                     { key: 'cucchiai' as USAMeasure, label: 'Cucchiai', disabled: arabi.cucchiaio == null },
                                     { key: 'pezzi' as USAMeasure, label: 'Pezzi', disabled: arabi.pezzo == null },
                                 ] as { key: USAMeasure; label: string; disabled: boolean }[]).map(tab => (
-                                    <button key={tab.key} disabled={tab.disabled} onClick={() => setArabiMeasure(tab.key)}
+                                    <button key={tab.key} type="button" disabled={tab.disabled} onClick={() => setArabiMeasure(tab.key)}
                                         className={`btn ${arabiMeasure === tab.key ? 'btn-accent' : 'btn-outline'}`}
                                         style={{ fontSize: 11, padding: '4px 10px', opacity: tab.disabled ? 0.4 : 1 }}>
                                         {tab.label}
