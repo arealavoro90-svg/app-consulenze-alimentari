@@ -2835,6 +2835,15 @@ export function NutrizionaleCalc() {
 
     return (
         <>
+            {/* Inject title into topbar-left slot */}
+            {createPortal(
+                <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+                    <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--color-navy)', lineHeight: 1.2 }}>Creazione tabelle valori nutrizionali</span>
+                    <span style={{ fontSize: 10, color: 'var(--color-text-muted)', lineHeight: 1.2, marginTop: 1 }}>Etichettatura internazionale (UE, USA, Canada, Australia, Arabi) &amp; Costi Ingredienti</span>
+                </div>,
+                document.getElementById('topbar-title-slot') ?? document.body
+            )}
+
             {/* Inject ModeToggle and action buttons into topbar slot */}
             {createPortal(
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>

@@ -421,6 +421,7 @@ body {
 .topbar-breadcrumb-sep { color: #dde2ea; }
 .topbar-breadcrumb-current { font-weight: 600; color: var(--color-text); }
 .topbar-breadcrumb-parent { color: var(--color-text-muted); }
+.topbar-title-portal:not(:empty) ~ .topbar-breadcrumb-fallback { display: none; }
 .topbar-right {
   display: flex;
   align-items: center;

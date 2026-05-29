@@ -46,9 +46,10 @@ export function AppShell() {
                         >
                             <AlignJustify size={18} />
                         </button>
-                        <span className="topbar-breadcrumb-parent">Strumenti</span>
-                        <span className="topbar-breadcrumb-sep">/</span>
-                        <span className="topbar-breadcrumb-current">{pageLabel}</span>
+                        <div id="topbar-title-slot" className="topbar-title-portal" />
+                        <span className="topbar-breadcrumb-parent topbar-breadcrumb-fallback">Strumenti</span>
+                        <span className="topbar-breadcrumb-sep topbar-breadcrumb-fallback">/</span>
+                        <span className="topbar-breadcrumb-current topbar-breadcrumb-fallback">{pageLabel}</span>
                     </div>
 
                     <div className="topbar-right">
