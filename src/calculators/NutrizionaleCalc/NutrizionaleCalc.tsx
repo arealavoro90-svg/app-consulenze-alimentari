@@ -2950,6 +2950,7 @@ export function NutrizionaleCalc() {
                                         key={tab.key}
                                         type="button"
                                         onClick={() => setExpertTab(tab.key)}
+                                        className="expert-tab-btn"
                                         style={{
                                             display: 'flex',
                                             alignItems: 'center',

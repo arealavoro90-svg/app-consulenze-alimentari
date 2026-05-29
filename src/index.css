@@ -1609,6 +1609,8 @@ body {
 }
 .comp-card-body { padding: 10px 14px 8px; }
 
+.expert-tab-btn:hover { color: #ff7e2e !important; }
+
 /* ════════════════════════════════════════════════════════════
    SEARCH BAR — icona integrata
    ════════════════════════════════════════════════════════════ */
