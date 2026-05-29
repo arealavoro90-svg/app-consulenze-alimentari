@@ -1188,7 +1188,7 @@ export function NutrizionaleCalc() {
     const setWizardMode = (val: boolean) => setUiMode(val ? 'guided' : 'expert');
     const [wizardStep, setWizardStep] = useState<0 | 1 | 2 | 3>(0);
     const toggleWizardMode = (mode: boolean) => { setWizardMode(mode); setWizardStep(0); };
-    const [expertTab, setExpertTab] = useState<'prodotto' | 'ricetta' | 'riepilogo' | 'mercati'>('prodotto');
+    const [expertTab, setExpertTab] = useState<'ricetta' | 'riepilogo' | 'mercati'>('ricetta');
 
     // Database state — fetched + merged with personal custom ingredients
     const [db, setDb] = useState<DBIngredient[]>([]);
@@ -2903,11 +2903,39 @@ export function NutrizionaleCalc() {
             )}
 
             <div style={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - var(--topbar-height, 56px))' }}>
-            {/* Header — with action buttons (toggle moved to topbar portal) */}
-            <div className="page-header" style={{ marginBottom: 10 }}>
-                <h1 style={{ display: 'flex', alignItems: 'center', gap: 8 }}><Salad size={22} /> Creazione tabelle valori nutrizionali</h1>
-                <p>Etichettatura internazionale (UE, USA, Canada, Australia, Arabi) &amp; Costi Ingredienti</p>
-            </div>
+            {/* Prodotto bar — horizontal, above panels */}
+            {!wizardMode && (
+                <div style={{ display: 'flex', gap: 10, padding: '8px 0 6px', flexShrink: 0, alignItems: 'flex-start' }}>
+                    <div style={{ flex: 3 }}>
+                        <label style={{ fontSize: 10, fontWeight: 700, color: 'var(--color-text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px', display: 'block', marginBottom: 4 }}>Nome prodotto</label>
+                        <input type="text" placeholder="Nome prodotto (es. Torta di mele...)" value={productName}
+                            onChange={e => setProductName(e.target.value)} className="form-input" style={{ fontSize: 13, fontWeight: 600 }} />
+                    </div>
+                    <div style={{ flex: 1 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', marginBottom: 4, gap: 3 }}>
+                            <label style={{ fontSize: 10, fontWeight: 700, color: 'var(--color-text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Peso finito (g)</label>
+                            <InfoTooltip text="Peso del prodotto dopo cottura, disidratazione o evaporazione di acqua. Deve essere uguale o inferiore al peso del prodotto processato." />
+                        </div>
+                        <input type="number" min={0} placeholder={`max ${totalGramsRaw.toFixed(0)}g`} value={finishedWeight}
+                            onChange={e => handleFW(e.target.value)}
+                            className="form-input" style={fwWarning ? { borderColor: '#e53e3e', background: 'rgba(229,62,62,.05)' } : {}} />
+                    </div>
+                    <div style={{ flex: 1 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', marginBottom: 4, gap: 3 }}>
+                            <label style={{ fontSize: 10, fontWeight: 700, color: 'var(--color-text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Peso specifico (g/ml)</label>
+                            <InfoTooltip text="Inserisci il peso specifico SOLO per alimenti liquidi. Quando compilato, i valori verranno espressi su 100 ml." />
+                        </div>
+                        <input type="number" min={0} step={0.01} placeholder="opzionale" value={specificGravity}
+                            onChange={e => setSpecificGravity(e.target.value)} className="form-input" />
+                    </div>
+                </div>
+            )}
+            {fwWarning && !wizardMode && (
+                <div style={{ marginBottom: 6, padding: '6px 10px', background: 'rgba(229,62,62,.10)', border: '2px solid #e53e3e', borderRadius: 7, fontSize: 11, color: '#c53030', fontWeight: 700, display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <AlertTriangle size={13} style={{ flexShrink: 0 }} />
+                    <span>{fieldErrors['finished-weight'] || `Peso superiore al crudo. Max ${(totalGramsRaw / ((components[0]?.pzUV || 1))).toFixed(0)}g.`}</span>
+                </div>
+            )}
 
             {/* Step indicator — guided mode only */}
             {wizardMode && (
@@ -2941,7 +2969,6 @@ export function NutrizionaleCalc() {
                             {/* Tab bar */}
                             <div style={{ display: 'flex', borderBottom: '2px solid #eaecf0', background: 'white', flexShrink: 0 }}>
                                 {([
-                                    { key: 'prodotto',  icon: <Package size={13} />,     label: 'Prodotto' },
                                     { key: 'ricetta',   icon: <Salad size={13} />,        label: 'Ricetta' },
                                     { key: 'riepilogo', icon: <ClipboardList size={13} />, label: 'Riepilogo' },
                                     { key: 'mercati',   icon: <Globe size={13} />,         label: 'Mercati' },
@@ -2976,46 +3003,7 @@ export function NutrizionaleCalc() {
                             {/* Tab content */}
                             <div style={{ flex: 1, overflowY: 'auto', padding: '14px' }}>
 
-                        {expertTab === 'prodotto' && (<>
-            {/* Product name */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-                <div>
-                    <label style={{ fontSize: 11, fontWeight: 700, color: 'var(--color-text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px', display: 'block', marginBottom: 6 }}>Nome prodotto</label>
-                    <input type="text" placeholder="Nome prodotto (es. Torta di mele, Salsa al pomodoro...)" value={productName}
-                        onChange={e => setProductName(e.target.value)} className="form-input" style={{ fontSize: 15, fontWeight: 600 }} />
-                </div>
-                {/* Weights grid */}
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-                    <div className="form-field" style={{ marginBottom: 0 }}>
-                        <div style={{ display: 'flex', alignItems: 'center', marginBottom: 4 }}>
-                            <label className="form-label" style={{ marginBottom: 0 }}>Peso prodotto finito (g)</label>
-                            <InfoTooltip text="Peso del prodotto dopo cottura, disidratazione o evaporazione di acqua. Deve essere uguale o inferiore al peso del prodotto processato." />
-                        </div>
-                        <input type="number" min={0} placeholder={`max ${totalGramsRaw.toFixed(0)}g`} value={finishedWeight}
-                            onChange={e => handleFW(e.target.value)}
-                            className="form-input" style={fwWarning ? { borderColor: '#e53e3e', background: 'rgba(229,62,62,.05)' } : {}} />
-                        {fwWarning && (
-                            <div style={{ marginTop: 6, padding: '8px 12px', background: 'rgba(229,62,62,.10)', border: '2px solid #e53e3e', borderRadius: 7, fontSize: 12, color: '#c53030', fontWeight: 700, display: 'flex', alignItems: 'flex-start', gap: 7 }}>
-                                <AlertTriangle size={14} style={{ flexShrink: 0, marginTop: 1 }} />
-                                <span>{fieldErrors['finished-weight'] || `Valore superiore al peso del prodotto crudo. Inserire un valore uguale o inferiore a ${(totalGramsRaw / ((components[0]?.pzUV || 1))).toFixed(0)}g.`}</span>
-                            </div>
-                        )}
-                    </div>
-                    <div className="form-field" style={{ marginBottom: 0 }}>
-                        <div style={{ display: 'flex', alignItems: 'center', marginBottom: 4 }}>
-                            <label className="form-label" style={{ marginBottom: 0 }}>Peso specifico (g/ml)</label>
-                            <InfoTooltip text="Inserisci il peso specifico SOLO per alimenti liquidi (bevande, vino, birra, succhi, latte, ecc.). Quando compilato, i valori nutrizionali verranno espressi su 100 ml anziché 100 g, e apparirà: 'Valori nutrizionali medi in 100 ml di prodotto'." />
-                        </div>
-                        <input type="number" min={0} step={0.01} placeholder="opzionale" value={specificGravity}
-                            onChange={e => setSpecificGravity(e.target.value)}
-                            className="form-input" />
-                    </div>
-                </div>
-            </div>
-
-        </>)}
-
-        {expertTab === 'ricetta' && (<>
+                        {expertTab === 'ricetta' && (<>
             <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--color-text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 12 }}>Componenti</div>
 
             {/* Components — mod 3, 4, 5, 6: PZ/UV decimals, tooltips, €/kg zero fix, wider fields */}
