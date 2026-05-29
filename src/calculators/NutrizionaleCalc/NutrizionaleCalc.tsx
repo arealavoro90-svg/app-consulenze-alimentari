@@ -2839,6 +2839,10 @@ export function NutrizionaleCalc() {
             {createPortal(
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                     <ModeToggle mode={uiMode} onChange={setUiMode} />
+                    <button type="button" className="topbar-btn-ghost" onClick={handleNew}>
+                        <Plus size={13} />
+                        Nuova Ricetta
+                    </button>
                     <button type="button" className="topbar-btn-ghost" onClick={() => setArchiveOpen(true)}>
                         <Archive size={13} />
                         Archivio
