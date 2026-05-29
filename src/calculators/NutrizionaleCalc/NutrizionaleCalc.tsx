@@ -2839,7 +2839,7 @@ export function NutrizionaleCalc() {
             {createPortal(
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                     <ModeToggle mode={uiMode} onChange={setUiMode} />
-                    <button type="button" className="topbar-btn-ghost" onClick={handleNew}>
+                    <button type="button" className="topbar-btn-primary" onClick={handleNew}>
                         <Plus size={13} />
                         Nuova Ricetta
                     </button>
@@ -2849,11 +2849,11 @@ export function NutrizionaleCalc() {
                     </button>
                     <button type="button" className="topbar-btn-ghost" onClick={() => setShowCustomModal(true)}>
                         <Database size={13} />
-                        Aggiungi al DB
+                        Nuovo Ingrediente
                     </button>
-                    <button type="button" className="topbar-btn-primary" onClick={handleSave}>
+                    <button type="button" className="topbar-btn-ghost" onClick={handleSave}>
                         <Save size={13} />
-                        {currentId ? 'Aggiorna' : 'Salva'}
+                        Salva
                     </button>
                 </div>,
                 document.getElementById('topbar-mode-toggle-slot') ?? document.body
