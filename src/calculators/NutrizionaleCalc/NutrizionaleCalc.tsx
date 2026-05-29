@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useRef, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import {
-    Save, FolderOpen, Plus, PlusCircle, Search, Database,
+    Save, FolderOpen, Plus, PlusCircle, Search, Database, Archive,
     ClipboardList, Scale, Layers, FlaskConical, Table2, Euro,
     AlertTriangle, Compass, SlidersHorizontal, ChevronRight, ChevronLeft,
     Trash2, X, BookOpen, CheckCircle, ChevronDown,
@@ -2771,9 +2771,19 @@ export function NutrizionaleCalc() {
 
     return (
         <>
-            {/* Inject ModeToggle into topbar slot */}
+            {/* Inject ModeToggle and action buttons into topbar slot */}
             {createPortal(
-                <ModeToggle mode={uiMode} onChange={setUiMode} />,
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <ModeToggle mode={uiMode} onChange={setUiMode} />
+                    <button type="button" className="topbar-btn-ghost" onClick={() => setArchiveOpen(true)}>
+                        <Archive size={13} />
+                        Archivio
+                    </button>
+                    <button type="button" className="topbar-btn-primary" onClick={handleNew}>
+                        <Plus size={13} />
+                        Nuova Ricetta
+                    </button>
+                </div>,
                 document.getElementById('topbar-mode-toggle-slot') ?? document.body
             )}
 

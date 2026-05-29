@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
 import { Sidebar } from './Sidebar';
-import { AlignJustify, Archive, Plus } from 'lucide-react';
+import { AlignJustify } from 'lucide-react';
 
 const ROUTE_LABELS: Record<string, string> = {
     '/dashboard':                'Dashboard',
@@ -20,7 +20,6 @@ export function AppShell() {
     const location = useLocation();
 
     const pageLabel = ROUTE_LABELS[location.pathname] ?? 'Portale';
-    const isNutrizionale = location.pathname === '/tool/nutrizionale';
 
     return (
         <div className={`app-shell${sidebarOpen ? ' sidebar-open' : ''}`}>
@@ -54,18 +53,7 @@ export function AppShell() {
 
                     <div className="topbar-right">
                         <div id="topbar-mode-toggle-slot" />
-                        {isNutrizionale && (
-                            <>
-                                <button type="button" className="topbar-btn-ghost">
-                                    <Archive size={13} />
-                                    Archivio
-                                </button>
-                                <button type="button" className="topbar-btn-primary">
-                                    <Plus size={13} />
-                                    Nuova Ricetta
-                                </button>
-                            </>
-                        )}
+                        <div id="topbar-actions-slot" />
                     </div>
                 </div>
 
