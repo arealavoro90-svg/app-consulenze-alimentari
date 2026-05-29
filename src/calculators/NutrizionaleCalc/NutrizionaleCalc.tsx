@@ -2843,9 +2843,13 @@ export function NutrizionaleCalc() {
                         <Archive size={13} />
                         Archivio
                     </button>
-                    <button type="button" className="topbar-btn-primary" onClick={handleNew}>
-                        <Plus size={13} />
-                        Nuova Ricetta
+                    <button type="button" className="topbar-btn-ghost" onClick={() => setShowCustomModal(true)}>
+                        <Database size={13} />
+                        Aggiungi al DB
+                    </button>
+                    <button type="button" className="topbar-btn-primary" onClick={handleSave}>
+                        <Save size={13} />
+                        {currentId ? 'Aggiorna' : 'Salva'}
                     </button>
                 </div>,
                 document.getElementById('topbar-mode-toggle-slot') ?? document.body
@@ -2896,17 +2900,9 @@ export function NutrizionaleCalc() {
 
             <div style={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - var(--topbar-height, 56px))' }}>
             {/* Header — with action buttons (toggle moved to topbar portal) */}
-            <div className="page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 12 }}>
-                <div>
-                    <h1 style={{ display: 'flex', alignItems: 'center', gap: 8 }}><Salad size={22} /> Creazione tabelle valori nutrizionali</h1>
-                    <p>Etichettatura internazionale (UE, USA, Canada, Australia, Arabi) &amp; Costi Ingredienti</p>
-                </div>
-                <div className="header-actions" style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
-                    <button className="btn btn-outline" onClick={() => setShowCustomModal(true)} style={{ display: 'flex', alignItems: 'center', gap: 6 }}><Database size={14} /> Aggiungi ingrediente al DB</button>
-                    <button className="btn btn-outline" onClick={handleNew} style={{ display: 'flex', alignItems: 'center', gap: 6 }}><Plus size={14} /> Nuovo</button>
-                    <button className="btn btn-outline" onClick={() => setArchiveOpen(true)} style={{ display: 'flex', alignItems: 'center', gap: 6 }}><FolderOpen size={14} /> Archivio ({archiveItems.length})</button>
-                    <button className="btn btn-accent" onClick={handleSave} style={{ display: 'flex', alignItems: 'center', gap: 6 }}><Save size={14} /> {currentId ? 'Aggiorna' : 'Salva'}</button>
-                </div>
+            <div className="page-header" style={{ marginBottom: 10 }}>
+                <h1 style={{ display: 'flex', alignItems: 'center', gap: 8 }}><Salad size={22} /> Creazione tabelle valori nutrizionali</h1>
+                <p>Etichettatura internazionale (UE, USA, Canada, Australia, Arabi) &amp; Costi Ingredienti</p>
             </div>
 
             {/* Step indicator — guided mode only */}
