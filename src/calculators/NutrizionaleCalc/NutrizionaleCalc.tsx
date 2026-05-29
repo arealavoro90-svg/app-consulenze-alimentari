@@ -1188,6 +1188,7 @@ export function NutrizionaleCalc() {
     const setWizardMode = (val: boolean) => setUiMode(val ? 'guided' : 'expert');
     const [wizardStep, setWizardStep] = useState<0 | 1 | 2 | 3>(0);
     const toggleWizardMode = (mode: boolean) => { setWizardMode(mode); setWizardStep(0); };
+    const [expertTab, setExpertTab] = useState<'ricetta' | 'ingredienti' | 'mercati'>('ricetta');
 
     // Database state — fetched + merged with personal custom ingredients
     const [db, setDb] = useState<DBIngredient[]>([]);
@@ -2599,7 +2600,7 @@ export function NutrizionaleCalc() {
 
     const renderTablePanel = (): React.ReactNode => {
         return (
-            <div style={{ padding: '14px', display: 'flex', flexDirection: 'column', height: '100%' }}>
+            <div style={{ padding: '10px 10px 4px', display: 'flex', flexDirection: 'column', height: '100%' }}>
                 {/* Tab switcher */}
                 <div style={{ display: 'flex', gap: '4px', marginBottom: '12px', background: 'var(--color-surface)', borderRadius: '7px', padding: '3px' }}>
                     {(['UE', 'USA', 'Canada', 'Australia', 'Arabi'] as NationTab[]).map(t => {
@@ -2632,7 +2633,7 @@ export function NutrizionaleCalc() {
                     {activeTab === 'UE' && (
                         <>
                             {(ue.porzione != null || ue.confezione != null || ue.pezzo != null) ? (
-                                <div style={{ display: 'flex', gap: 4, marginBottom: 10, flexWrap: 'wrap' }}>
+                                <div style={{ display: 'flex', gap: 4, marginBottom: 8, flexWrap: 'wrap' }}>
                                     {([
                                         { key: '100g' as EUSubTab, label: 'Per 100g', disabled: false },
                                         { key: 'uv' as EUSubTab, label: 'Per U.V.', disabled: ue.confezione == null },
@@ -2645,7 +2646,7 @@ export function NutrizionaleCalc() {
                                             disabled={tab.disabled}
                                             onClick={() => setEuSubTab(tab.key)}
                                             className={`btn ${euSubTab === tab.key ? 'btn-accent' : 'btn-outline'}`}
-                                            style={{ fontSize: 11, padding: '4px 10px', opacity: tab.disabled ? 0.4 : 1 }}
+                                            style={{ fontSize: 11, padding: '3px 8px', opacity: tab.disabled ? 0.4 : 1 }}
                                         >
                                             {tab.label}
                                         </button>
@@ -2660,13 +2661,13 @@ export function NutrizionaleCalc() {
                                 showOptionals={showOptionals}
                                 activeSubTab={euSubTab}
                             />
-                            <div style={{ marginTop: 12, display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: 10 }}>
-                                <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, fontWeight: 600, cursor: 'pointer', color: 'var(--color-text-muted)' }}>
+                            <div style={{ marginTop: 8, display: 'flex', alignItems: 'center', gap: 8 }}>
+                                <label style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 11, cursor: 'pointer', color: 'var(--color-text-muted)' }}>
                                     <input
                                         type="checkbox"
                                         checked={showOptionals}
                                         onChange={e => setShowOptionals(e.target.checked)}
-                                        style={{ width: 15, height: 15, cursor: 'pointer', accentColor: 'var(--color-orange)' }}
+                                        style={{ width: 13, height: 13, cursor: 'pointer', accentColor: 'var(--color-orange)' }}
                                     />
                                     Mostra valori facoltativi
                                 </label>
@@ -2675,7 +2676,7 @@ export function NutrizionaleCalc() {
                                         type="button"
                                         onClick={() => setNutrModalOpen(true)}
                                         className="btn btn-outline"
-                                        style={{ fontSize: 11, padding: '4px 10px', display: 'flex', alignItems: 'center', gap: 5 }}
+                                        style={{ fontSize: 11, padding: '3px 8px', display: 'flex', alignItems: 'center', gap: 5 }}
                                     >
                                         ⚙ Configura nutrienti
                                     </button>
@@ -2685,27 +2686,27 @@ export function NutrizionaleCalc() {
                     )}
                     {activeTab === 'USA' && (
                         <>
-                            <div style={{ display: 'flex', gap: 4, marginBottom: 6, flexWrap: 'wrap' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginBottom: 8, flexWrap: 'wrap' }}>
                                 {(['verticale', 'orizzontale', 'lineare'] as SubTab[]).map(t => (
                                     <button key={t} type="button" onClick={() => setSubTab(t)}
                                         className={`btn ${subTab === t ? 'btn-accent' : 'btn-outline'}`}
-                                        style={{ fontSize: 11, padding: '4px 10px' }}>
+                                        style={{ fontSize: 11, padding: '3px 8px' }}>
                                         {t.charAt(0).toUpperCase() + t.slice(1)}
                                     </button>
                                 ))}
-                            </div>
-                            {(usa.confezione != null && usa.confezione > 0) ? (
-                                <div style={{ display: 'flex', gap: 4, marginBottom: 6, flexWrap: 'wrap' }}>
-                                    {(['serving', 'confezione'] as USAServingRef[]).map(ref => (
-                                        <button key={ref} type="button" onClick={() => setUsaServingRef(ref)}
-                                            className={`btn ${usaServingRef === ref ? 'btn-accent' : 'btn-outline'}`}
-                                            style={{ fontSize: 11, padding: '4px 10px' }}>
-                                            {ref === 'serving' ? 'Per Serving' : 'Per Confezione'}
-                                        </button>
-                                    ))}
-                                </div>
-                            ) : null}
-                            <div style={{ display: 'flex', gap: 4, marginBottom: 10, flexWrap: 'wrap' }}>
+                                {(usa.confezione != null && usa.confezione > 0) && (
+                                    <>
+                                        <span style={{ width: 1, height: 16, background: 'var(--color-border)', flexShrink: 0 }} />
+                                        {(['serving', 'confezione'] as USAServingRef[]).map(ref => (
+                                            <button key={ref} type="button" onClick={() => setUsaServingRef(ref)}
+                                                className={`btn ${usaServingRef === ref ? 'btn-accent' : 'btn-outline'}`}
+                                                style={{ fontSize: 11, padding: '3px 8px' }}>
+                                                {ref === 'serving' ? 'Per Serving' : 'Per Confezione'}
+                                            </button>
+                                        ))}
+                                    </>
+                                )}
+                                <span style={{ width: 1, height: 16, background: 'var(--color-border)', flexShrink: 0 }} />
                                 {([
                                     { key: 'g' as USAMeasure, label: 'g / ml', disabled: false },
                                     { key: 'tazze' as USAMeasure, label: 'Tazze', disabled: usa.cup == null },
@@ -2714,7 +2715,7 @@ export function NutrizionaleCalc() {
                                 ] as { key: USAMeasure; label: string; disabled: boolean }[]).map(tab => (
                                     <button key={tab.key} type="button" disabled={tab.disabled} onClick={() => setUsaMeasure(tab.key)}
                                         className={`btn ${usaMeasure === tab.key ? 'btn-accent' : 'btn-outline'}`}
-                                        style={{ fontSize: 11, padding: '4px 10px', opacity: tab.disabled ? 0.4 : 1 }}>
+                                        style={{ fontSize: 11, padding: '3px 8px', opacity: tab.disabled ? 0.4 : 1 }}>
                                         {tab.label}
                                     </button>
                                 ))}
@@ -2725,18 +2726,19 @@ export function NutrizionaleCalc() {
                     )}
                     {activeTab === 'Canada' && (
                         <>
-                            {(ca.confezione != null && ca.confezione > 0) && (
-                                <div style={{ display: 'flex', gap: 4, marginBottom: 6, flexWrap: 'wrap' }}>
-                                    {(['serving', 'confezione'] as USAServingRef[]).map(ref => (
-                                        <button key={ref} type="button" onClick={() => setCaServingRef(ref)}
-                                            className={`btn ${caServingRef === ref ? 'btn-accent' : 'btn-outline'}`}
-                                            style={{ fontSize: 11, padding: '4px 10px' }}>
-                                            {ref === 'serving' ? 'Per Serving' : 'Per Confezione'}
-                                        </button>
-                                    ))}
-                                </div>
-                            )}
-                            <div style={{ display: 'flex', gap: 4, marginBottom: 10, flexWrap: 'wrap' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginBottom: 8, flexWrap: 'wrap' }}>
+                                {(ca.confezione != null && ca.confezione > 0) && (
+                                    <>
+                                        {(['serving', 'confezione'] as USAServingRef[]).map(ref => (
+                                            <button key={ref} type="button" onClick={() => setCaServingRef(ref)}
+                                                className={`btn ${caServingRef === ref ? 'btn-accent' : 'btn-outline'}`}
+                                                style={{ fontSize: 11, padding: '3px 8px' }}>
+                                                {ref === 'serving' ? 'Per Serving' : 'Per Confezione'}
+                                            </button>
+                                        ))}
+                                        <span style={{ width: 1, height: 16, background: 'var(--color-border)', flexShrink: 0 }} />
+                                    </>
+                                )}
                                 {([
                                     { key: 'g' as USAMeasure, label: 'g / ml', disabled: false },
                                     { key: 'tazze' as USAMeasure, label: 'Tazze (250ml)', disabled: ca.cup == null },
@@ -2745,7 +2747,7 @@ export function NutrizionaleCalc() {
                                 ] as { key: USAMeasure; label: string; disabled: boolean }[]).map(tab => (
                                     <button key={tab.key} type="button" disabled={tab.disabled} onClick={() => setCaMeasure(tab.key)}
                                         className={`btn ${caMeasure === tab.key ? 'btn-accent' : 'btn-outline'}`}
-                                        style={{ fontSize: 11, padding: '4px 10px', opacity: tab.disabled ? 0.4 : 1 }}>
+                                        style={{ fontSize: 11, padding: '3px 8px', opacity: tab.disabled ? 0.4 : 1 }}>
                                         {tab.label}
                                     </button>
                                 ))}
@@ -2756,18 +2758,19 @@ export function NutrizionaleCalc() {
                     {activeTab === 'Australia' && <TabAustralia p={per100display} au={au} showDI={auShowDI} setShowDI={setAuShowDI} full={false} />}
                     {activeTab === 'Arabi' && (
                         <>
-                            {(arabi.confezione != null && arabi.confezione > 0) ? (
-                                <div style={{ display: 'flex', gap: 4, marginBottom: 6, flexWrap: 'wrap' }}>
-                                    {(['serving', 'confezione'] as USAServingRef[]).map(ref => (
-                                        <button key={ref} type="button" onClick={() => setArabiServingRef(ref)}
-                                            className={`btn ${arabiServingRef === ref ? 'btn-accent' : 'btn-outline'}`}
-                                            style={{ fontSize: 11, padding: '4px 10px' }}>
-                                            {ref === 'serving' ? 'Per Serving' : 'Per Confezione'}
-                                        </button>
-                                    ))}
-                                </div>
-                            ) : null}
-                            <div style={{ display: 'flex', gap: 4, marginBottom: 10, flexWrap: 'wrap' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginBottom: 8, flexWrap: 'wrap' }}>
+                                {(arabi.confezione != null && arabi.confezione > 0) && (
+                                    <>
+                                        {(['serving', 'confezione'] as USAServingRef[]).map(ref => (
+                                            <button key={ref} type="button" onClick={() => setArabiServingRef(ref)}
+                                                className={`btn ${arabiServingRef === ref ? 'btn-accent' : 'btn-outline'}`}
+                                                style={{ fontSize: 11, padding: '3px 8px' }}>
+                                                {ref === 'serving' ? 'Per Serving' : 'Per Confezione'}
+                                            </button>
+                                        ))}
+                                        <span style={{ width: 1, height: 16, background: 'var(--color-border)', flexShrink: 0 }} />
+                                    </>
+                                )}
                                 {([
                                     { key: 'g' as USAMeasure, label: 'g / ml', disabled: false },
                                     { key: 'tazze' as USAMeasure, label: 'Tazze', disabled: arabi.cup == null },
@@ -2776,7 +2779,7 @@ export function NutrizionaleCalc() {
                                 ] as { key: USAMeasure; label: string; disabled: boolean }[]).map(tab => (
                                     <button key={tab.key} type="button" disabled={tab.disabled} onClick={() => setArabiMeasure(tab.key)}
                                         className={`btn ${arabiMeasure === tab.key ? 'btn-accent' : 'btn-outline'}`}
-                                        style={{ fontSize: 11, padding: '4px 10px', opacity: tab.disabled ? 0.4 : 1 }}>
+                                        style={{ fontSize: 11, padding: '3px 8px', opacity: tab.disabled ? 0.4 : 1 }}>
                                         {tab.label}
                                     </button>
                                 ))}
@@ -2791,9 +2794,9 @@ export function NutrizionaleCalc() {
                     type="button"
                     onClick={handlePDF}
                     style={{
-                        marginTop: '10px',
+                        marginTop: '6px',
                         width: '100%',
-                        padding: '8px',
+                        padding: '7px',
                         borderRadius: '7px',
                         background: 'var(--color-navy)',
                         color: 'white',
@@ -2915,8 +2918,42 @@ export function NutrizionaleCalc() {
 
             <SplitShell
                 left={
-                    <div style={{ padding: '14px', fontSize: 15, overflowY: 'auto' }}>
-                        {wizardMode ? renderWizard() : (<>
+                    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', fontSize: 15 }}>
+                        {wizardMode ? renderWizard() : (
+                        <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+                            {/* Tab bar */}
+                            <div style={{ display: 'flex', borderBottom: '2px solid #eaecf0', background: 'white', flexShrink: 0 }}>
+                                {([
+                                    { key: 'ricetta',     label: '📝 Ricetta' },
+                                    { key: 'ingredienti', label: '🥗 Ingredienti' },
+                                    { key: 'mercati',     label: '🌍 Mercati' },
+                                ] as { key: typeof expertTab; label: string }[]).map(tab => (
+                                    <button
+                                        key={tab.key}
+                                        type="button"
+                                        onClick={() => setExpertTab(tab.key)}
+                                        style={{
+                                            padding: '8px 14px',
+                                            border: 'none',
+                                            background: 'transparent',
+                                            borderBottom: expertTab === tab.key ? '2px solid #ff7e2e' : '2px solid transparent',
+                                            marginBottom: '-2px',
+                                            color: expertTab === tab.key ? '#ff7e2e' : '#aaa',
+                                            fontWeight: expertTab === tab.key ? 700 : 400,
+                                            fontSize: '11px',
+                                            cursor: 'pointer',
+                                            whiteSpace: 'nowrap',
+                                        }}
+                                    >
+                                        {tab.label}
+                                    </button>
+                                ))}
+                            </div>
+
+                            {/* Tab content */}
+                            <div style={{ flex: 1, overflowY: 'auto', padding: '14px' }}>
+
+                        {expertTab === 'ricetta' && (<>
             {/* Quick Guide — mod 1 (Step 3 text updated) */}
             <div style={{ marginBottom: 20, border: '1.5px solid var(--color-border)', borderRadius: 12, overflow: 'hidden' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 18px', background: 'var(--color-bg-secondary, #f8f9fb)', borderBottom: guideOpen ? '1px solid var(--color-border)' : 'none' }}>
@@ -2994,6 +3031,9 @@ export function NutrizionaleCalc() {
                 </div>
             </div>
 
+        </>)}
+
+        {expertTab === 'ingredienti' && (<>
             {/* INSERIMENTO RICETTA section header — mod 1 */}
             <div
                 onClick={() => setRicettaOpen(v => !v)}
@@ -3355,6 +3395,9 @@ export function NutrizionaleCalc() {
             })()}
 
 
+        </>)}
+
+        {expertTab === 'mercati' && (<>
             {allRows.length > 0 && (
                 <div style={{ marginTop: 0 }}>
                     {/* Nation Tabs */}
@@ -3621,7 +3664,10 @@ export function NutrizionaleCalc() {
                     <button className="btn btn-primary" onClick={handleSave} title="Salva la ricetta nell'archivio locale" style={{ background: 'var(--color-navy)', display: 'flex', alignItems: 'center', gap: 6 }}><Save size={14} /> Salva in archivio</button>
                 </div>
             )}
-            </>)}
+        </>)}
+                            </div>{/* end tab content */}
+                        </div>
+                        )}
                     </div>
                 }
                 right={renderTablePanel()}
