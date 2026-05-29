@@ -1,24 +1,25 @@
-
+import { useState, useRef } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import {
     Home, LogOut, Salad, Tag, Wine, Package,
-    Thermometer, FileText, Settings2, LayoutGrid, BookOpen,
+    Thermometer, FileText, Settings2, BookOpen,
 } from 'lucide-react';
 import { useAuth } from '../auth/AuthContext';
 import { TOOLS_CATALOG } from '../data/mockUsers';
 import type { ToolId } from '../data/mockUsers';
 
 const TOOL_ICONS: Record<ToolId, React.ReactNode> = {
-    'nutrizionale':       <Salad size={16} />,
-    'etichette':          <Tag size={16} />,
-    'etichette-vini':     <Wine size={16} />,
-    'rintracciabilita':   <Package size={16} />,
-    'trattamento-termico':<Thermometer size={16} />,
-    'schede-complete':    <FileText size={16} />,
-    'scheda-processo':    <Settings2 size={16} />,
+    'nutrizionale':        <Salad size={16} />,
+    'etichette':           <Tag size={16} />,
+    'etichette-vini':      <Wine size={16} />,
+    'rintracciabilita':    <Package size={16} />,
+    'trattamento-termico': <Thermometer size={16} />,
+    'schede-complete':     <FileText size={16} />,
+    'scheda-processo':     <Settings2 size={16} />,
 };
 
 interface SidebarProps {
+    /** Used on <900px to open sidebar as a drawer */
     isOpen?: boolean;
     onClose?: () => void;
 }
@@ -26,11 +27,10 @@ interface SidebarProps {
 export function Sidebar({ isOpen = false, onClose }: SidebarProps) {
     const { user, logout } = useAuth();
     const navigate = useNavigate();
+    const [flyoutOpen, setFlyoutOpen] = useState(false);
+    const leaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-    const handleLogout = () => {
-        logout();
-        navigate('/login');
-    };
+    const handleLogout = () => { logout(); navigate('/login'); };
 
     const initials = user?.name
         .split(' ')
@@ -38,80 +38,114 @@ export function Sidebar({ isOpen = false, onClose }: SidebarProps) {
         .slice(0, 2)
         .join('') ?? '?';
 
-    return (
-        <aside className={`sidebar${isOpen ? ' open' : ''}`}>
-            <div className="sidebar-brand">
-                <img
-                    src="/aea-logo.png"
-                    alt="AEA Consulenze Alimentari"
-                    className="sidebar-logo"
-                />
-                {/* Close button — visible only on mobile */}
-                {onClose && (
-                    <button
-                        onClick={onClose}
-                        style={{
-                            background: 'none', border: 'none',
-                            color: 'rgba(255,255,255,0.5)', fontSize: 18, cursor: 'pointer',
-                            lineHeight: 1, padding: '0 2px', flexShrink: 0,
-                        }}
-                        aria-label="Chiudi menu"
-                    >
-                        ✕
-                    </button>
-                )}
-            </div>
+    const openFlyout  = () => {
+        if (leaveTimer.current) clearTimeout(leaveTimer.current);
+        setFlyoutOpen(true);
+    };
+    const closeFlyout = () => {
+        leaveTimer.current = setTimeout(() => setFlyoutOpen(false), 120);
+    };
 
-            <div className="sidebar-user">
-                <div className="sidebar-avatar">{initials}</div>
-                <div className="sidebar-user-info">
-                    <strong>{user?.name}</strong>
-                    <span>{user?.company}</span>
+    const allItems = [
+        { to: '/dashboard',   icon: <Home size={16} />,     label: 'Dashboard',       key: 'dashboard' },
+        { to: '/risorse',     icon: <BookOpen size={16} />, label: 'Links e Risorse', key: 'risorse' },
+    ];
+    const toolItems = (user?.purchasedTools ?? []).map((toolId) => ({
+        to:    `/tool/${toolId}`,
+        icon:  TOOL_ICONS[toolId],
+        label: TOOLS_CATALOG[toolId].label,
+        key:   toolId,
+    }));
+
+    return (
+        <>
+            {/* Collapsed rail */}
+            <aside
+                className={`sidebar${isOpen ? ' open' : ''}`}
+                onMouseEnter={openFlyout}
+                onMouseLeave={closeFlyout}
+            >
+                <div className="sidebar-logo-mark">AEA</div>
+                <div className="sidebar-divider" />
+
+                {[...allItems, ...toolItems].map((item) => (
+                    <NavLink
+                        key={item.key}
+                        to={item.to}
+                        title={item.label}
+                        className={({ isActive }) =>
+                            `sidebar-nav-icon-btn${isActive ? ' active' : ''}`
+                        }
+                        onClick={onClose}
+                    >
+                        {item.icon}
+                    </NavLink>
+                ))}
+
+                <div style={{ flex: 1 }} />
+
+                <div className="sidebar-user-avatar" title={user?.name ?? ''}>
+                    {initials}
+                </div>
+            </aside>
+
+            {/* Fly-out overlay */}
+            <div
+                className={`sidebar-flyout${flyoutOpen ? ' open' : ''}`}
+                onMouseEnter={openFlyout}
+                onMouseLeave={closeFlyout}
+            >
+                <div className="sidebar-flyout-brand-name">AEA Consulenze</div>
+                <div className="sidebar-flyout-brand-sub">Portale Clienti</div>
+
+                <div className="sidebar-flyout-section-label">NAVIGAZIONE</div>
+                {allItems.map((item) => (
+                    <NavLink
+                        key={item.key}
+                        to={item.to}
+                        className={({ isActive }) =>
+                            `sidebar-flyout-item${isActive ? ' active' : ''}`
+                        }
+                        onClick={() => { setFlyoutOpen(false); onClose?.(); }}
+                    >
+                        {item.icon}
+                        {item.label}
+                    </NavLink>
+                ))}
+
+                <div className="sidebar-flyout-section-label" style={{ marginTop: 12 }}>
+                    I TUOI STRUMENTI
+                </div>
+                {toolItems.map((item) => (
+                    <NavLink
+                        key={item.key}
+                        to={item.to}
+                        className={({ isActive }) =>
+                            `sidebar-flyout-item${isActive ? ' active' : ''}`
+                        }
+                        onClick={() => { setFlyoutOpen(false); onClose?.(); }}
+                    >
+                        {item.icon}
+                        {item.label}
+                    </NavLink>
+                ))}
+
+                <div className="sidebar-flyout-footer">
+                    <div className="sidebar-user-avatar">{initials}</div>
+                    <div>
+                        <div className="sidebar-flyout-user-name">{user?.name}</div>
+                        <div className="sidebar-flyout-user-email">{user?.company}</div>
+                    </div>
+                    <button
+                        type="button"
+                        className="sidebar-flyout-logout"
+                        onClick={handleLogout}
+                        title="Esci dall'account"
+                    >
+                        <LogOut size={14} />
+                    </button>
                 </div>
             </div>
-
-            <nav className="sidebar-nav">
-                <div className="sidebar-section-label">Navigazione</div>
-                <NavLink
-                    to="/dashboard"
-                    className={({ isActive }) => `sidebar-nav-item${isActive ? ' active' : ''}`}
-                    onClick={onClose}
-                >
-                    <span className="sidebar-nav-icon"><Home size={16} /></span>
-                    Dashboard
-                </NavLink>
-                <NavLink
-                    to="/risorse"
-                    className={({ isActive }) => `sidebar-nav-item${isActive ? ' active' : ''}`}
-                    onClick={onClose}
-                >
-                    <span className="sidebar-nav-icon"><BookOpen size={16} /></span>
-                    Links e Risorse
-                </NavLink>
-
-                <div className="sidebar-section-label" style={{ marginTop: 16 }}>I tuoi strumenti</div>
-                {user?.purchasedTools.map((toolId) => {
-                    const tool = TOOLS_CATALOG[toolId];
-                    return (
-                        <NavLink
-                            key={toolId}
-                            to={`/tool/${toolId}`}
-                            className={({ isActive }) => `sidebar-nav-item${isActive ? ' active' : ''}`}
-                            onClick={onClose}
-                        >
-                            <span className="sidebar-nav-icon">{TOOL_ICONS[toolId]}</span>
-                            {tool.label}
-                        </NavLink>
-                    );
-                })}
-            </nav>
-
-            <div className="sidebar-footer">
-                <button className="sidebar-logout-btn" onClick={handleLogout}>
-                    <LogOut size={15} />
-                    Esci dall'account
-                </button>
-            </div>
-        </aside>
+        </>
     );
 }
