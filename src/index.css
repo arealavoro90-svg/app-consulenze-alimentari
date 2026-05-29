@@ -480,7 +480,7 @@ body {
 /* ── Split panel ── */
 .split-panel {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 1.4fr 1fr;
   gap: 12px;
   padding: 16px;
   flex: 1;
@@ -1554,18 +1554,11 @@ body {
    ════════════════════════════════════════════════════════════ */
 
 .comp-card {
-  border: 1.5px solid var(--color-border) !important;
-  border-radius: 12px !important;
   overflow: hidden;
-  transition: box-shadow 0.25s ease;
-}
-.comp-card:focus-within {
-  box-shadow: 0 0 0 3px rgba(255,126,46,.1), 0 4px 20px rgba(0,0,0,.06);
 }
 .comp-card-header {
   padding: 13px 18px;
   background: linear-gradient(120deg, var(--color-surface) 0%, rgba(255,126,46,.04) 100%);
-  border-bottom: 1.5px solid var(--color-border);
   cursor: pointer;
   user-select: none;
   display: flex;
