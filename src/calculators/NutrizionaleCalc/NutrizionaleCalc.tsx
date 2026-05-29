@@ -1188,7 +1188,7 @@ export function NutrizionaleCalc() {
     const setWizardMode = (val: boolean) => setUiMode(val ? 'guided' : 'expert');
     const [wizardStep, setWizardStep] = useState<0 | 1 | 2 | 3>(0);
     const toggleWizardMode = (mode: boolean) => { setWizardMode(mode); setWizardStep(0); };
-    const [expertTab, setExpertTab] = useState<'ricetta' | 'ingredienti' | 'mercati'>('ricetta');
+    const [expertTab, setExpertTab] = useState<'prodotto' | 'ricetta' | 'riepilogo' | 'mercati'>('prodotto');
 
     // Database state — fetched + merged with personal custom ingredients
     const [db, setDb] = useState<DBIngredient[]>([]);
@@ -2924,16 +2924,20 @@ export function NutrizionaleCalc() {
                             {/* Tab bar */}
                             <div style={{ display: 'flex', borderBottom: '2px solid #eaecf0', background: 'white', flexShrink: 0 }}>
                                 {([
-                                    { key: 'ricetta',     label: '📝 Ricetta' },
-                                    { key: 'ingredienti', label: '🥗 Ingredienti' },
-                                    { key: 'mercati',     label: '🌍 Mercati' },
-                                ] as { key: typeof expertTab; label: string }[]).map(tab => (
+                                    { key: 'prodotto',  icon: <Package size={13} />,     label: 'Prodotto' },
+                                    { key: 'ricetta',   icon: <Salad size={13} />,        label: 'Ricetta' },
+                                    { key: 'riepilogo', icon: <ClipboardList size={13} />, label: 'Riepilogo' },
+                                    { key: 'mercati',   icon: <Globe size={13} />,         label: 'Mercati' },
+                                ] as { key: typeof expertTab; icon: React.ReactNode; label: string }[]).map(tab => (
                                     <button
                                         key={tab.key}
                                         type="button"
                                         onClick={() => setExpertTab(tab.key)}
                                         style={{
-                                            padding: '8px 14px',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: '5px',
+                                            padding: '8px 12px',
                                             border: 'none',
                                             background: 'transparent',
                                             borderBottom: expertTab === tab.key ? '2px solid #ff7e2e' : '2px solid transparent',
@@ -2945,6 +2949,7 @@ export function NutrizionaleCalc() {
                                             whiteSpace: 'nowrap',
                                         }}
                                     >
+                                        {tab.icon}
                                         {tab.label}
                                     </button>
                                 ))}
@@ -2953,96 +2958,47 @@ export function NutrizionaleCalc() {
                             {/* Tab content */}
                             <div style={{ flex: 1, overflowY: 'auto', padding: '14px' }}>
 
-                        {expertTab === 'ricetta' && (<>
-            {/* Quick Guide — mod 1 (Step 3 text updated) */}
-            <div style={{ marginBottom: 20, border: '1.5px solid var(--color-border)', borderRadius: 12, overflow: 'hidden' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 18px', background: 'var(--color-bg-secondary, #f8f9fb)', borderBottom: guideOpen ? '1px solid var(--color-border)' : 'none' }}>
-                    <span style={{ fontWeight: 700, fontSize: 14, display: 'flex', alignItems: 'center', gap: 7 }}><BookOpen size={15} /> Come usare il Calcolatore — guida rapida</span>
-                    <button className="btn btn-outline" style={{ fontSize: 12, padding: '4px 12px' }} onClick={toggleGuide}>{guideOpen ? 'Nascondi guida' : 'Mostra guida'}</button>
+                        {expertTab === 'prodotto' && (<>
+            {/* Product name */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                <div>
+                    <label style={{ fontSize: 11, fontWeight: 700, color: 'var(--color-text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px', display: 'block', marginBottom: 6 }}>Nome prodotto</label>
+                    <input type="text" placeholder="Nome prodotto (es. Torta di mele, Salsa al pomodoro...)" value={productName}
+                        onChange={e => setProductName(e.target.value)} className="form-input" style={{ fontSize: 15, fontWeight: 600 }} />
                 </div>
-                <div style={{ maxHeight: guideOpen ? '900px' : '0', overflow: 'hidden', transition: 'max-height 0.35s ease' }}>
-                    <div style={{ padding: '18px 18px 6px' }}>
-                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(190px, 1fr))', gap: 12, marginBottom: 18 }}>
-                            {([
-                                { step: 'STEP 1', icon: <Search size={20} />, title: 'Cerca Ingredienti', desc: "Digita nel campo ricerca e seleziona l'ingrediente dal database AEA." },
-                                { step: 'STEP 2', icon: <Scale size={20} />, title: 'Inserisci Pesi', desc: 'Specifica i grammi per ogni ingrediente. I calcoli si aggiornano in tempo reale.' },
-                                { step: 'STEP 3', icon: <Flame size={20} />, title: 'Calo Peso', desc: 'Peso del prodotto finito (dopo eventuale calo peso dovuto ad evaporazione di acqua).' },
-                                { step: 'STEP 4', icon: <Euro size={20} />, title: 'Analisi Costi', desc: 'Aggiungi €/kg e Resa% per vedere il costo del piatto e il breakdown economico.' },
-                                { step: 'STEP 5', icon: <Globe size={20} />, title: 'Export Labelling', desc: 'Scegli il paese di destinazione e scarica le tabelle PDF conformi ai regolamenti.' },
-                            ] as { step: string; icon: React.ReactNode; title: string; desc: string }[]).map(({ step, icon, title, desc }) => (
-                                <div key={step} className="card" style={{ padding: 14, display: 'flex', flexDirection: 'column', gap: 6 }}>
-                                    <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--color-text-muted)', textTransform: 'uppercase' }}>{step}</div>
-                                    <div style={{ color: 'var(--color-accent-light)' }}>{icon}</div>
-                                    <div style={{ fontWeight: 700, fontSize: 13 }}>{title}</div>
-                                    <div style={{ fontSize: 11, color: 'var(--color-text-muted)', lineHeight: 1.5 }}>{desc}</div>
-                                </div>
-                            ))}
+                {/* Weights grid */}
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                    <div className="form-field" style={{ marginBottom: 0 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', marginBottom: 4 }}>
+                            <label className="form-label" style={{ marginBottom: 0 }}>Peso prodotto finito (g)</label>
+                            <InfoTooltip text="Peso del prodotto dopo cottura, disidratazione o evaporazione di acqua. Deve essere uguale o inferiore al peso del prodotto processato." />
                         </div>
+                        <input type="number" min={0} placeholder={`max ${totalGramsRaw.toFixed(0)}g`} value={finishedWeight}
+                            onChange={e => handleFW(e.target.value)}
+                            className="form-input" style={fwWarning ? { borderColor: '#e53e3e', background: 'rgba(229,62,62,.05)' } : {}} />
+                        {fwWarning && (
+                            <div style={{ marginTop: 6, padding: '8px 12px', background: 'rgba(229,62,62,.10)', border: '2px solid #e53e3e', borderRadius: 7, fontSize: 12, color: '#c53030', fontWeight: 700, display: 'flex', alignItems: 'flex-start', gap: 7 }}>
+                                <AlertTriangle size={14} style={{ flexShrink: 0, marginTop: 1 }} />
+                                <span>{fieldErrors['finished-weight'] || `Valore superiore al peso del prodotto crudo. Inserire un valore uguale o inferiore a ${(totalGramsRaw / ((components[0]?.pzUV || 1))).toFixed(0)}g.`}</span>
+                            </div>
+                        )}
                     </div>
-                </div>
-            </div>
-
-            {/* Product name — fuori dal blocco INSERIMENTO RICETTA */}
-            <div className="prodotto-card">
-                <div className="prodotto-card-label">
-                    <Package size={13} /> PRODOTTO
-                    <InfoTooltip text="Il nome del prodotto come comparirà nella scheda etichetta" />
-                </div>
-                <input type="text" placeholder="Nome prodotto (es. Torta di mele, Salsa al pomodoro...)" value={productName}
-                    onChange={e => setProductName(e.target.value)} className="form-input" style={{ fontSize: 15, fontWeight: 600 }} />
-            </div>
-
-            {/* Weight card — collapsible, fuori dal blocco INSERIMENTO RICETTA */}
-            <div className="section-card" style={{ marginBottom: 20 }}>
-                <div
-                    className="section-card-header"
-                    onClick={() => setPesoCardOpen(v => !v)}
-                >
-                    <h3 className="section-card-title"><Scale size={15} /> Peso prodotto</h3>
-                    <ChevronRight size={14} style={{ transform: pesoCardOpen ? 'rotate(90deg)' : 'rotate(0deg)', transition: 'transform 0.2s', color: 'var(--color-text-muted)' }} />
-                </div>
-                <div style={{ maxHeight: pesoCardOpen ? '400px' : '0', overflow: 'hidden', transition: 'max-height 0.3s ease' }}>
-                    <div className="section-card-body" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 12 }}>
-                        <div className="form-field" style={{ marginBottom: 0 }}>
-                            <div style={{ display: 'flex', alignItems: 'center', marginBottom: 4 }}>
-                                <label className="form-label" style={{ marginBottom: 0 }}>Peso prodotto finito (g)</label>
-                                <InfoTooltip text="Peso del prodotto dopo cottura, disidratazione o evaporazione di acqua. Deve essere uguale o inferiore al peso del prodotto processato." />
-                            </div>
-                            <input type="number" min={0} placeholder={`max ${totalGramsRaw.toFixed(0)}g`} value={finishedWeight}
-                                onChange={e => handleFW(e.target.value)}
-                                className="form-input" style={fwWarning ? { borderColor: '#e53e3e', background: 'rgba(229,62,62,.05)' } : {}} />
-                            {fwWarning && (
-                                <div style={{ marginTop: 6, padding: '8px 12px', background: 'rgba(229,62,62,.10)', border: '2px solid #e53e3e', borderRadius: 7, fontSize: 12, color: '#c53030', fontWeight: 700, display: 'flex', alignItems: 'flex-start', gap: 7 }}>
-                                    <AlertTriangle size={14} style={{ flexShrink: 0, marginTop: 1 }} />
-                                    <span>{fieldErrors['finished-weight'] || `Valore superiore al peso del prodotto crudo. Inserire un valore uguale o inferiore a ${(totalGramsRaw / ((components[0]?.pzUV || 1))).toFixed(0)}g.`}</span>
-                                </div>
-                            )}
+                    <div className="form-field" style={{ marginBottom: 0 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', marginBottom: 4 }}>
+                            <label className="form-label" style={{ marginBottom: 0 }}>Peso specifico (g/ml)</label>
+                            <InfoTooltip text="Inserisci il peso specifico SOLO per alimenti liquidi (bevande, vino, birra, succhi, latte, ecc.). Quando compilato, i valori nutrizionali verranno espressi su 100 ml anziché 100 g, e apparirà: 'Valori nutrizionali medi in 100 ml di prodotto'." />
                         </div>
-                        <div className="form-field" style={{ marginBottom: 0 }}>
-                            <div style={{ display: 'flex', alignItems: 'center', marginBottom: 4 }}>
-                                <label className="form-label" style={{ marginBottom: 0 }}>Peso specifico (g/ml)</label>
-                                <InfoTooltip text="Inserisci il peso specifico SOLO per alimenti liquidi (bevande, vino, birra, succhi, latte, ecc.). Quando compilato, i valori nutrizionali verranno espressi su 100 ml anziché 100 g, e apparirà: 'Valori nutrizionali medi in 100 ml di prodotto'." />
-                            </div>
-                            <input type="number" min={0} step={0.01} placeholder="opzionale" value={specificGravity}
-                                onChange={e => setSpecificGravity(e.target.value)}
-                                className="form-input" />
-                        </div>
+                        <input type="number" min={0} step={0.01} placeholder="opzionale" value={specificGravity}
+                            onChange={e => setSpecificGravity(e.target.value)}
+                            className="form-input" />
                     </div>
                 </div>
             </div>
 
         </>)}
 
-        {expertTab === 'ingredienti' && (<>
-            {/* INSERIMENTO RICETTA section header — mod 1 */}
-            <div
-                onClick={() => setRicettaOpen(v => !v)}
-                style={{ background: 'var(--color-navy, #1a1a2e)', color: 'white', borderRadius: ricettaOpen ? '10px 10px 0 0' : 10, padding: '10px 20px', marginBottom: 0, fontWeight: 800, fontSize: 15, letterSpacing: '0.08em', cursor: 'pointer', userSelect: 'none', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}><ClipboardList size={16} /> INSERIMENTO RICETTA</span>
-                <ChevronRight size={16} style={{ transform: ricettaOpen ? 'rotate(90deg)' : 'rotate(0deg)', transition: 'transform 0.2s', opacity: 0.7 }} />
-            </div>
-            <div style={{ maxHeight: ricettaOpen ? '10000px' : '0', overflow: 'hidden', transition: 'max-height 0.45s ease' }}>
-            <div style={{ border: '2px solid var(--color-navy, #1a1a2e)', borderTop: 'none', borderRadius: '0 0 12px 12px', padding: '20px 20px 4px', marginBottom: 20 }}>
+        {expertTab === 'ricetta' && (<>
+            <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--color-text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 12 }}>Componenti</div>
 
             {/* Components — mod 3, 4, 5, 6: PZ/UV decimals, tooltips, €/kg zero fix, wider fields */}
             {components.map((comp, ci) => {
@@ -3258,9 +3214,9 @@ export function NutrizionaleCalc() {
 
             <button className="btn btn-outline add-comp-btn" onClick={addComp}><Plus size={14} /> Aggiungi componente</button>
 
-            </div>{/* end INSERIMENTO RICETTA wrapper */}
-            </div>{/* end collapsible wrapper */}
+        </>)}
 
+        {expertTab === 'riepilogo' && (<>
             {/* Riepilogo ingredienti — Excel-style */}
             {allRows.length > 0 && (() => {
                 const pesoFinitoPzCalc = fw > 0 ? fw : totGrammiXpzuv;
@@ -3281,14 +3237,9 @@ export function NutrizionaleCalc() {
                 const fmtC = (v: number) => v > 0 ? v.toFixed(3).replace('.', ',') : '—';
                 return (
                     <div className="card" style={{ marginBottom: 20 }}>
-                        <div
-                            onClick={() => setRiepilogoOpen(v => !v)}
-                            style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer', userSelect: 'none' }}
-                        >
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                             <h3 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: 7 }}><Table2 size={15} /> Riepilogo ingredienti <span style={{ fontSize: 13, fontWeight: 400, color: 'var(--color-text-muted)' }}>({mergedIngredients.length})</span></h3>
-                            <ChevronRight size={14} style={{ transform: riepilogoOpen ? 'rotate(90deg)' : 'rotate(0deg)', transition: 'transform 0.2s', color: 'var(--color-text-muted)' }} />
                         </div>
-                        {riepilogoOpen && (<>
                             <div className="ri-tab-bar" style={{ display: 'flex', gap: 0, marginTop: 12, marginBottom: 4, borderRadius: 8, overflow: 'hidden', border: '1.5px solid var(--color-border)', alignSelf: 'flex-start' }}>
                                 <button onClick={() => setRiepilogoTab('q')} title="Visualizza quantità e grammature" style={{ padding: '4px 11px', border: 'none', borderRight: '1.5px solid var(--color-border)', cursor: 'pointer', fontFamily: 'inherit', fontSize: 11, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 4, background: riepilogoTab === 'q' ? 'var(--color-navy)' : 'transparent', color: riepilogoTab === 'q' ? 'white' : 'var(--color-text-muted)' }}><Scale size={12} />Quantità</button>
                                 <button onClick={() => setRiepilogoTab('c')} title="Visualizza costi e rese" style={{ padding: '4px 11px', border: 'none', cursor: 'pointer', fontFamily: 'inherit', fontSize: 11, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 4, background: riepilogoTab === 'c' ? 'var(--color-navy)' : 'transparent', color: riepilogoTab === 'c' ? 'white' : 'var(--color-text-muted)' }}><Euro size={12} />Costi</button>
@@ -3349,7 +3300,6 @@ export function NutrizionaleCalc() {
                                     </tbody>
                                 </table>
                             </div>
-                        </>)}
                     </div>
                 );
             })()}
@@ -3374,7 +3324,7 @@ export function NutrizionaleCalc() {
                 const costPerKg = pesoTotale > 0 ? (costoTotale / pesoTotale) * 1000 : 0;
                 if (costoTotale === 0) return null;
                 return (
-                    <div style={{ marginBottom: 20, background: 'linear-gradient(135deg,rgba(255,126,46,0.06),rgba(12,19,38,0.02))', border: '1.5px solid var(--color-orange)', borderRadius: 12, padding: '14px 20px' }}>
+                    <div style={{ marginBottom: 20, background: 'var(--color-surface)', borderRadius: 8, padding: '14px 20px' }}>
                         <div style={{ fontWeight: 800, fontSize: 14, marginBottom: 12, display: 'flex', alignItems: 'center', gap: 7 }}><Euro size={15} /> Riepilogo Costi Ingredienti</div>
                         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(180px,1fr))', gap: 12 }}>
                             <div style={{ background: 'white', borderRadius: 10, padding: '10px 14px', boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}>
