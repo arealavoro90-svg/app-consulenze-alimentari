@@ -3266,27 +3266,27 @@ export function NutrizionaleCalc() {
                                     <thead>
                                         <tr style={{ background: 'var(--color-orange)', color: 'white' }}>
                                             <td style={{ padding: '5px 7px', fontWeight: 700, textAlign: 'center', whiteSpace: 'nowrap' }}>{mergedIngredients.length}</td>
-                                            <td className="ri-q" style={{ padding: '5px 7px', fontWeight: 700, textAlign: 'right', whiteSpace: 'nowrap' }}>{fmt3(totGrammiTotali)}</td>
-                                            <td className="ri-q" style={{ padding: '5px 7px', fontWeight: 700, textAlign: 'right', whiteSpace: 'nowrap' }}>{fmt3(totGrammiXpzuv)}</td>
-                                            <td className="ri-q" style={{ padding: '5px 7px', fontWeight: 700, textAlign: 'right', whiteSpace: 'nowrap' }}>100,000</td>
-                                            <td className="ri-q" style={{ padding: '5px 7px', fontWeight: 700, textAlign: 'right', whiteSpace: 'nowrap' }}>{fmt3(totQuid)}</td>
                                             <td className="ri-c" style={{ padding: '5px 6px' }} />
                                             <td className="ri-c" style={{ padding: '5px 6px' }} />
                                             <td className="ri-c" style={{ padding: '5px 6px' }} />
                                             <td className="ri-c" style={{ padding: '5px 6px', fontWeight: 700, textAlign: 'right', whiteSpace: 'nowrap', background: 'rgba(0,0,0,0.15)' }}>{totCostoUV > 0 ? fmt3(totCostoUV) : '—'}</td>
                                             <td className="ri-c" style={{ padding: '5px 6px', fontWeight: 700, textAlign: 'right', whiteSpace: 'nowrap', background: 'rgba(0,0,0,0.15)' }}>{totCostoKg > 0 ? fmt3(totCostoKg) : '—'}</td>
+                                            <td className="ri-q" style={{ padding: '5px 7px', fontWeight: 700, textAlign: 'right', whiteSpace: 'nowrap' }}>{fmt3(totGrammiTotali)}</td>
+                                            <td className="ri-q" style={{ padding: '5px 7px', fontWeight: 700, textAlign: 'right', whiteSpace: 'nowrap' }}>{fmt3(totGrammiXpzuv)}</td>
+                                            <td className="ri-q" style={{ padding: '5px 7px', fontWeight: 700, textAlign: 'right', whiteSpace: 'nowrap' }}>100,000</td>
+                                            <td className="ri-q" style={{ padding: '5px 7px', fontWeight: 700, textAlign: 'right', whiteSpace: 'nowrap' }}>{fmt3(totQuid)}</td>
                                         </tr>
                                         <tr style={{ background: '#f0f0f0', borderBottom: '2px solid var(--color-border)' }}>
                                             <th style={{ padding: '5px 7px', textAlign: 'left', fontWeight: 700, fontSize: 10, textTransform: 'uppercase', minWidth: 100 }}>INGREDIENTI</th>
-                                            <th className="ri-q" style={{ padding: '5px 7px', textAlign: 'right', fontWeight: 700, fontSize: 10, whiteSpace: 'nowrap' }}>g tot.</th>
-                                            <th className="ri-q" style={{ padding: '5px 7px', textAlign: 'right', fontWeight: 700, fontSize: 10, whiteSpace: 'nowrap' }}>g X PZ</th>
-                                            <th className="ri-q" style={{ padding: '5px 7px', textAlign: 'right', fontWeight: 700, fontSize: 10, whiteSpace: 'nowrap' }}>%</th>
-                                            <th className="ri-q" style={{ padding: '5px 7px', textAlign: 'right', fontWeight: 700, fontSize: 10, whiteSpace: 'nowrap', color: 'var(--color-orange)' }}>QUID</th>
                                             <th className="ri-c" style={{ padding: '5px 6px', textAlign: 'right', fontWeight: 700, fontSize: 10, whiteSpace: 'nowrap' }}>€/KG<br />grezzo</th>
                                             <th className="ri-c" style={{ padding: '5px 6px', textAlign: 'right', fontWeight: 700, fontSize: 10, whiteSpace: 'nowrap' }}>RESA %</th>
                                             <th className="ri-c" style={{ padding: '5px 6px', textAlign: 'right', fontWeight: 700, fontSize: 10, whiteSpace: 'nowrap' }}>€/KG<br />pulito</th>
                                             <th className="ri-c" style={{ padding: '5px 6px', textAlign: 'right', fontWeight: 700, fontSize: 10, whiteSpace: 'nowrap', background: 'rgba(255,126,46,0.08)' }}>€/UV</th>
                                             <th className="ri-c" style={{ padding: '5px 6px', textAlign: 'right', fontWeight: 700, fontSize: 10, whiteSpace: 'nowrap', background: 'rgba(255,126,46,0.08)' }}>€/KG</th>
+                                            <th className="ri-q" style={{ padding: '5px 7px', textAlign: 'right', fontWeight: 700, fontSize: 10, whiteSpace: 'nowrap' }}>g tot.</th>
+                                            <th className="ri-q" style={{ padding: '5px 7px', textAlign: 'right', fontWeight: 700, fontSize: 10, whiteSpace: 'nowrap' }}>g X PZ</th>
+                                            <th className="ri-q" style={{ padding: '5px 7px', textAlign: 'right', fontWeight: 700, fontSize: 10, whiteSpace: 'nowrap' }}>%</th>
+                                            <th className="ri-q" style={{ padding: '5px 7px', textAlign: 'right', fontWeight: 700, fontSize: 10, whiteSpace: 'nowrap', color: 'var(--color-orange)' }}>QUID</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -3302,15 +3302,15 @@ export function NutrizionaleCalc() {
                                             return (
                                                 <tr key={row.ing.nome} style={{ background: bg, borderBottom: '1px solid var(--color-border)' }}>
                                                     <td style={{ padding: '5px 7px', fontWeight: 500, minWidth: 100 }}>{(row.ing.nome || '').trim()}</td>
-                                                    <td className="ri-q" style={{ padding: '5px 7px', textAlign: 'right', whiteSpace: 'nowrap', color: 'var(--color-text-muted)' }}>{fmt3(row.grammiTotali)}</td>
-                                                    <td className="ri-q" style={{ padding: '5px 7px', textAlign: 'right', whiteSpace: 'nowrap', color: 'var(--color-text-muted)' }}>{fmt3(row.grammiXpzuv)}</td>
-                                                    <td className="ri-q" style={{ padding: '5px 7px', textAlign: 'right', whiteSpace: 'nowrap' }}>{fmt3(pctRicetta)}</td>
-                                                    <td className="ri-q" style={{ padding: '5px 7px', textAlign: 'right', whiteSpace: 'nowrap', fontWeight: 600, color: 'var(--color-orange)' }}>{fmt3(quid)}</td>
                                                     <td className="ri-c" style={{ padding: '5px 6px', textAlign: 'right', whiteSpace: 'nowrap' }}>{row.eurKg > 0 ? fmt2(row.eurKg) : '—'}</td>
                                                     <td className="ri-c" style={{ padding: '5px 6px', textAlign: 'right', whiteSpace: 'nowrap' }}>{fmt2(row.resa || 100)}</td>
                                                     <td className="ri-c" style={{ padding: '5px 6px', textAlign: 'right', whiteSpace: 'nowrap' }}>{costoKgPulito > 0 ? fmt2(costoKgPulito) : '—'}</td>
                                                     <td className="ri-c" style={{ padding: '5px 6px', textAlign: 'right', whiteSpace: 'nowrap', fontWeight: 600, background: 'rgba(255,126,46,0.04)' }}>{fmtC(costoUV)}</td>
                                                     <td className="ri-c" style={{ padding: '5px 6px', textAlign: 'right', whiteSpace: 'nowrap', fontWeight: 600, background: 'rgba(255,126,46,0.04)' }}>{fmtC(costoKg)}</td>
+                                                    <td className="ri-q" style={{ padding: '5px 7px', textAlign: 'right', whiteSpace: 'nowrap', color: 'var(--color-text-muted)' }}>{fmt3(row.grammiTotali)}</td>
+                                                    <td className="ri-q" style={{ padding: '5px 7px', textAlign: 'right', whiteSpace: 'nowrap', color: 'var(--color-text-muted)' }}>{fmt3(row.grammiXpzuv)}</td>
+                                                    <td className="ri-q" style={{ padding: '5px 7px', textAlign: 'right', whiteSpace: 'nowrap' }}>{fmt3(pctRicetta)}</td>
+                                                    <td className="ri-q" style={{ padding: '5px 7px', textAlign: 'right', whiteSpace: 'nowrap', fontWeight: 600, color: 'var(--color-orange)' }}>{fmt3(quid)}</td>
                                                 </tr>
                                             );
                                         })}
