@@ -5,6 +5,7 @@ import { useArchive } from '../../hooks/useArchive';
 import { CalcoloTab } from './mobile/CalcoloTab';
 import { TabellaTab } from './mobile/TabellaTab';
 import { ArchivioTab } from './mobile/ArchivioTab';
+import { ToolsTab } from './mobile/ToolsTab';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 
@@ -171,8 +172,8 @@ export function NutrizionaleCalcMobile() {
                         onDelete={(id) => archive.deleteItem(id)}
                     />
                 );
-            default:
-                return <div style={{ padding: 16, color: '#999' }}>{activeTab} — in arrivo</div>;
+            case 'tools':
+                return <ToolsTab />;
         }
     };
 
