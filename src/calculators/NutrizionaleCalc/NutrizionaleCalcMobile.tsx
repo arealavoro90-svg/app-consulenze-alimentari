@@ -3,6 +3,10 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../auth/AuthContext';
 import { useArchive } from '../../hooks/useArchive';
 import { CalcoloTab } from './mobile/CalcoloTab';
+import { TabellaTab } from './mobile/TabellaTab';
+import { ArchivioTab } from './mobile/ArchivioTab';
+import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
 
 // ─── Shared types ─────────────────────────────────────────────────────────────
 export interface CalcResult {
@@ -110,6 +114,22 @@ export function NutrizionaleCalcMobile() {
         { id: 'tools',    label: 'Tools'    },
     ];
 
+    const handleExportPDF = async (_region: string) => {
+        const previewEl = document.querySelector('.m-table-preview') as HTMLElement | null;
+        if (!previewEl) return;
+        try {
+            const canvas = await html2canvas(previewEl, { scale: 2, useCORS: true });
+            const imgData = canvas.toDataURL('image/png');
+            const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+            const w = pdf.internal.pageSize.getWidth();
+            const ratio = canvas.height / canvas.width;
+            pdf.addImage(imgData, 'PNG', 10, 10, w - 20, (w - 20) * ratio);
+            pdf.save(`${form.denominazione || 'tabella'}_${_region}.pdf`);
+        } catch (e) {
+            console.error('PDF export failed', e);
+        }
+    };
+
     const renderTab = () => {
         switch (activeTab) {
             case 'calcolo':
@@ -118,6 +138,37 @@ export function NutrizionaleCalcMobile() {
                         form={form}
                         onChange={updateForm}
                         onGoToTabella={() => setActiveTab('tabella')}
+                    />
+                );
+            case 'tabella':
+                return (
+                    <TabellaTab
+                        calcResult={calcResult}
+                        form={form}
+                        onChange={updateForm}
+                        onSave={(region) => {
+                            archive.saveItem(
+                                form.denominazione || 'Senza nome',
+                                {
+                                    denominazione: form.denominazione,
+                                    porzione_g: parseFloat(form.porzione_g) || 100,
+                                    region,
+                                    calcResult,
+                                    form,
+                                }
+                            );
+                        }}
+                        onExportPDF={handleExportPDF}
+                    />
+                );
+            case 'archivio':
+                return (
+                    <ArchivioTab
+                        items={archive.items}
+                        onLoad={(entry) => {
+                            loadFromArchive(entry);
+                        }}
+                        onDelete={(id) => archive.deleteItem(id)}
                     />
                 );
             default:
