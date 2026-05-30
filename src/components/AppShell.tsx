@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
 import { Sidebar } from './Sidebar';
+import { MobileShell } from './MobileShell';
+import { useMobile } from '../hooks/useMobile';
 import { AlignJustify } from 'lucide-react';
 
 const ROUTE_LABELS: Record<string, string> = {
@@ -18,24 +20,27 @@ const ROUTE_LABELS: Record<string, string> = {
 export function AppShell() {
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const location = useLocation();
+    const isMobile = useMobile();
+
+    if (isMobile) {
+        return <MobileShell />;
+    }
 
     const pageLabel = ROUTE_LABELS[location.pathname] ?? 'Portale';
 
     return (
         <div className={`app-shell${sidebarOpen ? ' sidebar-open' : ''}`}>
-            {/* Backdrop mobile */}
             <div
-                    className="sidebar-backdrop"
-                    onClick={() => setSidebarOpen(false)}
-                    onKeyDown={(e) => { if (e.key === 'Escape') setSidebarOpen(false); }}
-                    role="presentation"
-                    aria-hidden="true"
-                />
+                className="sidebar-backdrop"
+                onClick={() => setSidebarOpen(false)}
+                onKeyDown={(e) => { if (e.key === 'Escape') setSidebarOpen(false); }}
+                role="presentation"
+                aria-hidden="true"
+            />
 
             <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
             <main className="main-content" style={{ display: 'flex', flexDirection: 'column' }}>
-                {/* Topbar */}
                 <div className="topbar">
                     <div className="topbar-left">
                         <button
