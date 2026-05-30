@@ -6,6 +6,8 @@ import { LoginPage } from './components/LoginPage';
 import { AppShell } from './components/AppShell';
 import { Dashboard } from './components/Dashboard';
 import { NutrizionaleCalc } from './calculators/NutrizionaleCalc/NutrizionaleCalc';
+import { NutrizionaleCalcMobile } from './calculators/NutrizionaleCalc/NutrizionaleCalcMobile';
+import { useMobile } from './hooks/useMobile';
 import { EtichetteCalc } from './calculators/EtichetteCalc/EtichetteCalc';
 import { EtichetteViniCalc } from './calculators/EtichetteViniCalc/EtichetteViniCalc';
 import { RintracciabilitaCalc } from './calculators/RintracciabilitaCalc/RintracciabilitaCalc';
@@ -13,6 +15,11 @@ import { TrattamentoTermicoCalc } from './calculators/TrattamentoTermicoCalc/Tra
 import { SchedeCompleteCalc } from './calculators/SchedeCompleteCalc/SchedeCompleteCalc';
 import { SchedaProcessoCalc } from './calculators/SchedaProcessoCalc/SchedaProcessoCalc';
 import { RisorseLinks } from './components/RisorseLinks';
+
+function NutrizionaleCalcEntry() {
+    const isMobile = useMobile();
+    return isMobile ? <NutrizionaleCalcMobile /> : <NutrizionaleCalc />;
+}
 
 export default function App() {
   return (
@@ -35,7 +42,7 @@ export default function App() {
               path="tool/nutrizionale"
               element={
                 <ProtectedRoute requiredTool="nutrizionale">
-                  <NutrizionaleCalc />
+                  <NutrizionaleCalcEntry />
                 </ProtectedRoute>
               }
             />
