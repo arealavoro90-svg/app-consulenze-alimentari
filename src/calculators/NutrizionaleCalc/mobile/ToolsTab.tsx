@@ -31,6 +31,7 @@ export function ToolsTab() {
 
     const handleTileTap = (toolId: ToolId) => {
         if (toolId === ACTIVE_TOOL) return;
+        if (!purchasedTools.includes(toolId)) return;
         navigate('/tool/' + toolId);
     };
 
