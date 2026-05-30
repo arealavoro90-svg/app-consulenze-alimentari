@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../auth/AuthContext';
 import { useArchive } from '../../hooks/useArchive';
+import { CalcoloTab } from './mobile/CalcoloTab';
 
 // ─── Shared types ─────────────────────────────────────────────────────────────
 export interface CalcResult {
@@ -110,8 +111,18 @@ export function NutrizionaleCalcMobile() {
     ];
 
     const renderTab = () => {
-        // Tab components vengono aggiunti nei task successivi
-        return <div style={{ padding: 16, color: '#999' }}>{activeTab} — in arrivo</div>;
+        switch (activeTab) {
+            case 'calcolo':
+                return (
+                    <CalcoloTab
+                        form={form}
+                        onChange={updateForm}
+                        onGoToTabella={() => setActiveTab('tabella')}
+                    />
+                );
+            default:
+                return <div style={{ padding: 16, color: '#999' }}>{activeTab} — in arrivo</div>;
+        }
     };
 
     return (
