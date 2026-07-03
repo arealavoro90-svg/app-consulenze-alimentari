@@ -520,17 +520,39 @@ function InfoTooltip({ text }: { text: string }) {
 }
 
 // ─── IngSearch sub-component ──────────────────────────────────────────────────
+const ING_RECENTI_KEY = 'ing_recenti';
+const MAX_RECENTI = 10;
+
+function getRecenti(db: DBIngredient[]): DBIngredient[] {
+    try {
+        const names: string[] = JSON.parse(localStorage.getItem(ING_RECENTI_KEY) ?? '[]');
+        return names.flatMap(name => { const found = db.find(d => d.nome === name); return found ? [found] : []; });
+    } catch { return []; }
+}
+
+function saveRecente(ing: DBIngredient): void {
+    try {
+        const names: string[] = JSON.parse(localStorage.getItem(ING_RECENTI_KEY) ?? '[]');
+        const updated = [ing.nome, ...names.filter(n => n !== ing.nome)].slice(0, MAX_RECENTI);
+        localStorage.setItem(ING_RECENTI_KEY, JSON.stringify(updated));
+    } catch { /* ignore */ }
+}
+
 function IngSearch({ onAdd, db, loading, error }: { onAdd: (ing: DBIngredient) => void; db: DBIngredient[]; loading: boolean; error: string | null }) {
     const [searchOpen, setSearchOpen] = useState(false);
     const [q, setQ] = useState('');
     const [res, setRes] = useState<DBIngredient[]>([]);
     const [dropOpen, setDropOpen] = useState(false);
     const [dropPos, setDropPos] = useState<{ top: number; left: number; width: number } | null>(null);
+    const [selectedIdx, setSelectedIdx] = useState(-1);
     const ref = useRef<HTMLDivElement>(null);
     const wrapRef = useRef<HTMLDivElement>(null);
     const inputRef = useRef<HTMLInputElement>(null);
+    const listRef = useRef<HTMLDivElement>(null);
 
-    const closeSearch = () => { setSearchOpen(false); setQ(''); setDropOpen(false); };
+    const closeSearch = () => { setSearchOpen(false); setQ(''); setDropOpen(false); setSelectedIdx(-1); };
+
+    const handleAdd = (ing: DBIngredient) => { saveRecente(ing); onAdd(ing); closeSearch(); };
 
     useEffect(() => {
         if (searchOpen) inputRef.current?.focus();
@@ -539,6 +561,7 @@ function IngSearch({ onAdd, db, loading, error }: { onAdd: (ing: DBIngredient) =
     useEffect(() => {
         const found = searchDB(q, db);
         setRes(found);
+        setSelectedIdx(-1);
         const shouldOpen = found.length > 0 && q.trim().length >= 2;
         if (shouldOpen && wrapRef.current) {
             const rect = wrapRef.current.getBoundingClientRect();
@@ -565,6 +588,23 @@ function IngSearch({ onAdd, db, loading, error }: { onAdd: (ing: DBIngredient) =
         return () => window.removeEventListener('scroll', updatePos, true);
     }, [dropOpen]);
 
+    // Scroll selected item into view
+    useEffect(() => {
+        if (selectedIdx < 0 || !listRef.current) return;
+        const item = listRef.current.querySelectorAll('[data-ing-item]')[selectedIdx] as HTMLElement | undefined;
+        item?.scrollIntoView({ block: 'nearest' });
+    }, [selectedIdx]);
+
+    const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+        if (!dropOpen) return;
+        if (e.key === 'ArrowDown') { e.preventDefault(); setSelectedIdx(i => Math.min(i + 1, res.length - 1)); }
+        else if (e.key === 'ArrowUp') { e.preventDefault(); setSelectedIdx(i => Math.max(i - 1, 0)); }
+        else if (e.key === 'Enter') { e.preventDefault(); const target = selectedIdx >= 0 ? res[selectedIdx] : res[0]; if (target) handleAdd(target); }
+        else if (e.key === 'Escape') { closeSearch(); }
+    };
+
+    const recenti = searchOpen && q.trim().length < 2 ? getRecenti(db).slice(0, 5) : [];
+
     return (
         <div ref={ref} style={{ marginBottom: 12 }}>
             {/* Pulsante toggle */}
@@ -579,13 +619,14 @@ function IngSearch({ onAdd, db, loading, error }: { onAdd: (ing: DBIngredient) =
                 {error && <span style={{ fontSize: 11, color: 'var(--color-danger)' }}>{error}</span>}
             </div>
 
-            {/* Barra di ricerca — visibile solo quando searchOpen */}
+            {/* Barra di ricerca */}
             {searchOpen && !error && !loading && (
                 <div style={{ position: 'relative', marginTop: 8 }}>
                     <div ref={wrapRef} className="ing-search-wrap" style={{ display: 'flex', alignItems: 'center' }}>
                         <span className="ing-search-icon"><Search size={14} /></span>
                         <input ref={inputRef} type="text" value={q} onChange={e => setQ(e.target.value)}
-                            placeholder="Cerca ingrediente (es. olio extravergine, farina 00...)"
+                            onKeyDown={handleKeyDown}
+                            placeholder="Cerca ingrediente (↑↓ per navigare, Invio per aggiungere)"
                             className="ing-search-input"
                             style={{ width: '100%' }} />
                         <button type="button" onClick={closeSearch}
@@ -593,8 +634,26 @@ function IngSearch({ onAdd, db, loading, error }: { onAdd: (ing: DBIngredient) =
                             <X size={14} />
                         </button>
                     </div>
+
+                    {/* Recenti — mostrati quando la query è vuota */}
+                    {recenti.length > 0 && (
+                        <div style={{ marginTop: 6, display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                            <span style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--color-text-muted)', alignSelf: 'center' }}>Recenti:</span>
+                            {recenti.map((ing, i) => (
+                                <button key={i} type="button" onClick={() => handleAdd(ing)}
+                                    style={{ fontSize: 12, padding: '3px 10px', borderRadius: 20, border: '1px solid var(--color-border)', background: 'var(--color-surface)', cursor: 'pointer', color: 'var(--color-text)', fontFamily: 'inherit' }}
+                                    onMouseEnter={e => (e.currentTarget.style.borderColor = 'var(--color-orange)')}
+                                    onMouseLeave={e => (e.currentTarget.style.borderColor = 'var(--color-border)')}
+                                >
+                                    {(ing.nome || '').trim()}
+                                </button>
+                            ))}
+                        </div>
+                    )}
+
+                    {/* Dropdown risultati */}
                     {dropOpen && dropPos && (
-                        <div style={{
+                        <div ref={listRef} style={{
                             position: 'fixed', top: dropPos.top, left: dropPos.left, width: dropPos.width,
                             background: 'var(--color-bg-card)', border: '1.5px solid var(--color-orange)',
                             borderRadius: 'var(--radius-md)', boxShadow: '0 8px 24px rgba(0,0,0,0.18)',
@@ -604,16 +663,17 @@ function IngSearch({ onAdd, db, loading, error }: { onAdd: (ing: DBIngredient) =
                                 {res.length} risultati
                             </div>
                             {res.map((ing, i) => (
-                                <button key={i} type="button"
-                                    onClick={() => { onAdd(ing); closeSearch(); }}
+                                <button key={i} type="button" data-ing-item
+                                    onClick={() => handleAdd(ing)}
                                     style={{
-                                        display: 'block', width: '100%', background: 'transparent',
+                                        display: 'block', width: '100%',
+                                        background: i === selectedIdx ? 'var(--color-accent-bg)' : 'transparent',
                                         border: 'none', borderBottom: '1px solid var(--color-border)',
                                         padding: '9px 14px', textAlign: 'left', cursor: 'pointer',
                                         fontFamily: 'inherit',
                                     }}
-                                    onMouseEnter={e => (e.currentTarget.style.background = 'var(--color-accent-bg)')}
-                                    onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
+                                    onMouseEnter={e => { setSelectedIdx(i); (e.currentTarget.style.background = 'var(--color-accent-bg)'); }}
+                                    onMouseLeave={e => { if (selectedIdx !== i) e.currentTarget.style.background = 'transparent'; }}
                                 >
                                     <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--color-text)', display: 'flex', alignItems: 'center', gap: 6 }}>
                                         {(ing.nome || '').trim()}
@@ -980,6 +1040,16 @@ function CustomIngredientModal({ onClose, onSave, initialIngredient, originalNom
     const grid3: React.CSSProperties = { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))', gap: 8 };
     const grid2: React.CSSProperties = { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: 8 };
 
+    // Accordion state per sezioni collassabili
+    const [openSec, setOpenSec] = useState({ facoltativi: false, condizionali: false, micro: false });
+    const toggleSec = (k: keyof typeof openSec) => setOpenSec(prev => ({ ...prev, [k]: !prev[k] }));
+    const AccHead = ({ label, sKey, color = '#718096' }: { label: string; sKey: keyof typeof openSec; color?: string }) => (
+        <button type="button" onClick={() => toggleSec(sKey)} style={{ display: 'flex', alignItems: 'center', gap: 6, width: '100%', background: 'none', border: 'none', cursor: 'pointer', padding: 0, textAlign: 'left' }}>
+            <span style={{ fontSize: 12, color, lineHeight: 1 }}>{openSec[sKey] ? '▼' : '▶'}</span>
+            <span style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.5, color }}>{label}</span>
+        </button>
+    );
+
     const clearErrors = React.useCallback(() => setErrors([]), []);
 
     const AllergenRow = ({ keys, labels, state, setState }: {
@@ -1096,43 +1166,48 @@ function CustomIngredientModal({ onClose, onSave, initialIngredient, originalNom
                     </div>
                 </div>
 
-                {/* 2 — Valori di macronutrienti facoltativi */}
+                {/* 2 — Valori di macronutrienti facoltativi (collassabile) */}
                 <div style={secS}>
-                    <div style={secT('#718096')}>○ Valori di macronutrienti facoltativi</div>
-                    <div style={grid3}>
-                        <NF label="○ Acidi grassi monoinsaturi" value={monoins} onChange={setMonoins} />
-                        <NF label="○ Acidi grassi polinsaturi" value={polins} onChange={setPolins} />
-                        <NF label="○ Eritritolo" value={eritritoloS} onChange={setEritritolo}
-                            tooltip="Poliolo con fattore energetico 0 kcal/g (EU Reg 1169/2011). Non contribuisce al calcolo dell'energia." />
-                        <NF label="○ Acidi organici" value={acidoOrganico} onChange={setAcidoOrganico}
-                            tooltip="Es. acido acetico (aceto), acido lattico (yogurt). Fattore energetico: 3 kcal/g — 13 kJ/g (EU Reg 1169/2011)." />
-                    </div>
+                    <AccHead label="○ Valori di macronutrienti facoltativi" sKey="facoltativi" />
+                    {openSec.facoltativi && (
+                        <div style={{ marginTop: 10, ...grid3 }}>
+                            <NF label="○ Acidi grassi monoinsaturi" value={monoins} onChange={setMonoins} />
+                            <NF label="○ Acidi grassi polinsaturi" value={polins} onChange={setPolins} />
+                            <NF label="○ Eritritolo" value={eritritoloS} onChange={setEritritolo}
+                                tooltip="Poliolo con fattore energetico 0 kcal/g (EU Reg 1169/2011). Non contribuisce al calcolo dell'energia." />
+                            <NF label="○ Acidi organici" value={acidoOrganico} onChange={setAcidoOrganico}
+                                tooltip="Es. acido acetico (aceto), acido lattico (yogurt). Fattore energetico: 3 kcal/g — 13 kJ/g (EU Reg 1169/2011)." />
+                        </div>
+                    )}
                 </div>
 
-                {/* 3 — Valori di macronutrienti obbligatori in taluni casi */}
+                {/* 3 — Valori di macronutrienti obbligatori in taluni casi (collassabile) */}
                 <div style={secS}>
-                    <div style={secT('#b7791f')}>△ Valori di macronutrienti obbligatori in taluni casi</div>
-                    <div style={grid3}>
-                        <NF label="△ Acidi grassi trans" value={trans} onChange={setTrans}
-                            tooltip="Obbligatorio per tabelle nutrizionali USA, Canada e Paesi Arabi." />
-                        <NF label="△ Zuccheri aggiunti" value={zuccheriAgg} onChange={setZuccheriAgg}
-                            tooltip="Obbligatorio per tabelle nutrizionali USA e Paesi Arabi." />
-                        <NF label="△ Polioli (escluso eritritolo e glicerolo)" value={polioliS} onChange={v => { setPolioli(v); clearErrors(); }}
-                            tooltip="Obbligatorio per tabella Australia se aggiunti in ricetta. Fattore energetico: 2,4 kcal/g — 10 kJ/g." />
-                        <NF label="△ Glicerolo" value={glicerolo} onChange={v => { setGlicerolo(v); clearErrors(); }}
-                            tooltip="Obbligatorio per tabella Australia se aggiunto in ricetta. Fattore energetico: 4,1 kcal/g — 17 kJ/g (EU Reg 1169/2011)." />
-                        <NF label="△ Alcol etilico" value={alcolS} onChange={v => { setAlcol(v); clearErrors(); }}
-                            unit="ml/100g"
-                            tooltip="Obbligatorio se l'ingrediente contiene alcol (es. vino, birra, rum, liquori). Inserire ml/100g: il sistema calcola automaticamente i g/100g (× 0,79). Fattore energetico: 7 kcal/g — 29 kJ/g." />
-                    </div>
+                    <AccHead label="△ Valori obbligatori in taluni casi (USA/CA/AU/Arabi)" sKey="condizionali" color="#b7791f" />
+                    {openSec.condizionali && (
+                        <div style={{ marginTop: 10, ...grid3 }}>
+                            <NF label="△ Acidi grassi trans" value={trans} onChange={setTrans}
+                                tooltip="Obbligatorio per tabelle nutrizionali USA, Canada e Paesi Arabi." />
+                            <NF label="△ Zuccheri aggiunti" value={zuccheriAgg} onChange={setZuccheriAgg}
+                                tooltip="Obbligatorio per tabelle nutrizionali USA e Paesi Arabi." />
+                            <NF label="△ Polioli (escluso eritritolo e glicerolo)" value={polioliS} onChange={v => { setPolioli(v); clearErrors(); }}
+                                tooltip="Obbligatorio per tabella Australia se aggiunti in ricetta. Fattore energetico: 2,4 kcal/g — 10 kJ/g." />
+                            <NF label="△ Glicerolo" value={glicerolo} onChange={v => { setGlicerolo(v); clearErrors(); }}
+                                tooltip="Obbligatorio per tabella Australia se aggiunto in ricetta. Fattore energetico: 4,1 kcal/g — 17 kJ/g (EU Reg 1169/2011)." />
+                            <NF label="△ Alcol etilico" value={alcolS} onChange={v => { setAlcol(v); clearErrors(); }}
+                                unit="ml/100g"
+                                tooltip="Obbligatorio se l'ingrediente contiene alcol (es. vino, birra, rum, liquori). Inserire ml/100g: il sistema calcola automaticamente i g/100g (× 0,79). Fattore energetico: 7 kcal/g — 29 kJ/g." />
+                        </div>
+                    )}
                 </div>
 
-                {/* 5 — Valori di micronutrienti */}
+                {/* 5 — Valori di micronutrienti (collassabile) */}
                 <div style={secS}>
-                    <div style={secT('#333')}>Valori di micronutrienti <span style={{ fontWeight: 400, textTransform: 'none', fontSize: 11 }}>(nessun micronutriente è obbligatorio in assoluto)</span></div>
+                    <AccHead label="Micronutrienti (nessuno obbligatorio in assoluto)" sKey="micro" color="#333" />
+                    {openSec.micro && (<>
 
                     {/* 5a — Micronutrienti obbligatori in taluni casi */}
-                    <div style={{ marginBottom: 14 }}>
+                    <div style={{ marginBottom: 14, marginTop: 10 }}>
                         <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.5, color: '#b7791f', marginBottom: 8 }}>△ Obbligatori in taluni casi</div>
                         <div style={grid3}>
                             <NF label="△ Colesterolo" value={colesterolo} onChange={setColesterolo} unit="mg/100g"
@@ -1200,6 +1275,7 @@ function CustomIngredientModal({ onClose, onSave, initialIngredient, originalNom
                                 tooltip="Vitamina A (Unità Internazionali) = RE × 3,333333333" />
                         </div>
                     </div>
+                    </>)}
                 </div>
 
                 {/* 4 — Valori calcolati automaticamente */}
@@ -2345,38 +2421,42 @@ export function NutrizionaleCalc() {
                 </div>
             )}
 
-            {/* ── Prodotto / Pesi — spostati nella sezione sinistra ── */}
+            {/* ── Prodotto / Pesi ── */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 12 }}>
                 <div>
-                    <label style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--color-text-muted)', display: 'block', marginBottom: 3 }}>Nome prodotto</label>
-                    <input type="text" placeholder="Nome prodotto (es. Torta di mele...)" value={productName}
-                        onChange={e => setProductName(e.target.value)} className="field-input" style={{ fontWeight: 600, width: '100%' }} />
+                    <label style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--color-text-muted)', display: 'block', marginBottom: 4 }}>Nome prodotto</label>
+                    <input type="text" placeholder="Es. Torta di mele, Ragù bolognese..." value={productName}
+                        onChange={e => setProductName(e.target.value)} className="field-input"
+                        style={{ fontWeight: 600, fontSize: 16, width: '100%', padding: '8px 10px' }} />
                 </div>
-                <div style={{ display: 'flex', gap: 8 }}>
-                    <div style={{ flex: 1 }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginBottom: 3 }}>
-                            <label style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--color-text-muted)' }}>Peso finito (g)</label>
-                            <InfoTooltip text="Peso del prodotto dopo cottura, disidratazione o evaporazione di acqua. Deve essere uguale o inferiore al peso del prodotto processato." />
+                {/* Peso finito e specifico — compaiono dopo il primo ingrediente */}
+                {allRows.length > 0 && (<>
+                    <div style={{ display: 'flex', gap: 8 }}>
+                        <div style={{ flex: 1 }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginBottom: 3 }}>
+                                <label style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--color-text-muted)' }}>Peso finito (g)</label>
+                                <InfoTooltip text="Peso del prodotto dopo cottura, disidratazione o evaporazione di acqua. Deve essere uguale o inferiore al peso del prodotto processato." />
+                            </div>
+                            <input type="number" min={0} placeholder={`max ${totalGramsRaw.toFixed(0)}g`} value={finishedWeight}
+                                onChange={e => handleFW(e.target.value)}
+                                className="field-input" style={{ width: '100%', ...(fwWarning ? { borderColor: '#e53e3e', background: 'rgba(229,62,62,.05)' } : {}) }} />
                         </div>
-                        <input type="number" min={0} placeholder={`max ${totalGramsRaw.toFixed(0)}g`} value={finishedWeight}
-                            onChange={e => handleFW(e.target.value)}
-                            className="field-input" style={{ width: '100%', ...(fwWarning ? { borderColor: '#e53e3e', background: 'rgba(229,62,62,.05)' } : {}) }} />
-                    </div>
-                    <div style={{ flex: 1 }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginBottom: 3 }}>
-                            <label style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--color-text-muted)' }}>Peso specifico (g/ml)</label>
-                            <InfoTooltip text="Inserisci il peso specifico SOLO per alimenti liquidi. Quando compilato, i valori verranno espressi su 100 ml." />
+                        <div style={{ flex: 1 }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginBottom: 3 }}>
+                                <label style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--color-text-muted)' }}>Peso specifico (g/ml)</label>
+                                <InfoTooltip text="Inserisci il peso specifico SOLO per alimenti liquidi. Quando compilato, i valori verranno espressi su 100 ml." />
+                            </div>
+                            <input type="number" min={0} step={0.01} placeholder="opzionale" value={specificGravity}
+                                onChange={e => setSpecificGravity(e.target.value)} className="field-input" style={{ width: '100%' }} />
                         </div>
-                        <input type="number" min={0} step={0.01} placeholder="opzionale" value={specificGravity}
-                            onChange={e => setSpecificGravity(e.target.value)} className="field-input" style={{ width: '100%' }} />
                     </div>
-                </div>
-                {fwWarning && (
-                    <div style={{ padding: '5px 8px', background: 'rgba(229,62,62,.10)', border: '2px solid #e53e3e', borderRadius: 6, fontSize: 11, color: '#c53030', fontWeight: 700, display: 'flex', alignItems: 'center', gap: 6 }}>
-                        <AlertTriangle size={12} style={{ flexShrink: 0 }} />
-                        <span>{fieldErrors['finished-weight'] || `Peso superiore al crudo. Max ${(totalGramsRaw / ((components[0]?.pzUV || 1))).toFixed(0)}g.`}</span>
-                    </div>
-                )}
+                    {fwWarning && (
+                        <div style={{ padding: '5px 8px', background: 'rgba(229,62,62,.10)', border: '2px solid #e53e3e', borderRadius: 6, fontSize: 11, color: '#c53030', fontWeight: 700, display: 'flex', alignItems: 'center', gap: 6 }}>
+                            <AlertTriangle size={12} style={{ flexShrink: 0 }} />
+                            <span>{fieldErrors['finished-weight'] || `Peso superiore al crudo. Max ${(totalGramsRaw / ((components[0]?.pzUV || 1))).toFixed(0)}g.`}</span>
+                        </div>
+                    )}
+                </>)}
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, margin: '4px 0 12px' }}>
                 <div style={{ flex: 1, height: 1, background: 'var(--color-border)' }} />
