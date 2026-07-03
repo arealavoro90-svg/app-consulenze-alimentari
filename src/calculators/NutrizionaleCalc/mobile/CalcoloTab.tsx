@@ -328,6 +328,12 @@ function RecipeRowItem({ row, compId, onRemove, onUpdate }: {
     const [resaRaw, setResaRaw] = useState(String(row.resa));
     const [eurRaw, setEurRaw] = useState(String(row.eurKg));
     const [expanded, setExpanded] = useState(false);
+    const [removing, setRemoving] = useState(false);
+
+    const handleRemove = () => {
+        setRemoving(true);
+        setTimeout(() => onRemove(compId, row.id), 200);
+    };
 
     const handleGrams = (v: string) => {
         setGramsRaw(v);
@@ -346,7 +352,7 @@ function RecipeRowItem({ row, compId, onRemove, onUpdate }: {
     };
 
     return (
-        <div className="m-ing-row" style={{ marginBottom: 5 }}>
+        <div className={`m-ing-row${removing ? ' m-ing-row--removing' : ''}`} style={{ marginBottom: 5 }}>
             {/* Main row */}
             <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '7px 10px' }}>
                 <button
@@ -379,7 +385,7 @@ function RecipeRowItem({ row, compId, onRemove, onUpdate }: {
                 <span className="m-ing-row__unit">g</span>
                 <button
                     type="button"
-                    onClick={() => onRemove(compId, row.id)}
+                    onClick={handleRemove}
                     className="m-ing-row__remove"
                     aria-label={`Rimuovi ${(row.ing.nome || '').trim()}`}
                 >
@@ -805,24 +811,26 @@ export function CalcoloTab({
                                 <div style={{ fontSize: 13, color: 'var(--m-text-muted)' }}>Inserisci il nome del prodotto e aggiungi gli ingredienti</div>
                             </div>
                         )}
-                        {components.map((comp, idx) => (
-                            <ComponentCard
-                                key={comp.id}
-                                comp={comp}
-                                index={idx}
-                                isOnly={components.length === 1}
-                                db={db}
-                                onRemoveComponent={onRemoveComponent}
-                                onUpdateName={onUpdateComponentName}
-                                onUpdatePzUV={onUpdateComponentPzUV}
-                                onAddRow={onAddRow}
-                                onRemoveRow={onRemoveRow}
-                                onUpdateRow={onUpdateRow}
-                                onAddAdditiveRow={onAddAdditiveRow}
-                                onRemoveAdditiveRow={onRemoveAdditiveRow}
-                                onUpdateAdditiveRow={onUpdateAdditiveRow}
-                            />
-                        ))}
+                        <div className="stagger-children--tight">
+                            {components.map((comp, idx) => (
+                                <ComponentCard
+                                    key={comp.id}
+                                    comp={comp}
+                                    index={idx}
+                                    isOnly={components.length === 1}
+                                    db={db}
+                                    onRemoveComponent={onRemoveComponent}
+                                    onUpdateName={onUpdateComponentName}
+                                    onUpdatePzUV={onUpdateComponentPzUV}
+                                    onAddRow={onAddRow}
+                                    onRemoveRow={onRemoveRow}
+                                    onUpdateRow={onUpdateRow}
+                                    onAddAdditiveRow={onAddAdditiveRow}
+                                    onRemoveAdditiveRow={onRemoveAdditiveRow}
+                                    onUpdateAdditiveRow={onUpdateAdditiveRow}
+                                />
+                            ))}
+                        </div>
 
                         <button
                             type="button"
