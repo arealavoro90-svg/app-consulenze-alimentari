@@ -130,7 +130,7 @@ export function ArchivioTab({ items, onLoad, onDelete }: Props) {
                         return (
                             <div
                                 key={item.id}
-                                className="m-archive-item"
+                                className="m-archive-item m-archive-card"
                                 onTouchStart={e => handleTouchStart(item.id, e)}
                                 onTouchEnd={handleTouchEnd}
                                 onTouchMove={handleTouchMove}
@@ -140,8 +140,8 @@ export function ArchivioTab({ items, onLoad, onDelete }: Props) {
                                     {REGION_CODE[region]}
                                 </div>
                                 <div className="m-archive-info">
-                                    <div className="m-archive-name">{item.name}</div>
-                                    <div className="m-archive-meta">
+                                    <div className="m-archive-name m-archive-card__title">{item.name}</div>
+                                    <div className="m-archive-meta m-archive-card__meta">
                                         {formatDate(item.date)} · {kcal} kcal/100 g
                                     </div>
                                 </div>

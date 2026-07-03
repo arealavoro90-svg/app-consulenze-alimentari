@@ -168,10 +168,7 @@ export function TabellaTab({ calcResult, form, onChange, onSave, onExportPDF, ha
         <div style={{ paddingTop: 8, paddingBottom: 100 }}>
 
             {/* ── Compact region chip bar ──────────────────────────────────── */}
-            <div style={{
-                display: 'flex', gap: 6, padding: '0 16px 10px',
-                overflowX: 'auto', flexWrap: 'nowrap',
-            }}>
+            <div className="m-region-tabs">
                 {REGIONS.map(r => {
                     const isActive = selectedRegion === r.id;
                     return (
@@ -180,15 +177,7 @@ export function TabellaTab({ calcResult, form, onChange, onSave, onExportPDF, ha
                             type="button"
                             onClick={() => setSelectedRegion(r.id)}
                             aria-pressed={isActive}
-                            style={{
-                                flexShrink: 0,
-                                display: 'flex', flexDirection: 'column', alignItems: 'center',
-                                padding: '6px 14px', borderRadius: 20, cursor: 'pointer',
-                                border: `1.5px solid ${isActive ? 'var(--m-orange)' : 'var(--m-border)'}`,
-                                background: isActive ? 'var(--m-orange)' : 'white',
-                                color: isActive ? 'white' : 'var(--m-text)',
-                                transition: 'all 0.15s',
-                            }}
+                            className={isActive ? 'm-region-tab m-region-tab--active' : 'm-region-tab'}
                         >
                             <span style={{ fontSize: 13, fontWeight: 800, lineHeight: 1.2 }}>{r.label}</span>
                             <span style={{ fontSize: 9, opacity: isActive ? 0.85 : 0.55, marginTop: 1 }}>{r.sub}</span>

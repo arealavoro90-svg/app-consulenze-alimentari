@@ -19,16 +19,15 @@ export function MobileShell({ pageLabel = 'Dashboard' }: MobileShellProps) {
             <header className="m-topbar">
                 <button
                     type="button"
+                    className="m-topbar__logo"
                     onClick={() => navigate('/dashboard')}
                     aria-label="Torna agli strumenti"
-                    style={{
-                        background: 'none', border: 'none', cursor: 'pointer',
-                        padding: 0, textAlign: 'left',
-                    }}
                 >
-                    <div className="m-topbar__title">{isHome ? 'AEA' : 'AEA ←'}</div>
-                    <div className="m-topbar__sub">{pageLabel}</div>
+                    {isHome ? 'AEA' : '← AEA'}
                 </button>
+                <div className="m-topbar__title-wrap">
+                    <div className="m-topbar__title">{pageLabel}</div>
+                </div>
                 <button
                     type="button"
                     className="m-topbar__avatar"

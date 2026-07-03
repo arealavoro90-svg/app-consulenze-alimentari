@@ -154,17 +154,12 @@ export function RiepilogoTab({ components, pesoFinito, presentAllergens, crossAl
                     const costoUV = row.eurKg > 0 ? (fabb / 1000) * row.eurKg : 0;
                     const costoKg = pesoFinitoPz > 0 && costoUV > 0 ? costoUV / (pesoFinitoPz / 1000) : 0;
                     return (
-                        <div key={row.ing.nome + i} style={{
-                            background: 'var(--m-surface)',
-                            border: '1px solid var(--m-border)',
-                            borderRadius: 10,
-                            padding: '10px 12px',
-                        }}>
-                            <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--m-text)', marginBottom: 4 }}>
+                        <div key={row.ing.nome + i} className="m-archive-card">
+                            <div className="m-archive-card__title">
                                 {(row.ing.nome || '').trim()}
                             </div>
                             {rTab === 'q' ? (
-                                <div style={{ fontSize: 12, color: 'var(--m-text-muted)', display: 'flex', flexWrap: 'wrap', gap: '2px 10px' }}>
+                                <div className="m-archive-card__meta" style={{ display: 'flex', flexWrap: 'wrap', gap: '2px 10px' }}>
                                     <span>{fmt3(row.grammiXpzuv)} g/pz</span>
                                     {totGrammiTotali !== totGrammiXpzuv && (
                                         <span>tot: {fmt3(row.grammiTotali)} g</span>
@@ -175,7 +170,7 @@ export function RiepilogoTab({ components, pesoFinito, presentAllergens, crossAl
                                     </span>
                                 </div>
                             ) : (
-                                <div style={{ fontSize: 12, color: 'var(--m-text-muted)', display: 'flex', flexWrap: 'wrap', gap: '2px 10px' }}>
+                                <div className="m-archive-card__meta" style={{ display: 'flex', flexWrap: 'wrap', gap: '2px 10px' }}>
                                     {row.eurKg > 0 && <span>€/kg: {fmt2(row.eurKg)}</span>}
                                     <span>resa: {fmt2(row.resa || 100)}%</span>
                                     {costoKgPulito > 0 && <span>€/kg pulito: {fmt2(costoKgPulito)}</span>}

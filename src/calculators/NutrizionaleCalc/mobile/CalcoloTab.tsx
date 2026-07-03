@@ -346,11 +346,7 @@ function RecipeRowItem({ row, compId, onRemove, onUpdate }: {
     };
 
     return (
-        <div style={{
-            background: 'rgba(0,0,0,0.03)', borderRadius: 8,
-            border: '1px solid var(--m-border, #eee)', marginBottom: 5,
-            overflow: 'hidden',
-        }}>
+        <div className="m-ing-row" style={{ marginBottom: 5 }}>
             {/* Main row */}
             <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '7px 10px' }}>
                 <button
@@ -361,16 +357,16 @@ function RecipeRowItem({ row, compId, onRemove, onUpdate }: {
                 >
                     {expanded ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
                 </button>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--m-text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                <div className="m-ing-row__name">
+                    <div className="m-ing-row__title">
                         {(row.ing.nome || '').trim()}
                     </div>
-                    <div style={{ fontSize: 10, color: 'var(--m-text-muted)' }}>
+                    <div className="m-ing-row__sub">
                         {Math.round(nv(row.ing.kcal))} kcal/100g
                     </div>
                 </div>
                 <input
-                    className="m-input m-input--num"
+                    className="m-input m-input--num m-ing-row__input"
                     type="number"
                     inputMode="decimal"
                     min="0"
@@ -380,11 +376,11 @@ function RecipeRowItem({ row, compId, onRemove, onUpdate }: {
                     style={{ width: 58, textAlign: 'right', flexShrink: 0, fontSize: 13 }}
                     aria-label={`Grammi di ${(row.ing.nome || '').trim()}`}
                 />
-                <span style={{ fontSize: 11, color: 'var(--m-text-muted)', flexShrink: 0 }}>g</span>
+                <span className="m-ing-row__unit">g</span>
                 <button
                     type="button"
                     onClick={() => onRemove(compId, row.id)}
-                    style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#e53e3e', padding: 2, flexShrink: 0 }}
+                    className="m-ing-row__remove"
                     aria-label={`Rimuovi ${(row.ing.nome || '').trim()}`}
                 >
                     <Trash2 size={13} />
@@ -574,16 +570,11 @@ function ComponentCard({
                 />
             )}
 
-            <div style={{
-                border: '1.5px solid var(--m-border, #e0e0e0)',
-                borderRadius: 10, marginBottom: 10, overflow: 'hidden',
-            }}>
+            <div className="m-comp-card">
                 {/* Card header — tappabile per collassare */}
                 <div
+                    className="m-comp-card__header"
                     style={{
-                        display: 'flex', alignItems: 'center', gap: 8,
-                        background: 'var(--m-card-header, rgba(255,126,46,0.07))',
-                        padding: '8px 10px',
                         borderBottom: collapsed ? 'none' : '1px solid var(--m-border, #e0e0e0)',
                         cursor: 'pointer',
                         userSelect: 'none',
@@ -625,7 +616,7 @@ function ComponentCard({
                 </div>
 
                 {/* Card body — collassabile */}
-                {!collapsed && <div style={{ padding: '10px 10px 6px' }}>
+                {!collapsed && <div className="m-comp-card__body">
                     {/* Nome e pz/UV — mostrati nel body quando espanso */}
                     <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
                         <input
@@ -807,6 +798,13 @@ export function CalcoloTab({
                     </div>
                 ) : (
                     <>
+                        {!hasIngredients && !form.denominazione && (
+                            <div style={{ margin: '0 14px 16px', padding: '20px 16px', border: '1.5px dashed var(--m-border)', borderRadius: 10, textAlign: 'center' }}>
+                                <div style={{ fontSize: 28, marginBottom: 8 }}>🍳</div>
+                                <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--m-text)', marginBottom: 4 }}>Inizia la ricetta</div>
+                                <div style={{ fontSize: 13, color: 'var(--m-text-muted)' }}>Inserisci il nome del prodotto e aggiungi gli ingredienti</div>
+                            </div>
+                        )}
                         {components.map((comp, idx) => (
                             <ComponentCard
                                 key={comp.id}

@@ -2642,3 +2642,440 @@ kbd.shortcut {
   border-color: var(--color-border);
   color: var(--color-text-muted);
 }
+
+/* ═══════════════════════════════════════════════════════════════════════
+   MOBILE DESIGN SYSTEM — Token + Components
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* ── A1. Mobile Design Tokens ────────────────────────────────────────── */
+:root {
+  --m-bg:            var(--color-bg);
+  --m-surface:       var(--color-surface);
+  --m-surface-2:     var(--color-surface-2, #f0f2f6);
+  --m-border:        var(--color-border);
+  --m-border-light:  rgba(221, 226, 234, 0.6);
+  --m-text:          var(--color-text);
+  --m-text-muted:    var(--color-text-muted);
+  --m-text-faint:    #94a3b8;
+  --m-orange:        var(--color-accent, #ff7e2e);
+  --m-navy:          var(--color-navy);
+  --m-card-header:   var(--color-accent-bg, rgba(255,126,46,0.08));
+  --m-tabbar-height: 60px;
+  --m-topbar-height: 52px;
+  --m-safe-bottom:   env(safe-area-inset-bottom, 0px);
+}
+
+/* ── A2. Shell & Topbar ──────────────────────────────────────────────── */
+.m-shell {
+  display: flex;
+  flex-direction: column;
+  min-height: 100dvh;
+  background: var(--m-bg);
+  font-family: var(--font-sans);
+}
+
+.m-topbar {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: var(--m-navy);
+  height: var(--m-topbar-height);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px;
+  padding-top: env(safe-area-inset-top, 0px);
+  box-shadow: 0 1px 4px rgba(0,0,0,0.15);
+}
+
+.m-topbar__logo {
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--m-orange);
+  letter-spacing: -0.02em;
+  flex-shrink: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+  padding: 0;
+}
+
+.m-topbar__title-wrap {
+  flex: 1;
+  min-width: 0;
+  padding: 0 12px;
+}
+
+.m-topbar__title {
+  font-size: 13px;
+  font-weight: 700;
+  color: #ffffff;
+  letter-spacing: -0.01em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.m-topbar__sub {
+  font-size: 10px;
+  color: rgba(255,255,255,0.5);
+  margin-top: 1px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.m-topbar__avatar {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: rgba(255,126,46,0.25);
+  border: 1.5px solid rgba(255,126,46,0.5);
+  color: var(--m-orange);
+  font-size: 12px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background 0.15s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.m-topbar__avatar:active { background: rgba(255,126,46,0.40); }
+
+/* ── A3. Bottom Tab Bar ──────────────────────────────────────────────── */
+.m-tabbar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 200;
+  height: calc(var(--m-tabbar-height) + var(--m-safe-bottom));
+  padding-bottom: var(--m-safe-bottom);
+  background: var(--m-surface);
+  border-top: 1px solid var(--m-border);
+  display: flex;
+  align-items: stretch;
+  box-shadow: 0 -2px 12px rgba(12, 19, 38, 0.06);
+}
+
+.m-tabbar__item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  padding: 6px 4px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  transition: transform 0.12s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.m-tabbar__item:active { transform: scale(0.92); }
+
+.m-tabbar__icon { color: var(--m-text-muted); line-height: 1; }
+.m-tabbar__icon--active { color: var(--m-orange); }
+
+.m-tabbar__label {
+  font-size: 10px;
+  font-weight: 500;
+  color: var(--m-text-muted);
+  line-height: 1;
+}
+
+.m-tabbar__label--active {
+  font-weight: 700;
+  color: var(--m-orange);
+}
+
+.m-tabbar__dot {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: transparent;
+  transition: background 0.12s ease, transform 0.12s ease;
+}
+
+.m-tabbar__dot--active {
+  background: var(--m-orange);
+  transform: scale(1.4);
+}
+
+.m-page {
+  flex: 1;
+  overflow-y: auto;
+  padding-bottom: calc(var(--m-tabbar-height) + var(--m-safe-bottom) + 12px);
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* ── B1. Inputs & Labels ────────────────────────────────────────────── */
+.m-input {
+  width: 100%;
+  height: 40px;
+  padding: 0 12px;
+  border: 1px solid var(--m-border);
+  border-radius: 8px;
+  background: var(--m-surface);
+  color: var(--m-text);
+  font-size: 14px;
+  font-family: var(--font-sans);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.m-input:focus {
+  border-color: var(--m-orange);
+  box-shadow: 0 0 0 3px rgba(255, 126, 46, 0.12);
+  outline: none;
+}
+
+.m-input--num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.m-label {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--m-text-muted);
+  display: block;
+  margin-bottom: 4px;
+}
+
+.m-field { display: flex; flex-direction: column; }
+
+.m-section { padding: 0 14px 12px; }
+
+.m-section__header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.m-section__line { flex: 1; height: 1px; background: var(--m-border); }
+
+.m-section__title {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--m-text-muted);
+  flex-shrink: 0;
+}
+
+/* ── B2. Component Card ─────────────────────────────────────────────── */
+.m-comp-card {
+  border: 1.5px solid var(--m-border);
+  border-radius: 10px;
+  margin-bottom: 10px;
+  overflow: hidden;
+  background: var(--m-surface);
+}
+
+.m-comp-card__header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--m-card-header);
+  padding: 9px 12px;
+  border-bottom: 1px solid var(--m-border);
+  cursor: pointer;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.m-comp-card__body { padding: 10px 12px 8px; }
+
+.m-comp-badge {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--m-orange);
+}
+
+/* ── B3. Ingredient Row ─────────────────────────────────────────────── */
+.m-ing-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  background: rgba(0,0,0,0.025);
+  border: 1px solid var(--m-border);
+  border-radius: 6px;
+  margin-bottom: 5px;
+}
+
+.m-ing-row__name { flex: 1; min-width: 0; }
+
+.m-ing-row__title {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--m-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.m-ing-row__sub {
+  font-size: 10px;
+  color: var(--m-text-muted);
+  margin-top: 1px;
+}
+
+.m-ing-row__input {
+  width: 58px;
+  flex-shrink: 0;
+  text-align: right;
+  height: 32px;
+  padding: 0 8px;
+  border: 1px solid var(--m-border);
+  border-radius: 6px;
+  background: var(--m-surface);
+  color: var(--m-text);
+  font-size: 13px;
+  font-family: var(--font-sans);
+  -webkit-appearance: none;
+}
+
+.m-ing-row__unit {
+  font-size: 11px;
+  color: var(--m-text-muted);
+  flex-shrink: 0;
+}
+
+.m-ing-row__remove {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--color-danger, #e53e3e);
+  padding: 4px;
+  flex-shrink: 0;
+  transition: transform 0.1s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.m-ing-row__remove:active { transform: scale(0.85); }
+
+/* ── C2. Region Tabs ────────────────────────────────────────────────── */
+.m-region-tabs {
+  display: flex;
+  overflow-x: auto;
+  gap: 6px;
+  padding: 12px 14px 0;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+.m-region-tabs::-webkit-scrollbar { display: none; }
+
+.m-region-tab {
+  padding: 6px 14px;
+  border-radius: 999px;
+  border: 1.5px solid var(--m-border);
+  background: transparent;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--m-text-muted);
+  white-space: nowrap;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  flex-shrink: 0;
+  -webkit-tap-highlight-color: transparent;
+  font-family: var(--font-sans);
+}
+
+.m-region-tab--active {
+  background: var(--m-orange);
+  border-color: var(--m-orange);
+  color: white;
+}
+
+/* ── C3. Nutrient Cards ─────────────────────────────────────────────── */
+.m-nutrient-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--m-border);
+}
+
+.m-nutrient-card:last-child { border-bottom: none; }
+
+.m-nutrient-card__label { flex: 1; font-size: 13px; color: var(--m-text); }
+
+.m-nutrient-card__value {
+  font-size: 13px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--m-text);
+  min-width: 70px;
+  text-align: right;
+}
+
+/* ── C4. Archive Cards ──────────────────────────────────────────────── */
+.m-archive-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--m-border);
+  transition: background 0.1s ease;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.m-archive-card:active { background: var(--m-surface-2); }
+
+.m-archive-card__title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--m-text);
+}
+
+.m-archive-card__meta {
+  font-size: 11px;
+  color: var(--m-text-muted);
+  margin-top: 2px;
+}
+
+/* ── D1. Tab Content Transition ─────────────────────────────────────── */
+.m-tab-content {
+  animation: fadeUp 0.18s ease backwards;
+}
+
+/* ── D2. Picker Bottom Sheet ────────────────────────────────────────── */
+.m-picker-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1200;
+  background: rgba(12, 19, 38, 0.55);
+  animation: fadeIn 0.15s ease;
+}
+
+.m-picker-panel {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  max-height: 85dvh;
+  background: var(--m-surface);
+  border-radius: 16px 16px 0 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  animation: slideUp 0.22s cubic-bezier(0.16, 1, 0.3, 1) backwards;
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(100%); }
+  to   { opacity: 1; transform: translateY(0); }
+}

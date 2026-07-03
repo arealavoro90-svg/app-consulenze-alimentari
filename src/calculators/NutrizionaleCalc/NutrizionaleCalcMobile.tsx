@@ -10,6 +10,8 @@ import { ArchivioTab } from './mobile/ArchivioTab';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import { readBridge } from './sessionBridge';
+import { useToast } from '../../components/ui/Toast';
+import { ConfirmDialog } from '../../components/ui/ConfirmDialog';
 
 // ─── DB type ──────────────────────────────────────────────────────────────────
 export interface DBIngredient {
@@ -249,6 +251,7 @@ export function NutrizionaleCalcMobile() {
     const { user } = useAuth();
     const navigate = useNavigate();
     const archive = useArchive<MobileArchiveEntry>('nut_mobile_v2');
+    const toast = useToast();
 
     const [activeTab, setActiveTab] = useState<MobileTab>('ricetta');
     const [form, setForm] = useState<MobileNutForm>(EMPTY_FORM);
@@ -429,6 +432,7 @@ export function NutrizionaleCalcMobile() {
             pdf.save(`${form.denominazione || 'tabella'}_${_region}.pdf`);
         } catch (e) {
             console.error('PDF export failed', e);
+            toast.error('Errore durante l\'esportazione.');
         }
     };
 
@@ -508,7 +512,9 @@ export function NutrizionaleCalcMobile() {
 
     return (
         <div style={{ minHeight: '100%', background: 'var(--m-bg)' }}>
-            {renderTab()}
+            <div key={activeTab} className="m-tab-content">
+                {renderTab()}
+            </div>
 
             {/* Bottom Tab Bar */}
             <nav className="m-tabbar" aria-label="Navigazione principale">
