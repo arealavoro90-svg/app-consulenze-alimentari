@@ -347,3 +347,203 @@
 .m-ctx-overlay {
   position: fixed; inset: 0; z-index: 99;
 }
+
+/* ── Region chip bar (TabellaTab) ────────────────────────────────────────── */
+.m-region-tabs {
+  display: flex;
+  gap: 6px;
+  padding: 10px 16px 8px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: var(--m-bg);
+  border-bottom: 1px solid var(--m-border-light);
+}
+.m-region-tabs::-webkit-scrollbar { display: none; }
+
+.m-region-tab {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-height: 44px;
+  padding: 6px 14px;
+  background: var(--m-surface);
+  border: 1.5px solid var(--m-border);
+  border-radius: 10px;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: background 0.15s, border-color 0.15s;
+}
+.m-region-tab--active {
+  background: var(--m-navy);
+  border-color: var(--m-navy);
+  color: #fff;
+}
+.m-region-tab--active span { color: #fff !important; opacity: 1 !important; }
+
+/* ── Segmented control ───────────────────────────────────────────────────── */
+.m-segmented {
+  display: flex;
+  border: 1.5px solid var(--m-border);
+  border-radius: var(--m-radius-md);
+  overflow: hidden;
+  background: var(--m-surface);
+}
+.m-segmented__btn {
+  flex: 1;
+  min-height: 44px;
+  border: none;
+  background: transparent;
+  font-size: 12px;
+  font-weight: 700;
+  font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  color: var(--m-text-muted);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: background 0.15s, color 0.15s;
+  border-right: 1px solid var(--m-border);
+}
+.m-segmented__btn:last-child { border-right: none; }
+.m-segmented__btn--active {
+  background: var(--m-navy);
+  color: var(--m-orange);
+}
+.m-segmented__label {
+  display: block;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.6px;
+  color: var(--m-text-muted);
+  text-transform: uppercase;
+  margin-bottom: 5px;
+}
+
+/* ── Serving size input grid ─────────────────────────────────────────────── */
+.m-serving-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 8px;
+}
+.m-serving-grid--2col {
+  grid-template-columns: 1fr 1fr;
+}
+.m-serving-field {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.m-serving-field__label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  color: var(--m-text-muted);
+  text-transform: uppercase;
+}
+
+/* ── Table scale container ───────────────────────────────────────────────── */
+.m-table-scale-wrap {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  position: relative;
+}
+.m-table-scale-wrap__inner {
+  transform-origin: top left;
+  /* scale settato via inline style: transform: scale(var(--tscale, 1)) */
+  /* width compensato: width: calc(100% / var(--tscale, 1)) */
+}
+.m-table-scroll-hint {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 4px;
+  padding: 4px 0 8px;
+  font-size: 10px;
+  color: var(--m-text-muted);
+  font-style: italic;
+}
+
+/* Fullscreen table overlay */
+.m-fullscreen-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  background: white;
+  display: flex;
+  flex-direction: column;
+}
+.m-fullscreen-overlay__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--m-border);
+  background: var(--m-navy);
+  flex-shrink: 0;
+}
+.m-fullscreen-overlay__title {
+  font-size: 14px;
+  font-weight: 800;
+  color: #fff;
+}
+.m-fullscreen-overlay__close {
+  background: none;
+  border: none;
+  color: var(--m-orange);
+  cursor: pointer;
+  padding: 4px;
+  font-size: 20px;
+  line-height: 1;
+}
+.m-fullscreen-overlay__body {
+  flex: 1;
+  overflow: auto;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-x pan-y;
+  padding: 16px;
+}
+.m-expand-btn {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  background: none;
+  border: 1px solid var(--m-border);
+  border-radius: 20px;
+  padding: 5px 12px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--m-text-muted);
+  cursor: pointer;
+  margin: 8px 0 4px;
+  -webkit-tap-highlight-color: transparent;
+}
+.m-expand-btn:active { opacity: 0.7; }
+
+/* ── Sticky CTA bar ──────────────────────────────────────────────────────── */
+.m-cta-bar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: calc(var(--m-tabbar-h) + env(safe-area-inset-bottom, 0px));
+  z-index: 15;
+  background: var(--m-surface);
+  border-top: 1px solid var(--m-border);
+  padding: 10px 16px;
+  display: flex;
+  gap: 8px;
+}
+
+/* ── Collapsible section ─────────────────────────────────────────────────── */
+.m-collapsible {
+  overflow: hidden;
+  max-height: 1000px;
+  transition: max-height 0.28s ease-in-out, opacity 0.2s ease;
+  opacity: 1;
+}
+.m-collapsible--closed {
+  max-height: 0;
+  opacity: 0;
+}
