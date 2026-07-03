@@ -222,6 +222,59 @@
 }
 
 
+/* Mobile market panel transition */
+@keyframes marketPanelIn {
+  from { opacity: 0; transform: translateX(8px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+/* Mobile tab content entrance */
+@keyframes tabContentIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Fullscreen overlay slide-up */
+@keyframes fullscreenSlideUp {
+  from { opacity: 0; transform: translateY(100%); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Fullscreen overlay slide-down (chiusura) */
+@keyframes fullscreenSlideDown {
+  from { opacity: 1; transform: translateY(0); }
+  to   { opacity: 0; transform: translateY(100%); }
+}
+
+/* Table scale-in (prima apparizione tabella) */
+@keyframes tableAppear {
+  from { opacity: 0; transform: scale(0.96); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+/* Ingredient row removing (height collapse) */
+@keyframes rowCollapse {
+  0%   { opacity: 1; max-height: 200px; }
+  40%  { opacity: 0; }
+  100% { opacity: 0; max-height: 0; padding-top: 0; padding-bottom: 0; margin: 0; }
+}
+
+/* Save button flash verde */
+@keyframes saveBtnFlash {
+  0%   { background: var(--m-orange, #ff7e2e); }
+  30%  { background: var(--m-green, #43821c); }
+  70%  { background: var(--m-green, #43821c); }
+  100% { background: var(--m-orange, #ff7e2e); }
+}
+
+/* Expand icon pulse */
+@keyframes expandPulse {
+  0%   { transform: scale(1);   opacity: 0.6; }
+  50%  { transform: scale(1.3); opacity: 1; }
+  100% { transform: scale(1);   opacity: 0.6; }
+}
+
+
 /* ═══════════════════════════════════════════════════════════
    SECTION 3: UTILITY ANIMATION CLASSES
    ═══════════════════════════════════════════════════════════ */
@@ -921,6 +974,58 @@
 .scroll-indicator--hidden { opacity: 0; pointer-events: none; }
 
 
+/* ----------------------------------------------------------
+   6.19 MOBILE — UX MOMENTS (co-designed UI + Motion)
+   ---------------------------------------------------------- */
+
+/* M1 — Cambio tab bottom nav */
+.m-tab-enter {
+  animation: tabContentIn var(--dur-normal) var(--ease-out) backwards;
+}
+
+/* M2 — Cambio chip mercato */
+.m-market-enter {
+  animation: marketPanelIn 180ms var(--ease-out) backwards;
+}
+
+/* M3 — Prima apparizione tabella */
+.m-table-appear {
+  animation: tableAppear var(--dur-normal) var(--ease-out-expo) backwards;
+}
+
+/* M4 — Fullscreen apertura */
+.m-fullscreen-enter {
+  animation: fullscreenSlideUp 280ms var(--ease-out-expo) both;
+}
+
+/* M5 — Fullscreen chiusura */
+.m-fullscreen-exit {
+  animation: fullscreenSlideDown 200ms var(--ease-in) forwards;
+}
+
+/* M6 — Ingrediente aggiunto */
+.m-ing-row {
+  animation: slideDown var(--dur-fast) var(--ease-out) backwards;
+}
+
+/* M7 — Ingrediente rimosso */
+.m-ing-row--removing {
+  animation: rowCollapse 200ms ease forwards;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+/* M8 — Save button success flash */
+.m-btn--saved {
+  animation: saveBtnFlash 400ms ease;
+}
+
+/* M10 — Expand icon pulse */
+.m-expand-pulse {
+  animation: expandPulse 600ms ease 300ms 1 both;
+}
+
+
 /* ═══════════════════════════════════════════════════════════
    SECTION 7: PREFERS-REDUCED-MOTION (granulare)
    Tier 1: animazioni decorative → disabilitate
@@ -1004,5 +1109,24 @@
   .checkmark-path {
     animation:         none !important;
     stroke-dashoffset: 0 !important;
+  }
+
+  /* Mobile UX moments */
+  .m-tab-enter,
+  .m-market-enter,
+  .m-table-appear,
+  .m-fullscreen-enter,
+  .m-fullscreen-exit,
+  .m-ing-row,
+  .m-ing-row--removing,
+  .m-expand-pulse {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+    max-height: none !important;
+  }
+
+  .m-btn--saved {
+    animation: none !important;
   }
 }
