@@ -1445,7 +1445,6 @@ export function NutrizionaleCalc() {
     const [, setCurrentName] = useState('');
     const [isFlashing, setIsFlashing] = useState(false);
     const [lastAddedRowId, setLastAddedRowId] = useState('');
-    const isMac = typeof navigator !== 'undefined' && navigator.platform.toUpperCase().includes('MAC');
 
     // ── Auto-save draft ──────────────────────────────────────────────────────
     const [isDirty, setIsDirty] = useState(false);
@@ -1790,17 +1789,6 @@ export function NutrizionaleCalc() {
         }
         doResetRecipe();
     };
-
-    useEffect(() => {
-        const handler = (e: KeyboardEvent) => {
-            if ((e.metaKey || e.ctrlKey) && e.key === 's') { e.preventDefault(); handleSave(); }
-            if ((e.metaKey || e.ctrlKey) && e.key === 'n') { e.preventDefault(); handleNew(); }
-            if ((e.metaKey || e.ctrlKey) && e.key === 'f') { e.preventDefault(); document.querySelector<HTMLInputElement>('.ing-search-input')?.focus(); }
-        };
-        window.addEventListener('keydown', handler);
-        return () => window.removeEventListener('keydown', handler);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
 
     const handleDownloadPNG = async () => {
         if (!tableRef.current) { toast.error('Tabella non trovata.'); return; }
@@ -2284,7 +2272,6 @@ export function NutrizionaleCalc() {
                     <button type="button" className="topbar-btn-primary" onClick={handleNew}>
                         <Plus size={13} />
                         Nuova Ricetta
-                        <kbd className="shortcut">{isMac ? '⌘N' : 'Ctrl+N'}</kbd>
                     </button>
                     <button type="button" className="topbar-btn-ghost" onClick={() => setArchiveOpen(true)}>
                         <Archive size={13} />
@@ -2304,7 +2291,6 @@ export function NutrizionaleCalc() {
                         )}
                         <Save size={13} />
                         Salva
-                        <kbd className="shortcut">{isMac ? '⌘S' : 'Ctrl+S'}</kbd>
                     </button>
                 </div>,
                 document.getElementById('topbar-mode-toggle-slot') ?? document.body
