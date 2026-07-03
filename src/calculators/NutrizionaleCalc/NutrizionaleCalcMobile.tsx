@@ -512,7 +512,7 @@ export function NutrizionaleCalcMobile() {
 
     return (
         <div style={{ minHeight: '100%', background: 'var(--m-bg)' }}>
-            <div key={activeTab} className="m-tab-content">
+            <div key={activeTab} className="m-tab-content m-tab-enter">
                 {renderTab()}
             </div>
 
