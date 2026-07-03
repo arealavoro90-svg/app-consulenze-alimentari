@@ -1,8 +1,14 @@
-import { Outlet } from 'react-router-dom';
+import { Outlet, useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
 
-export function MobileShell() {
+interface MobileShellProps {
+    pageLabel?: string;
+}
+
+export function MobileShell({ pageLabel = 'Dashboard' }: MobileShellProps) {
     const { user, logout } = useAuth();
+    const navigate = useNavigate();
+    const isHome = pageLabel === 'Dashboard';
 
     const initials = user
         ? user.name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()
@@ -11,10 +17,18 @@ export function MobileShell() {
     return (
         <div className="m-shell">
             <header className="m-topbar">
-                <div>
-                    <div className="m-topbar__title">AEA</div>
-                    <div className="m-topbar__sub">Portale Clienti</div>
-                </div>
+                <button
+                    type="button"
+                    onClick={() => navigate('/dashboard')}
+                    aria-label="Torna agli strumenti"
+                    style={{
+                        background: 'none', border: 'none', cursor: 'pointer',
+                        padding: 0, textAlign: 'left',
+                    }}
+                >
+                    <div className="m-topbar__title">{isHome ? 'AEA' : 'AEA ←'}</div>
+                    <div className="m-topbar__sub">{pageLabel}</div>
+                </button>
                 <button
                     type="button"
                     className="m-topbar__avatar"

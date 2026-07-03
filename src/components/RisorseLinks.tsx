@@ -145,7 +145,7 @@ export function RisorseLinks() {
             </div>
 
             {/* Row: database + serving size */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, marginBottom: 0 }}>
+            <div className="grid-responsive-2" style={{ gap: 20, marginBottom: 0 }}>
 
                 {/* Database nutrizionali */}
                 <div style={cardStyle}>
@@ -171,7 +171,8 @@ export function RisorseLinks() {
             {/* Norme per paese */}
             <div style={cardStyle}>
                 <div style={sectionTitleStyle}>Normativa per Paese</div>
-                <table style={tableStyle}>
+                <div className="table-scroll">
+                <table style={{ ...tableStyle, minWidth: 560 }}>
                     <thead>
                         <tr>
                             <th style={{ ...thStyle, width: '12%' }}>Paese</th>
@@ -199,6 +200,7 @@ export function RisorseLinks() {
                         ))}
                     </tbody>
                 </table>
+                </div>
             </div>
 
             {/* Contatti */}

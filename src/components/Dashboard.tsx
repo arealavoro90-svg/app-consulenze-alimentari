@@ -28,6 +28,11 @@ export function Dashboard() {
         return 'Buonasera';
     };
 
+    // Admin vede tutti gli strumenti, gli altri solo quelli acquistati
+    const visibleTools: ToolId[] = user?.role === 'admin'
+        ? (Object.keys(TOOLS_CATALOG) as ToolId[])
+        : (user?.purchasedTools ?? []);
+
     return (
         <div>
             <div className="page-header">
@@ -49,7 +54,7 @@ export function Dashboard() {
                     <div>
                         <div style={{ fontSize: 13, color: 'var(--color-text-muted)', marginBottom: 2 }}>Strumenti acquistati</div>
                         <div style={{ fontSize: 28, fontWeight: 800, color: 'var(--color-accent-light)' }}>
-                            {user?.purchasedTools.length}
+                            {visibleTools.length}
                             <span style={{ fontSize: 14, color: 'var(--color-text-muted)', fontWeight: 400, marginLeft: 8 }}>
                                 / {Object.keys(TOOLS_CATALOG).length} disponibili
                             </span>
@@ -64,7 +69,7 @@ export function Dashboard() {
             </div>
 
             <div className="card-grid-3">
-                {user?.purchasedTools.map((toolId) => {
+                {visibleTools.map((toolId) => {
                     const tool = TOOLS_CATALOG[toolId];
                     return (
                         <Link key={toolId} to={`/tool/${toolId}`} className="tool-card">

@@ -353,7 +353,8 @@ export function SchedaProcessoCalc() {
                             </div>
                             {data.componenti.length > 1 && <button onClick={() => removeComp(comp.id)} style={{ background: 'transparent', border: 'none', color: '#c53030', cursor: 'pointer', fontSize: 18 }}>✕</button>}
                         </div>
-                        <div style={{ padding: 16, overflowX: 'auto' }}>
+                        <div style={{ padding: 16, overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
+                        <div style={{ minWidth: 640 }}>
                             <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 1fr 1.5fr 1.5fr 1fr auto', gap: 6, marginBottom: 8, paddingBottom: 8, borderBottom: '1px solid var(--color-border)' }}>
                                 {['Ingrediente', 'g in ricetta', 'Fattore calo', '% comp.', 'Fabb. kg', 'Fornitore', 'Data fornitura / Lotto', ''].map((h, i) => (
                                     <div key={i} style={{ fontSize: 10, fontWeight: 700, color: 'var(--color-text-muted)', textTransform: 'uppercase' }}>{h}</div>
@@ -379,6 +380,7 @@ export function SchedaProcessoCalc() {
                                 Tot. ricetta: {comp.totGRicetta.toFixed(1)} g/ricetta —
                                 Fabb. tot. comp.: <span style={{ color: 'var(--color-orange)' }}>{comp.ingredienti.reduce((s, i) => s + i.fabbKg, 0).toFixed(3)} kg</span>
                             </div>
+                        </div>
                         </div>
                     </div>
                 ))}
@@ -415,7 +417,8 @@ export function SchedaProcessoCalc() {
                                     <span style={{ fontWeight: 700, fontSize: 13 }}>📊 Parametri di processo / CCP</span>
                                     <button className="btn btn-outline" style={{ fontSize: 11, padding: '4px 10px' }} onClick={() => addParam(fase.id)}>+ Parametro</button>
                                 </div>
-                                <div style={{ overflowX: 'auto' }}>
+                                <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
+                                <div style={{ minWidth: 400 }}>
                                     <div style={{ display: 'grid', gridTemplateColumns: '2fr 2fr 2fr auto', gap: 6, marginBottom: 6, paddingBottom: 6, borderBottom: '1px solid var(--color-border)' }}>
                                         {['Parametro', 'Standard di riferimento', 'Valore riscontrato', ''].map((h, i) => (
                                             <div key={i} style={{ fontSize: 10, fontWeight: 700, color: 'var(--color-text-muted)', textTransform: 'uppercase' }}>{h}</div>
@@ -429,6 +432,7 @@ export function SchedaProcessoCalc() {
                                             <button onClick={() => removeParam(fase.id, param.id)} style={{ background: 'rgba(229,62,62,0.08)', border: '1px solid rgba(229,62,62,0.25)', color: '#c53030', borderRadius: 6, padding: '6px 10px', cursor: 'pointer' }}>🗑</button>
                                         </div>
                                     ))}
+                                </div>
                                 </div>
                             </div>
 
@@ -444,7 +448,8 @@ export function SchedaProcessoCalc() {
                                     <span style={{ fontWeight: 700, fontSize: 13 }}>🔖 Coadiuvanti tecnologici e imballi primari</span>
                                     <button className="btn btn-outline" style={{ fontSize: 11, padding: '4px 10px' }} onClick={() => addCoad(fase.id)}>+ Aggiungi</button>
                                 </div>
-                                <div style={{ overflowX: 'auto' }}>
+                                <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
+                                <div style={{ minWidth: 420 }}>
                                     <div style={{ display: 'grid', gridTemplateColumns: '2fr 1.5fr 1fr 1.5fr auto', gap: 6, marginBottom: 6, paddingBottom: 6, borderBottom: '1px solid var(--color-border)' }}>
                                         {['Descrizione', 'Fornitore', 'Data fornitura', 'Lotto', ''].map((h, i) => (
                                             <div key={i} style={{ fontSize: 10, fontWeight: 700, color: 'var(--color-text-muted)', textTransform: 'uppercase' }}>{h}</div>
@@ -459,6 +464,7 @@ export function SchedaProcessoCalc() {
                                             <button onClick={() => removeCoad(fase.id, c.id)} style={{ background: 'rgba(229,62,62,0.08)', border: '1px solid rgba(229,62,62,0.25)', color: '#c53030', borderRadius: 6, padding: '6px 10px', cursor: 'pointer' }}>🗑</button>
                                         </div>
                                     ))}
+                                </div>
                                 </div>
                             </div>
                         </div>

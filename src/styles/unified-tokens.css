@@ -1,0 +1,146 @@
+/* ═══════════════════════════════════════════════════════════
+   AEA — Unified Tokens (Desktop = Mobile)
+   Portale AEA Consulenze Alimentari
+   React 19 + TypeScript + Vite
+
+   Elimina il doppio namespace --m-* / --color-*
+   Font: Helvetica Neue — nessun Google Fonts import
+   Mobile bg: #f4f6f9 (uguale al desktop, unified)
+   ═══════════════════════════════════════════════════════════ */
+
+
+/* ═══════════════════════════════════════════════════════════
+   SECTION 1: ROOT TOKENS
+   ═══════════════════════════════════════════════════════════ */
+
+:root {
+  /* Font — unico stack, nessun import esterno */
+  --font:      'Helvetica Neue', Helvetica, Arial, sans-serif;
+  --font-mono: 'Courier New', Courier, monospace;
+
+  /* Brand */
+  --navy:   #0c1326;
+  --orange: #ff7e2e;
+  --green:  #43821c;
+
+  /* Layout background — UGUALE desktop e mobile */
+  --bg:        #f4f6f9;
+  --surface:   #ffffff;
+  --surface-2: #f0f2f6;
+  --border:    #dde2ea;
+  --border-focus: rgba(255, 126, 46, 0.4);
+
+  /* Sidebar — invariata */
+  --sidebar-bg:     #0c1326;
+  --sidebar-text:   #ffffff;
+  --sidebar-muted:  rgba(255, 255, 255, 0.5);
+  --sidebar-active: rgba(255, 126, 46, 0.15);
+
+  /* Text */
+  --text:       #1a1f2e;
+  --text-muted: #5e6b80;
+  --text-dim:   #9ba8bb;
+
+  /* Accent */
+  --accent:    #ff7e2e;
+  --accent-bg: rgba(255, 126, 46, 0.08);
+
+  /* Status */
+  --success: #43821c;
+  --danger:  #e53e3e;
+  --warning: #d97706;
+
+  /* Radius — max 10px su componenti primari */
+  --r-sm: 4px;
+  --r-md: 8px;
+  --r-lg: 10px;
+
+  /* Shadow — sottili */
+  --shadow-sm: 0 1px 3px rgba(12, 19, 38, 0.06);
+  --shadow-md: 0 2px 8px rgba(12, 19, 38, 0.10);
+  --shadow-lg: 0 4px 20px rgba(12, 19, 38, 0.14);
+
+  /* Layout */
+  --topbar-h:  52px;
+  --sidebar-w: 48px;   /* rail collapsed */
+  --tabbar-h:  60px;   /* mobile bottom tab */
+}
+
+
+/* ═══════════════════════════════════════════════════════════
+   SECTION 2: MOBILE OVERRIDES — solo dimensioni, non colori
+   ═══════════════════════════════════════════════════════════ */
+
+@media (max-width: 899px) {
+  :root {
+    --topbar-h: 52px;
+    --r-md:     8px;
+  }
+}
+
+
+/* ═══════════════════════════════════════════════════════════
+   SECTION 3: FONT RESET GLOBALE
+   ═══════════════════════════════════════════════════════════ */
+
+body,
+input,
+button,
+select,
+textarea {
+  font-family:              var(--font);
+  -webkit-font-smoothing:   antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+
+/* ═══════════════════════════════════════════════════════════
+   SECTION 4: MAPPING DI COMPATIBILITA
+   --m-* e --color-* → token unificati
+   Permette ai componenti esistenti di funzionare senza
+   modifiche fino alla migrazione progressiva.
+   ═══════════════════════════════════════════════════════════ */
+
+:root {
+  /* Mapping --m-* (mobile legacy) */
+  --m-bg:      var(--bg);
+  --m-surface: var(--surface);
+  --m-navy:    var(--navy);
+  --m-orange:  var(--orange);
+  --m-green:   var(--green);
+  --m-border:  var(--border);
+  --m-text:    var(--text);
+  --m-muted:   var(--text-muted);
+  --m-shadow:  rgba(12, 19, 38, 0.08);
+
+  /* Mapping --color-* (desktop legacy) */
+  --color-bg:           var(--bg);
+  --color-bg-card:      var(--surface);
+  --color-surface:      var(--surface);
+  --color-surface-2:    var(--surface-2);
+  --color-border:       var(--border);
+  --color-border-focus: var(--border-focus);
+  --color-text:         var(--text);
+  --color-text-muted:   var(--text-muted);
+  --color-accent:       var(--accent);
+  --color-accent-bg:    var(--accent-bg);
+  --color-orange:       var(--orange);
+  --color-navy:         var(--navy);
+  --color-success:      var(--success);
+  --color-success-bg:   rgba(67, 130, 28, 0.10);
+  --color-danger:       var(--danger);
+  --color-danger-bg:    rgba(229, 62, 62, 0.10);
+  --color-warning:      var(--warning);
+  --color-warning-bg:   rgba(217, 119, 6, 0.10);
+
+  /* Mapping radius legacy */
+  --radius-sm:   var(--r-sm);
+  --radius-md:   var(--r-md);
+  --radius-lg:   var(--r-lg);
+  --radius-xl:   var(--r-lg);   /* xl → capped a 10px */
+  --radius-full: 9999px;
+
+  /* Mapping shadow legacy */
+  --shadow-card:  var(--shadow-sm);
+  --shadow-focus: 0 0 0 3px rgba(255, 126, 46, 0.12);
+}

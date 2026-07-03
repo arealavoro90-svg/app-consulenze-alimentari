@@ -21,12 +21,11 @@ export function AppShell() {
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const location = useLocation();
     const isMobile = useMobile();
+    const pageLabel = ROUTE_LABELS[location.pathname] ?? 'Portale';
 
     if (isMobile) {
-        return <MobileShell />;
+        return <MobileShell pageLabel={pageLabel} />;
     }
-
-    const pageLabel = ROUTE_LABELS[location.pathname] ?? 'Portale';
 
     return (
         <div className={`app-shell${sidebarOpen ? ' sidebar-open' : ''}`}>

@@ -1,16 +1,19 @@
 import React, { useState, useMemo, useRef, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
+import { ConfirmDialog } from '../../components/ui/ConfirmDialog';
+import { useToast } from '../../components/ui/Toast';
 import {
     Save, FolderOpen, Plus, PlusCircle, Search, Database, Archive,
     ClipboardList, Scale, Layers, FlaskConical, Table2, Euro,
     AlertTriangle, Compass, SlidersHorizontal, ChevronRight, ChevronLeft,
     Trash2, X, BookOpen, CheckCircle, ChevronDown,
-    Salad, Flame, Globe, Check, Package, ImageDown,
+    Salad, Flame, Globe, Package, ImageDown,
 } from 'lucide-react';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import { useArchive } from '../../hooks/useArchive';
 import { useLocalStorage } from '../../hooks/useLocalStorage';
+import { useAutosave } from '../../hooks/useAutosave';
 import { ValidationError } from '../../components/ValidationError';
 import { generateEtichettaPDF } from '../../utils/pdfGenerator';
 import {
@@ -26,8 +29,8 @@ import { NutrientSelectModal } from './NutrientSelectModal';
 import type { EUSubTab, SelectedOptionals } from './TabUE';
 import { TabUSA } from './TabUSA';
 import type { USAServingRef, USAMeasure } from './TabUSA';
-import { ModeToggle, useModeToggle } from '../../components/ModeToggle';
 import { SplitShell } from './SplitShell';
+import { BrowseIngredientsModal } from './BrowseIngredientsModal';
 
 
 // ─── DB Types ─────────────────────────────────────────────────────────────────
@@ -112,20 +115,23 @@ interface CalcResult {
     zuccheri_agg: number; polioli: number; amido: number; fibre: number;
     proteine: number; sodio_mg: number; sale: number; potassio: number;
     calcio: number; fosforo: number; magnesio: number; ferro: number;
-    zinco: number; vitA_eq: number; vitD: number; vitE: number; vitC: number;
+    zinco: number; rame: number; manganese: number; selenio: number; iodio: number;
+    vitA_eq: number; vitD: number; vitE: number; vitC: number;
     vitB1: number; vitB2: number; vitB3: number; vitB6: number; vitB9: number; vitB12: number;
+    vitK: number; vitB5: number;
 }
 const ZERO_CALC: CalcResult = {
     energyKcal: 0, energyKj: 0, grassi: 0, saturi: 0, monoins: 0, polins: 0,
     trans: 0, colesterolo: 0, carboidrati: 0, carboidratiTot: 0, zuccheri: 0,
     zuccheri_agg: 0, polioli: 0, amido: 0, fibre: 0, proteine: 0, sodio_mg: 0,
     sale: 0, potassio: 0, calcio: 0, fosforo: 0, magnesio: 0, ferro: 0, zinco: 0,
+    rame: 0, manganese: 0, selenio: 0, iodio: 0,
     vitA_eq: 0, vitD: 0, vitE: 0, vitC: 0, vitB1: 0, vitB2: 0, vitB3: 0, vitB6: 0,
-    vitB9: 0, vitB12: 0,
+    vitB9: 0, vitB12: 0, vitK: 0, vitB5: 0,
 };
 
 // ─── State types ──────────────────────────────────────────────────────────────
-interface RecipeRow { id: string; ing: DBIngredient; grams: number; eurKg: number; resa: number; }
+interface RecipeRow { id: string; ing: DBIngredient; grams: number; eurKg: number; resa: number; postCottura?: boolean; acquaAggiunta?: boolean; }
 interface AdditiveRow { id: string; categoria: string; nomeSpecifico: string; grams: number; eurKg: number; resa: number; }
 interface Component {
     id: string; name: string; rows: RecipeRow[]; additiveRows: AdditiveRow[]; pzUV: number;
@@ -153,15 +159,27 @@ type SubTab = 'verticale' | 'orizzontale' | 'lineare';
 
 // ─── Rounding helpers ─────────────────────────────────────────────────────────
 // Canada
-function rCA_energy(v: number): string { return v < 5 ? '0' : Math.round(v).toString(); }
+function rCA_energy(v: number): string {
+    if (v < 5) return '0';
+    if (v <= 50) return (Math.round(v / 5) * 5).toString();
+    return (Math.round(v / 10) * 10).toString();
+}
 function rCA_fat(v: number): string {
     if (v < 0.5) return '0';
-    if (v <= 5) return v.toFixed(1);
+    if (v <= 5) return (Math.round(v / 0.5) * 0.5).toFixed(1);
     return Math.round(v).toString();
 }
 function rCA_carb(v: number): string { return v < 0.5 ? '0' : Math.round(v).toString(); }
-function rCA_chol(v: number): string { return v < 2 ? '0' : Math.round(v).toString(); }
-function rCA_na(v: number): string { return v < 5 ? '0' : Math.round(v).toString(); }
+function rCA_chol(v: number): string {
+    if (v < 2) return '0';
+    if (v <= 5) return 'less than 5';
+    return Math.round(v).toString();
+}
+function rCA_na(v: number): string {
+    if (v < 5) return '0';
+    if (v <= 140) return (Math.round(v / 5) * 5).toString();
+    return (Math.round(v / 10) * 10).toString();
+}
 function rCA_iron(v: number): string { return v < 0.05 ? '0' : v.toFixed(1); }
 function rCA_pct(v: number, dv: number): string { return Math.round(v / dv * 100).toString(); }
 
@@ -181,14 +199,18 @@ function n(v: unknown): number { const num = Number(v); return isNaN(num) ? 0 : 
 
 function calcNutrients(components: Component[], pesoFinitoVal: number): CalcResult {
     let peso_totale_pz = 0;
-    const g_per_pz_list: { ing: DBIngredient; g: number }[] = [];
+    const g_per_pz_list: { ing: DBIngredient; g: number; postCottura?: boolean; acquaAggiunta?: boolean }[] = [];
 
     for (const c of components) {
         const pzUV = c.pzUV || 1;
         for (const r of c.rows) {
             const g = r.grams / pzUV;
             peso_totale_pz += g;
-            g_per_pz_list.push({ ing: r.ing, g });
+            g_per_pz_list.push({ ing: r.ing, g, postCottura: r.postCottura, acquaAggiunta: r.acquaAggiunta });
+        }
+        // Additivi: contribuiscono al peso crudo ma non ai nutrienti (nessun DBIngredient)
+        for (const r of c.additiveRows) {
+            peso_totale_pz += (r.grams || 0) / pzUV;
         }
     }
 
@@ -230,6 +252,26 @@ function calcNutrients(components: Component[], pesoFinitoVal: number): CalcResu
         sum.vitB6 += n(item.ing.vitB6) * f;
         sum.vitB9 += n(item.ing.vitB9) * f;
         sum.vitB12 += n(item.ing.vitB12) * f;
+        sum.vitK += n(item.ing.vitK) * f;
+        sum.vitB5 += n(item.ing.vitB5) * f;
+        sum.rame += n(item.ing.rame) * f;
+        sum.manganese += n(item.ing.manganese) * f;
+        sum.selenio += n(item.ing.selenio) * f;
+        sum.iodio += n(item.ing.iodio) * f;
+    }
+
+    // --- Alcohol evaporation cascade (EU Reg 1169/2011: 7 kcal/g, 29 kJ/g) ---
+    // Pre-cottura alcohol: rows NOT flagged postCottura where ing.alcol > 0
+    // Weight loss priority: alcohol evaporates first, then added water, then natural water
+    const calo_peso = Math.max(0, peso_totale_pz - pf_pz);
+    if (calo_peso > 0) {
+        const alcol_pre_abs = g_per_pz_list.reduce((s, item) =>
+            !item.postCottura ? s + (n(item.ing.alcol) / 100) * item.g : s, 0);
+        const evaporated_alcol_abs = Math.min(calo_peso, alcol_pre_abs);
+        if (evaporated_alcol_abs > 0) {
+            sum.energyKcal -= evaporated_alcol_abs * 7;
+            sum.energyKj   -= evaporated_alcol_abs * 29;
+        }
     }
 
     const factor = 100 / pf_pz;
@@ -479,12 +521,21 @@ function InfoTooltip({ text }: { text: string }) {
 
 // ─── IngSearch sub-component ──────────────────────────────────────────────────
 function IngSearch({ onAdd, db, loading, error }: { onAdd: (ing: DBIngredient) => void; db: DBIngredient[]; loading: boolean; error: string | null }) {
+    const [searchOpen, setSearchOpen] = useState(false);
     const [q, setQ] = useState('');
     const [res, setRes] = useState<DBIngredient[]>([]);
-    const [open, setOpen] = useState(false);
+    const [dropOpen, setDropOpen] = useState(false);
     const [dropPos, setDropPos] = useState<{ top: number; left: number; width: number } | null>(null);
     const ref = useRef<HTMLDivElement>(null);
     const wrapRef = useRef<HTMLDivElement>(null);
+    const inputRef = useRef<HTMLInputElement>(null);
+
+    const closeSearch = () => { setSearchOpen(false); setQ(''); setDropOpen(false); };
+
+    useEffect(() => {
+        if (searchOpen) inputRef.current?.focus();
+    }, [searchOpen]);
+
     useEffect(() => {
         const found = searchDB(q, db);
         setRes(found);
@@ -493,15 +544,17 @@ function IngSearch({ onAdd, db, loading, error }: { onAdd: (ing: DBIngredient) =
             const rect = wrapRef.current.getBoundingClientRect();
             setDropPos({ top: rect.bottom + 2, left: rect.left, width: rect.width });
         }
-        setOpen(shouldOpen);
+        setDropOpen(shouldOpen);
     }, [q, db]);
+
     useEffect(() => {
-        const h = (e: MouseEvent) => { if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false); };
+        const h = (e: MouseEvent) => { if (ref.current && !ref.current.contains(e.target as Node)) setDropOpen(false); };
         document.addEventListener('mousedown', h);
         return () => document.removeEventListener('mousedown', h);
     }, []);
+
     useEffect(() => {
-        if (!open) return;
+        if (!dropOpen) return;
         const updatePos = () => {
             if (wrapRef.current) {
                 const rect = wrapRef.current.getBoundingClientRect();
@@ -510,62 +563,71 @@ function IngSearch({ onAdd, db, loading, error }: { onAdd: (ing: DBIngredient) =
         };
         window.addEventListener('scroll', updatePos, true);
         return () => window.removeEventListener('scroll', updatePos, true);
-    }, [open]);
+    }, [dropOpen]);
+
     return (
-        <div ref={ref} style={{ position: 'relative', marginBottom: 12 }}>
-            <div className="form-field" style={{ marginBottom: 0 }}>
-                {error ? (
-                    <div style={{ padding: '10px 14px', background: '#fff3f3', borderRadius: 6, display: 'flex', alignItems: 'center', gap: 10, border: '1.5px solid #e53935' }}>
-                        <span style={{ fontSize: 13, color: '#c62828' }}>{error}</span>
-                    </div>
-                ) : loading ? (
-                    <div style={{ padding: '10px 14px', background: '#f5f5f5', borderRadius: 6, display: 'flex', alignItems: 'center', gap: 10, border: '1.5px solid var(--color-border)' }}>
-                        <div className="spinner" style={{ width: 14, height: 14, border: '2px solid #ccc', borderTopColor: 'var(--color-orange)', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
-                        <span style={{ fontSize: 13, color: 'var(--color-text-muted)' }}>Caricamento database ingredienti...</span>
-                    </div>
-                ) : (
-                    <div ref={wrapRef} className="ing-search-wrap">
+        <div ref={ref} style={{ marginBottom: 12 }}>
+            {/* Pulsante toggle */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <button type="button" className="btn btn-outline" style={{ fontSize: 12, padding: '5px 14px' }}
+                    onClick={() => searchOpen ? closeSearch() : setSearchOpen(true)}
+                    disabled={!!error || loading}
+                >
+                    <Plus size={13} /> Aggiungi ingrediente
+                </button>
+                {loading && <span style={{ fontSize: 11, color: 'var(--color-text-muted)' }}>Caricamento DB...</span>}
+                {error && <span style={{ fontSize: 11, color: 'var(--color-danger)' }}>{error}</span>}
+            </div>
+
+            {/* Barra di ricerca — visibile solo quando searchOpen */}
+            {searchOpen && !error && !loading && (
+                <div style={{ position: 'relative', marginTop: 8 }}>
+                    <div ref={wrapRef} className="ing-search-wrap" style={{ display: 'flex', alignItems: 'center' }}>
                         <span className="ing-search-icon"><Search size={14} /></span>
-                        <input type="text" value={q} onChange={e => setQ(e.target.value)}
+                        <input ref={inputRef} type="text" value={q} onChange={e => setQ(e.target.value)}
                             placeholder="Cerca ingrediente (es. olio extravergine, farina 00...)"
                             className="ing-search-input"
                             style={{ width: '100%' }} />
-                    </div>
-                )}
-            </div>
-            {open && dropPos && (
-                <div style={{
-                    position: 'fixed', top: dropPos.top, left: dropPos.left, width: dropPos.width,
-                    background: 'var(--color-bg-card)', border: '1.5px solid var(--color-orange)',
-                    borderRadius: 'var(--radius-md)', boxShadow: '0 8px 24px rgba(0,0,0,0.18)',
-                    zIndex: 9999, maxHeight: 320, overflowY: 'auto',
-                }}>
-                    <div style={{ padding: '6px 12px', fontSize: 10, color: 'var(--color-text-dim)', borderBottom: '1px solid var(--color-border)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                        {res.length} risultati
-                    </div>
-                    {res.map((ing, i) => (
-                        <button key={i} type="button"
-                            onClick={() => { onAdd(ing); setQ(''); setOpen(false); }}
-                            style={{
-                                display: 'block', width: '100%', background: 'transparent',
-                                border: 'none', borderBottom: '1px solid var(--color-border)',
-                                padding: '9px 14px', textAlign: 'left', cursor: 'pointer',
-                                fontFamily: 'inherit',
-                            }}
-                            onMouseEnter={e => (e.currentTarget.style.background = 'var(--color-accent-bg)')}
-                            onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
-                        >
-                            <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--color-text)', display: 'flex', alignItems: 'center', gap: 6 }}>
-                                {(ing.nome || '').trim()}
-                                {ing.categoria === '_custom' && (
-                                    <span style={{ fontSize: 10, background: 'var(--color-orange)', color: 'white', borderRadius: 4, padding: '1px 6px', fontWeight: 700, flexShrink: 0 }}>Personale</span>
-                                )}
-                            </div>
-                            <div style={{ fontSize: 11, color: 'var(--color-text-muted)', marginTop: 2 }}>
-                                {Math.round(n(ing.kcal))} kcal · {Math.round(n(ing.grassi) * 10) / 10}g grassi · {Math.round(n(ing.carboidrati) * 10) / 10}g carbo{ing.categoria && ing.categoria !== '_custom' ? ` · ${ing.categoria}` : ''}
-                            </div>
+                        <button type="button" onClick={closeSearch}
+                            style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '0 8px', color: 'var(--color-text-muted)', display: 'flex', alignItems: 'center' }}>
+                            <X size={14} />
                         </button>
-                    ))}
+                    </div>
+                    {dropOpen && dropPos && (
+                        <div style={{
+                            position: 'fixed', top: dropPos.top, left: dropPos.left, width: dropPos.width,
+                            background: 'var(--color-bg-card)', border: '1.5px solid var(--color-orange)',
+                            borderRadius: 'var(--radius-md)', boxShadow: '0 8px 24px rgba(0,0,0,0.18)',
+                            zIndex: 9999, maxHeight: 320, overflowY: 'auto',
+                        }}>
+                            <div style={{ padding: '6px 12px', fontSize: 10, color: 'var(--color-text-dim)', borderBottom: '1px solid var(--color-border)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                                {res.length} risultati
+                            </div>
+                            {res.map((ing, i) => (
+                                <button key={i} type="button"
+                                    onClick={() => { onAdd(ing); closeSearch(); }}
+                                    style={{
+                                        display: 'block', width: '100%', background: 'transparent',
+                                        border: 'none', borderBottom: '1px solid var(--color-border)',
+                                        padding: '9px 14px', textAlign: 'left', cursor: 'pointer',
+                                        fontFamily: 'inherit',
+                                    }}
+                                    onMouseEnter={e => (e.currentTarget.style.background = 'var(--color-accent-bg)')}
+                                    onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
+                                >
+                                    <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--color-text)', display: 'flex', alignItems: 'center', gap: 6 }}>
+                                        {(ing.nome || '').trim()}
+                                        {ing.categoria === '_custom' && (
+                                            <span style={{ fontSize: 10, background: 'var(--color-orange)', color: 'white', borderRadius: 4, padding: '1px 6px', fontWeight: 700, flexShrink: 0 }}>Personale</span>
+                                        )}
+                                    </div>
+                                    <div style={{ fontSize: 11, color: 'var(--color-text-muted)', marginTop: 2 }}>
+                                        {Math.round(n(ing.kcal))} kcal · {Math.round(n(ing.grassi) * 10) / 10}g grassi · {Math.round(n(ing.carboidrati) * 10) / 10}g carbo{ing.categoria && ing.categoria !== '_custom' ? ` · ${ing.categoria}` : ''}
+                                    </div>
+                                </button>
+                            ))}
+                        </div>
+                    )}
                 </div>
             )}
         </div>
@@ -650,6 +712,44 @@ const CI_CROSS_LABELS: Record<string, string> = {
     cross_solfiti:'SOLFITI (>10 ppm)', cross_lupini:'LUPINI', cross_molluschi:'MOLLUSCHI',
 };
 
+// Stili e componente NF a livello di modulo (evita ricreazione ad ogni render)
+const _iS: React.CSSProperties = { width: '100%', padding: '5px 8px', border: '1px solid var(--color-border)', borderRadius: 5, fontSize: 13, boxSizing: 'border-box' };
+const _iSRo: React.CSSProperties = { ..._iS, background: 'var(--color-bg-secondary,#f0f4ff)', color: 'var(--color-text-muted)', fontWeight: 600, cursor: 'default' };
+const _iSErr: React.CSSProperties = { ..._iS, border: '1.5px solid #e53e3e' };
+const _lS: React.CSSProperties = { fontSize: 11, fontWeight: 600, display: 'block', marginBottom: 3, color: 'var(--color-text-muted)' };
+const _ClearErrorsCtx = React.createContext<() => void>(() => {});
+
+const NF = React.memo(function NF({ label, value, onChange, unit = 'g/100g', ro = false, err = false, tooltip }: {
+    label: string; value: string; onChange?: (v: string) => void;
+    unit?: string; ro?: boolean; err?: boolean; tooltip?: string;
+}) {
+    const clearErrors = React.useContext(_ClearErrorsCtx);
+    return (
+        <div>
+            <label style={{ ..._lS, display: 'flex', alignItems: 'center', gap: 2 }}>
+                <span>{label} <span style={{ fontWeight: 400 }}>{unit}</span></span>
+                {tooltip && <InfoTooltip text={tooltip} />}
+            </label>
+            <input
+                type="text"
+                inputMode="decimal"
+                style={ro ? _iSRo : err ? _iSErr : _iS}
+                value={value}
+                onChange={e => {
+                    if (ro) return;
+                    const v = e.target.value;
+                    if (v === '' || v === '-' || /^-?\d*[.,]?\d*$/.test(v)) {
+                        onChange?.(v.replace(',', '.'));
+                        clearErrors();
+                    }
+                }}
+                onFocus={e => { if (!ro) e.target.select(); }}
+                readOnly={ro}
+            />
+        </div>
+    );
+});
+
 const DB_ACCREDITATI: { nome: string; url: string }[] = [
     { nome: 'CREA (Italia)', url: 'https://www.alimentinutrizione.it/tabelle-nutrizionali' },
     { nome: 'ANSES / Ciqual (Francia)', url: 'https://ciqual.anses.fr/' },
@@ -661,60 +761,76 @@ const DB_ACCREDITATI: { nome: string; url: string }[] = [
     { nome: 'Rivm NEVO (Paesi Bassi)', url: 'https://nevo-online.rivm.nl/' },
 ];
 
-function CustomIngredientModal({ onClose, onSave }: { onClose: () => void; onSave: (ing: DBIngredient) => void }) {
+function CustomIngredientModal({ onClose, onSave, initialIngredient, originalNome }: {
+    onClose: () => void;
+    onSave: (ing: DBIngredient) => void;
+    initialIngredient?: DBIngredient;
+    originalNome?: string; // nome dell'ingrediente originale da rimuovere in caso di modifica
+}) {
+    const s = (v: number | undefined) => (v != null && v !== 0) ? String(v) : '';
     // Info base
-    const [nome, setNome] = useState('');
+    const [nome, setNome] = useState(initialIngredient?.nome ?? '');
     const [categoria, setCategoria] = useState('ingrediente');
-    const [eurKg, setEurKg] = useState('0');
-    const [fonteTipo, setFonteTipo] = useState<'database' | 'schede' | ''>('');
-    const [fonteDb, setFonteDb] = useState('');
+    const [eurKg, setEurKg] = useState(s(initialIngredient?.eur_kg) || '0');
+    const [fonteTipo, setFonteTipo] = useState<'database' | 'schede' | ''>(() => {
+        if (!initialIngredient?.fonte_dati) return '';
+        return initialIngredient.fonte_link ? 'database' : 'schede';
+    });
+    const [fonteDb, setFonteDb] = useState(initialIngredient?.fonte_dati ?? '');
     // Obbligatori
-    const [grassi, setGrassi] = useState('');
-    const [saturi, setSaturi] = useState('');
-    const [carboidrati, setCarboidrati] = useState('');
-    const [zuccheri, setZuccheri] = useState('');
-    const [proteine, setProteine] = useState('');
-    const [sale, setSale] = useState('');
+    const [grassi, setGrassi] = useState(s(initialIngredient?.grassi));
+    const [saturi, setSaturi] = useState(s(initialIngredient?.saturi));
+    const [carboidrati, setCarboidrati] = useState(s(initialIngredient?.carboidrati));
+    const [zuccheri, setZuccheri] = useState(s(initialIngredient?.zuccheri));
+    const [proteine, setProteine] = useState(s(initialIngredient?.proteine));
+    const [sale, setSale] = useState(() => {
+        if (!initialIngredient) return '';
+        const saleG = Math.round((initialIngredient.sodio_mg / 400) * 10000) / 10000;
+        return saleG > 0 ? String(saleG) : '';
+    });
     // Facoltativi
-    const [monoins, setMonoins] = useState('');
-    const [polins, setPolins] = useState('');
-    const [eritritoloS, setEritritolo] = useState('');
-    const [acidoOrganico, setAcidoOrganico] = useState('');
+    const [monoins, setMonoins] = useState(s(initialIngredient?.monoins));
+    const [polins, setPolins] = useState(s(initialIngredient?.polins));
+    const [eritritoloS, setEritritolo] = useState(s(initialIngredient?.eritritolo));
+    const [acidoOrganico, setAcidoOrganico] = useState(s(initialIngredient?.acidi_organici));
     // Obbligatori in taluni casi — macronutrienti
-    const [trans, setTrans] = useState('');
-    const [zuccheriAgg, setZuccheriAgg] = useState('');
-    const [polioliS, setPolioli] = useState('');
-    const [glicerolo, setGlicerolo] = useState('');
-    const [alcolS, setAlcol] = useState('');
-    const [fibre, setFibre] = useState('');
+    const [trans, setTrans] = useState(s(initialIngredient?.trans));
+    const [zuccheriAgg, setZuccheriAgg] = useState(s(initialIngredient?.zuccheri_agg));
+    const [polioliS, setPolioli] = useState(s(initialIngredient?.polioli));
+    const [glicerolo, setGlicerolo] = useState(s(initialIngredient?.glicerolo));
+    const [alcolS, setAlcol] = useState(() => {
+        if (!initialIngredient?.alcol) return '';
+        return String(Math.round((initialIngredient.alcol / 0.79) * 1000) / 1000);
+    });
+    const [fibre, setFibre] = useState(s(initialIngredient?.fibre));
     // Micronutrienti obbligatori in taluni casi
-    const [colesterolo, setColesterolo] = useState('');
-    const [potassio, setPotassio] = useState('');
-    const [calcio, setCalcio] = useState('');
-    const [ferro, setFerro] = useState('');
+    const [colesterolo, setColesterolo] = useState(s(initialIngredient?.colesterolo));
+    const [potassio, setPotassio] = useState(s(initialIngredient?.potassio));
+    const [calcio, setCalcio] = useState(s(initialIngredient?.calcio));
+    const [ferro, setFerro] = useState(s(initialIngredient?.ferro));
     // Micronutrienti facoltativi — sali minerali
-    const [fosforo, setFosforo] = useState('');
-    const [magnesio, setMagnesio] = useState('');
-    const [iodio, setIodio] = useState('');
-    const [zinco, setZinco] = useState('');
-    const [rame, setRame] = useState('');
-    const [manganese, setManganese] = useState('');
-    const [selenio, setSelenio] = useState('');
+    const [fosforo, setFosforo] = useState(s(initialIngredient?.fosforo));
+    const [magnesio, setMagnesio] = useState(s(initialIngredient?.magnesio));
+    const [iodio, setIodio] = useState(s(initialIngredient?.iodio));
+    const [zinco, setZinco] = useState(s(initialIngredient?.zinco));
+    const [rame, setRame] = useState(s(initialIngredient?.rame));
+    const [manganese, setManganese] = useState(s(initialIngredient?.manganese));
+    const [selenio, setSelenio] = useState(s(initialIngredient?.selenio));
     // Vitamine liposolubili
-    const [betaCarotene, setBetaCarotene] = useState('');
-    const [retinolo, setRetinolo] = useState('');
-    const [vitD, setVitD] = useState('');
-    const [vitE, setVitE] = useState('');
-    const [vitK, setVitK] = useState('');
+    const [betaCarotene, setBetaCarotene] = useState(s(initialIngredient?.betaCarotene));
+    const [retinolo, setRetinolo] = useState(s(initialIngredient?.retinolo));
+    const [vitD, setVitD] = useState(s(initialIngredient?.vitD));
+    const [vitE, setVitE] = useState(s(initialIngredient?.vitE));
+    const [vitK, setVitK] = useState(s(initialIngredient?.vitK));
     // Vitamine idrosolubili
-    const [vitC, setVitC] = useState('');
-    const [vitB1, setVitB1] = useState('');
-    const [vitB2, setVitB2] = useState('');
-    const [vitB3, setVitB3] = useState('');
-    const [vitB5, setVitB5] = useState('');
-    const [vitB6, setVitB6] = useState('');
-    const [vitB9, setVitB9] = useState('');
-    const [vitB12, setVitB12] = useState('');
+    const [vitC, setVitC] = useState(s(initialIngredient?.vitC));
+    const [vitB1, setVitB1] = useState(s(initialIngredient?.vitB1));
+    const [vitB2, setVitB2] = useState(s(initialIngredient?.vitB2));
+    const [vitB3, setVitB3] = useState(s(initialIngredient?.vitB3));
+    const [vitB5, setVitB5] = useState(s(initialIngredient?.vitB5));
+    const [vitB6, setVitB6] = useState(s(initialIngredient?.vitB6));
+    const [vitB9, setVitB9] = useState(s(initialIngredient?.vitB9));
+    const [vitB12, setVitB12] = useState(s(initialIngredient?.vitB12));
     // Validazione
     const [errors, setErrors] = useState<string[]>([]);
 
@@ -776,10 +892,8 @@ function CustomIngredientModal({ onClose, onSave }: { onClose: () => void; onSav
     // Vitamina A calcolata
     const betaCaroteneN = parseFloat(betaCarotene) || 0;  // μg/100g
     const retinolN      = parseFloat(retinolo)     || 0;  // μg/100g
-    const vitA_eq       = Math.round((betaCaroteneN + retinolN) * 1000) / 1000;  // μg RE/100g
+    const vitA_eq       = Math.round((betaCaroteneN / 6 + retinolN) * 1000) / 1000;  // μg RE/100g
     const vitA_iu       = Math.round(vitA_eq * 3.333333333 * 10) / 10;           // UI/100g
-
-    const clearErrors = () => setErrors([]);
 
     const handleSave = () => {
         const errs: string[] = [];
@@ -847,40 +961,26 @@ function CustomIngredientModal({ onClose, onSave }: { onClose: () => void; onSav
             vitB12:       vitB12      ? parseFloat(vitB12): undefined,
         };
         try {
-            const ex = JSON.parse(localStorage.getItem('custom_ingredients') || '[]');
+            let ex = JSON.parse(localStorage.getItem('custom_ingredients') || '[]') as DBIngredient[];
+            // Se stiamo modificando un ingrediente esistente, rimuoviamo il vecchio
+            if (originalNome) {
+                ex = ex.filter(i => i.nome !== originalNome);
+            }
             localStorage.setItem('custom_ingredients', JSON.stringify([...ex, ing]));
         } catch {}
         onSave(ing);
         onClose();
     };
 
-    // Stili riutilizzabili
+    // Stili locali (non ricreano NF — NF è fuori dal componente)
     const iS: React.CSSProperties = { width: '100%', padding: '5px 8px', border: '1px solid var(--color-border)', borderRadius: 5, fontSize: 13, boxSizing: 'border-box' };
-    const iSRo: React.CSSProperties = { ...iS, background: 'var(--color-bg-secondary,#f0f4ff)', color: 'var(--color-text-muted)', fontWeight: 600, cursor: 'default' };
-    const iSErr: React.CSSProperties = { ...iS, border: '1.5px solid #e53e3e' };
     const lS: React.CSSProperties = { fontSize: 11, fontWeight: 600, display: 'block', marginBottom: 3, color: 'var(--color-text-muted)' };
     const secS: React.CSSProperties = { marginBottom: 14, padding: '12px 14px', borderRadius: 8, border: '1px solid var(--color-border)' };
     const secT = (color: string): React.CSSProperties => ({ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.5, color, marginBottom: 10 });
     const grid3: React.CSSProperties = { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))', gap: 8 };
     const grid2: React.CSSProperties = { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: 8 };
 
-    const NF = ({ label, value, onChange, unit = 'g/100g', ro = false, err = false, tooltip }: {
-        label: string; value: string; onChange?: (v: string) => void;
-        unit?: string; ro?: boolean; err?: boolean; tooltip?: string;
-    }) => (
-        <div>
-            <label style={{ ...lS, display: 'flex', alignItems: 'center', gap: 2 }}>
-                <span>{label} <span style={{ fontWeight: 400 }}>{unit}</span></span>
-                {tooltip && <InfoTooltip text={tooltip} />}
-            </label>
-            <input type="number" min={0} step={0.01}
-                style={ro ? iSRo : err ? iSErr : iS}
-                value={value}
-                onChange={e => { onChange?.(e.target.value); clearErrors(); }}
-                readOnly={ro}
-            />
-        </div>
-    );
+    const clearErrors = React.useCallback(() => setErrors([]), []);
 
     const AllergenRow = ({ keys, labels, state, setState }: {
         keys: readonly string[]; labels: Record<string, string>;
@@ -897,12 +997,13 @@ function CustomIngredientModal({ onClose, onSave }: { onClose: () => void; onSav
     );
 
     return (
+        <_ClearErrorsCtx.Provider value={clearErrors}>
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.55)', zIndex: 2000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
             <div className="card" style={{ width: '100%', maxWidth: 700, maxHeight: '92vh', overflowY: 'auto' }}>
 
                 {/* Header */}
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-                    <h3 style={{ margin: 0 }}>➕ Aggiungi ingrediente nel Data Base</h3>
+                    <h3 style={{ margin: 0 }}>{initialIngredient ? '✏️ Modifica ingrediente' : '➕ Aggiungi ingrediente nel Data Base'}</h3>
                     <button className="btn btn-outline" onClick={onClose}>✕</button>
                 </div>
 
@@ -927,7 +1028,7 @@ function CustomIngredientModal({ onClose, onSave }: { onClose: () => void; onSav
                     <div style={secT('#333')}>Informazioni base</div>
                     <div style={{ marginBottom: 8 }}>
                         <label style={{ ...lS, color: '#333' }}>Nome ingrediente <span style={{ color: '#c53030' }}>*</span></label>
-                        <input style={!nome.trim() && errors.length > 0 ? iSErr : iS} value={nome}
+                        <input style={!nome.trim() && errors.length > 0 ? _iSErr : _iS} value={nome}
                             onChange={e => { setNome(e.target.value); clearErrors(); }}
                             placeholder="es. salsa di soia artigianale" />
                     </div>
@@ -986,12 +1087,12 @@ function CustomIngredientModal({ onClose, onSave }: { onClose: () => void; onSav
                         <NF label="* Acidi grassi saturi" value={saturi} onChange={setSaturi} err={!saturi && errors.length > 0} />
                         <NF label="* Carboidrati totali" value={carboidrati} onChange={setCarboidrati} err={!carboidrati && errors.length > 0} />
                         <NF label="* Zuccheri" value={zuccheri} onChange={setZuccheri} err={!zuccheri && errors.length > 0} />
-                        <NF label="* Proteine" value={proteine} onChange={setProteine} err={!proteine && errors.length > 0} />
-                        <NF label="* Sale" value={sale} onChange={setSale} err={!sale && errors.length > 0} />
                         <NF
                             label="* Fibre alimentari (altamente consigliato, anche se non obbligatorio in base al Reg. UE 1169/2011)"
                             value={fibre} onChange={v => { setFibre(v); clearErrors(); }}
                         />
+                        <NF label="* Proteine" value={proteine} onChange={setProteine} err={!proteine && errors.length > 0} />
+                        <NF label="* Sale" value={sale} onChange={setSale} err={!sale && errors.length > 0} />
                     </div>
                 </div>
 
@@ -1066,9 +1167,9 @@ function CustomIngredientModal({ onClose, onSave }: { onClose: () => void; onSav
                         <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.5, color: '#718096', marginBottom: 8 }}>○ Vitamine liposolubili (facoltative)</div>
                         <div style={grid3}>
                             <NF label="○ β-Carotene" value={betaCarotene} onChange={setBetaCarotene} unit="μg/100g"
-                                tooltip="Precursore della vitamina A. Usato per calcolare Vitamina A (RE) = β-carotene + retinolo." />
+                                tooltip="Precursore della vitamina A. Usato per calcolare Vitamina A (RE) = β-carotene/6 + retinolo." />
                             <NF label="○ Retinolo" value={retinolo} onChange={setRetinolo} unit="μg/100g"
-                                tooltip="Forma preformata della vitamina A. Usato per calcolare Vitamina A (RE) = β-carotene + retinolo." />
+                                tooltip="Forma preformata della vitamina A. Usato per calcolare Vitamina A (RE) = β-carotene/6 + retinolo." />
                             <NF label="○ Vitamina E (tocoferoli)" value={vitE} onChange={setVitE} unit="mg/100g" />
                             <NF label="○ Vitamina K (fillochinone)" value={vitK} onChange={setVitK} unit="μg/100g" />
                         </div>
@@ -1094,7 +1195,7 @@ function CustomIngredientModal({ onClose, onSave }: { onClose: () => void; onSav
                         <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.5, color: '#2b6cb0', marginBottom: 8 }}>◎ Micronutrienti calcolati automaticamente</div>
                         <div style={grid3}>
                             <NF label="◎ Vitamina A (RE)" value={String(vitA_eq)} unit="μg/100g" ro
-                                tooltip="Vitamina A (retinolo equivalente) = β-carotene + retinolo" />
+                                tooltip="Vitamina A (retinolo equivalente) = β-carotene/6 + retinolo" />
                             <NF label="◎ Vitamina A (U.I.)" value={String(vitA_iu)} unit="UI/100g" ro
                                 tooltip="Vitamina A (Unità Internazionali) = RE × 3,333333333" />
                         </div>
@@ -1136,6 +1237,7 @@ function CustomIngredientModal({ onClose, onSave }: { onClose: () => void; onSav
                 </div>
             </div>
         </div>
+        </_ClearErrorsCtx.Provider>
     );
 }
 
@@ -1155,6 +1257,8 @@ export function NutrizionaleCalc() {
     // const [fwErrorMsg, setFwErrorMsg] = useState('');
     const [archiveOpen, setArchiveOpen] = useState(false);
     const [showCustomModal, setShowCustomModal] = useState(false);
+    const [showBrowseModal, setShowBrowseModal] = useState(false);
+    const [editIngredient, setEditIngredient] = useState<{ ing: DBIngredient; isCustom: boolean } | null>(null);
     // const [toolTab, setToolTab] = useState<'tabelle' | 'lista'>('tabelle');
     const [servingOpen, setServingOpen] = useState<Record<string, boolean>>({
         '🇪🇺 UE': false, '🇺🇸 USA (CUP=240ml)': false, '🇨🇦 Canada (CUP=250ml)': false, '🇦🇺 Australia': false, '🌍 Paesi Arabi (CUP=240ml)': false
@@ -1172,6 +1276,14 @@ export function NutrizionaleCalc() {
     const [compOpen, setCompOpen] = useState<Record<string, boolean>>({});
     const [pzUVRaw, setPzUVRaw] = useState<Record<string, string>>({});
     const [gramsRaw, setGramsRaw] = useState<Record<string, string>>({});
+    const [eurKgRaw, setEurKgRaw] = useState<Record<string, string>>({});
+    const [resaRaw, setResaRaw] = useState<Record<string, string>>({});
+    const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
+    const toggleExpandRow = (rowId: string) => setExpandedRows(prev => {
+        const next = new Set(prev);
+        if (next.has(rowId)) next.delete(rowId); else next.add(rowId);
+        return next;
+    });
     const [additiveOpen, setAdditiveOpen] = useState(true);
     const [riepilogoOpen, setRiepilogoOpen] = useState(true);
     const [riepilogoTab, setRiepilogoTab] = useState<'q' | 'c'>('q');
@@ -1181,14 +1293,20 @@ export function NutrizionaleCalc() {
     const [guideOpen, setGuideOpen] = useLocalStorage<boolean>('nutri_guide_open', true);
     const toggleGuide = () => setGuideOpen(prev => !prev);
 
-    // Wizard mode state
-    const [uiMode, setUiMode] = useModeToggle();
-    // Alias for backward compatibility with existing code
-    const wizardMode = uiMode === 'guided';
-    const setWizardMode = (val: boolean) => setUiMode(val ? 'guided' : 'expert');
-    const [wizardStep, setWizardStep] = useState<0 | 1 | 2 | 3>(0);
-    const toggleWizardMode = (mode: boolean) => { setWizardMode(mode); setWizardStep(0); };
-    const [expertTab, setExpertTab] = useState<'ricetta' | 'riepilogo' | 'mercati'>('ricetta');
+    const [expertTab, setExpertTab] = useState<'ricetta' | 'riepilogo'>('ricetta');
+
+    // Toast + ConfirmDialog state (replaces native alert/confirm)
+    const toast = useToast();
+    const [confirmState, setConfirmState] = useState<{
+        open: boolean;
+        title: string;
+        message: string;
+        variant: 'danger' | 'warning' | 'info';
+        confirmLabel: string;
+        onConfirm: () => void;
+    }>({ open: false, title: '', message: '', variant: 'warning', confirmLabel: 'Conferma', onConfirm: () => {} });
+    const openConfirm = (opts: Omit<typeof confirmState, 'open'>) => setConfirmState({ ...opts, open: true });
+    const closeConfirm = () => setConfirmState(prev => ({ ...prev, open: false }));
 
     // Database state — fetched + merged with personal custom ingredients
     const [db, setDb] = useState<DBIngredient[]>([]);
@@ -1249,9 +1367,68 @@ export function NutrizionaleCalc() {
     const { items: archiveItems, saveItem, deleteItem } = useArchive<ArchiveData>('nutrizionale-v3');
     const [currentId, setCurrentId] = useState<string | undefined>(undefined);
     const [, setCurrentName] = useState('');
+    const [isFlashing, setIsFlashing] = useState(false);
 
-    // Weight totals
-    const totalGramsRaw = components.reduce((s, c) => s + c.rows.reduce((rs, r) => rs + r.grams, 0), 0);
+    // ── Auto-save draft ──────────────────────────────────────────────────────
+    const [isDirty, setIsDirty] = useState(false);
+    const DRAFT_KEY = 'nut_draft';
+    const draftData = useMemo(() => ({
+        components, productName, finishedWeight, specificGravity,
+    }), [components, productName, finishedWeight, specificGravity]);
+    const draftEnabled = components.some(c => c.rows.length > 0) || !!productName;
+    const { hasDraft, loadDraft, clearDraft } = useAutosave(DRAFT_KEY, draftData, draftEnabled);
+
+    // Mark dirty when recipe content changes
+    const lastSavedRef = useRef<string>('');
+    useEffect(() => {
+        const snap = JSON.stringify(draftData);
+        if (lastSavedRef.current && snap !== lastSavedRef.current) setIsDirty(true);
+    }, [draftData]);
+
+    // Offer draft restore once DB is loaded (only when recipe is empty)
+    const draftOfferDoneRef = useRef(false);
+    useEffect(() => {
+        if (loadingDB || draftOfferDoneRef.current || !hasDraft) return;
+        if (components.some(c => c.rows.length > 0) || !!productName) return; // recipe already populated
+        draftOfferDoneRef.current = true;
+        openConfirm({
+            title: 'Bozza non salvata',
+            message: 'Hai una bozza non salvata. Vuoi ripristinarla?',
+            variant: 'info',
+            confirmLabel: 'Ripristina',
+            onConfirm: () => {
+                const draft = loadDraft();
+                if (!draft) return;
+                setProductName(draft.productName);
+                setFinishedWeight(draft.finishedWeight);
+                setSpecificGravity(draft.specificGravity);
+                // Restore components: re-resolve ingredient references from DB
+                const restoredComps: Component[] = draft.components.map(c => ({
+                    ...c,
+                    id: String(Date.now() + Math.random()),
+                    rows: c.rows.flatMap(r => {
+                        const found = db.find(d => d.nome === r.ing.nome);
+                        return found ? [{ ...r, id: String(Date.now() + Math.random()), ing: found }] : [];
+                    }),
+                }));
+                const compsToSet = restoredComps.length ? restoredComps : [makeComp()];
+                setComponents(compsToSet);
+                const restoredPzUVRaw: Record<string, string> = {};
+                compsToSet.forEach(c => { restoredPzUVRaw[c.id] = String(c.pzUV); });
+                setPzUVRaw(restoredPzUVRaw);
+                clearDraft();
+                closeConfirm();
+            },
+        });
+    // ponytail: one-shot effect, intentionally omitting openConfirm/closeConfirm (stable refs)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [loadingDB, hasDraft]);
+    const flashInitRef = useRef(false);
+
+    // Weight totals (ingredienti + additivi)
+    const totalGramsRaw = components.reduce((s, c) =>
+        s + c.rows.reduce((rs, r) => rs + r.grams, 0)
+          + c.additiveRows.reduce((rs, r) => rs + (r.grams || 0), 0), 0);
     const fw = parseFloat(finishedWeight) || 0;
     const pesoTotale = fw > 0 ? fw : totalGramsRaw;
 
@@ -1278,10 +1455,20 @@ export function NutrizionaleCalc() {
         return [...map.values()].sort((a, b) => a.ing.nome.localeCompare(b.ing.nome, 'it'));
     }, [components]);
 
-    const totGrammiXpzuv = useMemo(() => mergedIngredients.reduce((s, r) => s + r.grammiXpzuv, 0), [mergedIngredients]);
+    const totAdditiveGramsXpzuv = useMemo(() =>
+        components.reduce((s, c) => s + c.additiveRows.reduce((rs, r) => rs + (r.grams || 0), 0) / (c.pzUV || 1), 0),
+    [components]);
+    const totGrammiXpzuv = useMemo(() => mergedIngredients.reduce((s, r) => s + r.grammiXpzuv, 0) + totAdditiveGramsXpzuv, [mergedIngredients, totAdditiveGramsXpzuv]);
 
     // Calculation
     const per100g = useMemo(() => calcNutrients(components, fw), [components, fw]);
+
+    useEffect(() => {
+        if (!flashInitRef.current) { flashInitRef.current = true; return; }
+        setIsFlashing(true);
+        const t = setTimeout(() => setIsFlashing(false), 600);
+        return () => clearTimeout(t);
+    }, [per100g]);
 
     // Se peso specifico inserito, i valori per 100ml = valori per 100g × densità
     const per100display = useMemo(() => {
@@ -1363,6 +1550,11 @@ export function NutrizionaleCalc() {
             ...c, rows: c.rows.map(r => r.id === rowId ? { ...r, resa: v } : r)
         }));
     };
+    const updateRowFlag = (compId: string, rowId: string, flag: 'postCottura' | 'acquaAggiunta', value: boolean) => {
+        setComponents(prev => prev.map(c => c.id !== compId ? c : {
+            ...c, rows: c.rows.map(r => r.id === rowId ? { ...r, [flag]: value } : r)
+        }));
+    };
     const removeRow = (compId: string, rowId: string) => {
         setComponents(prev => prev.map(c => c.id !== compId ? c : { ...c, rows: c.rows.filter(r => r.id !== rowId) }));
     };
@@ -1423,7 +1615,9 @@ export function NutrizionaleCalc() {
 
     // Archive save/load
     const handleSave = () => {
-        const name = productName || prompt('Nome ricetta:') || 'Ricetta';
+        const name = productName || 'Ricetta';
+        const existing = archiveItems.find(i => i.name === name);
+        const snap = JSON.stringify(draftData);
         saveItem(name, {
             nome_prodotto: productName,
             componenti: components.map(c => ({
@@ -1435,8 +1629,10 @@ export function NutrizionaleCalc() {
             additivi: additiveChips.map(a => a.nome),
             peso_finito_pz: fw,
             serving_sizes: { UE: ue, USA: usa, Canada: ca, Australia: au, Arabi: arabi }
-        });
-        alert('Ricetta salvata in archivio!');
+        }, existing?.id);
+        clearDraft();
+        lastSavedRef.current = snap;
+        setIsDirty(false);
     };
 
     const handleLoad = (item: typeof archiveItems[0]) => {
@@ -1487,23 +1683,35 @@ export function NutrizionaleCalc() {
         setArchiveOpen(false);
     };
 
-    const handleNew = () => {
-        if (allRows.length > 0 && !window.confirm('Vuoi davvero creare una nuova ricetta? Perderai i dati non salvati.')) return;
+    const doResetRecipe = () => {
         setProductName('');
         setComponents([makeComp()]);
         setAdditives(['']);
         setAdditiveChips([]);
         setFinishedWeight('');
         setSpecificGravity('');
-        setFwWarning(false); // setFwErrorMsg('');
+        setFwWarning(false);
         setUE({}); setUSA({}); setCA({}); setAU({}); setArabi({});
         setCurrentId(undefined);
         setCurrentName('');
-        setWizardStep(0);
+    };
+
+    const handleNew = () => {
+        if (allRows.length > 0) {
+            openConfirm({
+                title: 'Nuova ricetta',
+                message: 'Vuoi davvero creare una nuova ricetta? I dati non salvati andranno persi.',
+                variant: 'warning',
+                confirmLabel: 'Crea nuova',
+                onConfirm: () => { closeConfirm(); doResetRecipe(); },
+            });
+            return;
+        }
+        doResetRecipe();
     };
 
     const handleDownloadPNG = async () => {
-        if (!tableRef.current) { alert('Errore: tabella non trovata.'); return; }
+        if (!tableRef.current) { toast.error('Tabella non trovata.'); return; }
         try {
             const target = (tableRef.current.querySelector('[data-table-export]') as HTMLElement) ?? tableRef.current;
             const canvas = await html2canvas(target, { scale: 2, backgroundColor: '#ffffff', useCORS: true });
@@ -1514,7 +1722,7 @@ export function NutrizionaleCalc() {
             a.click();
         } catch (e) {
             console.error('PNG Export error:', e);
-            alert('Errore durante l\'esportazione della tabella in PNG.');
+            toast.error('Errore durante l\'esportazione della tabella in PNG.');
         }
     };
 
@@ -1525,7 +1733,7 @@ export function NutrizionaleCalc() {
                                    document.querySelector('div[style*="maxWidth: 480"]') as HTMLElement;
 
             if (!etichettaElement) {
-                alert('Errore: tabella etichetta non trovata. Assicurati di essere sulla tab UE.');
+                toast.error('Tabella etichetta non trovata. Assicurati di essere sulla tab UE.');
                 return;
             }
 
@@ -1533,12 +1741,12 @@ export function NutrizionaleCalc() {
             await generateEtichettaPDF(etichettaElement, fileName);
         } catch (error) {
             console.error('Etichetta PDF export error:', error);
-            alert('Errore durante l\'esportazione della scheda etichetta in PDF.');
+            toast.error('Errore durante l\'esportazione del PDF etichetta.');
         }
     };
 
     const handlePDF = async () => {
-        if (allRows.length === 0 || !productName) { alert('Inserisci almeno il nome del prodotto e un ingrediente prima di scaricare.'); return; }
+        if (allRows.length === 0 || !productName) { toast.warning('Inserisci il nome del prodotto e almeno un ingrediente prima di scaricare.'); return; }
         try {
             const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
             const W = 210;
@@ -1687,949 +1895,92 @@ export function NutrizionaleCalc() {
             doc.save(`${productName || 'ricetta'}_scheda_${activeTab}.pdf`);
         } catch (e) {
             console.error('PDF export error:', e);
-            alert('Errore durante la generazione del PDF.');
+            toast.error('Errore durante la generazione del PDF.');
         }
     };
 
-    // ─── Wizard renderer ──────────────────────────────────────────────────────
-    const WIZ_STEPS: { label: string }[] = [
-        { label: 'Prodotto' },
-        { label: 'Ingredienti' },
-        { label: 'Mercati' },
-        { label: 'Export' },
-    ];
+    // ─── (wizard renderer removed) ────────────────────────────────────────────
 
-    const wizNav = (dir: -1 | 1) => {
-        if (dir === 1) {
-            if (wizardStep === 0 && !productName.trim()) {
-                setFieldErrors(prev => ({ ...prev, wizardNome: 'Inserisci il nome del prodotto per continuare.' }));
-                return;
-            }
-            if (wizardStep === 1 && allRows.length === 0) {
-                setFieldErrors(prev => ({ ...prev, wizardIng: 'Aggiungi almeno un ingrediente per continuare.' }));
-                return;
-            }
-            if (wizardStep === 1) {
-                for (const comp of components) {
-                    const raw = pzUVRaw[comp.id] ?? '';
-                    const v = parseFloat(raw.replace(',', '.'));
-                    if (!raw.trim() || isNaN(v) || v < 0.001) {
-                        setFieldErrors(prev => ({ ...prev, [`pzuv-${comp.id}`]: 'Inserisci il numero di pezzi per UV per continuare.' }));
-                        return;
-                    }
-                }
-                if (fwWarning) {
-                    const firstPzUV = components.length > 0 ? (components[0].pzUV || 1) : 1;
-                    const pesoCrudoPerPz = (totalGramsRaw / firstPzUV).toFixed(0);
-                    setFieldErrors(prev => ({ ...prev, wizardFW: `VALORE NON VALIDO! Il peso prodotto finito (${finishedWeight}g) supera il peso del prodotto crudo per pezzo (${totGrammiXpzuv.toFixed(0)}g). Torna al Passo 1 e inserisci un valore uguale o inferiore.` }));
-                    return;
-                }
-            }
-        }
-        setFieldErrors({});
-        setWizardStep(prev => Math.max(0, Math.min(3, prev + dir)) as 0 | 1 | 2 | 3);
-    };
-
-    const renderWizard = (): React.ReactNode => {
-        const pct = ((wizardStep + 1) / 4 * 100).toFixed(0) + '%';
-
+    const renderTablePanel = (isMobileInline = false): React.ReactNode => {
         return (
-            <div className="card" style={{ overflow: 'hidden', padding: 0 }}>
-
-                {/* ── Progress bar ── */}
-                <div style={{ padding: '22px 28px 0', borderBottom: '1px solid var(--color-border)' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', marginBottom: 16 }}>
-                        {WIZ_STEPS.map((s, i) => (
-                            <React.Fragment key={i}>
-                                {i > 0 && (
-                                    <div style={{
-                                        flex: 1, height: 2, margin: '0 6px',
-                                        background: i <= wizardStep ? 'var(--color-green)' : 'var(--color-border)',
-                                        transition: 'background .3s',
-                                    }} />
-                                )}
-                                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                                    <div style={{
-                                        width: 30, height: 30, borderRadius: '50%',
-                                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                        fontSize: 11, fontWeight: 800, flexShrink: 0,
-                                        transition: 'all .3s',
-                                        background: i < wizardStep ? 'var(--color-green)'
-                                            : i === wizardStep ? 'linear-gradient(135deg, var(--color-orange), var(--color-orange-hover))'
-                                            : 'var(--color-surface)',
-                                        border: `2px solid ${i < wizardStep ? 'var(--color-green)' : i === wizardStep ? 'var(--color-orange)' : 'var(--color-border)'}`,
-                                        color: i <= wizardStep ? 'white' : 'var(--color-text-dim)',
-                                        boxShadow: i === wizardStep ? '0 0 0 4px rgba(255,126,46,.18)' : 'none',
-                                    }}>
-                                        {i < wizardStep ? <Check size={12} /> : i + 1}
-                                    </div>
-                                    <span className="wizard-step-label" style={{
-                                        fontSize: 12, fontWeight: 700,
-                                        color: i < wizardStep ? 'var(--color-green)' : i === wizardStep ? 'var(--color-navy)' : 'var(--color-text-dim)',
-                                        whiteSpace: 'nowrap',
-                                    }}>
-                                        {s.label}
-                                    </span>
-                                </div>
-                            </React.Fragment>
-                        ))}
-                    </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 12, paddingBottom: 14 }}>
-                        <div style={{ flex: 1, height: 4, background: 'var(--color-surface)', borderRadius: 2, overflow: 'hidden' }}>
-                            <div style={{
-                                height: '100%', borderRadius: 2,
-                                background: 'linear-gradient(90deg, var(--color-orange), var(--color-orange-hover))',
-                                width: pct, transition: 'width .45s cubic-bezier(.4,0,.2,1)',
-                            }} />
-                        </div>
-                        <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--color-text-muted)', whiteSpace: 'nowrap' }}>
-                            Passo {wizardStep + 1} di 4
-                        </span>
-                    </div>
-                </div>
-
-                {/* ── Step content ── */}
-                <div className="wizard-content" style={{ padding: 28, minHeight: 340 }}>
-
-                    {/* Step 0 — Prodotto */}
-                    {wizardStep === 0 && (
-                        <>
-                        <div className="guided-callout">
-                            <span className="guided-callout-icon">💡</span>
-                            <div>
-                                <div className="guided-callout-title">STEP 1 — DATI RICETTA</div>
-                                <div className="guided-callout-text">
-                                    Inserisci il nome del prodotto e i pesi. Il peso finito include il calo cottura.
-                                </div>
-                            </div>
-                        </div>
-                        <div>
-                            <h2 style={{ fontFamily: 'Fraunces, serif', fontSize: 18, fontWeight: 900, color: 'var(--color-navy)', marginBottom: 4, display: 'flex', alignItems: 'center', gap: 7 }}>
-                                <Package size={18} /> Il tuo prodotto
-                            </h2>
-                            <p style={{ fontSize: 13, color: 'var(--color-text-muted)', marginBottom: 22, lineHeight: 1.55 }}>
-                                Inserisci le informazioni base. Il nome apparirà nella testata di ogni tabella nutrizionale generata.
-                            </p>
-                            <div className="prodotto-card">
-                                <div className="prodotto-card-label">
-                                    <Package size={13} /> PRODOTTO <span style={{ color: 'var(--color-danger)' }}>*</span>
-                                </div>
-                                <input
-                                    type="text"
-                                    className="form-input"
-                                    placeholder="Nome prodotto (es. Torta di mele, Salsa al pomodoro…)"
-                                    value={productName}
-                                    onChange={e => { setProductName(e.target.value); setFieldErrors({}); }}
-                                    style={{ fontSize: 15, fontWeight: 600, borderColor: fieldErrors.wizardNome ? 'var(--color-danger)' : undefined }}
-                                />
-                                {fieldErrors.wizardNome && (
-                                    <span style={{ fontSize: 12, color: 'var(--color-danger)', fontWeight: 600, marginTop: 4, display: 'flex', alignItems: 'center', gap: 4 }}>
-                                        <AlertTriangle size={12} /> {fieldErrors.wizardNome}
-                                    </span>
-                                )}
-                            </div>
-                            <div className="wizard-field-grid">
-                                <div className="form-field" style={{ marginBottom: 0 }}>
-                                    <div style={{ display: 'flex', alignItems: 'center', marginBottom: 4 }}>
-                                        <label className="form-label" style={{ marginBottom: 0 }}>Peso prodotto finito (g/pz)</label>
-                                        <InfoTooltip text="Peso del prodotto dopo cottura, disidratazione o evaporazione di acqua. Deve essere uguale o inferiore al peso del prodotto processato." />
-                                    </div>
-                                    <input
-                                        type="number" min={0} className="form-input"
-                                        placeholder="es. 120"
-                                        value={finishedWeight}
-                                        onChange={e => handleFW(e.target.value)}
-                                        style={fwWarning ? { borderColor: '#e53e3e' } : {}}
-                                    />
-                                    <ValidationError message={fieldErrors['finished-weight']} visible={!!fieldErrors['finished-weight']} />
-                                    {!fwWarning && !fieldErrors['finished-weight'] && <span className="hint">Peso netto dopo lavorazione/cottura.</span>}
-                                </div>
-                                <div className="form-field" style={{ marginBottom: 0 }}>
-                                    <div style={{ display: 'flex', alignItems: 'center', marginBottom: 4 }}>
-                                        <label className="form-label" style={{ marginBottom: 0 }}>Peso specifico (g/ml)</label>
-                                        <InfoTooltip text="Inserisci il peso specifico SOLO per alimenti liquidi (bevande, vino, birra, succhi, latte, ecc.). Quando compilato, i valori nutrizionali verranno espressi su 100 ml anziché 100 g, e apparirà: 'Valori nutrizionali medi in 100 ml di prodotto'." />
-                                    </div>
-                                    <input
-                                        type="number" min={0} step={0.01} className="form-input"
-                                        placeholder="opzionale"
-                                        value={specificGravity}
-                                        onChange={e => setSpecificGravity(e.target.value)}
-                                    />
-                                </div>
-                            </div>
-                        </div>
-                        </>
-                    )}
-
-                    {/* Step 1 — Ingredienti */}
-                    {wizardStep === 1 && (
-                        <>
-                        <div className="guided-callout">
-                            <span className="guided-callout-icon">🥗</span>
-                            <div>
-                                <div className="guided-callout-title">STEP 2 — INGREDIENTI</div>
-                                <div className="guided-callout-text">
-                                    Cerca gli ingredienti nel database e inserisci i grammi. La tabella si aggiorna in tempo reale.
-                                </div>
-                            </div>
-                        </div>
-                        <div>
-                            <h2 style={{ fontFamily: 'Fraunces, serif', fontSize: 18, fontWeight: 900, color: 'var(--color-navy)', marginBottom: 4, display: 'flex', alignItems: 'center', gap: 7 }}>
-                                <Salad size={18} /> Ingredienti della ricetta
-                            </h2>
-                            <p style={{ fontSize: 13, color: 'var(--color-text-muted)', marginBottom: 22, lineHeight: 1.55 }}>
-                                Cerca ogni ingrediente nel database e inserisci i grammi per l'intera ricetta. Puoi aggiungere più componenti separati.
-                            </p>
-                            {fieldErrors.wizardIng && (
-                                <div style={{ background: 'rgba(229,62,62,.07)', border: '1px solid rgba(229,62,62,.22)', borderRadius: 'var(--radius-sm)', padding: '8px 12px', marginBottom: 14, fontSize: 12, color: 'var(--color-danger)', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6 }}>
-                                    <AlertTriangle size={13} /> {fieldErrors.wizardIng}
-                                </div>
-                            )}
-                            {(fwWarning || fieldErrors.wizardFW) && (
-                                <div style={{ background: 'rgba(229,62,62,.10)', border: '2px solid #e53e3e', borderRadius: 8, padding: '10px 14px', marginBottom: 14, fontSize: 13, color: '#c53030', fontWeight: 700, display: 'flex', alignItems: 'flex-start', gap: 8 }}>
-                                    <AlertTriangle size={16} style={{ flexShrink: 0, marginTop: 1 }} />
-                                    <span>{fieldErrors.wizardFW || `VALORE NON VALIDO! Il peso prodotto finito (${finishedWeight}g) supera il peso del prodotto crudo per pezzo (${totGrammiXpzuv.toFixed(0)}g). Torna al Passo 1 e inserisci un valore uguale o inferiore.`}</span>
-                                </div>
-                            )}
-                            <div
-                                onClick={() => setRicettaOpen(v => !v)}
-                                style={{ background: 'var(--color-navy)', color: 'white', borderRadius: ricettaOpen ? '10px 10px 0 0' : 10, padding: '10px 20px', fontWeight: 800, fontSize: 14, letterSpacing: '0.06em', cursor: 'pointer', userSelect: 'none', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                                <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}><ClipboardList size={15} /> INSERIMENTO RICETTA</span>
-                                <ChevronRight size={15} style={{ transform: ricettaOpen ? 'rotate(90deg)' : 'rotate(0deg)', transition: 'transform 0.2s', opacity: 0.7 }} />
-                            </div>
-                            <div style={{ maxHeight: ricettaOpen ? '10000px' : '0', overflow: 'hidden', transition: 'max-height 0.45s ease' }}>
-                            <div style={{ border: '2px solid var(--color-navy)', borderTop: 'none', borderRadius: '0 0 12px 12px', padding: '16px 16px 4px', marginBottom: 16 }}>
-                                {components.map((comp, ci) => {
-                                    const isCompOpen = compOpen[comp.id] !== false;
-                                    return (
-                                        <div key={comp.id} className="comp-card" style={{ marginBottom: 12 }}>
-                                            <div
-                                                className="comp-card-header"
-                                                onClick={() => setCompOpen(prev => ({ ...prev, [comp.id]: !isCompOpen }))}
-                                            >
-                                                <h3 className="comp-card-title">
-                                                    <span className="comp-number-badge">{ci + 1}</span>
-                                                    {comp.name || `Componente ${ci + 1}`}
-                                                </h3>
-                                                <ChevronRight size={14} style={{ transform: isCompOpen ? 'rotate(90deg)' : 'rotate(0deg)', transition: 'transform 0.2s', color: 'var(--color-text-muted)' }} />
-                                            </div>
-                                            {isCompOpen && (
-                                                <div className="comp-card-body">
-                                                    <div className="form-field">
-                                                        <label className="form-label">Nome componente (facoltativo)</label>
-                                                        <input className="form-input" placeholder="es. Pasta frolla, Farcitura…" value={comp.name} onChange={e => updateCompName(comp.id, e.target.value)} />
-                                                    </div>
-                                                    <div className="form-field">
-                                                        <div style={{ display: 'flex', alignItems: 'center', marginBottom: 4 }}>
-                                                            <label className="form-label" style={{ marginBottom: 0 }}>PER N° PZ /U.V.</label>
-                                                            <InfoTooltip text="Digitare il numero di PZ o di Unità di Vendita che si possono realizzare con la quantità di componente che scaturisce dalla ricetta." />
-                                                        </div>
-                                                        <input
-                                                            type="text"
-                                                            inputMode="decimal"
-                                                            placeholder="Obbligatorio per procedere"
-                                                            className="form-input"
-                                                            value={pzUVRaw[comp.id] ?? ''}
-                                                            onChange={e => {
-                                                                const raw = e.target.value;
-                                                                setPzUVRaw(prev => ({ ...prev, [comp.id]: raw }));
-                                                                const v = parseFloat(raw.replace(',', '.'));
-                                                                if (!isNaN(v) && v >= 0.001) {
-                                                                    updateCompPzUV(comp.id, v);
-                                                                    setFieldErrors(prev => ({ ...prev, [`pzuv-${comp.id}`]: '' }));
-                                                                }
-                                                            }}
-                                                            onBlur={e => {
-                                                                const raw = e.target.value.trim();
-                                                                const v = parseFloat(raw.replace(',', '.'));
-                                                                if (!raw || isNaN(v) || v < 0.001) {
-                                                                    setFieldErrors(prev => ({ ...prev, [`pzuv-${comp.id}`]: 'Inserisci il numero di pezzi per UV per continuare.' }));
-                                                                } else {
-                                                                    updateCompPzUV(comp.id, v);
-                                                                    setFieldErrors(prev => ({ ...prev, [`pzuv-${comp.id}`]: '' }));
-                                                                }
-                                                            }}
-                                                        />
-                                                        {fieldErrors[`pzuv-${comp.id}`] && (
-                                                            <div style={{ fontSize: 12, color: 'var(--color-danger)', marginTop: 4, fontWeight: 600 }}>⚠ {fieldErrors[`pzuv-${comp.id}`]}</div>
-                                                        )}
-                                                    </div>
-                                                    <IngSearch onAdd={(ing) => addRowToComp(comp.id, ing)} db={db} loading={loadingDB} error={dbError} />
-                                                    {comp.rows.length > 0 && (
-                                                        <div style={{ marginTop: 8 }}>
-                                                            {comp.rows.map(row => {
-                                                                const _displayGramsWiz = (() => { const raw = gramsRaw[`${comp.id}-${row.id}`]; if (raw === undefined) return row.grams; const v = parseFloat(raw.replace(',', '.')); return isNaN(v) ? row.grams : v; })();
-                                                                const gramsPerPiece = comp.pzUV > 0 && _displayGramsWiz > 0 ? _displayGramsWiz / comp.pzUV : null;
-                                                                const fabbReale = row.grams / ((row.resa || 100) / 100);
-                                                                const costoIng = (fabbReale / 1000) * row.eurKg;
-                                                                return (
-                                                                    <div key={row.id} className="ing-card">
-                                                                        <div className="ing-card-header">
-                                                                            <div className="ing-name-area">
-                                                                                <span className="ing-name">{row.ing.etichetta || row.ing.nome}</span>
-                                                                            </div>
-                                                                            <button className="ing-delete-btn" onClick={() => removeRow(comp.id, row.id)} title="Rimuovi ingrediente"><Trash2 size={13} /></button>
-                                                                        </div>
-                                                                        <div className="ing-card-body">
-                                                                            <div className="ing-field-group">
-                                                                                <div className="ing-field-header">
-                                                                                    <span className="ing-field-label">Grammi</span>
-                                                                                </div>
-                                                                                <div className="ing-field-input-wrap">
-                                                                                    <input type="text" inputMode="decimal"
-                                                                                        className="form-input ing-input"
-                                                                                        value={gramsRaw[`${comp.id}-${row.id}`] ?? String(row.grams)}
-                                                                                        onChange={e => {
-                                                                                            const raw = e.target.value;
-                                                                                            setGramsRaw(prev => ({ ...prev, [`${comp.id}-${row.id}`]: raw }));
-                                                                                            const v = parseFloat(raw.replace(',', '.'));
-                                                                                            if (!isNaN(v) && v >= 0) updateGrams(comp.id, row.id, v);
-                                                                                        }}
-                                                                                        onBlur={e => {
-                                                                                            const raw = e.target.value.trim();
-                                                                                            const v = parseFloat(raw.replace(',', '.'));
-                                                                                            const val = (!raw || isNaN(v) || v < 0) ? 0 : v;
-                                                                                            setGramsRaw(prev => ({ ...prev, [`${comp.id}-${row.id}`]: String(val) }));
-                                                                                            updateGrams(comp.id, row.id, val);
-                                                                                        }}
-                                                                                    />
-                                                                                    <span className="ing-unit">g</span>
-                                                                                </div>
-                                                                                {gramsPerPiece !== null && <span className="ing-per-pz">{gramsPerPiece.toFixed(1)} g/pz</span>}
-                                                                                <ValidationError message={fieldErrors[`${comp.id}-${row.id}-grams`]} visible={!!fieldErrors[`${comp.id}-${row.id}-grams`]} />
-                                                                            </div>
-                                                                            <div className="ing-field-group">
-                                                                                <div className="ing-field-header">
-                                                                                    <span className="ing-field-label">€/kg</span>
-                                                                                    <InfoTooltip text="Costo dell'ingrediente per kg, IVA esclusa. Non è obbligatorio: se non inserisci nulla, il valore predefinito è 0 e il costo non verrà calcolato." />
-                                                                                </div>
-                                                                                <input type="number" min={0} step={0.01}
-                                                                                    placeholder="0"
-                                                                                    value={row.eurKg === 0 || row.eurKg ? row.eurKg : ''}
-                                                                                    onChange={e => updateEurKg(comp.id, row.id, e.target.value === '' ? 0 : parseFloat(e.target.value) || 0)}
-                                                                                    className="form-input ing-input" />
-                                                                            </div>
-                                                                            <div className="ing-field-group">
-                                                                                <div className="ing-field-header">
-                                                                                    <span className="ing-field-label">Resa %</span>
-                                                                                    <InfoTooltip text="Percentuale di prodotto effettivamente utilizzabile dopo pulizia o lavorazione. Es: 70 per verdure con scarti (foglie, bucce). Default: 100" />
-                                                                                </div>
-                                                                                <input type="number" min={1} max={100} step={1}
-                                                                                    value={row.resa || 100}
-                                                                                    onChange={e => updateResa(comp.id, row.id, parseFloat(e.target.value) || 100)}
-                                                                                    className="form-input ing-input" />
-                                                                            </div>
-                                                                        </div>
-                                                                        {(row.eurKg > 0) && (
-                                                                            <div className="ing-cost-line">
-                                                                                <span>Grammi reali: <strong>{fabbReale.toFixed(1)}g</strong></span>
-                                                                                <span>Costo: <strong style={{ color: 'var(--color-orange)' }}>{costoIng.toFixed(4)} €</strong></span>
-                                                                            </div>
-                                                                        )}
-                                                                    </div>
-                                                                );
-                                                            })}
-                                                            {comp.rows.length > 0 && (
-                                                                <div className="ing-total-bar">
-                                                                    <span>Totale: <strong>{comp.rows.reduce((s, r) => s + r.grams, 0).toFixed(0)} g</strong></span>
-                                                                </div>
-                                                            )}
-                                                        </div>
-                                                    )}
-                                                    {/* Additivi per componente */}
-                                                    <div style={{ marginTop: 12 }}>
-                                                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
-                                                            <label className="form-label" style={{ margin: 0, display: 'flex', alignItems: 'center', gap: 6 }}><FlaskConical size={13} /> Additivi</label>
-                                                            <button type="button" className="btn btn-outline" style={{ fontSize: 11, padding: '3px 10px' }} onClick={() => addAdditiveRow(comp.id)}>
-                                                                <Plus size={11} /> Aggiungi additivo
-                                                            </button>
-                                                        </div>
-                                                        {comp.additiveRows.map(arow => {
-                                                            const fabbA = arow.grams / ((arow.resa || 100) / 100);
-                                                            const costoA = (fabbA / 1000) * arow.eurKg;
-                                                            return (
-                                                                <div key={arow.id} className="ing-card" style={{ marginBottom: 8 }}>
-                                                                    <div className="ing-card-header">
-                                                                        <div style={{ display: 'flex', gap: 8, flex: 1, flexWrap: 'wrap' }}>
-                                                                            <select className="form-input" style={{ flex: '1 1 160px', fontSize: 12 }} value={arow.categoria} onChange={e => { updateAdditiveRow(comp.id, arow.id, 'categoria', e.target.value); updateAdditiveRow(comp.id, arow.id, 'nomeSpecifico', ''); }}>
-                                                                                <option value="">— Categoria —</option>
-                                                                                {ADDITIVI_CATEGORIE.map(cat => <option key={cat} value={cat}>{cat}</option>)}
-                                                                            </select>
-                                                                            <select className="form-input" style={{ flex: '1 1 160px', fontSize: 12 }} value={arow.nomeSpecifico} onChange={e => updateAdditiveRow(comp.id, arow.id, 'nomeSpecifico', e.target.value)} disabled={!arow.categoria}>
-                                                                                <option value="">{arow.categoria ? '— Seleziona additivo —' : '— Prima seleziona categoria —'}</option>
-                                                                                {(ADDITIVI_SPECIFICI[arow.categoria] || []).map(n => <option key={n} value={n}>{n}</option>)}
-                                                                            </select>
-                                                                        </div>
-                                                                        <button className="ing-delete-btn" onClick={() => removeAdditiveRow(comp.id, arow.id)} title="Rimuovi additivo"><Trash2 size={13} /></button>
-                                                                    </div>
-                                                                    <div className="ing-card-body">
-                                                                        <div className="ing-field-group">
-                                                                            <div className="ing-field-header"><span className="ing-field-label">Grammi</span></div>
-                                                                            <div className="ing-field-input-wrap">
-                                                                                <input type="number" min={0} step={0.1} className="form-input ing-input" value={arow.grams || ''} placeholder="0" onChange={e => updateAdditiveRow(comp.id, arow.id, 'grams', parseFloat(e.target.value) || 0)} />
-                                                                                <span className="ing-unit">g</span>
-                                                                            </div>
-                                                                        </div>
-                                                                        <div className="ing-field-group">
-                                                                            <div className="ing-field-header"><span className="ing-field-label">€/kg</span></div>
-                                                                            <input type="number" min={0} step={0.01} placeholder="0" className="form-input ing-input" value={arow.eurKg || ''} onChange={e => updateAdditiveRow(comp.id, arow.id, 'eurKg', parseFloat(e.target.value) || 0)} />
-                                                                        </div>
-                                                                        <div className="ing-field-group">
-                                                                            <div className="ing-field-header"><span className="ing-field-label">Resa %</span></div>
-                                                                            <input type="number" min={1} max={100} step={1} className="form-input ing-input" value={arow.resa || 100} onChange={e => updateAdditiveRow(comp.id, arow.id, 'resa', parseFloat(e.target.value) || 100)} />
-                                                                        </div>
-                                                                    </div>
-                                                                    {arow.eurKg > 0 && (
-                                                                        <div className="ing-cost-line">
-                                                                            <span>Grammi reali: <strong>{fabbA.toFixed(1)}g</strong></span>
-                                                                            <span>Costo: <strong style={{ color: 'var(--color-orange)' }}>{costoA.toFixed(4)} €</strong></span>
-                                                                        </div>
-                                                                    )}
-                                                                </div>
-                                                            );
-                                                        })}
-                                                    </div>
-                                                    {components.length > 1 && (
-                                                        <button className="btn btn-danger" style={{ fontSize: 12, marginTop: 8, display: 'flex', alignItems: 'center', gap: 6 }} onClick={() => removeComp(comp.id)}><Trash2 size={13} /> Rimuovi componente</button>
-                                                    )}
-                                                </div>
-                                            )}
-                                        </div>
-                                    );
-                                })}
-                                {(
-                                    <button className="btn btn-outline add-comp-btn" onClick={addComp} style={{ marginBottom: 12 }}>
-                                        <Plus size={14} /> Aggiungi componente
-                                    </button>
-                                )}
-                            </div>
-                            </div>{/* end collapsible wrapper wizard */}
-
-                            {/* Riepilogo ingredienti — identico alla modalità avanzata */}
-                            {allRows.length > 0 && (() => {
-                                const pesoFinitoPzCalc = fw > 0 ? fw : totGrammiXpzuv;
-                                const caloAcqua = totGrammiXpzuv > pesoFinitoPzCalc ? totGrammiXpzuv - pesoFinitoPzCalc : 0;
-                                const isAcqua = (nome: string) => (nome || '').trim().toLowerCase() === 'acqua';
-                                const totGrammiTotali = mergedIngredients.reduce((s, r) => s + r.grammiTotali, 0);
-                                const totQuid = pesoFinitoPzCalc > 0 ? (totGrammiXpzuv / pesoFinitoPzCalc * 100) : 0;
-                                let totCostoUV = 0;
-                                for (const r of mergedIngredients) {
-                                    if (r.eurKg > 0) {
-                                        const fabb = r.grammiXpzuv / ((r.resa || 100) / 100);
-                                        totCostoUV += (fabb / 1000) * r.eurKg;
-                                    }
-                                }
-                                const totCostoKg = pesoFinitoPzCalc > 0 && totCostoUV > 0 ? totCostoUV / (pesoFinitoPzCalc / 1000) : 0;
-                                const fmt3 = (v: number) => v.toFixed(3).replace('.', ',');
-                                const fmt2 = (v: number) => v.toFixed(2).replace('.', ',');
-                                const fmtC = (v: number) => v > 0 ? v.toFixed(3).replace('.', ',') : '—';
-                                return (
-                                    <div className="card" style={{ marginBottom: 20 }}>
-                                        <div
-                                            onClick={() => setRiepilogoOpen(v => !v)}
-                                            style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer', userSelect: 'none' }}
-                                        >
-                                            <h3 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: 7 }}><Table2 size={15} /> Riepilogo ingredienti <span style={{ fontSize: 13, fontWeight: 400, color: 'var(--color-text-muted)' }}>({mergedIngredients.length})</span></h3>
-                                            <ChevronRight size={14} style={{ transform: riepilogoOpen ? 'rotate(90deg)' : 'rotate(0deg)', transition: 'transform 0.2s', color: 'var(--color-text-muted)' }} />
-                                        </div>
-                                        {riepilogoOpen && (<>
-                                            <div className="ri-tab-bar" style={{ display: 'flex', gap: 0, marginTop: 12, marginBottom: 4, borderRadius: 8, overflow: 'hidden', border: '1.5px solid var(--color-border)', alignSelf: 'flex-start' }}>
-                                                <button onClick={() => setRiepilogoTab('q')} title="Visualizza quantità e grammature" style={{ padding: '4px 11px', border: 'none', borderRight: '1.5px solid var(--color-border)', cursor: 'pointer', fontFamily: 'inherit', fontSize: 11, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 4, background: riepilogoTab === 'q' ? 'var(--color-navy)' : 'transparent', color: riepilogoTab === 'q' ? 'white' : 'var(--color-text-muted)' }}><Scale size={12} />Quantità</button>
-                                                <button onClick={() => setRiepilogoTab('c')} title="Visualizza costi e rese" style={{ padding: '4px 11px', border: 'none', cursor: 'pointer', fontFamily: 'inherit', fontSize: 11, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 4, background: riepilogoTab === 'c' ? 'var(--color-navy)' : 'transparent', color: riepilogoTab === 'c' ? 'white' : 'var(--color-text-muted)' }}><Euro size={12} />Costi</button>
-                                            </div>
-                                            <div className="riepilogo-wrapper" data-riepilogo-tab={riepilogoTab} style={{ marginTop: 0, overflowX: 'auto', marginLeft: -24, marginRight: -24, paddingLeft: 24, paddingRight: 24 }}>
-                                                <table className="riepilogo-table" style={{ borderCollapse: 'collapse', fontSize: 12, width: '100%', minWidth: 860 }}>
-                                                    <thead>
-                                                        <tr style={{ background: 'var(--color-orange)', color: 'white' }}>
-                                                            <td style={{ padding: '6px 10px', fontWeight: 700, textAlign: 'center', whiteSpace: 'nowrap' }}>{mergedIngredients.length}</td>
-                                                            <td className="ri-q" style={{ padding: '6px 10px', fontWeight: 700, textAlign: 'right', whiteSpace: 'nowrap' }}>{fmt3(totGrammiTotali)}</td>
-                                                            <td className="ri-q" style={{ padding: '6px 10px', fontWeight: 700, textAlign: 'right', whiteSpace: 'nowrap' }}>{fmt3(totGrammiXpzuv)}</td>
-                                                            <td className="ri-q" style={{ padding: '6px 10px', fontWeight: 700, textAlign: 'right', whiteSpace: 'nowrap' }}>100,000</td>
-                                                            <td className="ri-q" style={{ padding: '6px 10px', fontWeight: 700, textAlign: 'right', whiteSpace: 'nowrap' }}>{fmt3(totQuid)}</td>
-                                                            <td className="ri-c" style={{ padding: '6px 8px' }} />
-                                                            <td className="ri-c" style={{ padding: '6px 8px' }} />
-                                                            <td className="ri-c" style={{ padding: '6px 8px' }} />
-                                                            <td style={{ padding: '6px 8px', fontWeight: 700, textAlign: 'right', whiteSpace: 'nowrap', background: 'rgba(0,0,0,0.15)' }}>{totCostoUV > 0 ? fmt3(totCostoUV) : '—'}</td>
-                                                            <td style={{ padding: '6px 8px', fontWeight: 700, textAlign: 'right', whiteSpace: 'nowrap', background: 'rgba(0,0,0,0.15)' }}>{totCostoKg > 0 ? fmt3(totCostoKg) : '—'}</td>
-                                                        </tr>
-                                                        <tr style={{ background: '#f0f0f0', borderBottom: '2px solid var(--color-border)' }}>
-                                                            <th style={{ padding: '6px 10px', textAlign: 'left', fontWeight: 700, fontSize: 11, textTransform: 'uppercase', minWidth: 130 }}>INGREDIENTI</th>
-                                                            <th className="ri-q" style={{ padding: '6px 10px', textAlign: 'right', fontWeight: 700, fontSize: 11, whiteSpace: 'nowrap' }}>grammi<br />totali</th>
-                                                            <th className="ri-q" style={{ padding: '6px 10px', textAlign: 'right', fontWeight: 700, fontSize: 11, whiteSpace: 'nowrap' }}>grammi X<br />PZ / U.V.</th>
-                                                            <th className="ri-q" style={{ padding: '6px 10px', textAlign: 'right', fontWeight: 700, fontSize: 11, whiteSpace: 'nowrap' }}>% in<br />ricetta</th>
-                                                            <th className="ri-q" style={{ padding: '6px 10px', textAlign: 'right', fontWeight: 700, fontSize: 11, whiteSpace: 'nowrap', color: 'var(--color-orange)' }}>QUID</th>
-                                                            <th className="ri-c" style={{ padding: '6px 8px', textAlign: 'right', fontWeight: 700, fontSize: 11, whiteSpace: 'nowrap' }}>COSTO/KG<br />ingr. grezzo</th>
-                                                            <th className="ri-c" style={{ padding: '6px 8px', textAlign: 'right', fontWeight: 700, fontSize: 11, whiteSpace: 'nowrap' }}>RESA<br />lavoraz. %</th>
-                                                            <th className="ri-c" style={{ padding: '6px 8px', textAlign: 'right', fontWeight: 700, fontSize: 11, whiteSpace: 'nowrap' }}>COSTO/KG<br />ingr. pulito</th>
-                                                            <th style={{ padding: '6px 8px', textAlign: 'right', fontWeight: 700, fontSize: 11, whiteSpace: 'nowrap', background: 'rgba(255,126,46,0.12)' }}>COSTO/<br />U.V.</th>
-                                                            <th style={{ padding: '6px 8px', textAlign: 'right', fontWeight: 700, fontSize: 11, whiteSpace: 'nowrap', background: 'rgba(255,126,46,0.12)' }}>COSTO/<br />KG</th>
-                                                        </tr>
-                                                    </thead>
-                                                    <tbody>
-                                                        {mergedIngredients.map((row, i) => {
-                                                            const pctRicetta = totGrammiXpzuv > 0 ? (row.grammiXpzuv / totGrammiXpzuv * 100) : 0;
-                                                            const grammiEffettivi = isAcqua(row.ing.nome) ? Math.max(0, row.grammiXpzuv - caloAcqua) : row.grammiXpzuv;
-                                                            const quid = pesoFinitoPzCalc > 0 ? (grammiEffettivi / pesoFinitoPzCalc * 100) : 0;
-                                                            const costoKgPulito = row.eurKg > 0 ? row.eurKg / ((row.resa || 100) / 100) : 0;
-                                                            const fabbXpzuv = row.grammiXpzuv / ((row.resa || 100) / 100);
-                                                            const costoUV = row.eurKg > 0 ? (fabbXpzuv / 1000) * row.eurKg : 0;
-                                                            const costoKg = pesoFinitoPzCalc > 0 && costoUV > 0 ? costoUV / (pesoFinitoPzCalc / 1000) : 0;
-                                                            const bg = i % 2 === 0 ? 'white' : '#fafafa';
-                                                            return (
-                                                                <tr key={row.ing.nome} style={{ background: bg, borderBottom: '1px solid var(--color-border)' }}>
-                                                                    <td style={{ padding: '6px 10px', fontWeight: 500, minWidth: 130 }}>{(row.ing.nome || '').trim()}</td>
-                                                                    <td className="ri-q" style={{ padding: '6px 10px', textAlign: 'right', whiteSpace: 'nowrap', color: 'var(--color-text-muted)' }}>{fmt3(row.grammiTotali)}</td>
-                                                                    <td className="ri-q" style={{ padding: '6px 10px', textAlign: 'right', whiteSpace: 'nowrap', color: 'var(--color-text-muted)' }}>{fmt3(row.grammiXpzuv)}</td>
-                                                                    <td className="ri-q" style={{ padding: '6px 10px', textAlign: 'right', whiteSpace: 'nowrap' }}>{fmt3(pctRicetta)}</td>
-                                                                    <td className="ri-q" style={{ padding: '6px 10px', textAlign: 'right', whiteSpace: 'nowrap', fontWeight: 600, color: 'var(--color-orange)' }}>{fmt3(quid)}</td>
-                                                                    <td className="ri-c" style={{ padding: '6px 8px', textAlign: 'right', whiteSpace: 'nowrap' }}>{row.eurKg > 0 ? fmt2(row.eurKg) : '—'}</td>
-                                                                    <td className="ri-c" style={{ padding: '6px 8px', textAlign: 'right', whiteSpace: 'nowrap' }}>{fmt2(row.resa || 100)}</td>
-                                                                    <td className="ri-c" style={{ padding: '6px 8px', textAlign: 'right', whiteSpace: 'nowrap' }}>{costoKgPulito > 0 ? fmt2(costoKgPulito) : '—'}</td>
-                                                                    <td style={{ padding: '6px 8px', textAlign: 'right', whiteSpace: 'nowrap', fontWeight: 600, background: 'rgba(255,126,46,0.04)' }}>{fmtC(costoUV)}</td>
-                                                                    <td style={{ padding: '6px 8px', textAlign: 'right', whiteSpace: 'nowrap', fontWeight: 600, background: 'rgba(255,126,46,0.04)' }}>{fmtC(costoKg)}</td>
-                                                                </tr>
-                                                            );
-                                                        })}
-                                                    </tbody>
-                                                </table>
-                                            </div>
-                                        </>)}
-                                    </div>
-                                );
-                            })()}
-
-                            {/* Cost summary card */}
-                            {allRows.length > 0 && (() => {
-                                let costoTotale = 0;
-                                let fabbRealeTotale = 0;
-                                for (const c of components) {
-                                    for (const r of c.rows) {
-                                        const fabb = r.grams / ((r.resa || 100) / 100);
-                                        costoTotale += (r.eurKg / 1000) * fabb;
-                                        fabbRealeTotale += fabb;
-                                    }
-                                }
-                                const costPerKg = pesoTotale > 0 ? (costoTotale / pesoTotale) * 1000 : 0;
-                                if (costoTotale === 0) return null;
-                                return (
-                                    <div style={{ marginBottom: 20, background: 'linear-gradient(135deg,rgba(255,126,46,0.06),rgba(12,19,38,0.02))', border: '1.5px solid var(--color-orange)', borderRadius: 12, padding: '14px 20px' }}>
-                                        <div style={{ fontWeight: 800, fontSize: 14, marginBottom: 12, display: 'flex', alignItems: 'center', gap: 7 }}><Euro size={15} /> Riepilogo Costi Ingredienti</div>
-                                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(180px,1fr))', gap: 12 }}>
-                                            <div style={{ background: 'white', borderRadius: 10, padding: '10px 14px', boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}>
-                                                <div style={{ fontSize: 11, color: 'var(--color-text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Costo ingredienti per pezzo</div>
-                                                <div style={{ fontSize: 22, fontWeight: 800, color: 'var(--color-orange)', marginTop: 4 }}>{costoTotale.toFixed(3)} €</div>
-                                            </div>
-                                            <div style={{ background: 'white', borderRadius: 10, padding: '10px 14px', boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}>
-                                                <div style={{ fontSize: 11, color: 'var(--color-text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Costo ingredienti per kg</div>
-                                                <div style={{ fontSize: 22, fontWeight: 800, color: 'var(--color-navy)', marginTop: 4 }}>{costPerKg.toFixed(3)} €</div>
-                                            </div>
-                                            <div style={{ background: 'white', borderRadius: 10, padding: '10px 14px', boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}>
-                                                <div style={{ fontSize: 11, color: 'var(--color-text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Fabbisogno reale totale</div>
-                                                <div style={{ fontSize: 22, fontWeight: 800, color: '#555', marginTop: 4 }}>{fabbRealeTotale.toFixed(1)} g</div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                );
-                            })()}
-                        </div>
-                        </>
-                    )}
-
-                    {/* Step 2 — Mercati & Serving size */}
-                    {wizardStep === 2 && (
-                        <>
-                        <div className="guided-callout">
-                            <span className="guided-callout-icon">🧪</span>
-                            <div>
-                                <div className="guided-callout-title">STEP 3 — ADDITIVI</div>
-                                <div className="guided-callout-text">
-                                    Aggiungi additivi se presenti nella ricetta. Puoi saltare questo step se non ne hai.
-                                </div>
-                            </div>
-                        </div>
-                        <div>
-                            <h2 style={{ fontFamily: 'Fraunces, serif', fontSize: 18, fontWeight: 900, color: 'var(--color-navy)', marginBottom: 4, display: 'flex', alignItems: 'center', gap: 7 }}>
-                                <Globe size={18} /> Mercati & Serving size
-                            </h2>
-                            <p style={{ fontSize: 13, color: 'var(--color-text-muted)', marginBottom: 22, lineHeight: 1.55 }}>
-                                Seleziona il mercato di destinazione e configura le porzioni di riferimento (facoltativo).
-                            </p>
-                            <div className="nation-tab-bar" style={{ display: 'flex', gap: 8, marginBottom: 20, alignItems: 'center', overflowX: 'auto', paddingBottom: 4 }}>
-                                {(['UE', 'USA', 'Canada', 'Australia', 'Arabi'] as NationTab[]).map(t => {
-                                    const codes: Record<NationTab, string> = { UE: 'EU', USA: 'US', Canada: 'CA', Australia: 'AU', Arabi: 'AR' };
-                                    const names: Record<NationTab, string> = { UE: 'UE', USA: 'USA', Canada: 'Canada', Australia: 'Australia', Arabi: 'Arabi' };
-                                    return (
-                                        <button key={t}
-                                            className={`btn nation-tab-btn ${activeTab === t ? 'btn-primary' : 'btn-outline'}`}
-                                            style={{ fontWeight: 600, flex: 1, textAlign: 'center', minWidth: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}
-                                            onClick={() => setActiveTab(t)}>
-                                            <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', padding: '1px 4px', borderRadius: 3, fontSize: 9, fontWeight: 800, letterSpacing: 0.3, border: '1px solid currentColor', opacity: 0.7, lineHeight: 1.4 }}>{codes[t]}</span>
-                                            {names[t]}
-                                        </button>
-                                    );
-                                })}
-                            </div>
-                            <div style={{ background: 'white', borderRadius: 8, boxShadow: '0 2px 8px rgba(0,0,0,0.05)', padding: '16px 20px', marginBottom: 16 }}>
-                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: 8, marginBottom: 16 }}>
-                                    {activeTab === 'UE' && (
-                                        <>
-                                            {(['porzione', 'confezione', 'pezzo'] as const).map((k, i) => {
-                                                const labels = ['Porzione (g/ml)', 'U.V. / Confezione (g/ml)', 'Pezzo (g/ml)'];
-                                                return (
-                                                    <div key={k} className="form-field" style={{ marginBottom: 0 }}>
-                                                        <label className="form-label">{labels[i]}</label>
-                                                        <input type="number" min={0} placeholder="—" value={ue[k] || ''}
-                                                            onChange={e => setUE(prev => ({ ...prev, [k]: parseFloat(e.target.value) || undefined }))}
-                                                            className="form-input" />
-                                                    </div>
-                                                );
-                                            })}
-                                        </>
-                                    )}
-                                    {activeTab === 'USA' && (
-                                        <>
-                                            {(['cup', 'cucchiaio', 'serving', 'confezione', 'pezzo'] as const).map((k, i) => {
-                                                const labels = ['CUP 240ml (g)', 'Cucchiaio 15ml (g)', 'Serving Size (g/ml)', 'Confezione/UV (g/ml)', 'Pezzo (g/ml)'];
-                                                return (
-                                                    <div key={k} className="form-field" style={{ marginBottom: 0 }}>
-                                                        <label className="form-label">{labels[i]}</label>
-                                                        <input type="number" min={0} placeholder="—" value={usa[k] || ''}
-                                                            onChange={e => setUSA(prev => ({ ...prev, [k]: parseFloat(e.target.value) || undefined }))}
-                                                            className="form-input" />
-                                                    </div>
-                                                );
-                                            })}
-                                        </>
-                                    )}
-                                    {activeTab === 'Canada' && (
-                                        <>
-                                            {(['cup', 'cucchiaio', 'serving', 'confezione', 'pezzo'] as const).map((k, i) => {
-                                                const labels = ['CUP 250ml (g)', 'Cucchiaio 15ml (g)', 'Serving Size (g/ml)', 'Confezione/UV (g/ml)', 'Pezzo (g/ml)'];
-                                                return (
-                                                    <div key={k} className="form-field" style={{ marginBottom: 0 }}>
-                                                        <label className="form-label">{labels[i]}</label>
-                                                        <input type="number" min={0} placeholder="—" value={ca[k] || ''}
-                                                            onChange={e => setCA(prev => ({ ...prev, [k]: parseFloat(e.target.value) || undefined }))}
-                                                            className="form-input" />
-                                                    </div>
-                                                );
-                                            })}
-                                        </>
-                                    )}
-                                    {activeTab === 'Australia' && (
-                                        <>
-                                            {(['serving', 'confezione', 'pezzo'] as const).map((k, i) => {
-                                                const labels = ['Serving Size (g/ml)', 'Confezione/UV (g/ml)', 'Pezzo (g/ml)'];
-                                                return (
-                                                    <div key={k} className="form-field" style={{ marginBottom: 0 }}>
-                                                        <label className="form-label">{labels[i]}</label>
-                                                        <input type="number" min={0} placeholder="—" value={au[k] || ''}
-                                                            onChange={e => setAU(prev => ({ ...prev, [k]: parseFloat(e.target.value) || undefined }))}
-                                                            className="form-input" />
-                                                    </div>
-                                                );
-                                            })}
-                                        </>
-                                    )}
-                                    {activeTab === 'Arabi' && (
-                                        <>
-                                            {(['cup', 'cucchiaio', 'serving', 'confezione', 'pezzo'] as const).map((k, i) => {
-                                                const labels = ['CUP 240ml (g)', 'Cucchiaio 15ml (g)', 'Serving Size (g/ml)', 'Confezione/UV (g/ml)', 'Pezzo (g/ml)'];
-                                                return (
-                                                    <div key={k} className="form-field" style={{ marginBottom: 0 }}>
-                                                        <label className="form-label">{labels[i]}</label>
-                                                        <input type="number" min={0} placeholder="—" value={arabi[k] || ''}
-                                                            onChange={e => setArabi(prev => ({ ...prev, [k]: parseFloat(e.target.value) || undefined }))}
-                                                            className="form-input" />
-                                                    </div>
-                                                );
-                                            })}
-                                        </>
-                                    )}
-                                </div>
-                            </div>
-                            <div style={{ background: 'rgba(67,130,28,.06)', border: '1px solid rgba(67,130,28,.18)', borderRadius: 'var(--radius-sm)', padding: '10px 14px', fontSize: 12, color: 'var(--color-green)', fontWeight: 600 }}>
-                                ✅ Serving size facoltativo — se non specificato la tabella mostrerà solo i valori per 100 g.
-                            </div>
-                        </div>
-                        </>
-                    )}
-
-                    {/* Step 3 — Anteprima & Export */}
-                    {wizardStep === 3 && (
-                        <>
-                        <div className="guided-callout">
-                            <span className="guided-callout-icon">📋</span>
-                            <div>
-                                <div className="guided-callout-title">STEP 4 — TABELLE</div>
-                                <div className="guided-callout-text">
-                                    Rivedi i valori e imposta le porzioni. Esporta il PDF dalla colonna destra.
-                                </div>
-                            </div>
-                        </div>
-                        <div>
-                            <h2 style={{ fontFamily: 'Fraunces, serif', fontSize: 18, fontWeight: 900, color: 'var(--color-navy)', marginBottom: 4, display: 'flex', alignItems: 'center', gap: 7 }}>
-                                <CheckCircle size={18} /> Tabella pronta!
-                            </h2>
-                            <p style={{ fontSize: 13, color: 'var(--color-text-muted)', marginBottom: 18, lineHeight: 1.55 }}>
-                                Anteprima calcolata · Normativa <strong>{activeTab}</strong>
-                            </p>
-                            {allRows.length === 0 && (
-                                <div style={{ background: 'rgba(217,119,6,.08)', border: '1px solid rgba(217,119,6,.25)', borderRadius: 'var(--radius-sm)', padding: '12px 16px', fontSize: 13, color: 'var(--color-warning)', fontWeight: 600, marginBottom: 16 }}>
-                                    ⚠ Nessun ingrediente inserito. Torna al passo precedente e aggiungi almeno un ingrediente.
-                                </div>
-                            )}
-                            <div className="nation-tab-bar" style={{ display: 'flex', gap: 8, marginBottom: 16, alignItems: 'center', overflowX: 'auto', paddingBottom: 4 }}>
-                                {(['UE', 'USA', 'Canada', 'Australia', 'Arabi'] as NationTab[]).map(t => {
-                                    const codes: Record<NationTab, string> = { UE: 'EU', USA: 'US', Canada: 'CA', Australia: 'AU', Arabi: 'AR' };
-                                    const names: Record<NationTab, string> = { UE: 'UE', USA: 'USA', Canada: 'Canada', Australia: 'Australia', Arabi: 'Arabi' };
-                                    return (
-                                        <button key={t}
-                                            className={`btn nation-tab-btn ${activeTab === t ? 'btn-primary' : 'btn-outline'}`}
-                                            style={{ fontWeight: 600, flex: 1, textAlign: 'center', minWidth: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}
-                                            onClick={() => setActiveTab(t)}>
-                                            <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', padding: '1px 4px', borderRadius: 3, fontSize: 9, fontWeight: 800, letterSpacing: 0.3, border: '1px solid currentColor', opacity: 0.7, lineHeight: 1.4 }}>{codes[t]}</span>
-                                            {names[t]}
-                                        </button>
-                                    );
-                                })}
-                            </div>
-                            <div className="nutri-results-wrapper" style={{ background: 'white', borderRadius: 8, boxShadow: '0 2px 8px rgba(0,0,0,0.05)', padding: '16px 20px', marginBottom: 16 }}>
-                                <div ref={tableRef}>
-                                    {activeTab === 'UE' && (
-                                        <>
-                                            {(ue.porzione != null || ue.confezione != null || ue.pezzo != null) ? (
-                                                <div style={{ display: 'flex', gap: 4, marginBottom: 10, flexWrap: 'wrap' }}>
-                                                    {([
-                                                        { key: '100g' as EUSubTab, label: 'Per 100g', disabled: false },
-                                                        { key: 'uv' as EUSubTab, label: 'Per U.V.', disabled: ue.confezione == null },
-                                                        { key: 'porzione' as EUSubTab, label: 'Per porzione', disabled: ue.porzione == null },
-                                                        { key: 'pezzo' as EUSubTab, label: 'Per pezzo', disabled: ue.pezzo == null },
-                                                    ] as { key: EUSubTab; label: string; disabled: boolean }[]).map(t => (
-                                                        <button
-                                                            key={t.key}
-                                                            disabled={t.disabled}
-                                                            onClick={() => setEuSubTab(t.key)}
-                                                            className={`btn ${euSubTab === t.key ? 'btn-accent' : 'btn-outline'}`}
-                                                            style={{ fontSize: 11, padding: '4px 10px', opacity: t.disabled ? 0.4 : 1 }}
-                                                        >
-                                                            {t.label}
-                                                        </button>
-                                                    ))}
-                                                </div>
-                                            ) : null}
-                                            <TabUE
-                                                p={per100display}
-                                                ue={ue}
-                                                specificGravity={parseFloat(specificGravity) || 0}
-                                                selectedOptionals={selectedOptionals}
-                                                showOptionals={showOptionals}
-                                                activeSubTab={euSubTab}
-                                            />
-                                        </>
-                                    )}
-                                    {activeTab === 'USA' && (
-                                        <>
-                                            <div style={{ display: 'flex', gap: 4, marginBottom: 6, flexWrap: 'wrap' }}>
-                                                {(['verticale', 'orizzontale', 'lineare'] as SubTab[]).map(t => (
-                                                    <button key={t} onClick={() => setSubTab(t)}
-                                                        className={`btn ${subTab === t ? 'btn-accent' : 'btn-outline'}`}
-                                                        style={{ fontSize: 11, padding: '4px 10px' }}>
-                                                        {t.charAt(0).toUpperCase() + t.slice(1)}
-                                                    </button>
-                                                ))}
-                                            </div>
-                                            {(usa.confezione != null && usa.confezione > 0) ? (
-                                                <div style={{ display: 'flex', gap: 4, marginBottom: 6, flexWrap: 'wrap' }}>
-                                                    {(['serving', 'confezione'] as USAServingRef[]).map(ref => (
-                                                        <button key={ref} onClick={() => setUsaServingRef(ref)}
-                                                            className={`btn ${usaServingRef === ref ? 'btn-accent' : 'btn-outline'}`}
-                                                            style={{ fontSize: 11, padding: '4px 10px' }}>
-                                                            {ref === 'serving' ? 'Per Serving' : 'Per Confezione'}
-                                                        </button>
-                                                    ))}
-                                                </div>
-                                            ) : null}
-                                            <div style={{ display: 'flex', gap: 4, marginBottom: 10, flexWrap: 'wrap' }}>
-                                                {([
-                                                    { key: 'g' as USAMeasure, label: 'g / ml', disabled: false },
-                                                    { key: 'tazze' as USAMeasure, label: 'Tazze', disabled: usa.cup == null },
-                                                    { key: 'cucchiai' as USAMeasure, label: 'Cucchiai', disabled: usa.cucchiaio == null },
-                                                    { key: 'pezzi' as USAMeasure, label: 'Pezzi', disabled: usa.pezzo == null },
-                                                ] as { key: USAMeasure; label: string; disabled: boolean }[]).map(t => (
-                                                    <button key={t.key} disabled={t.disabled} onClick={() => setUsaMeasure(t.key)}
-                                                        className={`btn ${usaMeasure === t.key ? 'btn-accent' : 'btn-outline'}`}
-                                                        style={{ fontSize: 11, padding: '4px 10px', opacity: t.disabled ? 0.4 : 1 }}>
-                                                        {t.label}
-                                                    </button>
-                                                ))}
-                                            </div>
-                                            <TabUSA p={per100display} usa={usa} specificGravity={parseFloat(specificGravity) || 0}
-                                                servingRef={usaServingRef} measure={usaMeasure} subTab={subTab} />
-                                        </>
-                                    )}
-                                    {activeTab === 'Canada' && (
-                                        <>
-                                            {(ca.confezione != null && ca.confezione > 0) && (
-                                                <div style={{ display: 'flex', gap: 4, marginBottom: 6, flexWrap: 'wrap' }}>
-                                                    {(['serving', 'confezione'] as USAServingRef[]).map(ref => (
-                                                        <button key={ref} onClick={() => setCaServingRef(ref)}
-                                                            className={`btn ${caServingRef === ref ? 'btn-accent' : 'btn-outline'}`}
-                                                            style={{ fontSize: 11, padding: '4px 10px' }}>
-                                                            {ref === 'serving' ? 'Per Serving' : 'Per Confezione'}
-                                                        </button>
-                                                    ))}
-                                                </div>
-                                            )}
-                                            <div style={{ display: 'flex', gap: 4, marginBottom: 10, flexWrap: 'wrap' }}>
-                                                {([
-                                                    { key: 'g' as USAMeasure, label: 'g / ml', disabled: false },
-                                                    { key: 'tazze' as USAMeasure, label: 'Tazze (250ml)', disabled: ca.cup == null },
-                                                    { key: 'cucchiai' as USAMeasure, label: 'Cucchiai', disabled: ca.cucchiaio == null },
-                                                    { key: 'pezzi' as USAMeasure, label: 'Pezzi', disabled: ca.pezzo == null },
-                                                ] as { key: USAMeasure; label: string; disabled: boolean }[]).map(t => (
-                                                    <button key={t.key} disabled={t.disabled} onClick={() => setCaMeasure(t.key)}
-                                                        className={`btn ${caMeasure === t.key ? 'btn-accent' : 'btn-outline'}`}
-                                                        style={{ fontSize: 11, padding: '4px 10px', opacity: t.disabled ? 0.4 : 1 }}>
-                                                        {t.label}
-                                                    </button>
-                                                ))}
-                                            </div>
-                                            <TabCanada p={per100display} ca={ca} servingRef={caServingRef} measure={caMeasure} subTab={subTab} setSubTab={setSubTab} full={false} />
-                                        </>
-                                    )}
-                                    {activeTab === 'Australia' && <TabAustralia p={per100display} au={au} showDI={auShowDI} setShowDI={setAuShowDI} full={false} />}
-                                    {activeTab === 'Arabi' && (
-                                        <>
-                                            {(arabi.confezione != null && arabi.confezione > 0) ? (
-                                                <div style={{ display: 'flex', gap: 4, marginBottom: 6, flexWrap: 'wrap' }}>
-                                                    {(['serving', 'confezione'] as USAServingRef[]).map(ref => (
-                                                        <button key={ref} onClick={() => setArabiServingRef(ref)}
-                                                            className={`btn ${arabiServingRef === ref ? 'btn-accent' : 'btn-outline'}`}
-                                                            style={{ fontSize: 11, padding: '4px 10px' }}>
-                                                            {ref === 'serving' ? 'Per Serving' : 'Per Confezione'}
-                                                        </button>
-                                                    ))}
-                                                </div>
-                                            ) : null}
-                                            <div style={{ display: 'flex', gap: 4, marginBottom: 10, flexWrap: 'wrap' }}>
-                                                {([
-                                                    { key: 'g' as USAMeasure, label: 'g / ml', disabled: false },
-                                                    { key: 'tazze' as USAMeasure, label: 'Tazze', disabled: arabi.cup == null },
-                                                    { key: 'cucchiai' as USAMeasure, label: 'Cucchiai', disabled: arabi.cucchiaio == null },
-                                                    { key: 'pezzi' as USAMeasure, label: 'Pezzi', disabled: arabi.pezzo == null },
-                                                ] as { key: USAMeasure; label: string; disabled: boolean }[]).map(t => (
-                                                    <button key={t.key} disabled={t.disabled} onClick={() => setArabiMeasure(t.key)}
-                                                        className={`btn ${arabiMeasure === t.key ? 'btn-accent' : 'btn-outline'}`}
-                                                        style={{ fontSize: 11, padding: '4px 10px', opacity: t.disabled ? 0.4 : 1 }}>
-                                                        {t.label}
-                                                    </button>
-                                                ))}
-                                            </div>
-                                            <TabArabi p={per100display} arabi={arabi} servingRef={arabiServingRef} measure={arabiMeasure} specificGravity={parseFloat(specificGravity) || 0} full={false} />
-                                        </>
-                                    )}
-                                </div>
-                                {activeTab === 'UE' && (
-                                    <div style={{ marginTop: 12, display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: 10 }}>
-                                        <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, fontWeight: 600, cursor: 'pointer', color: 'var(--color-text-muted)' }}>
-                                            <input
-                                                type="checkbox"
-                                                checked={showOptionals}
-                                                onChange={e => setShowOptionals(e.target.checked)}
-                                                style={{ width: 15, height: 15, cursor: 'pointer', accentColor: 'var(--color-orange)' }}
-                                            />
-                                            Mostra valori facoltativi
-                                        </label>
-                                        {showOptionals && (
-                                            <button
-                                                onClick={() => setNutrModalOpen(true)}
-                                                className="btn btn-outline"
-                                                style={{ fontSize: 11, padding: '4px 10px', display: 'flex', alignItems: 'center', gap: 5 }}
-                                            >
-                                                ⚙ Configura nutrienti
-                                            </button>
-                                        )}
-                                    </div>
-                                )}
-                            </div>
-                            <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
-                                <button className="btn btn-outline" onClick={handleDownloadPNG} title="Esporta la tabella nutrizionale come immagine PNG" style={{ display: 'flex', alignItems: 'center', gap: 6 }}><ImageDown size={14} /> Scarica PNG</button>
-                                <button className="btn btn-primary" onClick={handleSave} title="Salva la ricetta nell'archivio locale" style={{ background: 'var(--color-navy)', display: 'flex', alignItems: 'center', gap: 6 }}><Save size={14} /> Salva in archivio</button>
-                            </div>
-                        </div>
-                        </>
-                    )}
-                </div>
-
-                {/* ── Footer navigazione ── */}
-                <div style={{
-                    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                    padding: '14px 28px', borderTop: '1px solid var(--color-border)',
-                    background: 'var(--color-surface)',
-                }}>
-                    <button
-                        className="btn btn-outline"
-                        onClick={() => wizNav(-1)}
-                        disabled={wizardStep === 0}
-                        style={{ opacity: wizardStep === 0 ? 0.4 : 1, display: 'flex', alignItems: 'center', gap: 6 }}>
-                        <ChevronLeft size={14} /> Indietro
-                    </button>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                        {fieldErrors.wizardNome && wizardStep === 0 && (
-                            <span style={{ fontSize: 12, color: 'var(--color-danger)', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 4 }}>
-                                <AlertTriangle size={12} /> {fieldErrors.wizardNome}
-                            </span>
-                        )}
-                        {fieldErrors.wizardIng && wizardStep === 1 && (
-                            <span style={{ fontSize: 12, color: 'var(--color-danger)', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 4 }}>
-                                <AlertTriangle size={12} /> {fieldErrors.wizardIng}
-                            </span>
-                        )}
-                        <button
-                            className="btn btn-accent"
-                            onClick={() => wizardStep === 3 ? toggleWizardMode(false) : wizNav(1)}
-                            style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                            {wizardStep === 3 ? <><SlidersHorizontal size={14} /> Apri modalità Avanzata</> : <>Avanti <ChevronRight size={14} /></>}
-                        </button>
-                    </div>
-                </div>
-            </div>
-        );
-    };
-
-    const renderTablePanel = (): React.ReactNode => {
-        return (
-            <div style={{ padding: '10px 10px 4px', display: 'flex', flexDirection: 'column', height: '100%' }}>
-                {/* Tab switcher */}
-                <div style={{ display: 'flex', gap: '4px', marginBottom: '12px', background: 'var(--color-surface)', borderRadius: '7px', padding: '3px' }}>
+            <div id={isMobileInline ? undefined : 'mob-tables-anchor'} className={`table-panel-inner${isFlashing ? ' value-flash' : ''}`}>
+            <div className="table-panel-header">
+                {/* TABELLA NUTRIZIONALE heading */}
+                <div className="table-panel-header-title">Tabella nutrizionale</div>
+                {/* Nation segmented control — matches HTML .right-seg */}
+                <div className="right-seg" role="group" aria-label="Mercato di riferimento">
                     {(['UE', 'USA', 'Canada', 'Australia', 'Arabi'] as NationTab[]).map(t => {
                         const labels: Record<NationTab, string> = { UE: 'EU', USA: 'USA', Canada: 'Canada', Australia: 'Australia', Arabi: 'Arabi' };
                         return (
-                            <button
-                                key={t}
-                                type="button"
-                                onClick={() => setActiveTab(t)}
-                                style={{
-                                    padding: '4px 10px',
-                                    borderRadius: '5px',
-                                    border: 'none',
-                                    background: activeTab === t ? 'white' : 'transparent',
-                                    boxShadow: activeTab === t ? '0 1px 2px rgba(0,0,0,0.07)' : 'none',
-                                    color: activeTab === t ? 'var(--color-text)' : 'var(--color-text-dim)',
-                                    fontWeight: activeTab === t ? 600 : 400,
-                                    fontSize: '11px',
-                                    cursor: 'pointer',
-                                }}
-                            >
-                                {labels[t]}
-                            </button>
+                            <button key={t} type="button" onClick={() => setActiveTab(t)}
+                                className={`right-seg-btn${activeTab === t ? ' active' : ''}`}
+                            >{labels[t]}</button>
                         );
                     })}
                 </div>
 
+                {/* Serving inputs — contextual per nation */}
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(110px, 1fr))', gap: 6, padding: '4px 0 8px' }}>
+                    {activeTab === 'UE' && (['porzione', 'confezione', 'pezzo'] as const).map((k, i) => {
+                        const labels = ['Porzione (g/ml)', 'U.V. / Confezione (g/ml)', 'Pezzo (g/ml)'];
+                        return (
+                            <div key={k} className="field">
+                                <label className="field-label" style={{ fontSize: 10 }}>{labels[i]}</label>
+                                <input type="number" min={0} placeholder="—" value={ue[k] || ''}
+                                    onChange={e => setUE(prev => ({ ...prev, [k]: parseFloat(e.target.value) || undefined }))}
+                                    className="field-input" style={{ padding: '5px 8px', fontSize: 12 }} />
+                            </div>
+                        );
+                    })}
+                    {activeTab === 'USA' && (['cup', 'cucchiaio', 'serving', 'confezione', 'pezzo'] as const).map((k, i) => {
+                        const labels = ['CUP 240ml (g)', 'Cucchiaio 15ml (g)', 'Serving Size (g/ml)', 'Confezione/UV (g/ml)', 'Pezzo (g/ml)'];
+                        return (
+                            <div key={k} className="field">
+                                <label className="field-label" style={{ fontSize: 10 }}>{labels[i]}</label>
+                                <input type="number" min={0} placeholder="—" value={usa[k] || ''}
+                                    onChange={e => setUSA(prev => ({ ...prev, [k]: parseFloat(e.target.value) || undefined }))}
+                                    className="field-input" style={{ padding: '5px 8px', fontSize: 12 }} />
+                            </div>
+                        );
+                    })}
+                    {activeTab === 'Canada' && (['cup', 'cucchiaio', 'serving', 'confezione', 'pezzo'] as const).map((k, i) => {
+                        const labels = ['CUP 250ml (g)', 'Cucchiaio 15ml (g)', 'Serving Size (g/ml)', 'Confezione/UV (g/ml)', 'Pezzo (g/ml)'];
+                        return (
+                            <div key={k} className="field">
+                                <label className="field-label" style={{ fontSize: 10 }}>{labels[i]}</label>
+                                <input type="number" min={0} placeholder="—" value={ca[k] || ''}
+                                    onChange={e => setCA(prev => ({ ...prev, [k]: parseFloat(e.target.value) || undefined }))}
+                                    className="field-input" style={{ padding: '5px 8px', fontSize: 12 }} />
+                            </div>
+                        );
+                    })}
+                    {activeTab === 'Australia' && (['serving', 'confezione', 'pezzo'] as const).map((k, i) => {
+                        const labels = ['Serving Size (g/ml)', 'Confezione/UV (g/ml)', 'Pezzo (g/ml)'];
+                        return (
+                            <div key={k} className="field">
+                                <label className="field-label" style={{ fontSize: 10 }}>{labels[i]}</label>
+                                <input type="number" min={0} placeholder="—" value={au[k] || ''}
+                                    onChange={e => setAU(prev => ({ ...prev, [k]: parseFloat(e.target.value) || undefined }))}
+                                    className="field-input" style={{ padding: '5px 8px', fontSize: 12 }} />
+                            </div>
+                        );
+                    })}
+                    {activeTab === 'Arabi' && (['cup', 'cucchiaio', 'serving', 'confezione', 'pezzo'] as const).map((k, i) => {
+                        const labels = ['CUP 240ml (g)', 'Cucchiaio 15ml (g)', 'Serving Size (g/ml)', 'Confezione/UV (g/ml)', 'Pezzo (g/ml)'];
+                        return (
+                            <div key={k} className="field">
+                                <label className="field-label" style={{ fontSize: 10 }}>{labels[i]}</label>
+                                <input type="number" min={0} placeholder="—" value={arabi[k] || ''}
+                                    onChange={e => setArabi(prev => ({ ...prev, [k]: parseFloat(e.target.value) || undefined }))}
+                                    className="field-input" style={{ padding: '5px 8px', fontSize: 12 }} />
+                            </div>
+                        );
+                    })}
+                </div>
+            </div>{/* /table-panel-header */}
+
                 {/* Active tab */}
-                <div ref={tableRef} style={{ flex: 1, overflowY: 'auto' }}>
+                <div ref={isMobileInline ? undefined : tableRef} className="table-scroll-area" style={{ overflowX: 'auto' }}>
                     {activeTab === 'UE' && (
                         <>
                             <div style={{ border: '1px solid #eaecf0', borderRadius: 8, overflow: 'hidden', marginTop: 8 }}>
@@ -2806,29 +2157,17 @@ export function NutrizionaleCalc() {
                     )}
                 </div>
 
-                {/* Export PNG */}
-                <button
-                    type="button"
-                    onClick={handleDownloadPNG}
-                    style={{
-                        marginTop: '6px',
-                        width: '100%',
-                        padding: '7px',
-                        borderRadius: '7px',
-                        background: 'var(--color-navy)',
-                        color: 'white',
-                        border: 'none',
-                        fontSize: '12px',
-                        fontWeight: 600,
-                        cursor: 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        gap: '6px',
-                    }}
-                >
-                    <ImageDown size={13} /> Esporta PNG
+            <div className="table-panel-footer">
+                <button type="button" onClick={handleDownloadPNG}
+                    className="btn btn-outline"
+                    style={{ flex: 1, justifyContent: 'center', fontSize: 12, padding: '7px' }}>
+                    <ImageDown size={13} /> Scarica PNG
                 </button>
+                <button type="button" onClick={handleSave}
+                    style={{ flex: 1, padding: '7px', borderRadius: '7px', background: 'var(--color-navy)', color: 'white', border: 'none', fontSize: '12px', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
+                    <Save size={13} /> Salva in archivio
+                </button>
+            </div>
             </div>
         );
     };
@@ -2837,17 +2176,19 @@ export function NutrizionaleCalc() {
         <>
             {/* Inject title into topbar-left slot */}
             {createPortal(
-                <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-                    <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--color-navy)', lineHeight: 1.2 }}>Creazione tabelle valori nutrizionali</span>
-                    <span style={{ fontSize: 10, color: 'var(--color-text-muted)', lineHeight: 1.2, marginTop: 1 }}>Etichettatura internazionale (UE, USA, Canada, Australia, Arabi) &amp; Costi Ingredienti</span>
+                <div style={{ fontWeight: 600, fontSize: 17, color: 'var(--color-text)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', lineHeight: 1.2 }}>
+                    {productName ? (
+                        <span style={{ color: 'var(--color-orange)' }}>{productName}</span>
+                    ) : (
+                        <span style={{ color: 'var(--color-text)' }}>Calcolatore Ricette</span>
+                    )}
                 </div>,
                 document.getElementById('topbar-title-slot') ?? document.body
             )}
 
-            {/* Inject ModeToggle and action buttons into topbar slot */}
+            {/* Action buttons into topbar slot */}
             {createPortal(
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <ModeToggle mode={uiMode} onChange={setUiMode} />
                     <button type="button" className="topbar-btn-primary" onClick={handleNew}>
                         <Plus size={13} />
                         Nuova Ricetta
@@ -2860,7 +2201,14 @@ export function NutrizionaleCalc() {
                         <Database size={13} />
                         Nuovo Ingrediente
                     </button>
-                    <button type="button" className="topbar-btn-ghost" onClick={handleSave}>
+                    <button type="button" className="topbar-btn-ghost" onClick={() => setShowBrowseModal(true)}>
+                        <Database size={13} />
+                        Sfoglia DB
+                    </button>
+                    <button type="button" className="topbar-btn-ghost" onClick={handleSave} style={{ position: 'relative' }}>
+                        {isDirty && (
+                            <span style={{ position: 'absolute', top: 4, right: 4, width: 6, height: 6, borderRadius: '50%', background: 'var(--color-orange, #f97316)', pointerEvents: 'none' }} />
+                        )}
                         <Save size={13} />
                         Salva
                     </button>
@@ -2869,10 +2217,45 @@ export function NutrizionaleCalc() {
             )}
 
             {/* Modals */}
+            <ConfirmDialog
+                open={confirmState.open}
+                title={confirmState.title}
+                message={confirmState.message}
+                variant={confirmState.variant}
+                confirmLabel={confirmState.confirmLabel}
+                onConfirm={confirmState.onConfirm}
+                onCancel={closeConfirm}
+            />
             {showCustomModal && (
                 <CustomIngredientModal
                     onClose={() => setShowCustomModal(false)}
                     onSave={(ing) => { addCustomIngredient(ing); }}
+                />
+            )}
+            {editIngredient && (
+                <CustomIngredientModal
+                    initialIngredient={editIngredient.ing}
+                    originalNome={editIngredient.isCustom ? editIngredient.ing.nome : undefined}
+                    onClose={() => setEditIngredient(null)}
+                    onSave={(ing) => {
+                        // Rimuovi vecchio e aggiungi nuovo nel db state
+                        if (editIngredient.isCustom) {
+                            setDb(prev => [...prev.filter(i => i.nome !== editIngredient.ing.nome), ing]);
+                        } else {
+                            addCustomIngredient(ing);
+                        }
+                        setEditIngredient(null);
+                    }}
+                />
+            )}
+            {showBrowseModal && (
+                <BrowseIngredientsModal
+                    db={db}
+                    onClose={() => setShowBrowseModal(false)}
+                    onEditIngredient={(ing, isCustom) => {
+                        setShowBrowseModal(false);
+                        setEditIngredient({ ing, isCustom });
+                    }}
                 />
             )}
             <NutrientSelectModal
@@ -2902,7 +2285,7 @@ export function NutrizionaleCalc() {
                                     </div>
                                     <div style={{ display: 'flex', gap: 8 }}>
                                         <button className="btn btn-primary" style={{ fontSize: 12, padding: '4px 10px' }} onClick={() => handleLoad(item)}>Carica</button>
-                                        <button className="btn btn-outline" style={{ fontSize: 12, padding: '4px 10px', color: '#e53e3e' }} onClick={() => { if (window.confirm(`Eliminare "${title}"?`)) deleteItem(item.id); }}>🗑 Elimina</button>
+                                        <button className="btn btn-outline" style={{ fontSize: 12, padding: '4px 10px', color: '#e53e3e' }} onClick={() => openConfirm({ title: 'Eliminare ricetta', message: `Vuoi eliminare "${title}"? L'azione è irreversibile.`, variant: 'danger', confirmLabel: 'Elimina', onConfirm: () => { closeConfirm(); deleteItem(item.id); } })}>🗑 Elimina</button>
                                     </div>
                                 </div>
                             );
@@ -2911,257 +2294,296 @@ export function NutrizionaleCalc() {
                 </div>
             )}
 
-            <div style={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - var(--topbar-height, 56px))' }}>
-            {/* Prodotto bar — horizontal, above panels */}
-            {!wizardMode && (
-                <div style={{ display: 'flex', gap: 10, padding: '8px 0 6px', flexShrink: 0, alignItems: 'flex-start' }}>
-                    <div style={{ flex: 3 }}>
-                        <label style={{ fontSize: 10, fontWeight: 700, color: 'var(--color-text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px', display: 'block', marginBottom: 4 }}>Nome prodotto</label>
-                        <input type="text" placeholder="Nome prodotto (es. Torta di mele...)" value={productName}
-                            onChange={e => setProductName(e.target.value)} className="form-input" style={{ fontSize: 13, fontWeight: 600 }} />
-                    </div>
-                    <div style={{ flex: 1 }}>
-                        <div style={{ display: 'flex', alignItems: 'center', marginBottom: 4, gap: 3 }}>
-                            <label style={{ fontSize: 10, fontWeight: 700, color: 'var(--color-text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Peso finito (g)</label>
-                            <InfoTooltip text="Peso del prodotto dopo cottura, disidratazione o evaporazione di acqua. Deve essere uguale o inferiore al peso del prodotto processato." />
-                        </div>
-                        <input type="number" min={0} placeholder={`max ${totalGramsRaw.toFixed(0)}g`} value={finishedWeight}
-                            onChange={e => handleFW(e.target.value)}
-                            className="form-input" style={fwWarning ? { borderColor: '#e53e3e', background: 'rgba(229,62,62,.05)' } : {}} />
-                    </div>
-                    <div style={{ flex: 1 }}>
-                        <div style={{ display: 'flex', alignItems: 'center', marginBottom: 4, gap: 3 }}>
-                            <label style={{ fontSize: 10, fontWeight: 700, color: 'var(--color-text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Peso specifico (g/ml)</label>
-                            <InfoTooltip text="Inserisci il peso specifico SOLO per alimenti liquidi. Quando compilato, i valori verranno espressi su 100 ml." />
-                        </div>
-                        <input type="number" min={0} step={0.01} placeholder="opzionale" value={specificGravity}
-                            onChange={e => setSpecificGravity(e.target.value)} className="form-input" />
-                    </div>
-                </div>
-            )}
-            {fwWarning && !wizardMode && (
-                <div style={{ marginBottom: 6, padding: '6px 10px', background: 'rgba(229,62,62,.10)', border: '2px solid #e53e3e', borderRadius: 7, fontSize: 11, color: '#c53030', fontWeight: 700, display: 'flex', alignItems: 'center', gap: 6 }}>
-                    <AlertTriangle size={13} style={{ flexShrink: 0 }} />
-                    <span>{fieldErrors['finished-weight'] || `Peso superiore al crudo. Max ${(totalGramsRaw / ((components[0]?.pzUV || 1))).toFixed(0)}g.`}</span>
-                </div>
-            )}
-
-            {/* Step indicator — guided mode only */}
-            {wizardMode && (
-                <div className="step-indicator">
-                    {[
-                        { label: 'Ricetta', step: 0 },
-                        { label: 'Ingredienti', step: 1 },
-                        { label: 'Mercati', step: 2 },
-                        { label: 'Tabelle', step: 3 },
-                    ].map(({ label, step }, i) => (
-                        <React.Fragment key={step}>
-                            {i > 0 && (
-                                <div className={`step-indicator-connector${wizardStep >= step ? ' done' : ''}`} />
-                            )}
-                            <div className={`step-dot ${wizardStep === step ? 'active' : wizardStep > step ? 'done' : 'pending'}`}>
-                                {wizardStep > step ? <Check size={10} /> : step + 1}
-                            </div>
-                            <span className={`step-label${wizardStep === step ? ' active' : wizardStep > step ? ' done' : ''}`}>
-                                {label}
-                            </span>
-                        </React.Fragment>
-                    ))}
-                </div>
-            )}
+            <div className="calc-outer-shell" style={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - var(--topbar-height, 56px))' }}>
 
             <SplitShell
                 left={
                     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', fontSize: 15 }}>
-                        {wizardMode ? renderWizard() : (
                         <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-                            {/* Tab bar */}
-                            <div style={{ display: 'flex', borderBottom: '2px solid #eaecf0', background: 'white', flexShrink: 0 }}>
+                            {/* Tab bar — hidden on mobile, replaced by bottom bar */}
+                            <div className="expert-desktop-tabbar" style={{ display: 'flex', borderBottom: '1px solid var(--color-border)', background: 'white', flexShrink: 0, height: 40 }}>
                                 {([
-                                    { key: 'ricetta',   icon: <Salad size={13} />,        label: 'Ricetta' },
-                                    { key: 'riepilogo', icon: <ClipboardList size={13} />, label: 'Riepilogo' },
-                                    { key: 'mercati',   icon: <Globe size={13} />,         label: 'Mercati' },
-                                ] as { key: typeof expertTab; icon: React.ReactNode; label: string }[]).map(tab => (
+                                    { key: 'ricetta',   label: 'Ricetta' },
+                                    { key: 'riepilogo', label: 'Riepilogo' },
+                                ] as { key: 'ricetta' | 'riepilogo'; label: string }[]).map(tab => (
                                     <button
                                         key={tab.key}
                                         type="button"
                                         onClick={() => setExpertTab(tab.key)}
-                                        className="expert-tab-btn"
-                                        style={{
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            gap: '5px',
-                                            padding: '8px 12px',
-                                            border: 'none',
-                                            background: 'transparent',
-                                            borderBottom: expertTab === tab.key ? '2px solid #ff7e2e' : '2px solid transparent',
-                                            marginBottom: '-2px',
-                                            color: expertTab === tab.key ? '#ff7e2e' : '#aaa',
-                                            fontWeight: expertTab === tab.key ? 700 : 400,
-                                            fontSize: '11px',
-                                            cursor: 'pointer',
-                                            whiteSpace: 'nowrap',
-                                        }}
+                                        className={`expert-tab-btn${expertTab === tab.key ? ' active' : ''}`}
+                                        style={{ marginBottom: -1 }}
                                     >
-                                        {tab.icon}
                                         {tab.label}
+                                        {tab.key === 'ricetta' && allRows.length > 0 && (
+                                            <span className="count-badge">{allRows.length}</span>
+                                        )}
                                     </button>
                                 ))}
                             </div>
 
                             {/* Tab content */}
-                            <div style={{ flex: 1, overflowY: 'auto', padding: '14px' }}>
+                            <div className="expert-tab-content" style={{ flex: 1, overflowY: 'auto', padding: '14px' }}>
 
                         {expertTab === 'ricetta' && (<>
-            <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--color-text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 12 }}>Componenti</div>
+
+            {/* ── Empty State — shown when no ingredients yet ── */}
+            {allRows.length === 0 && !productName && (
+                <div className="empty-state" style={{ marginBottom: 16 }}>
+                    <div className="empty-state-icon">🍳</div>
+                    <div className="empty-state-title">Inizia la tua ricetta</div>
+                    <div className="empty-state-desc">Crea una tabella nutrizionale professionale in pochi passi</div>
+                    <ul className="empty-state-steps">
+                        <li><span className="empty-state-step-num">1</span> Dai un nome al prodotto</li>
+                        <li><span className="empty-state-step-num">2</span> Cerca e aggiungi gli ingredienti</li>
+                        <li><span className="empty-state-step-num">3</span> Visualizza la tabella nutrizionale</li>
+                    </ul>
+                    <div className="empty-state-actions">
+                        <button type="button" className="btn btn-outline" style={{ fontSize: 13, padding: '8px 16px' }} onClick={() => setArchiveOpen(true)}>
+                            <FolderOpen size={14} /> Carica da archivio
+                        </button>
+                    </div>
+                </div>
+            )}
+
+            {/* ── Prodotto / Pesi — spostati nella sezione sinistra ── */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 12 }}>
+                <div>
+                    <label style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--color-text-muted)', display: 'block', marginBottom: 3 }}>Nome prodotto</label>
+                    <input type="text" placeholder="Nome prodotto (es. Torta di mele...)" value={productName}
+                        onChange={e => setProductName(e.target.value)} className="field-input" style={{ fontWeight: 600, width: '100%' }} />
+                </div>
+                <div style={{ display: 'flex', gap: 8 }}>
+                    <div style={{ flex: 1 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginBottom: 3 }}>
+                            <label style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--color-text-muted)' }}>Peso finito (g)</label>
+                            <InfoTooltip text="Peso del prodotto dopo cottura, disidratazione o evaporazione di acqua. Deve essere uguale o inferiore al peso del prodotto processato." />
+                        </div>
+                        <input type="number" min={0} placeholder={`max ${totalGramsRaw.toFixed(0)}g`} value={finishedWeight}
+                            onChange={e => handleFW(e.target.value)}
+                            className="field-input" style={{ width: '100%', ...(fwWarning ? { borderColor: '#e53e3e', background: 'rgba(229,62,62,.05)' } : {}) }} />
+                    </div>
+                    <div style={{ flex: 1 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginBottom: 3 }}>
+                            <label style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--color-text-muted)' }}>Peso specifico (g/ml)</label>
+                            <InfoTooltip text="Inserisci il peso specifico SOLO per alimenti liquidi. Quando compilato, i valori verranno espressi su 100 ml." />
+                        </div>
+                        <input type="number" min={0} step={0.01} placeholder="opzionale" value={specificGravity}
+                            onChange={e => setSpecificGravity(e.target.value)} className="field-input" style={{ width: '100%' }} />
+                    </div>
+                </div>
+                {fwWarning && (
+                    <div style={{ padding: '5px 8px', background: 'rgba(229,62,62,.10)', border: '2px solid #e53e3e', borderRadius: 6, fontSize: 11, color: '#c53030', fontWeight: 700, display: 'flex', alignItems: 'center', gap: 6 }}>
+                        <AlertTriangle size={12} style={{ flexShrink: 0 }} />
+                        <span>{fieldErrors['finished-weight'] || `Peso superiore al crudo. Max ${(totalGramsRaw / ((components[0]?.pzUV || 1))).toFixed(0)}g.`}</span>
+                    </div>
+                )}
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, margin: '4px 0 12px' }}>
+                <div style={{ flex: 1, height: 1, background: 'var(--color-border)' }} />
+                <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--color-text-muted)' }}>Ingredienti</span>
+                <div style={{ flex: 1, height: 1, background: 'var(--color-border)' }} />
+            </div>
 
             {/* Components — mod 3, 4, 5, 6: PZ/UV decimals, tooltips, €/kg zero fix, wider fields */}
             {components.map((comp, ci) => {
                 const isCompOpen = compOpen[comp.id] !== false;
                 return (
-                <div key={comp.id} className="comp-card" style={{ marginBottom: 16 }}>
+                <div key={comp.id} className="comp-card">
                     <div
-                        className="comp-card-header"
                         onClick={() => setCompOpen(prev => ({ ...prev, [comp.id]: !isCompOpen }))}
+                        style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'rgba(255,126,46,0.07)', padding: '8px 10px', borderBottom: isCompOpen ? '1px solid var(--color-border)' : 'none', cursor: 'pointer' }}
                     >
-                        <h3 className="comp-card-title">
-                            <span className="comp-number-badge">{ci + 1}</span>
+                        <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--color-orange)', flexShrink: 0, minWidth: 20 }}>C{ci + 1}</span>
+                        <div style={{ flex: 1, minWidth: 0, fontSize: 13, fontWeight: 600, color: 'var(--color-text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                             {comp.name || `Componente ${ci + 1}`}
-                        </h3>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 4, flexShrink: 0 }}>
                             {components.length > 1 && (
                                 <button onClick={(e) => { e.stopPropagation(); removeComp(comp.id); }} className="comp-action-btn" title="Rimuovi questo componente">
-                                    <Trash2 size={14} />
+                                    <Trash2 size={13} />
                                 </button>
                             )}
-                            <ChevronRight size={14} style={{ transform: isCompOpen ? 'rotate(90deg)' : 'rotate(0deg)', transition: 'transform 0.2s', color: 'var(--color-text-muted)' }} />
+                            <ChevronDown size={14} style={{ transform: isCompOpen ? 'rotate(0deg)' : 'rotate(-90deg)', transition: 'transform 0.2s', color: 'var(--color-text-muted)', pointerEvents: 'none' }} />
                         </div>
                     </div>
                     {isCompOpen && (<div className="comp-card-body">
-                    <div className="comp-header-grid" style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: 12, marginBottom: 12 }}>
-                        <div className="form-field" style={{ marginBottom: 0 }}>
-                            <div style={{ display: 'flex', alignItems: 'center', marginBottom: 4 }}>
-                                <label className="form-label" style={{ marginBottom: 0 }}>Nome componente</label>
-                                <InfoTooltip text="Inserisci il nome del componente (es: pasta, farcitura, ricopertura)." />
-                            </div>
-                            <input type="text" placeholder="Nome componente opzionale (es. impasto, crema)" value={comp.name}
-                                onChange={e => updateCompName(comp.id, e.target.value)} className="form-input" />
-                        </div>
-                        <div style={{ display: 'flex', alignItems: 'flex-end', gap: 6 }}>
-                            <div>
-                                <div style={{ display: 'flex', alignItems: 'center', marginBottom: 4 }}>
-                                    <label className="form-label" style={{ whiteSpace: 'nowrap', marginBottom: 0, fontSize: 13 }}>PER N° PZ /U.V.</label>
-                                    <InfoTooltip text="Digitare il numero di PZ o di Unità di Vendita che si possono realizzare con la quantità di componente che scaturisce dalla ricetta." />
-                                </div>
-                                <div style={{ width: 120 }}>
-                                    <input
-                                        type="text"
-                                        inputMode="decimal"
-                                        placeholder="Obbligatorio"
-                                        value={pzUVRaw[comp.id] ?? ''}
-                                        onChange={e => {
-                                            const raw = e.target.value;
-                                            setPzUVRaw(prev => ({ ...prev, [comp.id]: raw }));
-                                            const v = parseFloat(raw.replace(',', '.'));
-                                            if (!isNaN(v) && v >= 0.001) {
-                                                updateCompPzUV(comp.id, v);
-                                                setFieldErrors(prev => ({ ...prev, [`${comp.id}-pzuv`]: '' }));
-                                            }
-                                        }}
-                                        onBlur={e => {
-                                            const raw = e.target.value.trim();
-                                            const v = parseFloat(raw.replace(',', '.'));
-                                            if (!raw || isNaN(v) || v < 0.001) {
-                                                setFieldErrors(prev => ({ ...prev, [`${comp.id}-pzuv`]: 'Inserisci il numero di pezzi per UV.' }));
-                                            } else {
-                                                updateCompPzUV(comp.id, v);
-                                                setFieldErrors(prev => ({ ...prev, [`${comp.id}-pzuv`]: '' }));
-                                            }
-                                        }}
-                                        className="form-input"
-                                    />
-                                </div>
-                                <ValidationError message={fieldErrors[`${comp.id}-pzuv`]} visible={!!fieldErrors[`${comp.id}-pzuv`]} />
-                            </div>
+                    <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 8 }}>
+                        <input
+                            type="text"
+                            placeholder="Nome componente"
+                            value={comp.name}
+                            onChange={e => updateCompName(comp.id, e.target.value)}
+                            style={{ flex: 1, fontSize: 13, fontWeight: 600, border: '1px solid var(--color-border)', borderRadius: 6, padding: '5px 8px', color: 'var(--color-text)', background: 'white', fontFamily: 'inherit', outline: 'none' }}
+                        />
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 4, flexShrink: 0 }}>
+                            <span style={{ fontSize: 11, color: 'var(--color-text-muted)' }}>pz/UV</span>
+                            <InfoTooltip text="Digitare il numero di PZ o di Unità di Vendita che si possono realizzare con la quantità di componente che scaturisce dalla ricetta." />
+                            <input
+                                type="text"
+                                inputMode="decimal"
+                                placeholder="—"
+                                value={pzUVRaw[comp.id] ?? ''}
+                                onChange={e => {
+                                    const raw = e.target.value;
+                                    setPzUVRaw(prev => ({ ...prev, [comp.id]: raw }));
+                                    const v = parseFloat(raw.replace(',', '.'));
+                                    if (!isNaN(v) && v >= 0.001) {
+                                        updateCompPzUV(comp.id, v);
+                                        setFieldErrors(prev => ({ ...prev, [`${comp.id}-pzuv`]: '' }));
+                                    }
+                                }}
+                                onBlur={e => {
+                                    const raw = e.target.value.trim();
+                                    const v = parseFloat(raw.replace(',', '.'));
+                                    if (!raw || isNaN(v) || v < 0.001) {
+                                        setFieldErrors(prev => ({ ...prev, [`${comp.id}-pzuv`]: 'Inserisci il numero di pezzi per UV.' }));
+                                    } else {
+                                        updateCompPzUV(comp.id, v);
+                                        setFieldErrors(prev => ({ ...prev, [`${comp.id}-pzuv`]: '' }));
+                                    }
+                                }}
+                                style={{ width: 46, fontSize: 12, border: '1px solid var(--color-border)', borderRadius: 6, padding: '4px 6px', textAlign: 'center', fontFamily: 'inherit', outline: 'none' }}
+                            />
                         </div>
                     </div>
+                    <ValidationError message={fieldErrors[`${comp.id}-pzuv`]} visible={!!fieldErrors[`${comp.id}-pzuv`]} />
                     <IngSearch onAdd={(ing) => addRowToComp(comp.id, ing)} db={db} loading={loadingDB} error={dbError} />
-                    {comp.rows.map(row => {
+                    {comp.rows.length > 0 && (
+                    <div style={{ border: '1px solid var(--color-border)', borderRadius: 8, overflow: 'hidden', marginBottom: 6 }}>
+                    {comp.rows.map((row, rowIdx) => {
                         const _displayGramsAdv = (() => { const raw = gramsRaw[`${comp.id}-${row.id}`]; if (raw === undefined) return row.grams; const v = parseFloat(raw.replace(',', '.')); return isNaN(v) ? row.grams : v; })();
                         const gramsPerPiece = comp.pzUV > 0 && _displayGramsAdv > 0 ? _displayGramsAdv / comp.pzUV : null;
                         const fabbReale = row.grams / ((row.resa || 100) / 100);
                         const costoIng = (row.eurKg / 1000) * fabbReale;
+                        const rowKey = `${comp.id}-${row.id}`;
+                        const isExpanded = expandedRows.has(rowKey);
+                        const isLast = rowIdx === comp.rows.length - 1;
                         return (
-                            <div key={row.id} className="ing-card">
-                                <div className="ing-card-header">
-                                    <div className="ing-name-area">
-                                        <span className="ing-name">{row.ing.nome}</span>
-                                        <InfoTooltip text="Grammi dell'ingrediente nella ricetta totale, per tutti i pezzi" />
+                            <div key={row.id} style={{ borderBottom: isLast && !isExpanded ? 'none' : '1px solid var(--color-border)' }}>
+                                {/* Compact row */}
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '7px 10px' }}>
+                                    <button
+                                        onClick={() => toggleExpandRow(rowKey)}
+                                        style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 2, color: 'var(--color-text-muted)', flexShrink: 0, display: 'flex', alignItems: 'center' }}
+                                        title={isExpanded ? 'Comprimi' : 'Espandi €/kg e Resa %'}
+                                    >
+                                        <ChevronDown size={12} style={{ transform: isExpanded ? 'rotate(0deg)' : 'rotate(-90deg)', transition: 'transform 0.15s' }} />
+                                    </button>
+                                    <div style={{ flex: 1, minWidth: 0 }}>
+                                        <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--color-text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{row.ing.nome}</div>
+                                        {row.ing.kcal != null && (
+                                            <div style={{ fontSize: 10, color: 'var(--color-text-muted)' }}>{row.ing.kcal} kcal/100g</div>
+                                        )}
                                     </div>
-                                    <button onClick={() => removeRow(comp.id, row.id)} className="ing-delete-btn" title="Rimuovi ingrediente">
-                                        <Trash2 size={13} />
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: 4, flexShrink: 0 }}>
+                                        <input type="text" inputMode="decimal"
+                                            style={{ width: 58, fontSize: 12, border: '1px solid var(--color-border)', borderRadius: 5, padding: '3px 6px', textAlign: 'right', fontFamily: 'inherit', color: 'var(--color-text)', background: 'var(--color-bg-input)', outline: 'none' }}
+                                            value={gramsRaw[rowKey] ?? String(row.grams)}
+                                            onChange={e => {
+                                                const raw = e.target.value;
+                                                setGramsRaw(prev => ({ ...prev, [rowKey]: raw }));
+                                                const v = parseFloat(raw.replace(',', '.'));
+                                                if (!isNaN(v) && v >= 0) updateGrams(comp.id, row.id, v);
+                                            }}
+                                            onBlur={e => {
+                                                const raw = e.target.value.trim();
+                                                const v = parseFloat(raw.replace(',', '.'));
+                                                const val = (!raw || isNaN(v) || v < 0) ? 0 : v;
+                                                setGramsRaw(prev => ({ ...prev, [rowKey]: String(val) }));
+                                                updateGrams(comp.id, row.id, val);
+                                            }}
+                                        />
+                                        <span style={{ fontSize: 12, color: 'var(--color-text-muted)' }}>g</span>
+                                    </div>
+                                    <button onClick={() => removeRow(comp.id, row.id)} className="ing-delete-btn" title="Rimuovi ingrediente" style={{ width: 24, height: 24, flexShrink: 0 }}>
+                                        <Trash2 size={12} />
                                     </button>
                                 </div>
-                                <div className="ing-card-body">
-                                    <div className="ing-field-group">
-                                        <div className="ing-field-header">
-                                            <span className="ing-field-label">Grammi</span>
-                                        </div>
-                                        <div className="ing-field-input-wrap">
+                                {gramsPerPiece !== null && (
+                                    <div style={{ fontSize: 10, color: 'var(--color-text-muted)', padding: '0 10px 3px', textAlign: 'right' }}>{gramsPerPiece.toFixed(1)} g/pz</div>
+                                )}
+                                <ValidationError message={fieldErrors[`${comp.id}-${row.id}-grams`]} visible={!!fieldErrors[`${comp.id}-${row.id}-grams`]} />
+                                {/* Expandable detail: €/kg e Resa % */}
+                                {isExpanded && (
+                                    <div style={{ borderTop: '1px solid var(--color-border)', padding: '8px 10px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, background: 'var(--color-surface)' }}>
+                                        <div className="ing-field-group">
+                                            <div className="ing-field-header">
+                                                <span className="ing-field-label">€/kg</span>
+                                                <InfoTooltip text="Costo dell'ingrediente per kg, IVA esclusa. Non è obbligatorio: se non inserisci nulla, il valore predefinito è 0 e il costo non verrà calcolato." />
+                                            </div>
                                             <input type="text" inputMode="decimal"
-                                                className="form-input ing-input"
-                                                value={gramsRaw[`${comp.id}-${row.id}`] ?? String(row.grams)}
+                                                placeholder="0"
+                                                value={eurKgRaw[`${comp.id}-${row.id}`] ?? (row.eurKg === 0 ? '' : String(row.eurKg))}
+                                                onFocus={e => e.target.select()}
                                                 onChange={e => {
-                                                    const raw = e.target.value;
-                                                    setGramsRaw(prev => ({ ...prev, [`${comp.id}-${row.id}`]: raw }));
-                                                    const v = parseFloat(raw.replace(',', '.'));
-                                                    if (!isNaN(v) && v >= 0) updateGrams(comp.id, row.id, v);
+                                                    const raw = e.target.value.replace(',', '.');
+                                                    setEurKgRaw(prev => ({ ...prev, [`${comp.id}-${row.id}`]: raw }));
+                                                    const v = parseFloat(raw);
+                                                    if (!isNaN(v) && v >= 0) updateEurKg(comp.id, row.id, v);
                                                 }}
                                                 onBlur={e => {
-                                                    const raw = e.target.value.trim();
-                                                    const v = parseFloat(raw.replace(',', '.'));
-                                                    const val = (!raw || isNaN(v) || v < 0) ? 0 : v;
-                                                    setGramsRaw(prev => ({ ...prev, [`${comp.id}-${row.id}`]: String(val) }));
-                                                    updateGrams(comp.id, row.id, val);
+                                                    const v = parseFloat(e.target.value.replace(',', '.'));
+                                                    const val = isNaN(v) || v < 0 ? 0 : v;
+                                                    setEurKgRaw(prev => ({ ...prev, [`${comp.id}-${row.id}`]: val === 0 ? '' : String(val) }));
+                                                    updateEurKg(comp.id, row.id, val);
                                                 }}
-                                            />
-                                            <span className="ing-unit">g</span>
+                                                className="form-input ing-input" />
+                                            <ValidationError message={fieldErrors[`${comp.id}-${row.id}-eurkgs`]} visible={!!fieldErrors[`${comp.id}-${row.id}-eurkgs`]} />
                                         </div>
-                                        {gramsPerPiece !== null && <span className="ing-per-pz">{gramsPerPiece.toFixed(1)} g/pz</span>}
-                                        <ValidationError message={fieldErrors[`${comp.id}-${row.id}-grams`]} visible={!!fieldErrors[`${comp.id}-${row.id}-grams`]} />
-                                    </div>
-                                    <div className="ing-field-group">
-                                        <div className="ing-field-header">
-                                            <span className="ing-field-label">€/kg</span>
-                                            <InfoTooltip text="Costo dell'ingrediente per kg, IVA esclusa. Non è obbligatorio: se non inserisci nulla, il valore predefinito è 0 e il costo non verrà calcolato." />
+                                        <div className="ing-field-group">
+                                            <div className="ing-field-header">
+                                                <span className="ing-field-label">Resa %</span>
+                                                <InfoTooltip text="Percentuale di prodotto effettivamente utilizzabile dopo pulizia o lavorazione. Es: 70 per verdure con scarti (foglie, bucce). Default: 100" />
+                                            </div>
+                                            <input type="text" inputMode="decimal"
+                                                value={resaRaw[`${comp.id}-${row.id}`] ?? String(row.resa || 100)}
+                                                onFocus={e => e.target.select()}
+                                                onChange={e => {
+                                                    const raw = e.target.value.replace(',', '.');
+                                                    setResaRaw(prev => ({ ...prev, [`${comp.id}-${row.id}`]: raw }));
+                                                    const v = parseFloat(raw);
+                                                    if (!isNaN(v) && v > 0 && v <= 100) updateResa(comp.id, row.id, v);
+                                                }}
+                                                onBlur={e => {
+                                                    const v = parseFloat(e.target.value.replace(',', '.'));
+                                                    const val = isNaN(v) || v <= 0 || v > 100 ? 100 : v;
+                                                    setResaRaw(prev => ({ ...prev, [`${comp.id}-${row.id}`]: String(val) }));
+                                                    updateResa(comp.id, row.id, val);
+                                                }}
+                                                className="form-input ing-input" />
+                                            <ValidationError message={fieldErrors[`${comp.id}-${row.id}-resa`]} visible={!!fieldErrors[`${comp.id}-${row.id}-resa`]} />
                                         </div>
-                                        <input type="number" min={0} step={0.01}
-                                            placeholder="0"
-                                            value={row.eurKg === 0 || row.eurKg ? row.eurKg : ''}
-                                            onChange={e => updateEurKg(comp.id, row.id, e.target.value === '' ? 0 : parseFloat(e.target.value) || 0)}
-                                            className="form-input ing-input" />
-                                        <ValidationError message={fieldErrors[`${comp.id}-${row.id}-eurkgs`]} visible={!!fieldErrors[`${comp.id}-${row.id}-eurkgs`]} />
-                                    </div>
-                                    <div className="ing-field-group">
-                                        <div className="ing-field-header">
-                                            <span className="ing-field-label">Resa %</span>
-                                            <InfoTooltip text="Percentuale di prodotto effettivamente utilizzabile dopo pulizia o lavorazione. Es: 70 per verdure con scarti (foglie, bucce). Default: 100" />
-                                        </div>
-                                        <input type="number" min={1} max={100} step={1} value={row.resa || 100}
-                                            onChange={e => updateResa(comp.id, row.id, parseFloat(e.target.value) || 100)}
-                                            className="form-input ing-input" />
-                                        <ValidationError message={fieldErrors[`${comp.id}-${row.id}-resa`]} visible={!!fieldErrors[`${comp.id}-${row.id}-resa`]} />
-                                    </div>
-                                </div>
-                                {(row.eurKg > 0) && (
-                                    <div className="ing-cost-line">
-                                        <span>Grammi reali: <strong>{fabbReale.toFixed(1)}g</strong></span>
-                                        <span>Costo: <strong style={{ color: 'var(--color-orange)' }}>{costoIng.toFixed(4)} €</strong></span>
+                                        {n(row.ing.alcol) > 0 && (
+                                            <div style={{ gridColumn: '1 / -1' }}>
+                                                <label style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer', fontSize: 12, color: 'var(--color-text)' }}>
+                                                    <input type="checkbox" checked={!!row.postCottura}
+                                                        onChange={() => updateRowFlag(comp.id, row.id, 'postCottura', !row.postCottura)} />
+                                                    <span>Post-cottura <span style={{ color: 'var(--color-text-muted)' }}>(alcol non evapora)</span></span>
+                                                </label>
+                                            </div>
+                                        )}
+                                        {n(row.ing.acqua) > 90 && (
+                                            <div style={{ gridColumn: '1 / -1' }}>
+                                                <label style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer', fontSize: 12, color: 'var(--color-text)' }}>
+                                                    <input type="checkbox" checked={!!row.acquaAggiunta}
+                                                        onChange={() => updateRowFlag(comp.id, row.id, 'acquaAggiunta', !row.acquaAggiunta)} />
+                                                    <span>Acqua aggiunta <span style={{ color: 'var(--color-text-muted)' }}>(evapora dopo alcol)</span></span>
+                                                </label>
+                                            </div>
+                                        )}
+                                        {(row.eurKg > 0) && (
+                                            <div className="ing-cost-line" style={{ gridColumn: '1 / -1' }}>
+                                                <span>Grammi reali: <strong>{fabbReale.toFixed(1)}g</strong></span>
+                                                <span>Costo: <strong style={{ color: 'var(--color-orange)' }}>{costoIng.toFixed(4)} €</strong></span>
+                                            </div>
+                                        )}
                                     </div>
                                 )}
                             </div>
                         );
                     })}
+                    </div>
+                    )}
                     {comp.rows.length > 0 && (
                         <div className="ing-total-bar">
                             <span>Totale: <strong>{comp.rows.reduce((s, r) => s + r.grams, 0).toFixed(0)} g</strong></span>
@@ -3170,10 +2592,9 @@ export function NutrizionaleCalc() {
                     {/* Additivi per componente — Vista Avanzata */}
                     {isCompOpen && (
                     <div style={{ marginTop: 12 }}>
-                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
-                            <label className="form-label" style={{ margin: 0, display: 'flex', alignItems: 'center', gap: 6 }}><FlaskConical size={13} /> Additivi</label>
-                            <button type="button" className="btn btn-outline" style={{ fontSize: 11, padding: '3px 10px' }} onClick={() => addAdditiveRow(comp.id)}>
-                                <Plus size={11} /> Aggiungi additivo
+                        <div style={{ marginBottom: 8 }}>
+                            <button type="button" className="btn btn-outline" style={{ fontSize: 12, padding: '5px 14px' }} onClick={() => addAdditiveRow(comp.id)}>
+                                <Plus size={13} /> Aggiungi additivo
                             </button>
                         </div>
                         {comp.additiveRows.map(arow => {
@@ -3204,11 +2625,19 @@ export function NutrizionaleCalc() {
                                         </div>
                                         <div className="ing-field-group">
                                             <div className="ing-field-header"><span className="ing-field-label">€/kg</span></div>
-                                            <input type="number" min={0} step={0.01} placeholder="0" className="form-input ing-input" value={arow.eurKg || ''} onChange={e => updateAdditiveRow(comp.id, arow.id, 'eurKg', parseFloat(e.target.value) || 0)} />
+                                            <input type="text" inputMode="decimal" placeholder="0" className="form-input ing-input"
+                                                value={eurKgRaw[`a-${comp.id}-${arow.id}`] ?? (arow.eurKg === 0 ? '' : String(arow.eurKg))}
+                                                onFocus={e => e.target.select()}
+                                                onChange={e => { const raw = e.target.value.replace(',', '.'); setEurKgRaw(prev => ({ ...prev, [`a-${comp.id}-${arow.id}`]: raw })); const v = parseFloat(raw); if (!isNaN(v) && v >= 0) updateAdditiveRow(comp.id, arow.id, 'eurKg', v); }}
+                                                onBlur={e => { const v = parseFloat(e.target.value.replace(',', '.')); const val = isNaN(v) || v < 0 ? 0 : v; setEurKgRaw(prev => ({ ...prev, [`a-${comp.id}-${arow.id}`]: val === 0 ? '' : String(val) })); updateAdditiveRow(comp.id, arow.id, 'eurKg', val); }} />
                                         </div>
                                         <div className="ing-field-group">
                                             <div className="ing-field-header"><span className="ing-field-label">Resa %</span></div>
-                                            <input type="number" min={1} max={100} step={1} className="form-input ing-input" value={arow.resa || 100} onChange={e => updateAdditiveRow(comp.id, arow.id, 'resa', parseFloat(e.target.value) || 100)} />
+                                            <input type="text" inputMode="decimal" className="form-input ing-input"
+                                                value={resaRaw[`a-${comp.id}-${arow.id}`] ?? String(arow.resa || 100)}
+                                                onFocus={e => e.target.select()}
+                                                onChange={e => { const raw = e.target.value.replace(',', '.'); setResaRaw(prev => ({ ...prev, [`a-${comp.id}-${arow.id}`]: raw })); const v = parseFloat(raw); if (!isNaN(v) && v > 0 && v <= 100) updateAdditiveRow(comp.id, arow.id, 'resa', v); }}
+                                                onBlur={e => { const v = parseFloat(e.target.value.replace(',', '.')); const val = isNaN(v) || v <= 0 || v > 100 ? 100 : v; setResaRaw(prev => ({ ...prev, [`a-${comp.id}-${arow.id}`]: String(val) })); updateAdditiveRow(comp.id, arow.id, 'resa', val); }} />
                                         </div>
                                     </div>
                                     {arow.eurKg > 0 && (
@@ -3251,16 +2680,13 @@ export function NutrizionaleCalc() {
                 const fmt2 = (v: number) => v.toFixed(2).replace('.', ',');
                 const fmtC = (v: number) => v > 0 ? v.toFixed(3).replace('.', ',') : '—';
                 return (
-                    <div className="card" style={{ marginBottom: 20 }}>
-                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                            <h3 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: 7 }}><Table2 size={15} /> Riepilogo ingredienti <span style={{ fontSize: 13, fontWeight: 400, color: 'var(--color-text-muted)' }}>({mergedIngredients.length})</span></h3>
+                    <div style={{ marginBottom: 20 }}>
+                        <div className="ri-tab-bar" style={{ display: 'flex', gap: 6, marginBottom: 14 }}>
+                            <button onClick={() => setRiepilogoTab('q')} title="Visualizza quantità e grammature" className={`ri-toggle-btn${riepilogoTab === 'q' ? ' active' : ''}`}><Scale size={12} />Quantità</button>
+                            <button onClick={() => setRiepilogoTab('c')} title="Visualizza costi e rese" className={`ri-toggle-btn${riepilogoTab === 'c' ? ' active' : ''}`}><Euro size={12} />Costi</button>
                         </div>
-                            <div className="ri-tab-bar" style={{ display: 'flex', gap: 0, marginTop: 12, marginBottom: 4, borderRadius: 8, overflow: 'hidden', border: '1.5px solid var(--color-border)', alignSelf: 'flex-start' }}>
-                                <button onClick={() => setRiepilogoTab('q')} title="Visualizza quantità e grammature" style={{ padding: '4px 11px', border: 'none', borderRight: '1.5px solid var(--color-border)', cursor: 'pointer', fontFamily: 'inherit', fontSize: 11, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 4, background: riepilogoTab === 'q' ? 'var(--color-navy)' : 'transparent', color: riepilogoTab === 'q' ? 'white' : 'var(--color-text-muted)' }}><Scale size={12} />Quantità</button>
-                                <button onClick={() => setRiepilogoTab('c')} title="Visualizza costi e rese" style={{ padding: '4px 11px', border: 'none', cursor: 'pointer', fontFamily: 'inherit', fontSize: 11, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 4, background: riepilogoTab === 'c' ? 'var(--color-navy)' : 'transparent', color: riepilogoTab === 'c' ? 'white' : 'var(--color-text-muted)' }}><Euro size={12} />Costi</button>
-                            </div>
-                            <div className="riepilogo-wrapper" data-riepilogo-tab={riepilogoTab} style={{ marginTop: 0, overflowX: 'auto', marginLeft: -24, marginRight: -24, paddingLeft: 24, paddingRight: 24 }}>
-                                <table className="riepilogo-table" style={{ borderCollapse: 'collapse', fontSize: 11, width: '100%', minWidth: 680 }}>
+                        <div className="riepilogo-wrapper" data-riepilogo-tab={riepilogoTab} style={{ overflowX: 'auto', margin: '0 -14px', padding: '0 14px' }}>
+                            <table className="riepilogo-table" style={{ borderCollapse: 'collapse', fontSize: 11, width: '100%', minWidth: 480 }}>
                                     <thead>
                                         <tr style={{ background: 'var(--color-orange)', color: 'white' }}>
                                             <td style={{ padding: '5px 7px', fontWeight: 700, textAlign: 'center', whiteSpace: 'nowrap' }}>{mergedIngredients.length}</td>
@@ -3320,11 +2746,6 @@ export function NutrizionaleCalc() {
             })()}
 
 
-            {/* Allergens */}
-            <div style={{ marginBottom: 20 }}>
-                <AllergenSection present={presentAllergens} cross={crossAllergens} />
-            </div>
-
             {/* Cost summary card */}
             {allRows.length > 0 && (() => {
                 let costoTotale = 0;
@@ -3362,125 +2783,54 @@ export function NutrizionaleCalc() {
 
         </>)}
 
-        {expertTab === 'mercati' && (<>
-            {allRows.length > 0 && (
-                <div style={{ marginTop: 0 }}>
-                    {/* Nation Tabs */}
-                    <div className="nation-tab-bar" style={{ display: 'flex', gap: 8, marginBottom: 16, alignItems: 'center', overflowX: 'auto', paddingBottom: 4 }}>
-                        {(['UE', 'USA', 'Canada', 'Australia', 'Arabi'] as NationTab[]).map(t => {
-                            const codes: Record<NationTab, string> = { UE: 'EU', USA: 'US', Canada: 'CA', Australia: 'AU', Arabi: 'AR' };
-                            const names: Record<NationTab, string> = { UE: 'UE', USA: 'USA', Canada: 'Canada', Australia: 'Australia', Arabi: 'Arabi' };
-                            return (
-                                <button key={t}
-                                    className={`btn nation-tab-btn ${activeTab === t ? 'btn-primary' : 'btn-outline'}`}
-                                    style={{ fontWeight: 600, flex: 1, textAlign: 'center', minWidth: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}
-                                    onClick={() => setActiveTab(t)}>
-                                    <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', padding: '1px 4px', borderRadius: 3, fontSize: 9, fontWeight: 800, letterSpacing: 0.3, border: '1px solid currentColor', opacity: 0.7, lineHeight: 1.4 }}>{codes[t]}</span>
-                                    {names[t]}
-                                </button>
-                            );
-                        })}
-                    </div>
 
-                    <div className="nutri-results-wrapper" style={{ background: 'white', borderRadius: 8, boxShadow: '0 2px 8px rgba(0,0,0,0.05)', padding: '16px 20px' }}>
-                        {/* Serving inputs for the active nation */}
-                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: 8, marginBottom: 16 }}>
-                            {activeTab === 'UE' && (
-                                <>
-                                    {(['porzione', 'confezione', 'pezzo'] as const).map((k, i) => {
-                                        const labels = ['Porzione (g/ml)', 'U.V. / Confezione (g/ml)', 'Pezzo (g/ml)'];
-                                        return (
-                                            <div key={k} className="form-field" style={{ marginBottom: 0 }}>
-                                                <label className="form-label">{labels[i]}</label>
-                                                <input type="number" min={0} placeholder="—" value={ue[k] || ''}
-                                                    onChange={e => setUE(prev => ({ ...prev, [k]: parseFloat(e.target.value) || undefined }))}
-                                                    className="form-input" />
-                                            </div>
-                                        );
-                                    })}
-                                </>
-                            )}
-                            {activeTab === 'USA' && (
-                                <>
-                                    {(['cup', 'cucchiaio', 'serving', 'confezione', 'pezzo'] as const).map((k, i) => {
-                                        const labels = ['CUP 240ml (g)', 'Cucchiaio 15ml (g)', 'Serving Size (g/ml)', 'Confezione/UV (g/ml)', 'Pezzo (g/ml)'];
-                                        return (
-                                            <div key={k} className="form-field" style={{ marginBottom: 0 }}>
-                                                <label className="form-label">{labels[i]}</label>
-                                                <input type="number" min={0} placeholder="—" value={usa[k] || ''}
-                                                    onChange={e => setUSA(prev => ({ ...prev, [k]: parseFloat(e.target.value) || undefined }))}
-                                                    className="form-input" />
-                                            </div>
-                                        );
-                                    })}
-                                </>
-                            )}
-                            {activeTab === 'Canada' && (
-                                <>
-                                    {(['cup', 'cucchiaio', 'serving', 'confezione', 'pezzo'] as const).map((k, i) => {
-                                        const labels = ['CUP 250ml (g)', 'Cucchiaio 15ml (g)', 'Serving Size (g/ml)', 'Confezione/UV (g/ml)', 'Pezzo (g/ml)'];
-                                        return (
-                                            <div key={k} className="form-field" style={{ marginBottom: 0 }}>
-                                                <label className="form-label">{labels[i]}</label>
-                                                <input type="number" min={0} placeholder="—" value={ca[k] || ''}
-                                                    onChange={e => setCA(prev => ({ ...prev, [k]: parseFloat(e.target.value) || undefined }))}
-                                                    className="form-input" />
-                                            </div>
-                                        );
-                                    })}
-                                </>
-                            )}
-                            {activeTab === 'Australia' && (
-                                <>
-                                    {(['serving', 'confezione', 'pezzo'] as const).map((k, i) => {
-                                        const labels = ['Serving Size (g/ml)', 'Confezione/UV (g/ml)', 'Pezzo (g/ml)'];
-                                        return (
-                                            <div key={k} className="form-field" style={{ marginBottom: 0 }}>
-                                                <label className="form-label">{labels[i]}</label>
-                                                <input type="number" min={0} placeholder="—" value={au[k] || ''}
-                                                    onChange={e => setAU(prev => ({ ...prev, [k]: parseFloat(e.target.value) || undefined }))}
-                                                    className="form-input" />
-                                            </div>
-                                        );
-                                    })}
-                                </>
-                            )}
-                            {activeTab === 'Arabi' && (
-                                <>
-                                    {(['cup', 'cucchiaio', 'serving', 'confezione', 'pezzo'] as const).map((k, i) => {
-                                        const labels = ['CUP 240ml (g)', 'Cucchiaio 15ml (g)', 'Serving Size (g/ml)', 'Confezione/UV (g/ml)', 'Pezzo (g/ml)'];
-                                        return (
-                                            <div key={k} className="form-field" style={{ marginBottom: 0 }}>
-                                                <label className="form-label">{labels[i]}</label>
-                                                <input type="number" min={0} placeholder="—" value={arabi[k] || ''}
-                                                    onChange={e => setArabi(prev => ({ ...prev, [k]: parseFloat(e.target.value) || undefined }))}
-                                                    className="form-input" />
-                                            </div>
-                                        );
-                                    })}
-                                </>
-                            )}
-                        </div>
-                    </div>
-                </div>
-            )}
-
-            {allRows.length > 0 && (
-                <div style={{ display: 'flex', gap: 10, marginTop: 20, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
-                    <button className="btn btn-outline" onClick={handleDownloadPNG} title="Esporta la tabella nutrizionale come immagine PNG" style={{ display: 'flex', alignItems: 'center', gap: 6 }}><ImageDown size={14} /> Scarica PNG</button>
-                    <button className="btn btn-primary" onClick={handleSave} title="Salva la ricetta nell'archivio locale" style={{ background: 'var(--color-navy)', display: 'flex', alignItems: 'center', gap: 6 }}><Save size={14} /> Salva in archivio</button>
-                </div>
-            )}
-        </>)}
                             </div>{/* end tab content */}
                         </div>
-                        )}
                     </div>
                 }
                 right={renderTablePanel()}
-                rightOpacity={wizardMode && wizardStep === 0 ? 0.45 : 1}
             />
             </div>
+
+            {/* ── Mobile bottom bar ── */}
+            <nav className="mob-bottom-bar" aria-label="Navigazione principale">
+                <button
+                    type="button"
+                    className={`mob-tab-item${expertTab === 'ricetta' ? ' active' : ''}`}
+                    onClick={() => setExpertTab('ricetta')}
+                    aria-label="Ricetta"
+                >
+                    <Salad size={20} strokeWidth={1.8} />
+                    Ricetta
+                </button>
+                <button
+                    type="button"
+                    className={`mob-tab-item${expertTab === 'riepilogo' ? ' active' : ''}`}
+                    onClick={() => setExpertTab('riepilogo')}
+                    aria-label="Riepilogo"
+                >
+                    <ClipboardList size={20} strokeWidth={1.8} />
+                    Riepilogo
+                </button>
+                <button
+                    type="button"
+                    className="mob-tab-item"
+                    onClick={() => document.getElementById('mob-tables-anchor')?.scrollIntoView({ behavior: 'smooth' })}
+                    aria-label="Mercati"
+                >
+                    <Globe size={20} strokeWidth={1.8} />
+                    Mercati
+                </button>
+                <button
+                    type="button"
+                    className="mob-tab-item"
+                    onClick={() => setArchiveOpen(true)}
+                    aria-label="Archivio"
+                >
+                    <Archive size={20} strokeWidth={1.8} />
+                    Archivio
+                </button>
+            </nav>
         </>
     );
 }
@@ -3489,21 +2839,21 @@ export function NutrizionaleCalc() {
 function AllergenSection({ present, cross }: { present: string[]; cross: string[] }) {
     if (present.length === 0 && cross.length === 0) return <div />;
     return (
-        <div className="card">
-            <h3 style={{ marginTop: 0, display: 'flex', alignItems: 'center', gap: 7 }}><AlertTriangle size={15} /> Allergeni</h3>
+        <div style={{ marginTop: 14 }}>
+            <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--color-text-muted)', marginBottom: 6 }}>Allergeni dichiarati</div>
             {present.length > 0 && (
-                <div style={{ marginBottom: 10 }}>
-                    <div style={{ fontSize: 11, fontWeight: 700, color: '#c53030', marginBottom: 4 }}>CONTIENE:</div>
-                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}>
-                        {present.map(a => <span key={a} style={{ background: 'rgba(229,62,62,0.1)', color: '#c53030', fontWeight: 700, padding: '2px 8px', borderRadius: 4, fontSize: 12 }}>{a}</span>)}
+                <div style={{ marginBottom: 8 }}>
+                    <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--color-text)', marginBottom: 6 }}>Contiene</div>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                        {present.map(a => <span key={a} style={{ background: 'var(--color-navy)', color: 'white', fontWeight: 700, padding: '3px 10px', borderRadius: 20, fontSize: 11 }}>{a}</span>)}
                     </div>
                 </div>
             )}
             {cross.length > 0 && (
                 <div>
-                    <div style={{ fontSize: 11, fontWeight: 600, color: '#dd6b20', marginBottom: 4 }}>PUÒ CONTENERE TRACCE DI:</div>
-                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}>
-                        {cross.map(a => <span key={a} style={{ background: 'rgba(221,107,32,0.1)', color: '#dd6b20', fontWeight: 600, padding: '2px 8px', borderRadius: 4, fontSize: 12 }}>{a}</span>)}
+                    <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--color-text)', marginBottom: 6 }}>Può contenere tracce</div>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                        {cross.map(a => <span key={a} style={{ border: '1.5px solid var(--color-border)', color: 'var(--color-text-muted)', padding: '3px 10px', borderRadius: 20, fontSize: 11 }}>{a}</span>)}
                     </div>
                 </div>
             )}
@@ -3582,20 +2932,28 @@ function TabCanada({ p, ca, servingRef, measure, subTab, setSubTab, full }: {
             )}
             <div data-table-export style={{ background: 'white', padding: 12, borderRadius: 0, display: 'inline-block' }}>
             {subTab === 'verticale' && (() => {
-                const F = '"Arial Black", "Arial Bold", Arial, sans-serif';
-                const Fn = 'Arial, sans-serif';
-                const ROW = (label: string, val: string, pct: string | null, sub: boolean, bold: boolean, border: string) => (
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', borderBottom: `1px solid ${border}`, paddingLeft: sub ? 16 : 0, paddingTop: 1, paddingBottom: 1 }}>
-                        <span style={{ fontSize: bold ? 14 : 12, fontWeight: bold ? 900 : 400, fontFamily: bold ? F : Fn }}>{label}{' '}{val}</span>
-                        {pct !== null ? <span style={{ fontSize: 13, fontWeight: 900, fontFamily: F }}>{pct}%</span> : <span />}
+                const F = 'Arial, Helvetica, sans-serif';          // normal width
+                const Fc = '"Arial Narrow", Arial, sans-serif';    // condensed — footnote only
+                const ROW = (label: string, val: string, pct: string | null, sub: boolean, bold: boolean, thickBottom?: boolean, noBorder?: boolean) => (
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline',
+                        borderBottom: noBorder ? 'none' : thickBottom ? '3px solid #000' : '1px solid #bbb',
+                        paddingLeft: sub ? 14 : 0, paddingTop: 1, paddingBottom: 1 }}>
+                        <div style={{ display: 'flex', alignItems: 'baseline', gap: 2, flex: 1 }}>
+                            <span style={{ fontFamily: F, fontSize: 11, fontWeight: bold ? 700 : 400 }}>{label}</span>
+                            <span style={{ fontFamily: F, fontSize: 11, fontWeight: 400 }}>{val}</span>
+                        </div>
+                        {pct !== null ? <span style={{ fontFamily: F, fontSize: 11, fontWeight: 400, minWidth: 22, textAlign: 'right' }}>{pct}%</span> : null}
                     </div>
                 );
                 return (
-                    <div style={{ width: 340, border: '2px solid #000', padding: '6px 8px', fontFamily: F }}>
-                        <div style={{ fontSize: 30, fontWeight: 900, lineHeight: 1.05 }}>
-                            Nutrition Facts<br />Valeur nutritive
+                    <div style={{ width: 280, border: '2px solid #000', padding: '4px 8px 6px 8px', fontFamily: F, backgroundColor: '#fff', color: '#000', boxSizing: 'border-box' }}>
+                        {/* Title — 13pt bold */}
+                        <div style={{ lineHeight: 1.1 }}>
+                            <div style={{ fontSize: 17, fontWeight: 700, fontFamily: F }}>Nutrition Facts</div>
+                            <div style={{ fontSize: 17, fontWeight: 700, fontFamily: F }}>Valeur nutritive</div>
                         </div>
-                        <div style={{ fontSize: 11, fontFamily: Fn, borderBottom: '5px solid #000', paddingBottom: 3, margin: '3px 0 0 0' }}>
+                        {/* Serving — 9pt normal */}
+                        <div style={{ fontSize: 12, fontFamily: F, fontWeight: 400, borderBottom: '5px solid #000', paddingBottom: 2, margin: '2px 0 0 0' }}>
                             <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                                 <span>{caEnLeft}</span>
                                 {caEnRight ? <span>{caEnRight}</span> : null}
@@ -3605,117 +2963,162 @@ function TabCanada({ p, ca, servingRef, measure, subTab, setSubTab, full }: {
                                 {caFrRight ? <span>{caFrRight}</span> : null}
                             </div>
                         </div>
-                        <div style={{ borderBottom: '8px solid #000', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', paddingTop: 3, paddingBottom: 4 }}>
-                            <div style={{ fontSize: 24, fontWeight: 900, fontFamily: F }}>Calories{'\u2002'}{rCA_energy(d.energyKcal)}</div>
-                            <div style={{ textAlign: 'right', fontSize: 9, fontFamily: Fn, lineHeight: 1.5 }}>% Daily Value*<br />% valeur quotidienne*</div>
+                        {/* Calories — 10pt bold, thick rule partial */}
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', paddingTop: 2 }}>
+                            <div style={{ fontSize: 13, fontWeight: 700, fontFamily: F, borderBottom: '3px solid #000', paddingBottom: 3 }}>Calories{'\u2002'}{rCA_energy(d.energyKcal)}</div>
+                            {/* % Daily Value subtitle — 6pt bold */}
+                            <div style={{ textAlign: 'right', fontSize: 8, fontFamily: F, fontWeight: 700, lineHeight: 1.4 }}>% Daily Value*<br />% valeur quotidienne*</div>
                         </div>
-                        {ROW('Fat / Lipides', `${rCA_fat(d.grassi)}g`, rCA_pct(d.grassi, DV_CA.grassi), false, true, '#aaa')}
-                        {ROW('Saturated / saturés', `${rCA_fat(d.saturi)}g`, null, true, false, '#ddd')}
-                        {ROW('+ Trans / trans', `${rCA_fat(d.trans)}g`, rCA_pct(satTrans, DV_CA.satTrans), true, false, '#aaa')}
-                        {ROW('Carbohydrate / Glucides', `${rCA_carb(d.carboidratiTot)}g`, null, false, true, '#aaa')}
-                        {ROW('Fibre / Fibres', `${rCA_carb(d.fibre)}g`, rCA_pct(d.fibre, DV_CA.fibre), true, false, '#ddd')}
-                        {ROW('Sugars / Sucres', `${rCA_carb(d.zuccheri)}g`, rCA_pct(d.zuccheri, DV_CA.zuccheri), true, false, '#aaa')}
-                        {ROW('Protein / Protéines', `${rCA_carb(d.proteine)}g`, null, false, true, '#aaa')}
-                        {ROW('Cholesterol / Cholestérol', `${rCA_chol(d.colesterolo)}mg`, null, false, true, '#aaa')}
-                        {ROW('Sodium', `${rCA_na(d.sodio_mg)}mg`, rCA_pct(d.sodio_mg, DV_CA.sodio_mg), false, true, '#000')}
-                        <div style={{ height: 5, background: '#000', margin: '2px 0' }} />
-                        {ROW('Potassium', `${rCA_na(d.potassio)}mg`, rCA_pct(d.potassio, DV_CA.potassio), false, false, '#ddd')}
-                        {ROW('Calcium', `${rCA_na(d.calcio)}mg`, rCA_pct(d.calcio, DV_CA.calcio), false, false, '#ddd')}
-                        {ROW('Iron / Fer', `${rCA_iron(d.ferro)}mg`, rCA_pct(d.ferro, DV_CA.ferro), false, false, '#000')}
-                        <div style={{ height: 5, background: '#000', margin: '2px 0' }} />
-                        <div style={{ fontSize: 9, fontFamily: Fn }}>* 5% or less is a <b>little</b>, 15% or more is a <b>lot</b></div>
-                        <div style={{ fontSize: 9, fontFamily: Fn }}>* 5% ou moins c'est <b>peu</b>, 15% ou plus c'est <b>beaucoup</b></div>
+                        {/* Nutrients — 8pt bold/normal */}
+                        {ROW('Fat / Lipides', `${rCA_fat(d.grassi)}g`, rCA_pct(d.grassi, DV_CA.grassi), false, true, false, true)}
+                        {ROW('Saturated / saturés', `${rCA_fat(d.saturi)}g`, null, true, false, false, true)}
+                        {ROW('+ Trans / trans', `${rCA_fat(d.trans)}g`, rCA_pct(satTrans, DV_CA.satTrans), true, false)}
+                        {ROW('Carbohydrate / Glucides', `${rCA_carb(d.carboidratiTot)}g`, null, false, true, false, true)}
+                        {ROW('Fibre / Fibres', `${rCA_carb(d.fibre)}g`, rCA_pct(d.fibre, DV_CA.fibre), true, false, false, true)}
+                        {ROW('Sugars / Sucres', `${rCA_carb(d.zuccheri)}g`, rCA_pct(d.zuccheri, DV_CA.zuccheri), true, false)}
+                        {ROW('Protein / Protéines', `${rCA_carb(d.proteine)}g`, null, false, true)}
+                        {ROW('Cholesterol / Cholestérol', `${rCA_chol(d.colesterolo)}mg`, null, false, true)}
+                        {ROW('Sodium', `${rCA_na(d.sodio_mg)}mg`, rCA_pct(d.sodio_mg, DV_CA.sodio_mg), false, true, true)}
+                        {ROW('Potassium', `${rCA_na(d.potassio)}mg`, rCA_pct(d.potassio, DV_CA.potassio), false, false)}
+                        {ROW('Calcium', `${rCA_na(d.calcio)}mg`, rCA_pct(d.calcio, DV_CA.calcio), false, false)}
+                        {ROW('Iron / Fer', `${rCA_iron(d.ferro)}mg`, rCA_pct(d.ferro, DV_CA.ferro), false, false, true)}
+                        {/* Footnote — 6.5pt condensed */}
+                        <div style={{ paddingTop: 2 }}>
+                            <div style={{ fontSize: 9, fontFamily: Fc, lineHeight: 1.2 }}>* 5% or less is a <b>little</b>, 15% or more is a <b>lot</b></div>
+                            <div style={{ fontSize: 9, fontFamily: Fc, lineHeight: 1.2 }}>* 5% ou moins c'est <b>peu</b>, 15% ou plus c'est <b>beaucoup</b></div>
+                        </div>
                     </div>
                 );
             })()}
 
             {subTab === 'orizzontale' && (() => {
-                const F = '"Arial Black", "Arial Bold", Arial, sans-serif';
-                const Fn = 'Arial, sans-serif';
-                const NROW = (label: string, val: string, pct: string | null, sub: boolean, bold: boolean, topBorder?: boolean) => (
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', paddingLeft: sub ? 12 : 0, paddingTop: 1, paddingBottom: 1, borderTop: topBorder ? '3px solid #000' : undefined, borderBottom: '1px solid #ddd' }}>
-                        <span style={{ fontSize: 11, fontWeight: bold ? 700 : 400, fontFamily: Fn }}>{label} {val}</span>
-                        {pct !== null ? <span style={{ fontSize: 11, fontWeight: 700, fontFamily: F }}>{pct}%</span> : null}
+                // Helvetica Neue Condensed: separate font families for bold vs regular (macOS fontStretch unreliable for regular)
+                const FB = '"Helvetica Neue Condensed Bold", "HelveticaNeue-CondensedBold", "Helvetica Neue", Helvetica, Arial, sans-serif';
+                const FR = '"Helvetica Neue Condensed", "HelveticaNeue-Condensed", "Arial Narrow", Helvetica, Arial, sans-serif';
+                const F = FR; // fallback alias for non-nutrient text (serving size, DV note, footnote)
+                // Col2 row: label+val left, pct right, optional bottom rule
+                const C2 = (label: string, val: string, pct: string | null, sub: boolean, bold: boolean, rule?: 'thin' | 'thick') => (
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline',
+                        borderBottom: rule === 'thick' ? '2pt solid #000' : rule === 'thin' ? '1px solid #888' : 'none',
+                        paddingLeft: sub ? 8 : 0,
+                        lineHeight: '11pt' }}>
+                        <span style={{ fontFamily: bold ? FB : FR, fontSize: 10, fontWeight: bold ? 700 : 400, color: '#000' }}>{label} {val}</span>
+                        {pct !== null ? <span style={{ fontFamily: FR, fontSize: 10, fontWeight: 400, color: '#000' }}>{pct} %</span> : null}
                     </div>
                 );
+                const C3 = (label: string, val: string, pct: string | null, bold: boolean, rule?: 'thin' | 'thick') => (
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline',
+                        borderBottom: rule === 'thick' ? '2pt solid #000' : rule === 'thin' ? '1px solid #888' : 'none',
+                        lineHeight: '11pt' }}>
+                        <span style={{ fontFamily: bold ? FB : FR, fontSize: 10, fontWeight: bold ? 700 : 400, color: '#000' }}>{label} {val}</span>
+                        {pct !== null ? <span style={{ fontFamily: FR, fontSize: 10, fontWeight: 400, color: '#000' }}>{pct} %</span> : null}
+                    </div>
+                );
+                const col1W = 155;
+                const col2W = 175;
+                const col3W = 160;
                 return (
-                    <div style={{ border: '2px solid #000', fontFamily: Fn, display: 'flex', flexDirection: 'column', minWidth: 480 }}>
-                        <div style={{ display: 'flex' }}>
-                            {/* Left: title + serving + Calories */}
-                            <div style={{ padding: '4px 8px', borderRight: '5px solid #000', minWidth: 185 }}>
-                                <div style={{ fontSize: 20, fontWeight: 900, fontFamily: F, lineHeight: 1.1 }}>Nutrition Facts<br />Valeur nutritive</div>
-                                <div style={{ fontSize: 10, fontFamily: Fn, marginTop: 2 }}>
-                                    <div style={{ display: 'flex', justifyContent: 'space-between', gap: 6 }}>
-                                        <span>{caEnLeft}</span>
-                                        {caEnRight ? <span>{caEnRight}</span> : null}
-                                    </div>
-                                    <div style={{ display: 'flex', justifyContent: 'space-between', gap: 6 }}>
-                                        <span>{caFrLeft}</span>
-                                        {caFrRight ? <span>{caFrRight}</span> : null}
-                                    </div>
-                                </div>
-                                <div style={{ fontSize: 20, fontWeight: 900, fontFamily: F, marginTop: 3 }}>Calories {rCA_energy(d.energyKcal)}</div>
-                                <div style={{ fontSize: 8, fontFamily: Fn, marginTop: 2 }}>* DV = Daily Value<br />* VQ = Valeur Quotidienne</div>
+                    <div style={{ border: '1px solid #000', padding: '3pt 3pt 0 3pt', boxSizing: 'content-box', display: 'flex', width: col1W + col2W + col3W + 2, backgroundColor: '#fff', color: '#000' }}>
+                        {/* Col 1 — centered group, bounded top=header line, bottom=footnote level */}
+                        <div style={{ width: col1W, flexShrink: 0, padding: '1px 6px 3pt 3pt', display: 'flex', flexDirection: 'column', justifyContent: 'flex-start' }}>
+                            <div style={{ fontSize: 22, fontWeight: 700, fontFamily: FB, lineHeight: 0.9, color: '#000' }}>Nutrition Facts<br />Valeur nutritive</div>
+                            <div style={{ marginTop: '5pt', fontSize: '8.5pt', fontFamily: FR, fontWeight: 400, color: '#000', lineHeight: '11pt' }}>
+                                <div style={{ color: '#000', whiteSpace: 'nowrap', overflow: 'hidden' }}>{caEnLeft}{caEnRight ? <span style={{ marginLeft: 4 }}>{caEnRight}</span> : null}</div>
+                                <div style={{ color: '#000', whiteSpace: 'nowrap', overflow: 'hidden' }}>{caFrLeft}{caFrRight ? <span style={{ marginLeft: 4 }}>{caFrRight}</span> : null}</div>
                             </div>
-                            {/* Middle: fat/carb group */}
-                            <div style={{ flex: 1, padding: '2px 6px', borderRight: '3px solid #000' }}>
-                                <div style={{ textAlign: 'right', fontSize: 9, fontFamily: Fn, paddingBottom: 2, borderBottom: '1px solid #000' }}>%DV* / %VQ*</div>
-                                {NROW('Fat/Lipides', `${rCA_fat(d.grassi)}g`, rCA_pct(d.grassi, DV_CA.grassi), false, true)}
-                                {NROW('Saturated/Saturés', `${rCA_fat(d.saturi)}g`, null, true, false)}
-                                {NROW('+Trans/Trans', `${rCA_fat(d.trans)}g`, rCA_pct(satTrans, DV_CA.satTrans), true, false)}
-                                {NROW('Carbohydrate/Glucides', `${rCA_carb(d.carboidratiTot)}g`, null, false, true)}
-                                {NROW('Fibre/Fibres', `${rCA_carb(d.fibre)}g`, rCA_pct(d.fibre, DV_CA.fibre), true, false)}
-                                {NROW('Sugars/Sucres', `${rCA_carb(d.zuccheri)}g`, rCA_pct(d.zuccheri, DV_CA.zuccheri), true, false)}
-                            </div>
-                            {/* Right: protein/minerals group */}
-                            <div style={{ flex: 1, padding: '2px 6px' }}>
-                                <div style={{ textAlign: 'right', fontSize: 9, fontFamily: Fn, paddingBottom: 2, borderBottom: '1px solid #000' }}>%DV* / %VQ*</div>
-                                {NROW('Protein/Protéines', `${rCA_carb(d.proteine)}g`, null, false, false)}
-                                {NROW('Cholesterol/Cholestérol', `${rCA_chol(d.colesterolo)}mg`, null, false, true, true)}
-                                {NROW('Sodium', `${rCA_na(d.sodio_mg)}mg`, rCA_pct(d.sodio_mg, DV_CA.sodio_mg), false, true, true)}
-                                {NROW('Potassium', `${rCA_na(d.potassio)}mg`, rCA_pct(d.potassio, DV_CA.potassio), false, false)}
-                                {NROW('Calcium', `${rCA_na(d.calcio)}mg`, rCA_pct(d.calcio, DV_CA.calcio), false, false)}
-                                {NROW('Iron/Fer', `${rCA_iron(d.ferro)}mg`, rCA_pct(d.ferro, DV_CA.ferro), false, false)}
+                            <div style={{ marginTop: '3pt', fontSize: '10.5pt', fontWeight: 700, fontFamily: FB, color: '#000', lineHeight: '13pt' }}>Calories {rCA_energy(d.energyKcal)}</div>
+                            <div style={{ marginTop: 'auto', fontFamily: FR, fontWeight: 400, color: '#000' }}>
+                                <div style={{ fontSize: '6pt', lineHeight: '7pt' }}>* DV = Daily Value</div>
+                                <div style={{ fontSize: '6pt', lineHeight: '7pt' }}>* VQ = valeur quotidienne</div>
                             </div>
                         </div>
-                        <div style={{ fontSize: 9, fontFamily: Fn, padding: '2px 6px', borderTop: '2px solid #000' }}>
-                            *5% or less is a <b>little</b>, 15% or more is a <b>lot</b> / *5% ou moins c'est <b>peu</b>, 15 ou plus c'est <b>beaucoup</b>
+                        {/* Col 2+3 wrapper */}
+                        <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+                            {/* Header row — borderBottom on inner div: gap = col2 rightPad(5) + col3 leftPad(5) + marginLeft(4) = 14px split */}
+                            {/* Col3 inner marginLeft:4 extra gap; col3 right: 5px outer padding → line doesn't touch frame */}
+                            <div style={{ display: 'flex' }}>
+                                <div style={{ width: col2W, flexShrink: 0, padding: '1px 5px 0 5px' }}>
+                                    <div style={{ borderBottom: '1px solid #000', paddingBottom: 1, textAlign: 'right', fontSize: 8, fontWeight: 700, fontFamily: FB, color: '#000' }}>% DV* / % VQ*</div>
+                                </div>
+                                <div style={{ width: col3W, flexShrink: 0, padding: '1px 5px 0 5px' }}>
+                                    <div style={{ borderBottom: '1px solid #000', paddingBottom: 1, textAlign: 'right', fontSize: 8, fontWeight: 700, fontFamily: FB, color: '#000' }}>% DV* / % VQ*</div>
+                                </div>
+                            </div>
+                            {/* Content row — col2 and col3 both space-between → bottom thick lines align */}
+                            <div style={{ display: 'flex', flex: 1 }}>
+                                <div style={{ width: col2W, flexShrink: 0, padding: '1px 5px 0 5px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                                    {C2('Fat / Lipides', `${rCA_fat(d.grassi)} g`, rCA_pct(d.grassi, DV_CA.grassi), false, true)}
+                                    {/* Sat+Trans: borderBottom on outer wrapper → full col2 width, aligns with header thin line and Sugars thick rule */}
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', borderBottom: '1px solid #888', paddingBottom: 1 }}>
+                                        <div style={{ flex: 1 }}>
+                                            <div style={{ paddingLeft: 8, fontSize: 10, fontFamily: FR, fontWeight: 400, color: '#000', lineHeight: '11pt' }}>Saturated / saturés {rCA_fat(d.saturi)} g</div>
+                                            <div style={{ paddingLeft: 8, fontSize: 10, fontFamily: FR, fontWeight: 400, color: '#000', lineHeight: '11pt' }}>+ Trans / trans {rCA_fat(d.trans)} g</div>
+                                        </div>
+                                        <div style={{ fontSize: 10, fontFamily: FR, fontWeight: 400, color: '#000', paddingLeft: 4, flexShrink: 0 }}>{rCA_pct(satTrans, DV_CA.satTrans)} %</div>
+                                    </div>
+                                    {C2('Carbohydrate / Glucides', `${rCA_carb(d.carboidratiTot)} g`, null, false, true)}
+                                    {C2('Fibre / Fibres', `${rCA_carb(d.fibre)} g`, rCA_pct(d.fibre, DV_CA.fibre), true, false)}
+                                    {C2('Sugars / Sucres', `${rCA_carb(d.zuccheri)} g`, rCA_pct(d.zuccheri, DV_CA.zuccheri), true, false, 'thick')}
+                                </div>
+                                <div style={{ width: col3W, flexShrink: 0, padding: '1px 5px 0 5px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                                    {C3('Protein / Protéines', `${rCA_carb(d.proteine)} g`, null, true, 'thin')}
+                                    {C3('Cholesterol / Cholestérol', `${rCA_chol(d.colesterolo)} mg`, null, true, 'thin')}
+                                    {C3('Sodium', `${rCA_na(d.sodio_mg)} mg`, rCA_pct(d.sodio_mg, DV_CA.sodio_mg), true, 'thick')}
+                                    {C3('Potassium', `${rCA_na(d.potassio)} mg`, rCA_pct(d.potassio, DV_CA.potassio), false)}
+                                    {C3('Calcium', `${rCA_na(d.calcio)} mg`, rCA_pct(d.calcio, DV_CA.calcio), false)}
+                                    {C3('Iron / Fer', `${rCA_iron(d.ferro)} mg`, rCA_pct(d.ferro, DV_CA.ferro), false, 'thick')}
+                                </div>
+                            </div>
+                            {/* Footnote — 6pt regular, 12pt leading; "a little" "a lot" "peu" "beaucoup" bold; spans col2 left to col3 right (aligns with thick rules) */}
+                            <div style={{ padding: '1px 5px 0 5px', fontSize: '6pt', lineHeight: '12pt', fontFamily: FR, fontWeight: 400, color: '#000', textAlign: 'justify', textAlignLast: 'justify' }}>
+                                * 5% or less is <span style={{ fontFamily: FB, fontWeight: 700 }}>a little</span>, 15% or more is <span style={{ fontFamily: FB, fontWeight: 700 }}>a lot</span> / * 5% ou moins c'est <span style={{ fontFamily: FB, fontWeight: 700 }}>peu</span>, 15% ou plus c'est <span style={{ fontFamily: FB, fontWeight: 700 }}>beaucoup</span>
+                            </div>
                         </div>
                     </div>
                 );
             })()}
 
             {subTab === 'lineare' && (() => {
-                const F = '"Arial Black", "Arial Bold", Arial, sans-serif';
-                const Fn = 'Arial, sans-serif';
-                const pctCA = (v: number, dv: number) => `( ${Math.round(v / dv * 100)}% )`;
+                const F = 'Arial, Helvetica, sans-serif';
+                const pctCA = (v: number, dv: number) => `(${Math.round(v / dv * 100)} %)`;
+                const B = (text: string) => <span style={{ fontWeight: 700 }}>{text}</span>;
                 return (
-                    <div style={{ border: '1px solid #000', padding: '4px 8px', fontFamily: Fn, fontSize: 11, display: 'inline-block' }}>
-                        <div>
-                            <span style={{ fontWeight: 900, fontSize: 14, fontFamily: F }}>Nutrition Facts</span>
-                            {caLinearServing ? <span>{'  '}{caLinearServing}</span> : null}
-                            <span>{'  '}:{'  '}<b>Calories</b>{' '}{rCA_energy(d.energyKcal)} .</span>
+                    <div style={{ border: '0.5pt solid #000', padding: '3pt', fontFamily: F, fontSize: '7pt', display: 'inline-block', backgroundColor: '#fff', color: '#000', boxSizing: 'content-box' as const }}>
+                        {/* Line 1: Heading · Serving · Calories */}
+                        <div style={{ whiteSpace: 'nowrap' }}>
+                            <span style={{ fontSize: '10pt', fontWeight: 700 }}>Nutrition Facts</span>
+                            {caLinearServing ? <span style={{ fontSize: '7.5pt', fontWeight: 400 }}>{' '}{caLinearServing}</span> : null}
+                            {' :'}
+                            <span style={{ fontSize: '8pt', fontWeight: 700 }}>{' '}Calories{' '}{rCA_energy(d.energyKcal)}</span>
                         </div>
-                        <div>
-                            <b>Fat</b>{' '}{rCA_fat(d.grassi)}g{' '}{pctCA(d.grassi, DV_CA.grassi)},{' '}
-                            <b>Saturated Fat</b>{' '}{rCA_fat(d.saturi)}g + Trans{' '}{rCA_fat(d.trans)}g{' '}{pctCA(satTrans, DV_CA.satTrans)},{' '}
-                            Cholesterol{' '}{rCA_chol(d.colesterolo)}mg
+                        {/* Line 2: Fat → Cholesterol */}
+                        <div style={{ whiteSpace: 'nowrap', lineHeight: '8pt' }}>
+                            {B('Fat')}{' '}{rCA_fat(d.grassi)} g{' '}{pctCA(d.grassi, DV_CA.grassi)},{' '}
+                            {B('Saturated Fat')}{' '}{rCA_fat(d.saturi)} g + {B('Trans')}{' '}{rCA_fat(d.trans)} g{' '}{pctCA(satTrans, DV_CA.satTrans)},{' '}
+                            {B('Cholesterol')}{' '}{rCA_chol(d.colesterolo)} mg
                         </div>
-                        <div>
-                            Carbohydrate{' '}{rCA_carb(d.carboidratiTot)}g,{' '}
-                            Fibre{' '}{rCA_carb(d.fibre)}g{' '}{pctCA(d.fibre, DV_CA.fibre)},{' '}
-                            Sugars{' '}{rCA_carb(d.zuccheri)}g{' '}{pctCA(d.zuccheri, DV_CA.zuccheri)},{' '}
-                            Protein{' '}{rCA_carb(d.proteine)}g,{' '}
-                            Sodium{' '}{rCA_na(d.sodio_mg)}mg{' '}{pctCA(d.sodio_mg, DV_CA.sodio_mg)}
+                        {/* Line 3: Carbohydrate → Sodium */}
+                        <div style={{ whiteSpace: 'nowrap', lineHeight: '8pt' }}>
+                            {B('Carbohydrate')}{' '}{rCA_carb(d.carboidratiTot)} g,{' '}
+                            {B('Fibre')}{' '}{rCA_carb(d.fibre)} g{' '}{pctCA(d.fibre, DV_CA.fibre)},{' '}
+                            {B('Sugars')}{' '}{rCA_carb(d.zuccheri)} g{' '}{pctCA(d.zuccheri, DV_CA.zuccheri)},{' '}
+                            {B('Protein')}{' '}{rCA_carb(d.proteine)} g,{' '}
+                            {B('Sodium')}{' '}{rCA_na(d.sodio_mg)} mg{' '}{pctCA(d.sodio_mg, DV_CA.sodio_mg)}
                         </div>
-                        <div>
-                            Potassium{' '}{rCA_na(d.potassio)}mg{' '}{pctCA(d.potassio, DV_CA.potassio)},{' '}
-                            Calcium{' '}{rCA_na(d.calcio)}mg{' '}{pctCA(d.calcio, DV_CA.calcio)},{' '}
-                            Iron{' '}{rCA_iron(d.ferro)}mg{' '}{pctCA(d.ferro, DV_CA.ferro)} .
+                        {/* Line 4: Potassium → Iron */}
+                        <div style={{ whiteSpace: 'nowrap', lineHeight: '8pt' }}>
+                            {B('Potassium')}{' '}{rCA_na(d.potassio)} mg{' '}{pctCA(d.potassio, DV_CA.potassio)},{' '}
+                            {B('Calcium')}{' '}{rCA_na(d.calcio)} mg{' '}{pctCA(d.calcio, DV_CA.calcio)},{' '}
+                            {B('Iron')}{' '}{rCA_iron(d.ferro)} mg{' '}{pctCA(d.ferro, DV_CA.ferro)}
                         </div>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 2 }}>
-                            <span style={{ fontSize: 9 }}>% = % Daily Value*</span>
-                            <span style={{ fontSize: 9 }}>*5% or less is a <b>little</b>, 15% or more is a <b>lot</b>.</span>
+                        {/* Line 5: Legend (left) · Footnote (right) */}
+                        <div style={{ display: 'flex', justifyContent: 'space-between', gap: 16, marginTop: '-2px', whiteSpace: 'nowrap' }}>
+                            <span style={{ fontSize: '6pt', fontWeight: 400 }}>
+                                % = % Daily Value<span style={{ fontSize: '9pt', position: 'relative', top: '2pt' }}>*</span>
+                            </span>
+                            <span style={{ fontSize: '6pt', fontWeight: 400 }}>
+                                <span style={{ fontSize: '9pt', position: 'relative', top: '2pt' }}>*</span>5% or less is <span style={{ fontWeight: 700 }}>a little</span>, 15% or more is <span style={{ fontWeight: 700 }}>a lot</span>
+                            </span>
                         </div>
                     </div>
                 );
@@ -3791,17 +3194,17 @@ function TabAustralia({ p, au, showDI: _showDI, setShowDI: _setShowDI, full }: {
                             <tr>
                                 <th style={{ ...thStyle, textAlign: 'left', width: '34%' }}></th>
                                 <th style={{ ...thStyle, textAlign: 'left' }}>Average Quantity<br/>per Serving</th>
-                                <th style={{ ...thStyle, textAlign: 'left' }}>% Daily Intake*<br/>(per Serving)</th>
+                                <th style={{ ...thStyle, textAlign: 'left', whiteSpace: 'nowrap' }}>% Daily Intake*<br/>(per Serving)</th>
                                 <th style={{ ...thStyle, textAlign: 'left' }}>Average Quantity<br/>per 100 g</th>
                             </tr>
                         </thead>
                         <tbody>
                             {svG > 0 && sv ? rows.map((r, i) => (
                                 <tr key={i}>
-                                    <td style={{ ...tdStyle, paddingTop: i === 0 ? 8 : 2, paddingLeft: r.isSub ? 22 : 10 }}>{r.label}</td>
-                                    <td style={{ ...tdStyle, paddingTop: i === 0 ? 8 : 2 }}>{r.svVal}</td>
-                                    <td style={{ ...tdStyle, paddingTop: i === 0 ? 8 : 2 }}>{r.di}</td>
-                                    <td style={{ ...tdStyle, paddingTop: i === 0 ? 8 : 2 }}>{r.p100}</td>
+                                    <td style={{ ...tdStyle, paddingTop: i === 0 ? 8 : 2, paddingLeft: r.isSub ? 22 : 10, whiteSpace: i === 0 ? 'nowrap' : undefined }}>{r.label}</td>
+                                    <td style={{ ...tdStyle, paddingTop: i === 0 ? 8 : 2, whiteSpace: i === 0 ? 'nowrap' : undefined }}>{r.svVal}</td>
+                                    <td style={{ ...tdStyle, paddingTop: i === 0 ? 8 : 2, whiteSpace: i === 0 ? 'nowrap' : undefined }}>{r.di}</td>
+                                    <td style={{ ...tdStyle, paddingTop: i === 0 ? 8 : 2, whiteSpace: i === 0 ? 'nowrap' : undefined }}>{r.p100}</td>
                                 </tr>
                             )) : (
                                 <tr><td colSpan={4} style={{ ...tdStyle, color: '#888' }}>Inserire il valore serving size sopra per calcolare le quantità per porzione.</td></tr>
@@ -3824,9 +3227,10 @@ const DV_GULF = {
     sodio_mg: 2400, carboidratiTot: 260, fibre: 28, zuccheri_agg: 50,
 };
 
-function arRndE(v: number): number { if (v < 5) return 0; if (v <= 50) return Math.round(v / 5) * 5; return Math.round(v / 10) * 10; }
-function arRndG(v: number): number { return v < 0.5 ? 0 : Math.round(v); }
-function arRndMg(v: number): number { return v < 5 ? 0 : Math.round(v / 5) * 5; }
+function arRndE(v: number): number { return Math.round(v); }
+function arRndG(v: number): number { return v < 10 ? Math.round(v * 10) / 10 : Math.round(v); }
+function arFmtG(v: number): string { const r = arRndG(v); return r < 10 ? r.toFixed(1) : r.toString(); }
+function arRndMg(v: number): number { return v < 1000 ? Math.round(v / 10) * 10 : Math.round(v / 100) * 100; }
 function arPct(v: number, dv: number): number { return Math.round(v / dv * 100); }
 function arDec1(n: number): string { return n.toFixed(1).replace('.', ','); }
 function arCupFmt(qty: number): string {
@@ -3876,17 +3280,19 @@ function TabArabi({ p, arabi, servingRef, measure, specificGravity, full }: {
 
     const addedSugarsG   = arRndG(d.zuccheri_agg);
     const addedSugarsPct = arPct(addedSugarsG, DV_GULF.zuccheri_agg);
+    const addedSugarsStr = arFmtG(d.zuccheri_agg);
 
     const nutriRows = [
-        { label: 'Total Fat',         val: d.grassi,       dvRef: DV_GULF.grassi,       unit: 'g',  bold: true,  indent: 0, italic: false },
-        { label: 'Saturated Fat',     val: d.saturi,       dvRef: DV_GULF.saturi,       unit: 'g',  bold: false, indent: 1, italic: false },
-        { label: 'Trans Fat',         val: d.trans,        dvRef: 0,                    unit: 'g',  bold: false, indent: 1, italic: true  },
-        { label: 'Cholesterol',       val: d.colesterolo,  dvRef: DV_GULF.colesterolo,  unit: 'mg', bold: true,  indent: 0, italic: false },
-        { label: 'Sodium',            val: d.sodio_mg,     dvRef: DV_GULF.sodio_mg,     unit: 'mg', bold: true,  indent: 0, italic: false },
-        { label: 'Total Carbohydrate',val: d.carboidratiTot,dvRef: DV_GULF.carboidratiTot,unit:'g', bold: true,  indent: 0, italic: false },
-        { label: 'Dietary Fiber',     val: d.fibre,        dvRef: DV_GULF.fibre,        unit: 'g',  bold: false, indent: 1, italic: false },
-        { label: 'Total Sugars',      val: d.zuccheri,     dvRef: 0,                    unit: 'g',  bold: false, indent: 1, italic: false },
-        { label: 'Protein',           val: d.proteine,     dvRef: 0,                    unit: 'g',  bold: true,  indent: 0, italic: false },
+        { label: 'Total Fat',          val: d.grassi,        dvRef: DV_GULF.grassi,        unit: 'g',  bold: true,  indent: 0, italic: false },
+        { label: 'Saturated Fat',      val: d.saturi,        dvRef: DV_GULF.saturi,        unit: 'g',  bold: false, indent: 1, italic: false },
+        { label: 'Trans Fat',          val: d.trans,         dvRef: 0,                     unit: 'g',  bold: false, indent: 1, italic: true  },
+        { label: 'Cholesterol',        val: d.colesterolo,   dvRef: DV_GULF.colesterolo,   unit: 'mg', bold: true,  indent: 0, italic: false },
+        { label: 'Sodium',             val: d.sodio_mg,      dvRef: DV_GULF.sodio_mg,      unit: 'mg', bold: true,  indent: 0, italic: false },
+        { label: 'Total Carbohydrate', val: d.carboidratiTot,dvRef: DV_GULF.carboidratiTot,unit: 'g',  bold: true,  indent: 0, italic: false },
+        { label: 'Dietary Fiber',      val: d.fibre,         dvRef: DV_GULF.fibre,         unit: 'g',  bold: false, indent: 1, italic: false },
+        { label: 'Total Sugars',       val: d.zuccheri,      dvRef: 0,                     unit: 'g',  bold: false, indent: 1, italic: false },
+        { label: `Includes ${addedSugarsStr}g Added Sugars`, val: d.zuccheri_agg, dvRef: DV_GULF.zuccheri_agg, unit: 'g', bold: false, indent: 2, italic: false },
+        { label: 'Protein',            val: d.proteine,      dvRef: 0,                     unit: 'g',  bold: true,  indent: 0, italic: false },
     ];
 
     return (
@@ -3897,59 +3303,67 @@ function TabArabi({ p, arabi, servingRef, measure, specificGravity, full }: {
                 </h3>
             )}
             <div data-table-export style={{ background: 'white', padding: 12, display: 'inline-block' }}>
-                <div style={{ maxWidth: 310, border: '3px solid #000', padding: '8px 8px 6px 8px', fontFamily: F }}>
+                <div style={{ width: 310, border: '2.5px solid #000', padding: '8px 8px 6px 8px', fontFamily: F, color: '#000', boxSizing: 'border-box' as const }}>
 
                     {/* Title */}
-                    <div style={{ fontSize: 38, fontWeight: 900, lineHeight: 1, letterSpacing: '-0.5px' }}>Nutrition Facts</div>
+                    <div style={{ fontSize: 38, fontWeight: 900, lineHeight: 1, whiteSpace: 'nowrap', textAlign: 'justify', textAlignLast: 'justify', WebkitTextStroke: '0.6px #000', borderBottom: '1px solid #000', paddingBottom: 3, marginBottom: 2 }}>Nutrition Facts</div>
 
                     {/* Servings per container */}
-                    <div style={{ fontSize: 11, borderBottom: '1px solid #000', paddingBottom: 2, marginBottom: 2 }}>
+                    <div style={{ fontSize: 18, fontWeight: 400 }}>
                         {si.servingsPerContainer} servings per container
                     </div>
 
-                    {/* Serving size — barra spessa sopra */}
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', borderTop: '8px solid #000', paddingTop: 2, paddingBottom: 2 }}>
-                        <span style={{ fontSize: 13, fontWeight: 700 }}>{si.sizeLabel}</span>
-                        <span style={{ fontSize: 13, fontWeight: 700 }}>{si.sizeValue}</span>
+                    {/* Serving size */}
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+                        <span style={{ fontSize: 16, fontWeight: 900, WebkitTextStroke: '0.4px #000' }}>Serving size</span>
+                        <span style={{ fontSize: 16, fontWeight: 900, WebkitTextStroke: '0.4px #000' }}>{si.sizeValue}</span>
                     </div>
 
-                    {/* Amount + Calories */}
-                    <div style={{ borderTop: '4px solid #000', paddingTop: 1 }}>
-                        <div style={{ fontSize: 10, fontWeight: 700 }}>{si.amountLabel}</div>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', borderBottom: '4px solid #000', paddingBottom: 2 }}>
-                            <span style={{ fontSize: 28, fontWeight: 900 }}>Calories</span>
-                            <span style={{ fontSize: 48, fontWeight: 900, lineHeight: 1 }}>{arRndE(d.energyKcal)}</span>
+                    {/* Thick bar + Amount + Calories */}
+                    <div style={{ borderTop: '14px solid #000', marginTop: 3, paddingTop: 2 }}>
+                        <div style={{ fontSize: 14, fontWeight: 900, WebkitTextStroke: '0.4px #000', lineHeight: 1, marginBottom: 0 }}>{si.amountLabel}</div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', borderBottom: '8px solid #000', paddingBottom: 2, marginTop: -10 }}>
+                            <span style={{ fontSize: 32, fontWeight: 900, WebkitTextStroke: '0.8px #000' }}>Calories</span>
+                            <span style={{ fontSize: 48, fontWeight: 900, lineHeight: 1, WebkitTextStroke: '0.8px #000' }}>{arRndE(d.energyKcal)}</span>
                         </div>
                     </div>
 
                     {/* % DV header */}
-                    <div style={{ textAlign: 'right', fontSize: 10, fontWeight: 700, borderBottom: '1px solid #000', paddingBottom: 1, marginBottom: 1 }}>
+                    <div style={{ textAlign: 'right', fontSize: 11, fontWeight: 900, WebkitTextStroke: '0.4px #000', paddingTop: 2, paddingBottom: 1, borderBottom: '1px solid #000' }}>
                         % Daily Value*
                     </div>
 
                     {/* Nutrient rows */}
                     {nutriRows.map((r, i) => {
-                        const fmtV = r.unit === 'mg' ? `${arRndMg(r.val)}mg` : `${arRndG(r.val)}g`;
+                        const fmtV = r.unit === 'mg' ? `${arRndMg(r.val)} mg` : `${arFmtG(r.val)} g`;
                         const pct  = r.dvRef > 0 ? arPct(r.unit === 'mg' ? arRndMg(r.val) : arRndG(r.val), r.dvRef) : null;
+                        const isLast = i === nutriRows.length - 1;
+                        // 0.5pt thicker on: Cholesterol(3), Sodium(4), TotalCarb(5), Includes(8), Protein/last
+                        const needsThickBorder = !isLast && ((r.bold && i > 0) || r.indent >= 2);
+                        const borderBottom = isLast ? '8px solid #000' : needsThickBorder ? '1.5px solid #000' : '1px solid #000';
+                        // label name bold, value regular for main nutrients
                         const labelNode = r.italic
-                            ? <><em>Trans</em>{' Fat '}{fmtV}</>
+                            ? <><em>Trans</em>{' Fat '}<span style={{ fontWeight: 400 }}>{fmtV}</span></>
+                            : r.indent >= 2
+                            ? <>{r.label}</>
+                            : r.bold
+                            ? <><span style={{ fontWeight: 900, WebkitTextStroke: '0.4px #000' }}>{r.label}</span>{' '}<span style={{ fontWeight: 400 }}>{fmtV}</span></>
                             : <>{r.label} {fmtV}</>;
                         return (
-                            <div key={i} style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #aaa', paddingLeft: r.indent * 16, paddingTop: 1, paddingBottom: 1 }}>
-                                <span style={{ fontSize: r.bold ? 13 : 12, fontWeight: r.bold ? 700 : 400 }}>{labelNode}</span>
-                                {pct !== null ? <span style={{ fontSize: 12, fontWeight: 700 }}>{pct}%</span> : <span />}
+                            <div key={i} style={{
+                                display: 'flex', justifyContent: 'space-between', alignItems: 'baseline',
+                                borderBottom,
+                                paddingLeft: r.indent * 18,
+                                paddingTop: 2, paddingBottom: 2,
+                            }}>
+                                <span style={{ fontSize: r.bold ? 15 : 13, fontWeight: r.bold ? 900 : 400 }}>{labelNode}</span>
+                                {pct !== null ? <span style={{ fontSize: 13, fontWeight: 900, WebkitTextStroke: '0.4px #000' }}>{pct}%</span> : <span />}
                             </div>
                         );
                     })}
 
-                    {/* Includes Added Sugars */}
-                    <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #aaa', paddingLeft: 32, fontSize: 11, paddingTop: 1, paddingBottom: 1 }}>
-                        <span>Includes {addedSugarsG}g Added Sugars</span>
-                        <span style={{ fontWeight: 700 }}>{addedSugarsPct}%</span>
-                    </div>
-
                     {/* Footnote */}
-                    <div style={{ fontSize: 9, paddingTop: 4, borderTop: '1px solid #000' }}>
+                    <div style={{ fontSize: 11, paddingTop: 4, lineHeight: 1.3 }}>
                         *The % Daily Value (DV) tells you how much a nutrient in a serving of food contributes to a daily diet. 2,000 calories a day is used for general nutrition advice.
                     </div>
                 </div>

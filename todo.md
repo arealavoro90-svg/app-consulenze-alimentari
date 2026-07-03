@@ -5,37 +5,49 @@
 
 ---
 
-## TABELLE ESTERE — In corso (riprendere alla prossima sessione)
+## MOB-PARITY — Parità Desktop/Mobile NutrizionaleCalc
+### Fase 5 — Session Bridge desktop↔mobile (COMPLETATA — 2026-05-30)
+- [x] **MOB-P5-1** — sessionBridge.ts: persistenza stato in localStorage (`nut_session_draft`)
+- [x] **MOB-P5-2** — Desktop scrive bridge al load da archivio (`handleLoad`)
+- [x] **MOB-P5-3** — Mobile legge bridge al mount (dopo DB load) e ricostruisce componenti
 
-Riferimento: `/Users/novanta/Desktop/APP/_materiale e modifiche_app AEA/Verifica del 20-05-26_tabelle.pdf`
+### Fase 4 — Ristrutturazione UI (COMPLETATA — 2026-05-30)
+- [x] **MOB-P4-1** — Tab bar rinominata: Ricetta | Riepilogo | Mercati | Archivio (Tools rimosso)
+- [x] **MOB-P4-2** — Logo AEA tappabile → naviga a /dashboard (accesso strumenti)
+- [x] **MOB-P4-3** — Nuovo tab Riepilogo: tabella ingredienti (Quantità/Costi), card costi, allergenici
+- [x] **MOB-P4-4** — Tab Mercati: chip region compatti (EU|US|CA|AU|AR) invece dei tile grandi
 
-- [ ] **TAB-USA-1** — USA Orizzontale: formattazione non conforme al PDF.
-      Verificare con hard refresh (Cmd+Shift+R) se il fix del 23-05 è visibile.
-      Se ancora sbagliata: rivedere font, spessori, posizionamento Calories block nel layout a 4 colonne.
 
-- [ ] **TAB-USA-2** — USA Lineare: verificare conformità al PDF dopo fix del 23-05
-      (Serv.size: abbreviato, Amount per serving: completo).
+Spec: `docs/superpowers/specs/2026-05-30-mobile-parity-design.md`
+Obiettivo: NutrizionaleCalcMobile = NutrizionaleCalc al 100%.
 
-- [ ] **TAB-CA-1** — Canada Verticale: riscrivere completamente.
-      Layout attuale (due colonne EN|FR affiancate) → layout richiesto (Nutrition Facts / Valeur nutritive
-      sovrapposti, righe bilingue nella stessa cella, Saturated+Trans combinati).
-      Varianti: g/tazze(250ml)/cucchiai/pezzi × serving/confezione + 100g.
+### Fase 1 — Fix TabellaTab + Tabelle CA/AU/Arabi (COMPLETATA — 2026-05-30)
 
-- [ ] **TAB-CA-2** — Canada Orizzontale: riscrivere completamente.
-      Colonna sx (NF/VN + serving + Calories) + 2 colonne nutrienti bilingui + footer.
+- [x] **MOB-P1-0** — Ricerca ingredienti da DB → calcolo automatico in CalcoloTab
+- [x] **MOB-P1-1** — Estrai `TabCanada.tsx` come file condiviso
+- [x] **MOB-P1-2** — Estrai `TabAustralia.tsx` come file condiviso
+- [x] **MOB-P1-3** — Estrai `TabArabi.tsx` come file condiviso
+- [x] **MOB-P1-4** — Espandi `MobileNutForm` con serving sizes per tutte le 5 regioni + specificGravity
+- [x] **MOB-P1-5** — Riscrivi `TabellaTab.tsx`: EU sub-tab selector, USA layout/measure/servingRef, CA/AU/Arabi tabelle + configuratori
+- [x] **MOB-P1-6** — Build + verifica TypeScript pulito
+- [x] **MOB-P1-7** — Deploy Vercel produzione (2026-05-30)
 
-- [ ] **TAB-CA-3** — Canada Lineare: correggere formato testo (vedi PDF pag. 13-14).
+### Fase 2 — CalcoloTab avanzato (COMPLETATA — 2026-05-30)
 
-- [ ] **TAB-AU-1** — Australia: riscrivere layout.
-      Titolo "NUTRITION INFORMATION" centrato grande, serving size dinamico,
-      colonne: Nutriente | Avg Qty per Serving | %DI | Avg Qty per 100g.
-      Rimuovere righe duplicate (Protein/Fat/Saturated appaiono 2 volte, bug).
+- [x] **MOB-P2-1** — Multi-componente: `MobileComponent[]` con nome, pzUV, rows, additiveRows
+- [x] **MOB-P2-2** — Campo resa % per ingrediente (default 100%, espandibile per riga)
+- [x] **MOB-P2-3** — Campo peso finito prodotto (pesoFinito_g in MobileNutForm)
+- [x] **MOB-P2-4** — Additivi: sezione collassabile per componente (categoria + nomeSpecifico)
+- [x] **MOB-P2-5** — Campo costo EUR/kg per ingrediente (espandibile per riga)
 
-- [ ] **TAB-AR-1** — Arabi: riscrivere con layout FDA-style verticale (come USA)
-      con tutte le varianti misura (tazze/cucchiai/pezzi × serving/confezione).
-      DV Gulf standard: 2000 kcal, grassi 65g, saturi 20g, sodio 2300mg, carb 300g, fibre 25g.
+### Fase 3 — Feature complete (COMPLETATA — 2026-05-30)
+
+- [x] **MOB-P3-1** — Allergenici: calcolo automatico da ingredienti DB (presenti + tracce), chip colorati in TabellaTab
+- [x] **MOB-P3-2** — Optional nutrients: NutrientSelectModal in TabellaTab mobile (pulsante "Nutrienti" nella vista EU)
+- [x] **MOB-P3-3** — Peso specifico (SG): campo in CalcoloTab, passa a TabUE/TabUSA/TabArabi
 
 ---
+
 
 ## BUG — Da correggere (viola CLAUDE.md)
 
@@ -85,6 +97,9 @@ Riferimento: `/Users/novanta/Desktop/APP/_materiale e modifiche_app AEA/Verifica
 
 ## COMPLETATI
 
+- [x] **MOB-P1-0** — Ricerca ingredienti da DB → calcolo automatico in mobile CalcoloTab (2026-05-30).
+      CalcoloTab riscritto: niente input manuali nutrienti. Ingredienti DB → calcNutrients() auto.
+      File: NutrizionaleCalcMobile.tsx, CalcoloTab.tsx. Deploy produzione OK.
 - [x] **MOB-1** — Interfaccia mobile NutrizionaleCalc (2026-05-30): MobileShell + useMobile hook + AppShell
       integrazione + NutrizionaleCalcMobile con 4 tab (Calcolo / Tabella / Archivio / Tools).
       Design system mobile in `src/styles/mobile.css`. Commit range: 8fb4438…40abc43.

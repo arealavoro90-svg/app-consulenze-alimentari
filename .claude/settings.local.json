@@ -1,4 +1,12 @@
 {
+  "hooks": {
+    "SessionStart": [
+      {
+        "type": "command",
+        "command": "node /Users/novanta/.claude/plugins/marketplaces/caveman/src/hooks/caveman-activate.js"
+      }
+    ]
+  },
   "permissions": {
     "allow": [
       "mcp__filesystem__read_text_file",
@@ -17,7 +25,21 @@
       "Read(//Users/novanta/Desktop/APP/**)",
       "Bash(npx create-video@latest --yes --blank --no-tailwind nutrizionale-intro)",
       "Bash(npm i:*)",
-      "Bash(npx remotion:*)"
+      "Bash(npx remotion:*)",
+      "Bash(brew install *)",
+      "Bash(git --version)",
+      "Bash(gh repo *)",
+      "Bash(vercel deploy *)",
+      "Bash(find ~/.config ~/.local /Users/novanta/.vercel /Users/novanta/.config -name \"auth.json\" 2>/dev/null | head -5)",
+      "Read(//Users/novanta/.config/**)",
+      "Bash(curl -s --max-time 15 https://backend-8ucuxconb-gliortografici-9003s-projects.vercel.app/api/auth/login/ -w \"\\\\nHTTP:%{http_code}\")",
+      "Bash(vercel ls *)",
+      "Read(//Users/novanta/.local/share/com.vercel.cli/**)",
+      "Read(//Users/novanta/**)",
+      "Bash(node -e \"const {readFileSync}=require\\('fs'\\); const p=require\\('path'\\); const d=p.join\\(require\\('os'\\).homedir\\(\\), '.vercel', 'auth.json'\\); console.log\\(readFileSync\\(d,'utf8'\\)\\)\")",
+      "Bash(git push *)",
+      "Bash(curl -s -X POST https://backend-snowy-seven-98.vercel.app/api/auth/login/ -H 'Content-Type: application/json' -d '{\"email\":\"admin@aea.it\",\"password\":\"Admin1234!\"}' -w '\\\\nHTTP:%{http_code}')",
+      "Bash(find ~/.claude/plugins/cache/claude-plugins-official -maxdepth 3 -type d 2>/dev/null | grep -iE \"setup|config|init\" )"
     ]
   }
 }

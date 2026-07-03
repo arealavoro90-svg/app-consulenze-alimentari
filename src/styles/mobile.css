@@ -1,5 +1,4 @@
 /* ── Mobile Design Tokens ───────────────────────────────────────────────── */
-@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap');
 
 :root {
   --m-bg:           #faf7f4;
@@ -26,7 +25,7 @@
   flex-direction: column;
   min-height: 100dvh;
   background: var(--m-bg);
-  font-family: 'Outfit', system-ui, sans-serif;
+  font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
 }
 
 /* ── Mobile topbar ──────────────────────────────────────────────────────── */
@@ -92,10 +91,16 @@
   transition: background 0.15s;
 }
 .m-tabbar__dot--active { background: var(--m-orange); }
+.m-tabbar__icon {
+  display: flex; align-items: center; justify-content: center;
+  color: var(--m-text-muted);
+  transition: color 0.15s;
+}
+.m-tabbar__icon--active { color: var(--m-orange); }
 .m-tabbar__label {
   font-size: 10px; font-weight: 500;
   color: var(--m-text-muted);
-  font-family: 'Outfit', system-ui, sans-serif;
+  font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
 }
 .m-tabbar__label--active { color: var(--m-orange); font-weight: 700; }
 
@@ -110,7 +115,7 @@
   min-height: 44px;
   padding: 10px 12px;
   font-size: 16px;
-  font-family: 'Outfit', system-ui, sans-serif;
+  font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
   color: var(--m-text);
   background: var(--m-surface);
   border: 1.5px solid var(--m-border);
@@ -174,7 +179,7 @@
   display: flex; align-items: center; justify-content: center; gap: 6px;
   min-height: 44px; padding: 0 20px;
   font-size: 13px; font-weight: 700; letter-spacing: 0.4px;
-  font-family: 'Outfit', system-ui, sans-serif;
+  font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
   border: none; border-radius: var(--m-radius-md);
   cursor: pointer;
   transition: opacity 0.15s, transform 0.1s;
@@ -209,7 +214,7 @@
 }
 .m-region-tile__code {
   font-size: 22px; font-weight: 800; color: var(--m-text);
-  font-family: 'Outfit', system-ui, sans-serif;
+  font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
   letter-spacing: -0.5px;
 }
 .m-region-tile__sub { font-size: 10px; color: var(--m-text-muted); margin-top: 3px; }
@@ -230,7 +235,7 @@
   display: flex; align-items: center; justify-content: center;
   font-size: 10px; font-weight: 800; color: #fff;
   flex-shrink: 0;
-  font-family: 'Outfit', system-ui, sans-serif;
+  font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
 }
 .m-archive-badge--UE        { background: var(--m-navy); }
 .m-archive-badge--USA       { background: #1a3a6b; }
@@ -290,7 +295,7 @@
 .m-search input {
   flex: 1; border: none; outline: none; background: transparent;
   font-size: 14px; color: var(--m-text);
-  font-family: 'Outfit', system-ui, sans-serif;
+  font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
 }
 .m-search input::placeholder { color: var(--m-text-muted); }
 

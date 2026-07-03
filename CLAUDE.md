@@ -1,5 +1,13 @@
 # CLAUDE.md — AEA Consulenze Alimentari
 
+## Protocollo obbligatorio pre-esecuzione
+**Prima di eseguire qualsiasi richiesta**, leggere e applicare il protocollo definito in:
+> `agentsinloop.md` — Multi-Agent Swarm Protocol V5.1
+
+Ogni risposta deve essere prodotta secondo il ciclo swarm (FAST / STANDARD / DEEP) e nel formato di output corrispondente definito nella Sezione 6 di quel file.
+
+---
+
 ## Regola operativa principale
 NON modificare codice esistente senza proporre prima la variazione e ricevere
 approvazione esplicita. Leggere sempre il file prima di proporre modifiche.
@@ -42,6 +50,11 @@ Al termine di OGNI richiesta o modifica al codice, chiedere sempre:
 > "Vuoi caricare le modifiche su Vercel per verificarne le funzionalità?"
 
 Se la risposta è affermativa, eseguire un deploy preview con `vercel` dalla directory del progetto.
+
+---
+
+## Stile di sviluppo
+Plugin attivo: **ponytail** (full mode) — soluzione più semplice che funziona, YAGNI enforced.
 
 ---
 

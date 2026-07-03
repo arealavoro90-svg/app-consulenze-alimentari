@@ -1,53 +1,80 @@
 import { createContext, useContext, useState, useEffect } from 'react';
 import type { ReactNode } from 'react';
-import { MOCK_USERS } from '../data/mockUsers';
 import type { User, ToolId } from '../data/mockUsers';
+import { apiLogin, apiLogout, apiMe } from '../api/auth';
+import { getAccessToken, clearTokens } from '../api/client';
 
 interface AuthContextType {
-    user: User | null;
-    login: (email: string, password: string) => Promise<boolean>;
-    logout: () => void;
+    user:            User | null;
+    login:           (email: string, password: string) => Promise<boolean>;
+    logout:          () => void;
     isAuthenticated: boolean;
-    hasTool: (toolId: ToolId) => boolean;
+    hasTool:         (toolId: ToolId) => boolean;
 }
 
+const CACHE_KEY  = 'aea_user';
 const AuthContext = createContext<AuthContextType | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-    const [user, setUser] = useState<User | null>(null);
-
-    useEffect(() => {
-        const saved = localStorage.getItem('aea_user');
-        if (saved) {
-            try {
-                setUser(JSON.parse(saved));
-            } catch {
-                localStorage.removeItem('aea_user');
-            }
+    /**
+     * Restore istantaneo dalla cache localStorage per evitare flash bianco.
+     * Il token viene verificato in background nell'useEffect.
+     */
+    const [user, setUser] = useState<User | null>(() => {
+        const cached = localStorage.getItem(CACHE_KEY);
+        if (cached) {
+            try { return JSON.parse(cached) as User; } catch { /* cache corrotta */ }
         }
+        return null;
+    });
+
+    /**
+     * Verifica il token JWT al mount.
+     * - Se non c'è token → pulisce eventuale cache obsoleta.
+     * - Se apiMe() fallisce (token scaduto/invalido) → logout silenzioso.
+     */
+    useEffect(() => {
+        const token = getAccessToken();
+        if (!token) {
+            setUser(null);
+            localStorage.removeItem(CACHE_KEY);
+            return;
+        }
+        apiMe()
+            .then((freshUser) => {
+                setUser(freshUser);
+                localStorage.setItem(CACHE_KEY, JSON.stringify(freshUser));
+            })
+            .catch(() => {
+                setUser(null);
+                localStorage.removeItem(CACHE_KEY);
+                clearTokens();
+            });
     }, []);
 
     const login = async (email: string, password: string): Promise<boolean> => {
-        const found = MOCK_USERS.find(
-            (u) => u.email.toLowerCase() === email.toLowerCase() && u.password === password
-        );
-        if (found) {
-            // eslint-disable-next-line @typescript-eslint/no-unused-vars
-            const { password: _p, ...safeUser } = found;
-            const userToStore = { ...safeUser, password: '' };
-            setUser(userToStore as User);
-            localStorage.setItem('aea_user', JSON.stringify(userToStore));
+        try {
+            const loggedUser = await apiLogin(email, password);
+            setUser(loggedUser);
+            localStorage.setItem(CACHE_KEY, JSON.stringify(loggedUser));
             return true;
+        } catch {
+            return false;
         }
-        return false;
     };
 
-    const logout = () => {
+    const logout = (): void => {
         setUser(null);
-        localStorage.removeItem('aea_user');
+        localStorage.removeItem(CACHE_KEY);
+        void apiLogout(); // fire-and-forget: blacklist refresh token sul server
     };
 
+    /**
+     * Admin ha accesso a tutti gli strumenti (role === 'admin').
+     * Client e demo controllano purchasedTools.
+     */
     const hasTool = (toolId: ToolId): boolean => {
+        if (user?.role === 'admin') return true;
         return user?.purchasedTools.includes(toolId) ?? false;
     };
 

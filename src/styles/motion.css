@@ -1,0 +1,1008 @@
+/* ═══════════════════════════════════════════════════════════
+   AEA — Motion System v2 (Unified)
+   Font: Helvetica Neue, Helvetica, Arial
+   Portale AEA Consulenze Alimentari
+   React 19 + TypeScript + Vite
+
+   REGOLE:
+   - NO bounce/elastic easing
+   - NO animazioni >500ms su interazioni
+   - SOLO transform e opacity per animazioni
+   - 60fps target — compositor-thread only
+   - prefers-reduced-motion gestito in fondo (granulare)
+   ═══════════════════════════════════════════════════════════ */
+
+
+/* ═══════════════════════════════════════════════════════════
+   SECTION 1: DESIGN TOKENS
+   ═══════════════════════════════════════════════════════════ */
+
+:root {
+  /* Font stack — unico, nessun Google Fonts */
+  --font-sans: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  --font-mono: 'Courier New', Courier, monospace;
+
+  /* Timing */
+  --dur-instant:   80ms;
+  --dur-fast:      150ms;
+  --dur-normal:    250ms;
+  --dur-slow:      400ms;
+  --dur-entrance:  500ms;
+
+  /* Easing */
+  --ease-out:      cubic-bezier(0.25, 1, 0.5, 1);
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in:       cubic-bezier(0.5, 0, 0.75, 0);
+  --ease-in-out:   cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* Alias legacy (compatibilita con componenti esistenti) */
+  --ease-out-quart: var(--ease-out);
+  --ease-out-quint: var(--ease-out-expo);
+  --ease-in-quart:  var(--ease-in);
+
+  /* Spacing */
+  --space-1:  4px;
+  --space-2:  8px;
+  --space-3:  12px;
+  --space-4:  16px;
+  --space-5:  20px;
+  --space-6:  24px;
+  --space-8:  32px;
+  --space-10: 40px;
+  --space-12: 48px;
+
+  /* Radius — max 10px su componenti primari */
+  --radius-sm:   4px;
+  --radius-md:   8px;
+  --radius-lg:   10px;
+  --radius-full: 9999px;
+
+  /* Shadow — sottili */
+  --shadow-sm:   0 1px 3px rgba(12, 19, 38, 0.06);
+  --shadow-md:   0 2px 8px rgba(12, 19, 38, 0.10);
+  --shadow-lg:   0 4px 20px rgba(12, 19, 38, 0.14);
+  --shadow-card: 0 1px 3px rgba(12, 19, 38, 0.06), 0 2px 8px rgba(12, 19, 38, 0.08);
+  --shadow-focus: 0 0 0 3px rgba(255, 126, 46, 0.12);
+
+  /* Color tokens — usati da componenti che importano solo motion.css */
+  --color-bg:          #f4f6f9;
+  --color-surface:     #ffffff;
+  --color-surface-2:   #f0f2f6;
+  --color-border:      #dde2ea;
+  --color-border-focus: rgba(255, 126, 46, 0.4);
+  --color-text:        #1a1f2e;
+  --color-text-muted:  #5e6b80;
+  --color-accent:      #ff7e2e;
+  --color-accent-bg:   rgba(255, 126, 46, 0.08);
+  --color-orange:      #ff7e2e;
+  --color-navy:        #0c1326;
+  --color-success:     #43821c;
+  --color-success-bg:  rgba(67, 130, 28, 0.10);
+  --color-danger:      #e53e3e;
+  --color-danger-bg:   rgba(229, 62, 62, 0.10);
+  --color-warning:     #d97706;
+  --color-warning-bg:  rgba(217, 119, 6, 0.10);
+}
+
+
+/* ═══════════════════════════════════════════════════════════
+   SECTION 2: @KEYFRAMES
+   ═══════════════════════════════════════════════════════════ */
+
+/* Fade semplice */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes fadeOut {
+  from { opacity: 1; }
+  to   { opacity: 0; }
+}
+
+/* Fade + traslazione verso l'alto (entrate dal basso) */
+@keyframes fadeUp {
+  from {
+    opacity:   0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity:   1;
+    transform: translateY(0);
+  }
+}
+
+/* Slide verso il basso (ingredient row add) */
+@keyframes slideDown {
+  from {
+    opacity:   0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity:   1;
+    transform: translateY(0);
+  }
+}
+
+/* Slide da destra (notifiche, drawer mobile) */
+@keyframes slideInRight {
+  from {
+    opacity:   0;
+    transform: translateX(12px);
+  }
+  to {
+    opacity:   1;
+    transform: translateX(0);
+  }
+}
+
+/* Slide fuori a sinistra (uscite) */
+@keyframes slideOutLeft {
+  from {
+    opacity:   1;
+    transform: translateX(0);
+  }
+  to {
+    opacity:   0;
+    transform: translateX(-12px);
+  }
+}
+
+/* Shimmer — skeleton loading */
+@keyframes shimmer {
+  0%   { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+/* Error shake — scuote orizzontalmente il campo in errore */
+@keyframes errorShake {
+  0%   { transform: translateX(0); }
+  15%  { transform: translateX(-6px); }
+  30%  { transform: translateX(6px); }
+  45%  { transform: translateX(-4px); }
+  60%  { transform: translateX(4px); }
+  75%  { transform: translateX(-2px); }
+  90%  { transform: translateX(2px); }
+  100% { transform: translateX(0); }
+}
+
+/* Success flash — background flash verde */
+@keyframes successFlash {
+  0%   { background-color: var(--color-accent); }
+  40%  { background-color: var(--color-success); }
+  100% { background-color: var(--color-accent); }
+}
+
+/* Scale in — modal content, popover */
+@keyframes scaleIn {
+  from {
+    opacity:   0;
+    transform: scale(0.96);
+  }
+  to {
+    opacity:   1;
+    transform: scale(1);
+  }
+}
+
+/* Progress grow — barra che si riempie da sinistra */
+@keyframes progressGrow {
+  from { transform: scaleX(0); }
+  to   { transform: scaleX(1); }
+}
+
+/* Checkmark SVG — stroke-dashoffset per tracciamento */
+@keyframes checkmark {
+  from { stroke-dashoffset: 32; }
+  to   { stroke-dashoffset: 0; }
+}
+
+/* Fade + traslazione verso il basso (menu, dropdown) */
+@keyframes fadeDown {
+  from {
+    opacity:   0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity:   1;
+    transform: translateY(0);
+  }
+}
+
+/* Scale out — modal close */
+@keyframes scaleOut {
+  from {
+    opacity:   1;
+    transform: scale(1);
+  }
+  to {
+    opacity:   0;
+    transform: scale(0.97);
+  }
+}
+
+
+/* ═══════════════════════════════════════════════════════════
+   SECTION 3: UTILITY ANIMATION CLASSES
+   ═══════════════════════════════════════════════════════════ */
+
+.animate-fade-in {
+  animation: fadeIn  var(--dur-fast)   var(--ease-out) backwards;
+}
+
+.animate-fade-out {
+  animation: fadeOut var(--dur-fast)   var(--ease-in) forwards;
+}
+
+.animate-fade-up {
+  animation: fadeUp  var(--dur-normal) var(--ease-out) backwards;
+}
+
+.animate-fade-down {
+  animation: fadeDown var(--dur-fast)  var(--ease-out) backwards;
+}
+
+.animate-slide-in-right {
+  animation: slideInRight var(--dur-normal) var(--ease-out) backwards;
+}
+
+.animate-slide-out-left {
+  animation: slideOutLeft var(--dur-fast)   var(--ease-in) forwards;
+}
+
+.animate-slide-down {
+  animation: slideDown var(--dur-fast) var(--ease-out) backwards;
+}
+
+.animate-scale-in {
+  animation: scaleIn var(--dur-normal) var(--ease-out-expo) backwards;
+}
+
+.animate-scale-out {
+  animation: scaleOut var(--dur-fast)  var(--ease-in) forwards;
+}
+
+/* Entrata lenta — pagine, dashboard */
+.animate-entrance {
+  animation: fadeUp var(--dur-entrance) var(--ease-out) backwards;
+}
+
+/* Feedback stati */
+.animate-error-shake {
+  animation: errorShake var(--dur-normal) var(--ease-out);
+}
+
+.animate-success-flash {
+  animation: successFlash var(--dur-slow) ease;
+}
+
+
+/* ═══════════════════════════════════════════════════════════
+   SECTION 4: STAGGER CHILDREN
+   8 livelli x 40ms = 0–280ms
+   ═══════════════════════════════════════════════════════════ */
+
+.stagger-children > * {
+  animation: fadeUp var(--dur-normal) var(--ease-out) backwards;
+}
+
+.stagger-children > *:nth-child(1) { animation-delay:   0ms; }
+.stagger-children > *:nth-child(2) { animation-delay:  40ms; }
+.stagger-children > *:nth-child(3) { animation-delay:  80ms; }
+.stagger-children > *:nth-child(4) { animation-delay: 120ms; }
+.stagger-children > *:nth-child(5) { animation-delay: 160ms; }
+.stagger-children > *:nth-child(6) { animation-delay: 200ms; }
+.stagger-children > *:nth-child(7) { animation-delay: 240ms; }
+.stagger-children > *:nth-child(8) { animation-delay: 280ms; }
+
+/* Variante compatta — 20ms per liste dense */
+.stagger-children--tight > * {
+  animation: fadeUp var(--dur-fast) var(--ease-out) backwards;
+}
+
+.stagger-children--tight > *:nth-child(1) { animation-delay:   0ms; }
+.stagger-children--tight > *:nth-child(2) { animation-delay:  20ms; }
+.stagger-children--tight > *:nth-child(3) { animation-delay:  40ms; }
+.stagger-children--tight > *:nth-child(4) { animation-delay:  60ms; }
+.stagger-children--tight > *:nth-child(5) { animation-delay:  80ms; }
+.stagger-children--tight > *:nth-child(6) { animation-delay: 100ms; }
+.stagger-children--tight > *:nth-child(7) { animation-delay: 120ms; }
+.stagger-children--tight > *:nth-child(8) { animation-delay: 140ms; }
+
+
+/* ═══════════════════════════════════════════════════════════
+   SECTION 5: SKELETON LOADING
+   ═══════════════════════════════════════════════════════════ */
+
+.skeleton {
+  background:    var(--color-surface-2);
+  border-radius: var(--radius-sm);
+  overflow:      hidden;
+  position:      relative;
+}
+
+.skeleton::after {
+  content:  '';
+  position: absolute;
+  inset:    0;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.40) 50%,
+    transparent 100%
+  );
+  animation: shimmer 1.4s ease-in-out infinite;
+}
+
+
+/* ═══════════════════════════════════════════════════════════
+   SECTION 6: COMPONENT TRANSITIONS
+   ═══════════════════════════════════════════════════════════ */
+
+
+/* ----------------------------------------------------------
+   6.1 SIDEBAR FLYOUT (Desktop)
+   ---------------------------------------------------------- */
+
+.sidebar-flyout {
+  transition:
+    opacity    var(--dur-fast) var(--ease-out),
+    transform  var(--dur-fast) var(--ease-out),
+    visibility var(--dur-fast);
+  transform-origin: left center;
+}
+
+.sidebar-flyout:not(.open) {
+  opacity:    0;
+  transform:  translateX(-8px);
+  visibility: hidden;
+}
+
+.sidebar-flyout.open {
+  opacity:    1;
+  transform:  translateX(0);
+  visibility: visible;
+}
+
+.sidebar-icon {
+  transition:
+    color      var(--dur-fast)    ease,
+    background var(--dur-fast)    ease,
+    transform  var(--dur-instant) ease;
+}
+
+.sidebar-icon:hover {
+  color:      var(--color-accent);
+  background: var(--color-accent-bg);
+  transform:  scale(1.05);
+}
+
+.sidebar-icon--active {
+  color:      var(--color-accent);
+  background: var(--color-accent-bg);
+}
+
+.sidebar-tooltip {
+  transition:
+    opacity   var(--dur-instant) ease,
+    transform var(--dur-instant) ease;
+  pointer-events: none;
+}
+
+.sidebar-icon:not(:hover) + .sidebar-tooltip {
+  opacity:   0;
+  transform: translateX(-4px);
+}
+
+.sidebar-icon:hover + .sidebar-tooltip {
+  opacity:   1;
+  transform: translateX(0);
+}
+
+
+/* ----------------------------------------------------------
+   6.2 TAB INDICATOR (Desktop)
+   left e width settati via JS con getBoundingClientRect
+   ---------------------------------------------------------- */
+
+.tab-indicator {
+  position:      absolute;
+  bottom:        0;
+  height:        2px;
+  background:    var(--color-accent);
+  border-radius: var(--radius-full);
+  transition:
+    left  var(--dur-normal) var(--ease-out),
+    width var(--dur-normal) var(--ease-out);
+}
+
+.tab-btn {
+  transition:
+    color      var(--dur-fast) ease,
+    background var(--dur-fast) ease;
+  position: relative;
+}
+
+.tab-btn:hover     { color: var(--color-text); }
+.tab-btn--active   { color: var(--color-accent); }
+
+
+/* ----------------------------------------------------------
+   6.3 MOBILE TAB BAR (Bottom nav)
+   ---------------------------------------------------------- */
+
+.m-tabbar__item {
+  transition: transform var(--dur-fast) var(--ease-out);
+}
+
+.m-tabbar__item:active {
+  transform: scale(0.92);
+}
+
+.m-tabbar__icon  { transition: color var(--dur-fast) ease; }
+.m-tabbar__label { transition: color var(--dur-fast) ease; }
+
+.m-tabbar__icon--active  { color: var(--color-accent); }
+.m-tabbar__label--active { color: var(--color-accent); }
+
+/* Dot indicator */
+.m-tabbar__dot {
+  width:         5px;
+  height:        5px;
+  border-radius: var(--radius-full);
+  background:    transparent;
+  transition:
+    background var(--dur-fast) ease,
+    transform  var(--dur-fast) ease;
+}
+
+.m-tabbar__dot--active {
+  background: var(--color-accent);
+  transform:  scale(1.3);
+}
+
+
+/* ----------------------------------------------------------
+   6.4 INGREDIENT ROWS
+   ---------------------------------------------------------- */
+
+.ingredient-row {
+  animation:  slideDown var(--dur-fast) var(--ease-out) backwards;
+  transition: background var(--dur-instant) ease;
+}
+
+.ingredient-row:hover {
+  background: rgba(12, 19, 38, 0.02);
+}
+
+.ingredient-row.removing {
+  animation:      fadeOut var(--dur-fast) ease forwards;
+  pointer-events: none;
+}
+
+.ingredient-row__remove-btn {
+  transition:
+    color     var(--dur-instant) ease,
+    transform var(--dur-instant) ease,
+    opacity   var(--dur-fast)    ease;
+  opacity: 0;
+}
+
+.ingredient-row:hover .ingredient-row__remove-btn {
+  opacity: 1;
+}
+
+.ingredient-row__remove-btn:hover {
+  color:     var(--color-danger);
+  transform: scale(1.15);
+}
+
+
+/* ----------------------------------------------------------
+   6.5 BUTTONS
+   ---------------------------------------------------------- */
+
+.btn {
+  transition:
+    transform    var(--dur-instant) ease,
+    background   var(--dur-fast)    ease,
+    box-shadow   var(--dur-fast)    ease,
+    border-color var(--dur-fast)    ease,
+    color        var(--dur-fast)    ease;
+  cursor: pointer;
+}
+
+.btn:hover  { transform: translateY(-1px); }
+.btn:active { transform: scale(0.97); }
+
+/* Primary — accent orange */
+.btn--primary {
+  background: var(--color-accent);
+  color:      #ffffff;
+  box-shadow: 0 1px 4px rgba(255, 126, 46, 0.20);
+}
+
+.btn--primary:hover {
+  background: #e8711f;
+  box-shadow: 0 2px 10px rgba(255, 126, 46, 0.28);
+}
+
+/* Success state */
+.btn--success {
+  background: var(--color-success) !important;
+  box-shadow: 0 1px 4px rgba(67, 130, 28, 0.25) !important;
+  animation:  successFlash var(--dur-slow) ease;
+  transition:
+    background  var(--dur-fast)    ease,
+    box-shadow  var(--dur-fast)    ease,
+    transform   var(--dur-instant) ease;
+}
+
+/* Secondary — outline */
+.btn--secondary {
+  background:   transparent;
+  border:       1px solid var(--color-border);
+  color:        var(--color-text);
+}
+
+.btn--secondary:hover {
+  border-color: #b0b9c8;
+  background:   rgba(12, 19, 38, 0.03);
+}
+
+/* Ghost */
+.btn--ghost {
+  background: transparent;
+  color:      var(--color-text-muted);
+}
+
+.btn--ghost:hover {
+  background: rgba(12, 19, 38, 0.04);
+  color:      var(--color-text);
+}
+
+/* Danger */
+.btn--danger {
+  background: var(--color-danger-bg);
+  color:      var(--color-danger);
+  border:     1px solid rgba(229, 62, 62, 0.20);
+}
+
+.btn--danger:hover {
+  background: rgba(229, 62, 62, 0.16);
+  box-shadow: 0 1px 4px rgba(229, 62, 62, 0.18);
+}
+
+/* Icon button */
+.btn-icon {
+  transition:
+    transform  var(--dur-instant) ease,
+    background var(--dur-fast)    ease,
+    color      var(--dur-fast)    ease;
+}
+
+.btn-icon:hover  { transform: scale(1.10); }
+.btn-icon:active { transform: scale(0.92); }
+
+
+/* ----------------------------------------------------------
+   6.6 FORM INPUTS
+   ---------------------------------------------------------- */
+
+.form-input {
+  transition:
+    border-color var(--dur-fast) ease,
+    box-shadow   var(--dur-fast) ease,
+    background   var(--dur-fast) ease;
+}
+
+.form-input:focus {
+  border-color: var(--color-accent);
+  box-shadow:   0 0 0 3px rgba(255, 126, 46, 0.12);
+  outline:      none;
+}
+
+.form-input:hover:not(:focus) {
+  border-color: #b8bfcc;
+}
+
+.form-input.error {
+  border-color: var(--color-danger);
+  box-shadow:   0 0 0 3px rgba(229, 62, 62, 0.12);
+  animation:    errorShake var(--dur-normal) var(--ease-out);
+}
+
+.form-error-msg {
+  animation: fadeDown var(--dur-fast) var(--ease-out) backwards;
+  color:     var(--color-danger);
+}
+
+.form-label {
+  transition:
+    transform  var(--dur-fast) var(--ease-out),
+    font-size  var(--dur-fast) var(--ease-out),
+    color      var(--dur-fast) ease;
+}
+
+.form-select {
+  transition:
+    border-color var(--dur-fast) ease,
+    box-shadow   var(--dur-fast) ease;
+}
+
+.form-select:focus {
+  border-color: var(--color-accent);
+  box-shadow:   0 0 0 3px rgba(255, 126, 46, 0.12);
+  outline:      none;
+}
+
+
+/* ----------------------------------------------------------
+   6.7 PROGRESS BAR (valori nutrizionali vs. RDA)
+   ---------------------------------------------------------- */
+
+.progress-track {
+  background:    var(--color-surface-2);
+  border-radius: var(--radius-full);
+  overflow:      hidden;
+}
+
+.progress-fill {
+  height:          100%;
+  border-radius:   var(--radius-full);
+  transform-origin: left center;
+  transition:
+    width            var(--dur-normal) var(--ease-out),
+    background-color var(--dur-fast)   ease;
+}
+
+.progress-fill--ok      { background: var(--color-success); }
+.progress-fill--warning { background: var(--color-warning); }
+.progress-fill--over    { background: var(--color-danger); }
+
+.progress-fill--animate-in {
+  animation: progressGrow var(--dur-slow) var(--ease-out) backwards;
+}
+
+
+/* ----------------------------------------------------------
+   6.8 MODAL OVERLAY + CONTENT
+   ---------------------------------------------------------- */
+
+.modal-overlay {
+  transition:      opacity var(--dur-fast) ease;
+  backdrop-filter: blur(2px);
+}
+
+.modal-overlay:not(.open) {
+  opacity:        0;
+  pointer-events: none;
+}
+
+.modal-overlay.open { opacity: 1; }
+
+.modal-content {
+  transition:
+    transform var(--dur-normal) var(--ease-out-expo),
+    opacity   var(--dur-fast)   ease;
+}
+
+.modal-content:not(.open) {
+  transform: translateY(16px) scale(0.98);
+  opacity:   0;
+}
+
+.modal-content.open {
+  transform: translateY(0) scale(1);
+  opacity:   1;
+}
+
+.modal-close-btn {
+  transition:
+    background var(--dur-instant) ease,
+    transform  var(--dur-instant) ease;
+}
+
+.modal-close-btn:hover  { background: rgba(12, 19, 38, 0.06); transform: scale(1.10); }
+.modal-close-btn:active { transform: scale(0.92); }
+
+
+/* ----------------------------------------------------------
+   6.9 TOOL CARDS (Dashboard — 7 calcolatori)
+   ---------------------------------------------------------- */
+
+.tool-card {
+  transition:
+    transform    var(--dur-fast) var(--ease-out),
+    box-shadow   var(--dur-fast) var(--ease-out),
+    border-color var(--dur-fast) ease;
+}
+
+.tool-card:hover {
+  transform:  translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.tool-card:active {
+  transform: translateY(0) scale(0.99);
+}
+
+.tool-card--featured {
+  transition:
+    transform    var(--dur-fast) var(--ease-out),
+    box-shadow   var(--dur-fast) var(--ease-out),
+    border-color var(--dur-fast) ease;
+}
+
+.tool-card--featured:hover {
+  transform:    translateY(-2px);
+  box-shadow:   var(--shadow-lg);
+  border-color: var(--color-accent);
+}
+
+.tool-card__icon {
+  transition:
+    transform var(--dur-fast) var(--ease-out),
+    opacity   var(--dur-fast) ease;
+}
+
+.tool-card:hover .tool-card__icon { transform: scale(1.06); }
+
+.tool-card__arrow {
+  transition:
+    transform var(--dur-fast) var(--ease-out),
+    opacity   var(--dur-fast) ease;
+  opacity: 0.4;
+}
+
+.tool-card:hover .tool-card__arrow {
+  transform: translateX(3px);
+  opacity:   1;
+}
+
+
+/* ----------------------------------------------------------
+   6.10 RESOURCE LINKS (pannello risorse)
+   ---------------------------------------------------------- */
+
+.resource-link {
+  border-left:  2px solid transparent;
+  padding-left: 12px;
+  transition:
+    background         var(--dur-instant) ease,
+    padding-left       var(--dur-fast)    var(--ease-out),
+    border-left-color  var(--dur-fast)    ease,
+    color              var(--dur-fast)    ease;
+}
+
+.resource-link:hover {
+  background:        rgba(255, 126, 46, 0.05);
+  padding-left:      16px;
+  border-left-color: var(--color-accent);
+  color:             var(--color-text);
+}
+
+.resource-link:active { background: var(--color-accent-bg); }
+
+.resource-link__ext-icon {
+  transition:
+    transform var(--dur-fast) var(--ease-out),
+    opacity   var(--dur-fast) ease;
+  opacity: 0;
+}
+
+.resource-link:hover .resource-link__ext-icon {
+  transform: translate(2px, -2px);
+  opacity:   1;
+}
+
+
+/* ----------------------------------------------------------
+   6.11 SPLIT PANEL DIVIDER (Desktop — Ricetta | Tabella)
+   ---------------------------------------------------------- */
+
+.split-panel-divider {
+  cursor:     col-resize;
+  transition:
+    background var(--dur-fast) ease,
+    box-shadow var(--dur-fast) ease;
+  user-select: none;
+}
+
+.split-panel-divider:hover {
+  background: var(--color-accent);
+  box-shadow: 0 0 0 2px var(--color-accent-bg);
+}
+
+/* Durante il drag — rimuovere transition per evitare lag */
+.split-panel-divider.dragging {
+  background: var(--color-accent);
+  transition: none;
+}
+
+.split-panel-divider__handle {
+  transition: opacity var(--dur-fast) ease;
+  opacity:    0.4;
+}
+
+.split-panel-divider:hover .split-panel-divider__handle { opacity: 1; }
+
+
+/* ----------------------------------------------------------
+   6.12 PAGE TRANSITIONS
+   ---------------------------------------------------------- */
+
+.page { transition: opacity var(--dur-fast) ease; }
+.page.entering { opacity: 0; }
+.page.active   { opacity: 1; }
+.page.exiting  { opacity: 0; }
+
+
+/* ----------------------------------------------------------
+   6.13 DROPDOWN / POPOVER
+   ---------------------------------------------------------- */
+
+.dropdown-menu {
+  animation:        fadeDown var(--dur-fast) var(--ease-out) backwards;
+  transform-origin: top center;
+}
+
+.dropdown-menu.closing {
+  animation: fadeOut var(--dur-fast) var(--ease-in) forwards;
+}
+
+.dropdown-item {
+  transition:
+    background var(--dur-instant) ease,
+    color      var(--dur-instant) ease;
+}
+
+.dropdown-item:hover         { background: var(--color-surface-2); }
+.dropdown-item--danger:hover { background: var(--color-danger-bg); color: var(--color-danger); }
+
+
+/* ----------------------------------------------------------
+   6.14 TOOLTIP
+   ---------------------------------------------------------- */
+
+.tooltip {
+  transition:
+    opacity   var(--dur-fast) ease,
+    transform var(--dur-fast) var(--ease-out);
+  pointer-events: none;
+}
+
+.tooltip:not(.visible) { opacity: 0; transform: translateY(4px); }
+.tooltip.visible       { opacity: 1; transform: translateY(0); }
+
+
+/* ----------------------------------------------------------
+   6.15 BADGE / TAG
+   ---------------------------------------------------------- */
+
+.badge { transition: background var(--dur-fast) ease; }
+
+.badge--animate-in {
+  animation: fadeIn var(--dur-fast) var(--ease-out) backwards;
+}
+
+
+/* ----------------------------------------------------------
+   6.16 NOTIFICATION / TOAST
+   ---------------------------------------------------------- */
+
+.toast {
+  animation: slideInRight var(--dur-normal) var(--ease-out-expo) backwards;
+}
+
+.toast.dismissing {
+  animation: slideOutLeft var(--dur-fast) var(--ease-in) forwards;
+}
+
+
+/* ----------------------------------------------------------
+   6.17 CHECKMARK SVG
+   Applicare su <path stroke-dasharray="32" stroke-dashoffset="32">
+   ---------------------------------------------------------- */
+
+.checkmark-path {
+  stroke-dasharray:  32;
+  stroke-dashoffset: 32;
+  animation: checkmark var(--dur-normal) var(--ease-out) forwards;
+  animation-delay:   80ms;
+}
+
+
+/* ----------------------------------------------------------
+   6.18 SCROLL INDICATOR
+   ---------------------------------------------------------- */
+
+.scroll-indicator { transition: opacity var(--dur-fast) ease; }
+.scroll-indicator--hidden { opacity: 0; pointer-events: none; }
+
+
+/* ═══════════════════════════════════════════════════════════
+   SECTION 7: PREFERS-REDUCED-MOTION (granulare)
+   Tier 1: animazioni decorative → disabilitate
+   Tier 2: transizioni di stato → ridotte a 0.01ms
+   Tier 3: hover con transform → resettati
+   ═══════════════════════════════════════════════════════════ */
+
+@media (prefers-reduced-motion: reduce) {
+
+  /* Tier 1 — entrate e decorative */
+  .animate-fade-in,
+  .animate-fade-up,
+  .animate-fade-down,
+  .animate-slide-in-right,
+  .animate-slide-down,
+  .animate-scale-in,
+  .animate-entrance,
+  .stagger-children > *,
+  .stagger-children--tight > *,
+  .ingredient-row,
+  .toast,
+  .dropdown-menu,
+  .badge--animate-in,
+  .progress-fill--animate-in {
+    animation: none !important;
+    opacity:   1 !important;
+    transform: none !important;
+  }
+
+  .skeleton::after { animation: none !important; }
+
+  /* Tier 2 — transizioni di stato ridotte */
+  .sidebar-flyout,
+  .sidebar-icon,
+  .sidebar-tooltip,
+  .tab-btn,
+  .tab-indicator,
+  .m-tabbar__item,
+  .m-tabbar__icon,
+  .m-tabbar__label,
+  .m-tabbar__dot,
+  .btn,
+  .btn-icon,
+  .btn--success,
+  .form-input,
+  .form-select,
+  .form-label,
+  .progress-fill,
+  .modal-overlay,
+  .modal-content,
+  .modal-close-btn,
+  .tool-card,
+  .tool-card--featured,
+  .tool-card__icon,
+  .tool-card__arrow,
+  .ingredient-row,
+  .ingredient-row__remove-btn,
+  .resource-link,
+  .resource-link__ext-icon,
+  .split-panel-divider,
+  .split-panel-divider__handle,
+  .page,
+  .dropdown-item,
+  .tooltip,
+  .badge,
+  .scroll-indicator {
+    transition-duration: 0.01ms !important;
+  }
+
+  /* Tier 3 — hover con transform resettati */
+  .tool-card:hover,
+  .tool-card--featured:hover,
+  .btn:hover,
+  .btn-icon:hover,
+  .resource-link:hover,
+  .sidebar-icon:hover {
+    transform: none !important;
+  }
+
+  /* Checkmark — mostra già disegnato */
+  .checkmark-path {
+    animation:         none !important;
+    stroke-dashoffset: 0 !important;
+  }
+}

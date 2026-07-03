@@ -1,0 +1,2862 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>AEA Consulenze Alimentari — Calcolatore Ricette</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@700;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition-duration: .01ms !important; }
+}
+
+:root {
+  --navy: #0c1326;
+  --navy-l: #1a2540;
+  --flyout-bg: #111d35;
+  --orange: #ff7e2e;
+  --orange-h: #dd5c0c;
+  --orange-l: #ff9f4f;
+  --green: #43821c;
+  --bg: #f4f6f9;
+  --card: #ffffff;
+  --input-bg: #f8f9fb;
+  --surface: #eef1f5;
+  --border: #dde2ea;
+  --text: #1a1f2e;
+  --muted: #5e6b80;
+  --dim: #9ba8bb;
+  --danger: #e53e3e;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; }
+body {
+  font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+  background: var(--bg);
+  overflow: hidden;
+  color: var(--text);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+/* ─── SHELL ─────────────────────────────────────────── */
+.shell { display: flex; height: 100vh; }
+
+/* ─── SIDEBAR ───────────────────────────────────────── */
+.sidebar {
+  width: 48px;
+  flex-shrink: 0;
+  background: var(--navy);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  z-index: 100;
+  position: relative;
+}
+.sidebar-logo {
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--orange);
+  flex-shrink: 0;
+}
+.sidebar-logo span {
+  font-family: 'Fraunces', serif;
+  font-weight: 900;
+  font-size: 15px;
+  color: white;
+  letter-spacing: -0.5px;
+}
+.sidebar-nav {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 0;
+  flex: 1;
+}
+.sidebar-icon {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.15s;
+  color: var(--dim);
+  position: relative;
+}
+.sidebar-icon:hover { background: rgba(255,255,255,0.08); color: white; }
+.sidebar-icon.active { color: var(--orange); }
+.sidebar-icon.active::after {
+  content: '';
+  position: absolute;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 3px;
+  height: 16px;
+  background: var(--orange);
+  border-radius: 2px 0 0 2px;
+}
+.sidebar-divider {
+  border: none;
+  border-top: 1px solid rgba(255,255,255,.08);
+  width: 28px;
+  margin: 4px 0;
+}
+.sidebar-bottom {
+  padding: 8px 0 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+.sidebar-avatar {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: var(--navy-l);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: 700;
+  color: white;
+  transition: background 0.15s;
+}
+.sidebar-avatar:hover { background: rgba(255,255,255,0.15); }
+
+/* ─── FLYOUT ────────────────────────────────────────── */
+.flyout {
+  position: fixed;
+  left: 48px;
+  top: 0;
+  bottom: 0;
+  width: 220px;
+  background: var(--flyout-bg);
+  z-index: 200;
+  display: flex;
+  flex-direction: column;
+  opacity: 0;
+  transform: translateX(-8px);
+  pointer-events: none;
+  transition: opacity 0.18s, transform 0.18s;
+  box-shadow: 4px 0 24px rgba(0,0,0,0.3);
+}
+.flyout.visible { opacity: 1; transform: translateX(0); pointer-events: all; }
+.flyout-user {
+  padding: 20px 16px 14px;
+  border-bottom: 1px solid rgba(255,255,255,0.07);
+}
+.flyout-user-name { font-size: 13px; font-weight: 700; color: white; margin-bottom: 2px; }
+.flyout-user-email { font-size: 11px; color: var(--dim); }
+.flyout-nav { padding: 6px 0; flex: 1; overflow-y: auto; }
+.flyout-section-label {
+  font-size: 10px;
+  font-weight: 700;
+  color: rgba(255,255,255,0.25);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding: 10px 16px 4px;
+}
+.flyout-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 16px;
+  color: var(--dim);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: color 0.12s, background 0.12s;
+  position: relative;
+}
+.flyout-item:hover { color: white; background: rgba(255,255,255,0.05); }
+.flyout-item.active { color: white; }
+.flyout-item.active::after {
+  content: '';
+  position: absolute;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 3px;
+  height: 16px;
+  background: var(--orange);
+  border-radius: 2px 0 0 2px;
+}
+.flyout-item svg { flex-shrink: 0; }
+.flyout-footer {
+  padding: 10px 16px 14px;
+  border-top: 1px solid rgba(255,255,255,0.07);
+}
+.flyout-footer-link {
+  font-size: 12px;
+  color: var(--dim);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 0;
+  transition: color 0.12s;
+}
+.flyout-footer-link:hover { color: white; }
+
+/* ─── MAIN ──────────────────────────────────────────── */
+.main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* ─── TOPBAR ────────────────────────────────────────── */
+.topbar {
+  height: 52px;
+  flex-shrink: 0;
+  background: var(--card);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  padding: 0 14px;
+  gap: 8px;
+}
+.topbar-title {
+  font-family: 'Fraunces', serif;
+  font-weight: 700;
+  font-size: 17px;
+  color: var(--text);
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.topbar-title span { color: var(--orange); }
+.topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+/* Segmented control */
+.seg-ctrl {
+  display: flex;
+  background: var(--surface);
+  border-radius: 7px;
+  padding: 2px;
+  gap: 2px;
+}
+.seg-btn {
+  padding: 5px 11px;
+  border-radius: 5px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted);
+  cursor: pointer;
+  border: none;
+  background: transparent;
+  transition: background 0.12s, color 0.12s;
+  white-space: nowrap;
+  font-family: inherit;
+}
+.seg-btn.active {
+  background: var(--card);
+  color: var(--text);
+  box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+}
+
+/* Buttons */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 13px;
+  border-radius: 7px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  transition: background 0.12s, border-color 0.12s, color 0.12s;
+  white-space: nowrap;
+  font-family: inherit;
+}
+.btn-ghost {
+  background: white;
+  border: 1px solid var(--border);
+  color: var(--muted);
+}
+.btn-ghost:hover { border-color: var(--dim); color: var(--text); }
+.btn-primary {
+  background: var(--orange);
+  color: white;
+  border: 1px solid transparent;
+}
+.btn-primary:hover { background: var(--orange-h); }
+.btn-sm { padding: 5px 11px; font-size: 12px; border-radius: 6px; }
+.btn-xs { padding: 3px 7px; font-size: 11px; border-radius: 4px; }
+
+/* ─── SPLIT ─────────────────────────────────────────── */
+.split {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  overflow: hidden;
+}
+
+/* ─── PANEL LEFT ────────────────────────────────────── */
+.panel-left {
+  width: 55%;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid var(--border);
+  overflow: hidden;
+}
+.tab-bar {
+  height: 40px;
+  flex-shrink: 0;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  background: var(--card);
+}
+.tab-btn {
+  padding: 0 18px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--muted);
+  cursor: pointer;
+  border: none;
+  background: transparent;
+  border-bottom: 2.5px solid transparent;
+  transition: color 0.12s, border-color 0.12s;
+  font-family: inherit;
+  display: flex;
+  align-items: center;
+  gap: 0;
+}
+.tab-btn.active { color: var(--orange); border-bottom-color: var(--orange); }
+.tab-btn:hover:not(.active) { color: var(--text); }
+.panel-left-content {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 14px;
+  background: var(--bg);
+}
+
+/* ─── PANEL RIGHT ───────────────────────────────────── */
+.panel-right {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--card);
+}
+.panel-right-header {
+  flex-shrink: 0;
+  border-bottom: 1px solid var(--border);
+  background: var(--card);
+  padding: 10px 16px 0;
+}
+.panel-right-title {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--muted);
+  margin-bottom: 8px;
+}
+.panel-right-content {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 14px;
+}
+.panel-right-footer {
+  flex-shrink: 0;
+  border-top: 1px solid var(--border);
+  padding: 10px 14px;
+  display: flex;
+  gap: 8px;
+  background: var(--card);
+}
+
+/* ─── COLLAPSIBLE SECTION ───────────────────────────── */
+.section-wrap {
+  margin-bottom: 10px;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+}
+.section-header {
+  background: var(--surface);
+  padding: 10px 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+  user-select: none;
+  transition: background 0.12s;
+}
+.section-header:hover { background: #e5e9f0; }
+.section-title {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.section-title-orange { color: var(--orange); }
+.section-chevron {
+  transition: transform 0.2s;
+  color: var(--dim);
+  flex-shrink: 0;
+}
+.section-chevron.open { transform: rotate(90deg); }
+.section-body { background: var(--card); border-top: 1px solid var(--border); }
+.section-body.hidden { display: none; }
+.section-pad { padding: 14px 16px; }
+
+/* ─── FORM ──────────────────────────────────────────── */
+.form-row { display: grid; gap: 10px; margin-bottom: 10px; }
+.form-row-1 { grid-template-columns: 1fr; }
+.form-row-2 { grid-template-columns: 1fr 1fr; }
+.form-row-3 { grid-template-columns: 1fr 1fr 1fr; }
+.form-row-4 { grid-template-columns: 1fr 1fr 1fr 1fr; }
+.field { display: flex; flex-direction: column; gap: 4px; }
+.field-label { font-size: 12px; font-weight: 600; color: var(--muted); }
+.field-input {
+  padding: 7px 10px;
+  border: 1.5px solid var(--border);
+  border-radius: 6px;
+  background: var(--input-bg);
+  font-size: 13px;
+  color: var(--text);
+  font-family: inherit;
+  transition: border-color 0.12s, box-shadow 0.12s;
+  outline: none;
+}
+.field-input:focus {
+  border-color: var(--orange);
+  box-shadow: 0 0 0 3px rgba(255,126,46,0.10);
+}
+.field-select {
+  padding: 7px 28px 7px 10px;
+  border: 1.5px solid var(--border);
+  border-radius: 6px;
+  background: var(--input-bg);
+  font-size: 13px;
+  color: var(--text);
+  font-family: inherit;
+  transition: border-color 0.12s, box-shadow 0.12s;
+  outline: none;
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%239ba8bb' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  background-color: var(--input-bg);
+}
+.field-select:focus {
+  border-color: var(--orange);
+  box-shadow: 0 0 0 3px rgba(255,126,46,0.10);
+}
+
+/* ─── SEARCH ────────────────────────────────────────── */
+.search-wrap { position: relative; margin-bottom: 10px; }
+.search-icon {
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--orange);
+  pointer-events: none;
+}
+.search-input {
+  width: 100%;
+  padding: 8px 10px 8px 34px;
+  border: 1.5px solid var(--border);
+  border-radius: 6px;
+  background: var(--input-bg);
+  font-size: 13px;
+  color: var(--text);
+  font-family: inherit;
+  outline: none;
+  transition: border-color 0.12s, box-shadow 0.12s;
+}
+.search-input:focus {
+  border-color: var(--orange);
+  box-shadow: 0 0 0 3px rgba(255,126,46,0.10);
+}
+.search-input::placeholder { color: var(--dim); }
+.search-dropdown {
+  display: none;
+  border: 1.5px solid var(--border);
+  border-radius: 6px;
+  background: white;
+  margin-top: -6px;
+  margin-bottom: 10px;
+  overflow: hidden;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.10);
+}
+.search-result {
+  padding: 9px 12px;
+  cursor: pointer;
+  font-size: 13px;
+  border-bottom: 1px solid var(--border);
+  transition: background 0.1s;
+}
+.search-result:last-child { border-bottom: none; }
+.search-result:hover { background: var(--surface); }
+.search-result strong { color: var(--text); }
+.search-result span { color: var(--dim); font-size: 11px; margin-left: 6px; }
+
+/* ─── COMP CARD ─────────────────────────────────────── */
+.comp-card {
+  border: 1.5px solid var(--border);
+  border-radius: 8px;
+  background: white;
+  margin-bottom: 10px;
+  overflow: hidden;
+}
+.comp-card-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  background: rgba(255,126,46,0.03);
+  border-bottom: 1px solid var(--border);
+}
+.comp-badge {
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  background: var(--orange);
+  color: white;
+  font-size: 11px;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.comp-name { font-size: 13px; font-weight: 700; color: var(--text); flex: 1; }
+.comp-actions { display: flex; align-items: center; gap: 4px; }
+.icon-btn {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 5px;
+  border: none;
+  background: transparent;
+  color: var(--dim);
+  cursor: pointer;
+  transition: background 0.12s, color 0.12s;
+}
+.icon-btn:hover { background: var(--surface); color: var(--text); }
+.icon-btn.danger:hover { background: rgba(229,62,62,0.08); color: var(--danger); }
+.comp-body { padding: 12px 14px; }
+
+/* ─── INGREDIENT CARD ───────────────────────────────── */
+.ing-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 8px; }
+.ing-card {
+  border: 1.5px solid var(--border);
+  border-radius: 8px;
+  background: white;
+  overflow: hidden;
+  transition: border-color 0.15s, box-shadow 0.15s;
+  animation: fadeInUp 0.2s ease;
+}
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes fadeOutDown {
+  from { opacity: 1; transform: translateY(0); }
+  to { opacity: 0; transform: translateY(8px); }
+}
+.ing-card:hover {
+  border-color: rgba(255,126,46,0.4);
+  box-shadow: 0 0 0 3px rgba(255,126,46,0.08);
+}
+.ing-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+}
+.ing-name { font-size: 13px; font-weight: 700; color: var(--text); }
+.ing-body { padding: 10px 12px; }
+.ing-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.ing-footer {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border);
+}
+.ing-stat { display: flex; flex-direction: column; gap: 1px; }
+.ing-stat-label {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--dim);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.ing-stat-value { font-size: 13px; font-weight: 700; color: var(--text); }
+.ing-stat-value.orange { color: var(--orange); }
+.ing-stat-value.green { color: var(--green); }
+
+/* ─── REGION / SUBTAB BARS ──────────────────────────── */
+.region-bar {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 10px;
+  flex-wrap: wrap;
+}
+.region-pill {
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 700;
+  border: 1.5px solid var(--border);
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  transition: all 0.12s;
+  font-family: inherit;
+  letter-spacing: 0.03em;
+}
+.region-pill.active {
+  background: var(--orange);
+  border-color: var(--orange);
+  color: white;
+}
+.region-pill:hover:not(.active) { border-color: var(--orange); color: var(--orange); }
+
+.subtab-bar {
+  display: flex;
+  gap: 4px;
+  padding-bottom: 10px;
+}
+.subtab-btn {
+  padding: 4px 12px;
+  border-radius: 5px;
+  font-size: 12px;
+  font-weight: 600;
+  border: 1.5px solid var(--border);
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  transition: all 0.12s;
+  font-family: inherit;
+}
+.subtab-btn.active {
+  background: var(--navy);
+  border-color: var(--navy);
+  color: white;
+}
+.subtab-btn:hover:not(.active) { border-color: var(--dim); color: var(--text); }
+
+/* Region panels */
+.region-panel { display: none; }
+.region-panel.active { display: block; }
+
+/* ─── EU TABLE ──────────────────────────────────────── */
+.eu-table {
+  width: 100%;
+  border-collapse: collapse;
+  border: 2px solid #000;
+  font-size: 12px;
+  background: white;
+  margin-bottom: 8px;
+}
+.eu-table th, .eu-table td {
+  border: 1px solid #333;
+  padding: 5px 8px;
+  text-align: left;
+}
+.eu-table-title {
+  background: #000;
+  color: white;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 7px 8px;
+}
+.eu-table-sub {
+  background: #f0f0f0;
+  font-size: 10px;
+  color: #555;
+  font-style: italic;
+}
+.eu-table .nutrient-major td { font-weight: 700; }
+.eu-table .nutrient-minor td:first-child { padding-left: 20px; font-style: italic; font-weight: 400; }
+.eu-table .nutrient-minor td { color: #444; }
+.eu-pct { text-align: right !important; font-weight: 700; color: #222; white-space: nowrap; }
+.eu-val { text-align: right !important; white-space: nowrap; }
+.eu-footnote { font-size: 10px; color: var(--muted); margin-top: 6px; font-style: italic; line-height: 1.4; }
+.optional-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 10px;
+  padding: 6px 12px;
+  border: 1.5px solid var(--border);
+  border-radius: 6px;
+  background: white;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 0.12s, color 0.12s;
+  font-family: inherit;
+}
+.optional-btn:hover { border-color: var(--orange); color: var(--orange); }
+.optional-rows { display: none; }
+.optional-rows.visible { display: table-row-group; }
+
+/* ─── USA NFP ───────────────────────────────────────── */
+.nfp {
+  border: 1px solid #000;
+  padding: 6px 8px;
+  max-width: 280px;
+  background: white;
+  font-family: Arial, Helvetica, sans-serif;
+}
+.nfp-title { font-size: 28px; font-weight: 900; line-height: 1.05; border-bottom: 8px solid #000; padding-bottom: 4px; margin-bottom: 3px; }
+.nfp-servings { font-size: 12px; margin-bottom: 2px; }
+.nfp-serving-size { font-size: 13px; font-weight: 700; border-bottom: 8px solid #000; padding-bottom: 4px; margin-bottom: 3px; display: flex; justify-content: space-between; }
+.nfp-calories-row { border-bottom: 3px solid #000; padding-bottom: 3px; margin-bottom: 3px; }
+.nfp-cal-label { font-size: 11px; font-weight: 700; }
+.nfp-cal-value { font-size: 38px; font-weight: 900; line-height: 1; }
+.nfp-dv-header { font-size: 9px; text-align: right; margin-bottom: 2px; font-weight: 700; }
+.nfp-row { font-size: 11px; border-top: 0.5px solid #aaa; padding: 2px 0; display: flex; justify-content: space-between; align-items: baseline; }
+.nfp-row.thick { border-top: 3px solid #000; }
+.nfp-row.indent { padding-left: 12px; }
+.nfp-row.indent2 { padding-left: 22px; }
+.nfp-footnote { border-top: 0.5px solid #000; margin-top: 4px; padding-top: 3px; font-size: 9px; }
+
+/* ─── PLACEHOLDER REGIONS ───────────────────────────── */
+.region-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 16px;
+  gap: 10px;
+  color: var(--muted);
+  text-align: center;
+}
+.region-placeholder .flag { font-size: 48px; }
+.region-placeholder .label { font-size: 14px; font-weight: 600; }
+.region-placeholder .sub { font-size: 12px; color: var(--dim); line-height: 1.5; }
+
+/* ─── RIEPILOGO ─────────────────────────────────────── */
+.ri-toggle-bar { display: flex; gap: 6px; margin-bottom: 14px; }
+.ri-toggle-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border: 1.5px solid var(--border);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.12s;
+  font-family: inherit;
+}
+.ri-toggle-btn.active { background: var(--navy); border-color: var(--navy); color: white; }
+.ri-panel { display: none; }
+.ri-panel.active { display: block; }
+
+.ri-table { width: 100%; border-collapse: collapse; font-size: 13px; margin-bottom: 14px; }
+.ri-table th {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--muted);
+  padding: 6px 10px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  text-align: left;
+}
+.ri-table th.right, .ri-table td.right { text-align: right; }
+.ri-table td { padding: 8px 10px; border-bottom: 1px solid var(--border); color: var(--text); }
+.ri-table tr:last-child td { border-bottom: none; }
+.ri-table .bold { font-weight: 700; }
+.ri-table .total-row { background: var(--surface); }
+
+.cost-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; }
+.cost-card {
+  background: white;
+  border: 1.5px solid var(--border);
+  border-radius: 8px;
+  padding: 12px 14px;
+}
+.cost-card-label { font-size: 11px; font-weight: 600; color: var(--muted); margin-bottom: 4px; }
+.cost-card-value { font-family: 'Fraunces', serif; font-size: 24px; font-weight: 700; color: var(--text); }
+.cost-card-value span { color: var(--orange); }
+
+.allergen-section { margin-top: 14px; }
+.allergen-group-label { font-size: 12px; font-weight: 600; color: var(--text); margin-bottom: 6px; margin-top: 10px; }
+.allergen-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 4px; }
+.allergen-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 700;
+}
+.allergen-chip.filled { background: var(--navy); color: white; }
+.allergen-chip.outline { border: 1.5px solid var(--border); color: var(--muted); background: transparent; }
+
+/* ─── ARCHIVIO OVERLAY ──────────────────────────────── */
+.overlay-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(12,19,38,0.5);
+  z-index: 300;
+  display: none;
+  align-items: flex-start;
+  justify-content: flex-end;
+  padding-top: 52px;
+}
+.overlay-backdrop.visible { display: flex; }
+.archivio-drawer {
+  width: 380px;
+  height: calc(100vh - 52px);
+  background: white;
+  border-left: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  box-shadow: -8px 0 32px rgba(0,0,0,0.12);
+  animation: slideInRight 0.2s ease;
+}
+@keyframes slideInRight {
+  from { transform: translateX(30px); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+.archivio-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.archivio-title { font-family: 'Fraunces', serif; font-weight: 700; font-size: 18px; color: var(--text); }
+.archivio-body { flex: 1; overflow-y: auto; padding: 16px 20px; }
+.archivio-section-label {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+  margin-bottom: 10px;
+}
+.archivio-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px 14px;
+  border: 1.5px solid var(--border);
+  border-radius: 8px;
+  margin-bottom: 8px;
+  transition: border-color 0.12s;
+}
+.archivio-item:hover { border-color: var(--orange); }
+.archivio-item-info { flex: 1; min-width: 0; }
+.archivio-item-name { font-size: 13px; font-weight: 700; color: var(--text); margin-bottom: 4px; }
+.archivio-item-meta {
+  font-size: 11px;
+  color: var(--dim);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px;
+  align-items: center;
+}
+.archivio-footer {
+  padding: 14px 20px;
+  border-top: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+/* ─── COUNT BADGE ───────────────────────────────────── */
+.count-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 9px;
+  background: var(--orange);
+  color: white;
+  font-size: 10px;
+  font-weight: 800;
+  margin-left: 6px;
+}
+
+/* ─── EMPTY STATE ───────────────────────────────────── */
+.empty-state {
+  padding: 18px;
+  text-align: center;
+  color: var(--dim);
+  font-size: 13px;
+  background: var(--surface);
+  border-radius: 6px;
+  border: 1.5px dashed var(--border);
+}
+.empty-state a { color: var(--orange); cursor: pointer; text-decoration: none; font-weight: 600; }
+.empty-state a:hover { text-decoration: underline; }
+
+/* ─── TOAST ─────────────────────────────────────────── */
+.toast-container {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 500;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: flex-end;
+  pointer-events: none;
+}
+.toast {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 15px;
+  background: var(--navy);
+  color: white;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.25);
+  min-width: 220px;
+  animation: toastIn 0.2s ease;
+  pointer-events: all;
+}
+@keyframes toastIn {
+  from { opacity: 0; transform: translateX(20px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+.toast-icon {
+  width: 20px;
+  height: 20px;
+  background: var(--green);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.toast.removing { animation: toastOut 0.2s ease forwards; }
+@keyframes toastOut {
+  from { opacity: 1; transform: translateX(0); }
+  to { opacity: 0; transform: translateX(20px); }
+}
+
+/* ─── PRODOTTO STRIP ────────────────────────────────── */
+.prodotto-strip {
+  flex-shrink: 0;
+  background: var(--card);
+  border-bottom: 2px solid var(--border);
+  padding: 8px 14px;
+  display: flex;
+  gap: 8px;
+  align-items: flex-end;
+  flex-wrap: wrap;
+}
+.prodotto-strip .field { display: flex; flex-direction: column; gap: 3px; min-width: 80px; }
+.prodotto-strip .field-nome { flex: 3; min-width: 160px; }
+.prodotto-strip .field-std { flex: 1; }
+
+/* ─── NATION TABS ────────────────────────────────────── */
+.nation-tab-bar { display: flex; gap: 6px; margin-bottom: 14px; overflow-x: auto; padding-bottom: 2px; }
+.nation-tab-btn {
+  display: flex; align-items: center; justify-content: center; gap: 5px;
+  flex: 1; min-width: 0; padding: 7px 8px;
+  border-radius: 7px; border: 1.5px solid var(--border);
+  background: transparent; color: var(--muted);
+  font-size: 12px; font-weight: 600; cursor: pointer;
+  font-family: inherit; transition: all 0.12s; white-space: nowrap;
+}
+.nation-tab-btn.active { background: var(--orange); border-color: var(--orange); color: white; }
+.nation-tab-btn:hover:not(.active) { border-color: var(--orange); color: var(--orange); }
+.nation-code {
+  display: inline-flex; align-items: center; justify-content: center;
+  padding: 1px 4px; border-radius: 3px; font-size: 9px; font-weight: 800;
+  border: 1px solid currentColor; opacity: 0.8; line-height: 1.4; flex-shrink: 0;
+}
+.nation-inputs { display: none; }
+.nation-inputs.active { display: block; }
+.mob-nation-table { display: none; }
+
+/* ─── RIGHT PANEL SEG CTRL ───────────────────────────── */
+.right-seg { display: flex; background: var(--surface); border-radius: 7px; padding: 3px; gap: 2px; margin-bottom: 8px; }
+.right-seg-btn {
+  flex: 1; padding: 4px 8px; border-radius: 5px; border: none;
+  background: transparent; color: var(--dim); font-size: 11px; font-weight: 500;
+  cursor: pointer; font-family: inherit; transition: all 0.12s; white-space: nowrap;
+}
+.right-seg-btn.active { background: white; color: var(--text); font-weight: 600; box-shadow: 0 1px 2px rgba(0,0,0,0.07); }
+.right-nation-panel { display: none; }
+.right-nation-panel.active { display: block; }
+
+/* ─── RIEPILOGO TABLE ─────────────────────────────────── */
+.ri-wrap { overflow-x: auto; margin: 0 -14px; padding: 0 14px; }
+.riepilogo-t { width: 100%; border-collapse: collapse; font-size: 11px; min-width: 480px; }
+.riepilogo-t .col-quid { font-weight: 700; color: var(--orange) !important; position: sticky; right: 0; background: white; box-shadow: -2px 0 4px rgba(0,0,0,0.06); }
+.riepilogo-t .rt-head-orange td:last-child { position: sticky; right: 0; background: var(--orange); box-shadow: -2px 0 4px rgba(0,0,0,0.15); }
+.riepilogo-t .rt-head-orange { background: var(--orange); color: white; }
+.riepilogo-t .rt-head-orange td { padding: 5px 7px; font-weight: 700; text-align: right; white-space: nowrap; border: none; }
+.riepilogo-t .rt-head-orange td:first-child { text-align: left; }
+.riepilogo-t .rt-head-gray { background: #f0f0f0; border-bottom: 2px solid var(--border); }
+.riepilogo-t .rt-head-gray th { padding: 5px 7px; font-weight: 700; font-size: 10px; text-transform: uppercase; text-align: right; white-space: nowrap; }
+.riepilogo-t .rt-head-gray th:first-child { text-align: left; }
+.riepilogo-t td { padding: 5px 7px; text-align: right; border-bottom: 1px solid var(--border); white-space: nowrap; color: var(--text); }
+.riepilogo-t td:first-child { text-align: left; font-weight: 500; }
+.riepilogo-t tr:nth-child(even) td { background: #fafafa; }
+.col-quid { font-weight: 700; color: var(--orange) !important; }
+.col-cost { background: rgba(255,126,46,0.04) !important; font-weight: 600; }
+.cost-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; margin-top: 14px; }
+.cost-mini { background: white; border: 1.5px solid var(--border); border-radius: 8px; padding: 10px 14px; }
+.cost-mini-label { font-size: 10px; font-weight: 700; color: var(--muted); text-transform: uppercase; margin-bottom: 3px; }
+.cost-mini-val { font-size: 20px; font-weight: 800; color: var(--orange); }
+
+/* ─── MOBILE BOTTOM BAR ─────────────────────────────── */
+.mob-bottom-bar {
+  display: none;
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  height: 60px;
+  background: white;
+  border-top: 1px solid var(--border);
+  justify-content: space-around;
+  align-items: center;
+  z-index: 100;
+  padding-bottom: env(safe-area-inset-bottom);
+}
+.mob-tab-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 500;
+  padding: 4px 0;
+  line-height: 1;
+}
+.mob-tab-item svg { color: var(--muted); }
+.mob-tab-item.active { color: var(--orange); }
+.mob-tab-item.active svg { color: var(--orange); stroke: var(--orange); }
+
+/* ─── MOBILE ────────────────────────────────────────── */
+@media (max-width: 768px) {
+  body { overflow: auto; }
+  .sidebar { display: none; }
+  .shell { flex-direction: column; height: auto; min-height: 100vh; }
+  .main { height: auto; overflow: visible; }
+
+  /* Topbar */
+  .topbar {
+    padding: 0 10px; gap: 6px;
+    position: sticky; top: 0; z-index: 60;
+    box-shadow: 0 2px 8px rgba(12,19,38,.10);
+  }
+  .topbar-title { font-size: 14px; }
+  .seg-ctrl { display: none; }
+  .topbar-right .btn { display: none; }
+  .topbar-right .btn:last-child { display: inline-flex; } /* mantieni solo Nuova ricetta */
+
+  /* Split → colonna */
+  .split { flex-direction: column; overflow: visible; }
+
+  /* Pannello sinistro: piena larghezza */
+  .panel-left { width: 100%; border-right: none; overflow: visible; min-height: 0; }
+  .tab-bar { display: flex; overflow-x: auto; -webkit-overflow-scrolling: touch; flex-shrink: 0; }
+  .tab-btn { padding: 0 14px; font-size: 12px; white-space: nowrap; }
+  .panel-left-content { overflow: visible; padding-bottom: 68px; }
+
+  /* Pannello destro: sempre visibile, stacked sotto il sinistro */
+  .panel-right {
+    display: flex;
+    width: 100%;
+    border-top: 2px solid var(--border);
+    min-height: 0;
+  }
+  .panel-right-content { overflow: visible; padding: 12px; }
+  /* header destro non sticky su mobile */
+  .panel-right-header { position: static; }
+
+  /* Griglia forme */
+  .form-row-4 { grid-template-columns: 1fr 1fr; }
+  .form-row-3 { grid-template-columns: 1fr 1fr; }
+  .cost-cards { grid-template-columns: 1fr 1fr; }
+  .cost-grid { grid-template-columns: 1fr 1fr; }
+
+  /* Prodotto strip */
+  .prodotto-strip { gap: 6px; flex-wrap: wrap; }
+  .prodotto-strip .field-nome { flex: 1 1 100%; }
+  .prodotto-strip .field-std { flex: 1 1 calc(50% - 6px); min-width: 80px; }
+
+  /* Archivio drawer */
+  .archivio-drawer { width: 100%; height: auto; max-height: 90vh; }
+  .overlay-backdrop { padding-top: 0; align-items: flex-end; }
+
+  /* Tabella riepilogo: scroll orizzontale */
+  .ri-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+
+  /* Tabelle nutrizionali: scroll orizzontale */
+  .eu-table { min-width: 300px; }
+  .nfp { max-width: 100%; }
+
+  /* Sezioni mercati mobile: il tab desktop è nascosto, il contenuto è controllato via JS */
+  #tab-mercati { display: none !important; }
+  .mob-bottom-bar { display: flex; }
+
+  /* Segmented control right panel: wrap su schermi piccoli */
+  .right-seg { flex-wrap: wrap; }
+  .right-seg-btn { flex: 1 1 auto; min-width: 60px; text-align: center; }
+
+  /* Subtab bar: wrap */
+  .subtab-bar { flex-wrap: wrap; gap: 4px; }
+
+  /* Ing grid: 2 col su mobile */
+  .ing-grid { grid-template-columns: 1fr 1fr; }
+  .ing-grid .field:last-child { grid-column: span 2; }
+
+  /* Toast above mobile bottom bar */
+  .toast-container { bottom: 76px; right: 12px; }
+
+  /* Topbar: compact title on mobile */
+  .topbar-title { font-size: 14px; }
+
+  /* Prodotto strip: inputs full width */
+  .prodotto-strip input { min-width: 0; flex: 1; }
+}
+
+/* ─── TABLET ─────────────────────────────────────────── */
+@media (max-width: 1024px) and (min-width: 769px) {
+  .panel-left { width: 50%; }
+  .form-row-4 { grid-template-columns: 1fr 1fr; }
+  .cost-grid { grid-template-columns: 1fr 1fr; }
+  .archivio-drawer { width: 320px; }
+}
+
+/* ─── MOBILE SUB-TABS (mercati) ──────────────────────── */
+.mob-subtab-bar {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 8px;
+  flex-wrap: wrap;
+}
+.mob-subtab-btn {
+  flex: 1;
+  min-width: 0;
+  padding: 5px 8px;
+  border-radius: 6px;
+  border: 1.5px solid var(--border);
+  background: transparent;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.12s;
+}
+.mob-subtab-btn.active {
+  background: var(--navy);
+  border-color: var(--navy);
+  color: white;
+}
+.mob-subtab-btn:hover:not(.active) {
+  border-color: var(--dim);
+  color: var(--text);
+}
+.mob-reg-panel { display: none; }
+.mob-reg-panel.active { display: block; }
+</style>
+</head>
+<body>
+
+<!-- FLYOUT -->
+<div class="flyout" id="flyout" role="navigation" aria-label="Menu strumenti">
+  <div class="flyout-user">
+    <div class="flyout-user-name">Marco Rossi</div>
+    <div class="flyout-user-email">m.rossi@aeaconsulenze.it</div>
+  </div>
+  <div class="flyout-nav">
+    <div class="flyout-section-label">Strumenti</div>
+    <div class="flyout-item active">
+      <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 3H5a2 2 0 0 0-2 2v4m6-6h10a2 2 0 0 1 2 2v4M9 3v18m0 0h10a2 2 0 0 0 2-2V9M9 21H5a2 2 0 0 1-2-2V9m0 0h18"/></svg>
+      Calcolatore Ricette
+    </div>
+    <div class="flyout-item" onclick="toast('Apertura Etichettatura...')">
+      <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>
+      Etichettatura
+    </div>
+    <div class="flyout-item" onclick="toast('Apertura Analisi Allergeni...')">
+      <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+      Analisi Allergeni
+    </div>
+    <div class="flyout-item" onclick="toast('Apertura Costo Ricetta...')">
+      <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+      Costo Ricetta
+    </div>
+    <div class="flyout-section-label">Gestione</div>
+    <div class="flyout-item" onclick="showArchivio()">
+      <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="21 8 21 21 3 21 3 8"/><rect x="1" y="3" width="22" height="5"/><line x1="10" y1="12" x2="14" y2="12"/></svg>
+      Archivio ricette
+    </div>
+    <div class="flyout-item" onclick="toast('Apertura Database Ingredienti...')">
+      <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>
+      Database ingredienti
+    </div>
+  </div>
+  <div class="flyout-footer">
+    <div class="flyout-footer-link" onclick="toast('Apertura Impostazioni...')">
+      <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      Impostazioni
+    </div>
+    <div class="flyout-footer-link" onclick="toast('Disconnessione in corso...')">
+      <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+      Esci
+    </div>
+  </div>
+</div>
+
+<!-- ARCHIVIO OVERLAY -->
+<div class="overlay-backdrop" id="archivioOverlay" onclick="overlayClick(event)">
+  <div class="archivio-drawer" onclick="event.stopPropagation()">
+    <div class="archivio-header">
+      <div class="archivio-title">Archivio ricette</div>
+      <button class="icon-btn" onclick="closeArchivio()" aria-label="Chiudi archivio">
+        <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="archivio-body">
+      <div class="archivio-section-label">2 ricette salvate</div>
+      <div class="archivio-item">
+        <div class="archivio-item-info">
+          <div class="archivio-item-name">Pasta all'uovo fresca — v3</div>
+          <div class="archivio-item-meta">
+            <span>EU</span><span>·</span><span>30 mag 2026</span><span>·</span><span>500 g</span><span>·</span><span>3 ing</span>
+          </div>
+        </div>
+        <button class="btn btn-ghost btn-sm" onclick="closeArchivio();toast('Ricetta caricata: Pasta all\'uovo fresca v3')">Carica</button>
+      </div>
+      <div class="archivio-item">
+        <div class="archivio-item-info">
+          <div class="archivio-item-name">Pasta di semola — integrale</div>
+          <div class="archivio-item-meta">
+            <span>EU + USA</span><span>·</span><span>22 mag 2026</span><span>·</span><span>400 g</span><span>·</span><span>4 ing</span>
+          </div>
+        </div>
+        <button class="btn btn-ghost btn-sm" onclick="closeArchivio();toast('Ricetta caricata: Pasta di semola integrale')">Carica</button>
+      </div>
+    </div>
+    <div class="archivio-footer">
+      <button class="btn btn-ghost" style="width:100%;justify-content:center;" onclick="toast('Esportazione JSON avviata...')">
+        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Esporta JSON
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST CONTAINER -->
+<div class="toast-container" id="toastContainer" aria-live="polite" aria-atomic="false"></div>
+
+<!-- SHELL -->
+<div class="shell">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-logo" title="AEA Consulenze Alimentari">
+      <span>AEA</span>
+    </div>
+    <nav class="sidebar-nav" aria-label="Strumenti">
+      <div class="sidebar-icon active" title="Calcolatore Ricette">
+        <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M9 3H5a2 2 0 0 0-2 2v4m6-6h10a2 2 0 0 1 2 2v4M9 3v18m0 0h10a2 2 0 0 0 2-2V9M9 21H5a2 2 0 0 1-2-2V9m0 0h18"/></svg>
+      </div>
+      <div class="sidebar-icon" title="Etichettatura" onclick="toast('Apertura Etichettatura...')">
+        <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>
+      </div>
+      <div class="sidebar-icon" title="Analisi Allergeni" onclick="toast('Apertura Analisi Allergeni...')">
+        <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+      </div>
+      <div class="sidebar-icon" title="Costo Ricetta" onclick="toast('Apertura Costo Ricetta...')">
+        <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+      </div>
+      <hr class="sidebar-divider">
+      <div class="sidebar-icon" title="Database ingredienti" onclick="toast('Apertura Database...')">
+        <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>
+      </div>
+      <div class="sidebar-icon" title="Archivio ricette" onclick="showArchivio()">
+        <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><polyline points="21 8 21 21 3 21 3 8"/><rect x="1" y="3" width="22" height="5"/><line x1="10" y1="12" x2="14" y2="12"/></svg>
+      </div>
+    </nav>
+    <div class="sidebar-bottom">
+      <div class="sidebar-avatar" title="Marco Rossi">MR</div>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <div class="main">
+
+    <!-- TOPBAR -->
+    <header class="topbar">
+      <div class="topbar-title">
+        <span>Pasta all'uovo fresca</span>
+      </div>
+      <div class="topbar-right">
+        <div class="seg-ctrl" role="group" aria-label="Modalità editor">
+          <button class="seg-btn" id="mode-guidato" onclick="setMode('guidato')">Guidato</button>
+          <button class="seg-btn active" id="mode-esperto" onclick="setMode('esperto')">Esperto</button>
+        </div>
+        <button class="btn btn-ghost btn-sm" onclick="toast('Ricetta salvata correttamente')">
+          <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+          Salva
+        </button>
+        <button class="btn btn-ghost btn-sm" onclick="showArchivio()">
+          <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="21 8 21 21 3 21 3 8"/><rect x="1" y="3" width="22" height="5"/><line x1="10" y1="12" x2="14" y2="12"/></svg>
+          Archivio
+        </button>
+        <button class="btn btn-primary btn-sm" onclick="toast('Nuova ricetta creata')">
+          <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Nuova ricetta
+        </button>
+      </div>
+    </header>
+
+    <!-- PRODOTTO STRIP -->
+    <div class="prodotto-strip" id="prodotto-strip">
+      <div class="field field-nome">
+        <label class="field-label">Nome prodotto</label>
+        <input class="field-input" type="text" value="Pasta all'uovo fresca" placeholder="Nome prodotto...">
+      </div>
+      <div class="field field-std">
+        <label class="field-label">Peso finito (g)</label>
+        <input class="field-input" type="number" value="500">
+      </div>
+      <div class="field field-std">
+        <label class="field-label">Peso specifico (g/ml)</label>
+        <input class="field-input" type="text" placeholder="Es. 1.02">
+      </div>
+    </div>
+
+    <!-- SPLIT -->
+    <div class="split">
+
+      <!-- PANEL LEFT -->
+      <section class="panel-left">
+
+        <!-- TAB BAR -->
+        <div class="tab-bar" role="tablist">
+          <button class="tab-btn active" id="tab-ricetta" role="tab" aria-selected="true" onclick="setTab('ricetta')">
+            Ricetta
+            <span class="count-badge" id="ing-count">3</span>
+          </button>
+          <button class="tab-btn" id="tab-riepilogo" role="tab" aria-selected="false" onclick="setTab('riepilogo')">
+            Riepilogo
+          </button>
+          <button class="tab-btn" id="tab-mercati" role="tab" aria-selected="false" onclick="setTab('mercati')" style="display:none;">
+            Mercati
+          </button>
+        </div>
+
+        <!-- TAB: RICETTA -->
+        <div class="panel-left-content" id="content-ricetta" role="tabpanel">
+
+          <!-- Section: Ingredienti -->
+          <div style="margin-bottom:4px;">
+            <div style="display:flex;align-items:center;gap:8px;margin:12px 0 10px;">
+              <div style="flex:1;height:1px;background:var(--border);"></div>
+              <span style="font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);">Ingredienti</span>
+              <div style="flex:1;height:1px;background:var(--border);"></div>
+            </div>
+            <div id="componenti-pad">
+
+              <!-- COMP CARD C1 -->
+              <div style="border:1.5px solid var(--border);border-radius:10px;margin-bottom:10px;overflow:hidden;" id="comp-1">
+                <div style="display:flex;align-items:center;gap:8px;background:rgba(255,126,46,0.07);padding:8px 10px;border-bottom:1px solid var(--border);cursor:pointer;" onclick="toggleComp('comp-1-body')">
+                  <span style="font-size:11px;font-weight:700;color:var(--orange);flex-shrink:0;min-width:20px;">C1</span>
+                  <div style="flex:1;min-width:0;font-size:13px;font-weight:600;color:var(--text);">Besciamella</div>
+                  <div style="display:flex;align-items:center;gap:4px;flex-shrink:0;" onclick="event.stopPropagation()">
+                    <button class="icon-btn danger" onclick="removeComp('comp-1')" style="width:26px;height:26px;" title="Elimina componente">
+                      <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+                    </button>
+                    <svg id="chev-comp-1" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="color:var(--muted);transition:transform .2s;flex-shrink:0;pointer-events:none;"><polyline points="6 9 12 15 18 9"/></svg>
+                  </div>
+                </div>
+                <div id="comp-1-body" style="padding:10px 10px 6px;">
+                  <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px;">
+                    <input style="flex:1;font-size:13px;font-weight:600;border:1px solid var(--border);border-radius:6px;padding:5px 8px;color:var(--text);background:white;" value="Besciamella" placeholder="Nome componente">
+                    <div style="display:flex;align-items:center;gap:4px;flex-shrink:0;">
+                      <span style="font-size:11px;color:var(--muted);">pz/UV</span>
+                      <input style="width:46px;font-size:12px;border:1px solid var(--border);border-radius:6px;padding:4px 6px;text-align:center;" type="number" value="9">
+                    </div>
+                  </div>
+                  <button style="width:100%;border:1.5px dashed var(--orange);background:transparent;color:var(--orange);font-size:12px;font-weight:600;padding:7px 10px;border-radius:7px;cursor:pointer;display:flex;align-items:center;gap:6px;margin-bottom:8px;box-sizing:border-box;" onclick="toggleSearch('searchArea-1')">
+                    <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                    Cerca e aggiungi ingrediente…
+                  </button>
+                  <div id="searchArea-1" style="display:none;margin-bottom:8px;">
+                    <div class="search-wrap" id="searchWrap-1">
+                      <span class="search-icon"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></span>
+                      <input class="search-input" type="text" placeholder="Cerca nel database (es. farina, uova, olio…)" oninput="filterSearch(this, 'drop-1')" onfocus="showDrop('drop-1')" onblur="hideDrop('drop-1')">
+                    </div>
+                    <div class="search-dropdown" id="drop-1">
+                      <div class="search-result" onmousedown="selectIngredient('Semola di grano duro', 200, 98, 0.95, 'ingList-1', 'drop-1')">
+                        <strong>Semola di grano duro</strong><span>Cereali · 0,95 €/kg</span>
+                      </div>
+                      <div class="search-result" onmousedown="selectIngredient('Grano tenero tipo 00', 350, 100, 0.78, 'ingList-1', 'drop-1')">
+                        <strong>Grano tenero tipo 00</strong><span>Cereali · 0,78 €/kg</span>
+                      </div>
+                      <div class="search-result" onmousedown="selectIngredient('Acqua demineralizzata', 50, 100, 0.01, 'ingList-1', 'drop-1')">
+                        <strong>Acqua demineralizzata</strong><span>Liquidi · 0,01 €/kg</span>
+                      </div>
+                      <div class="search-result" onmousedown="selectIngredient('Olio extravergine oliva', 30, 100, 3.80, 'ingList-1', 'drop-1')">
+                        <strong>Olio extravergine oliva</strong><span>Condimenti · 3,80 €/kg</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div id="ingList-1">
+                    <div class="ing-row" style="display:flex;gap:6px;align-items:center;padding:7px 10px;border-bottom:1px solid var(--border);" id="ing-1">
+                      <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="color:var(--muted);flex-shrink:0;"><polyline points="6 9 12 15 18 9"/></svg>
+                      <div style="flex:1;min-width:0;">
+                        <div style="font-size:12px;font-weight:600;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">Farina di frumento 00</div>
+                        <div style="font-size:10px;color:var(--muted);">340 kcal/100g</div>
+                      </div>
+                      <input type="number" value="350" style="width:58px;font-size:12px;border:1px solid var(--border);border-radius:5px;padding:3px 6px;text-align:right;">
+                      <span style="font-size:12px;color:var(--muted);">g</span>
+                      <button class="icon-btn danger" onclick="delIng('ing-1')" style="width:24px;height:24px;flex-shrink:0;">
+                        <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+                      </button>
+                    </div>
+                    <div class="ing-row" style="display:flex;gap:6px;align-items:center;padding:7px 10px;border-bottom:1px solid var(--border);" id="ing-2">
+                      <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="color:var(--muted);flex-shrink:0;"><polyline points="6 9 12 15 18 9"/></svg>
+                      <div style="flex:1;min-width:0;">
+                        <div style="font-size:12px;font-weight:600;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">Uova intere fresche</div>
+                        <div style="font-size:10px;color:var(--muted);">147 kcal/100g</div>
+                      </div>
+                      <input type="number" value="120" style="width:58px;font-size:12px;border:1px solid var(--border);border-radius:5px;padding:3px 6px;text-align:right;">
+                      <span style="font-size:12px;color:var(--muted);">g</span>
+                      <button class="icon-btn danger" onclick="delIng('ing-2')" style="width:24px;height:24px;flex-shrink:0;">
+                        <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+                      </button>
+                    </div>
+                    <div class="ing-row" style="display:flex;gap:6px;align-items:center;padding:7px 10px;" id="ing-3">
+                      <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="color:var(--muted);flex-shrink:0;"><polyline points="6 9 12 15 18 9"/></svg>
+                      <div style="flex:1;min-width:0;">
+                        <div style="font-size:12px;font-weight:600;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">Sale marino fino</div>
+                        <div style="font-size:10px;color:var(--muted);">0 kcal/100g</div>
+                      </div>
+                      <input type="number" value="8" style="width:58px;font-size:12px;border:1px solid var(--border);border-radius:5px;padding:3px 6px;text-align:right;">
+                      <span style="font-size:12px;color:var(--muted);">g</span>
+                      <button class="icon-btn danger" onclick="delIng('ing-3')" style="width:24px;height:24px;flex-shrink:0;">
+                        <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+                      </button>
+                    </div>
+                  </div>
+                  <div style="font-size:10px;text-align:right;color:var(--muted);padding:4px 10px 2px;">Totale: 478,0 g (normalizzato a 100g)</div>
+                  <div style="border-top:1px dashed var(--border);margin-top:6px;padding-top:4px;">
+                    <button style="font-size:11px;color:var(--muted);background:none;border:none;cursor:pointer;display:flex;align-items:center;gap:4px;padding:2px 0;" onclick="toggleAdditivi('additivi-1')">
+                      <svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M10 2v6l-2 4h8l-2-4V2"/><path d="M8.5 12c-2 1.5-3.5 3.5-3.5 6a7 7 0 0 0 14 0c0-2.5-1.5-4.5-3.5-6"/></svg>
+                      Additivi
+                      <svg width="10" height="10" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+                    </button>
+                    <div id="additivi-1" style="display:none;padding:4px 0 2px;font-size:12px;color:var(--muted);">Nessun additivo aggiunto.</div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Add component button -->
+              <button class="btn btn-ghost btn-sm" id="add-comp-btn" style="width:100%;justify-content:center;border-style:dashed;" onclick="addComp()">
+                <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                Aggiungi componente
+              </button>
+
+            </div>
+          </div>
+
+        </div><!-- /content-ricetta -->
+
+        <!-- TAB: RIEPILOGO -->
+        <div class="panel-left-content" id="content-riepilogo" role="tabpanel" style="display:none;">
+
+          <div class="ri-toggle-bar">
+            <button class="ri-toggle-btn active" id="ri-btn-quantita" onclick="riTab('quantita')">
+              <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M20 7H4a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2z"/><path d="M16 3l-4 4-4-4"/></svg>
+              Quantità
+            </button>
+            <button class="ri-toggle-btn" id="ri-btn-costi" onclick="riTab('costi')">
+              <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+              Costi
+            </button>
+          </div>
+
+          <!-- QUANTITÀ panel: g tot. | g X PZ | % | QUID -->
+          <div class="ri-panel active" id="panel-quantita">
+            <div class="ri-wrap">
+              <table class="riepilogo-t">
+                <thead>
+                  <tr class="rt-head-orange">
+                    <td>INGREDIENTI</td>
+                    <td>g tot.</td>
+                    <td>g X PZ</td>
+                    <td>%</td>
+                    <td>QUID</td>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>Farina di frumento 00</td>
+                    <td>350</td>
+                    <td>350</td>
+                    <td>72,9%</td>
+                    <td class="col-quid">72,9%</td>
+                  </tr>
+                  <tr>
+                    <td>Uova intere fresche</td>
+                    <td>120</td>
+                    <td>126</td>
+                    <td>26,3%</td>
+                    <td class="col-quid">25,0%</td>
+                  </tr>
+                  <tr>
+                    <td>Sale marino fino</td>
+                    <td>8</td>
+                    <td>8</td>
+                    <td>1,7%</td>
+                    <td class="col-quid">1,7%</td>
+                  </tr>
+                  <tr style="background:var(--surface);font-weight:700;">
+                    <td>TOTALE</td>
+                    <td>478</td>
+                    <td>484</td>
+                    <td>100%</td>
+                    <td class="col-quid">100%</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- COSTI panel: €/KG grezzo | RESA % | €/KG pulito | €/UV | €/KG -->
+          <div class="ri-panel" id="panel-costi">
+            <div class="ri-wrap">
+              <table class="riepilogo-t">
+                <thead>
+                  <tr class="rt-head-orange">
+                    <td>INGREDIENTI</td>
+                    <td>€/KG grezzo</td>
+                    <td>RESA %</td>
+                    <td>€/KG pulito</td>
+                    <td>€/UV</td>
+                    <td>€/KG</td>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>Farina di frumento 00</td>
+                    <td>0,80</td>
+                    <td>100%</td>
+                    <td>0,80</td>
+                    <td class="col-cost">0,280 €</td>
+                    <td class="col-cost">0,56 €</td>
+                  </tr>
+                  <tr>
+                    <td>Uova intere fresche</td>
+                    <td>2,40</td>
+                    <td>95%</td>
+                    <td>2,53</td>
+                    <td class="col-cost">0,288 €</td>
+                    <td class="col-cost">0,576 €</td>
+                  </tr>
+                  <tr>
+                    <td>Sale marino fino</td>
+                    <td>0,60</td>
+                    <td>100%</td>
+                    <td>0,60</td>
+                    <td class="col-cost">0,005 €</td>
+                    <td class="col-cost">0,010 €</td>
+                  </tr>
+                  <tr style="background:var(--surface);font-weight:700;">
+                    <td>TOTALE</td>
+                    <td>—</td>
+                    <td>—</td>
+                    <td>—</td>
+                    <td class="col-cost">0,573 €</td>
+                    <td class="col-cost">1,146 €</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <!-- Cost cards sotto tab Costi -->
+            <div class="cost-grid">
+              <div class="cost-mini">
+                <div class="cost-mini-label">Costo/pezzo</div>
+                <div class="cost-mini-val">0,573 €</div>
+              </div>
+              <div class="cost-mini">
+                <div class="cost-mini-label">Costo/kg</div>
+                <div class="cost-mini-val">1,146 €</div>
+              </div>
+              <div class="cost-mini">
+                <div class="cost-mini-label">Costo/100g</div>
+                <div class="cost-mini-val">0,115 €</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Allergeni: sempre visibili sotto entrambi i tab -->
+          <div class="allergen-section">
+            <div class="allergen-group-label" style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);">Allergeni dichiarati</div>
+            <div class="allergen-group-label">Contiene</div>
+            <div class="allergen-chips">
+              <span class="allergen-chip filled">
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zM8 12h8"/></svg>
+                Glutine
+              </span>
+              <span class="allergen-chip filled">
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><ellipse cx="12" cy="9" rx="4" ry="6"/><path d="M8 15c-3 1-5 3-5 5h18c0-2-2-4-5-5"/></svg>
+                Uova
+              </span>
+            </div>
+            <div class="allergen-group-label">Può contenere tracce</div>
+            <div class="allergen-chips">
+              <span class="allergen-chip outline">Latte</span>
+              <span class="allergen-chip outline">Frutta a guscio</span>
+            </div>
+          </div>
+
+        </div><!-- /content-riepilogo -->
+
+        <!-- TAB: MERCATI (mobile only) -->
+        <div class="panel-left-content" id="content-mercati" role="tabpanel" style="display:none;">
+
+          <!-- Nation tabs (same segmented style as desktop) -->
+          <div class="right-seg" role="group" aria-label="Mercato di riferimento" style="margin-bottom:10px;">
+            <button class="right-seg-btn active" id="mnation-ue" onclick="setMobileNation('ue')">EU</button>
+            <button class="right-seg-btn" id="mnation-usa" onclick="setMobileNation('usa')">USA</button>
+            <button class="right-seg-btn" id="mnation-canada" onclick="setMobileNation('canada')">Canada</button>
+            <button class="right-seg-btn" id="mnation-australia" onclick="setMobileNation('australia')">Australia</button>
+            <button class="right-seg-btn" id="mnation-arabi" onclick="setMobileNation('arabi')">Arabi</button>
+          </div>
+
+          <!-- UE contextual inputs -->
+          <div class="nation-inputs active" id="minputs-ue">
+            <div class="form-row form-row-3" style="margin-bottom:12px;">
+              <div class="field">
+                <label class="field-label">Porzione (g/ml)</label>
+                <input class="field-input" type="number" placeholder="es. 100">
+              </div>
+              <div class="field">
+                <label class="field-label">U.V. / Confezione (g/ml)</label>
+                <input class="field-input" type="number" value="500">
+              </div>
+              <div class="field">
+                <label class="field-label">Pezzo (g/ml)</label>
+                <input class="field-input" type="number" value="500">
+              </div>
+            </div>
+          </div>
+
+          <!-- USA contextual inputs -->
+          <div class="nation-inputs" id="minputs-usa">
+            <div class="form-row form-row-3" style="margin-bottom:6px;">
+              <div class="field">
+                <label class="field-label">CUP 240ml (g)</label>
+                <input class="field-input" type="number" placeholder="es. 128">
+              </div>
+              <div class="field">
+                <label class="field-label">Cucchiaio 15ml (g)</label>
+                <input class="field-input" type="number" placeholder="es. 8">
+              </div>
+              <div class="field">
+                <label class="field-label">Serving Size (g/ml)</label>
+                <input class="field-input" type="number" placeholder="es. 125">
+              </div>
+            </div>
+            <div class="form-row form-row-2" style="margin-bottom:12px;">
+              <div class="field">
+                <label class="field-label">Confezione/UV (g/ml)</label>
+                <input class="field-input" type="number" value="500">
+              </div>
+              <div class="field">
+                <label class="field-label">Pezzo (g/ml)</label>
+                <input class="field-input" type="number" value="500">
+              </div>
+            </div>
+          </div>
+
+          <!-- Canada contextual inputs -->
+          <div class="nation-inputs" id="minputs-canada">
+            <div class="form-row form-row-3" style="margin-bottom:6px;">
+              <div class="field">
+                <label class="field-label">CUP 250ml (g)</label>
+                <input class="field-input" type="number" placeholder="es. 130">
+              </div>
+              <div class="field">
+                <label class="field-label">Cucchiaio 15ml (g)</label>
+                <input class="field-input" type="number" placeholder="es. 8">
+              </div>
+              <div class="field">
+                <label class="field-label">Serving Size (g/ml)</label>
+                <input class="field-input" type="number" placeholder="es. 125">
+              </div>
+            </div>
+            <div class="form-row form-row-2" style="margin-bottom:12px;">
+              <div class="field">
+                <label class="field-label">Confezione/UV (g/ml)</label>
+                <input class="field-input" type="number" value="500">
+              </div>
+              <div class="field">
+                <label class="field-label">Pezzo (g/ml)</label>
+                <input class="field-input" type="number" value="500">
+              </div>
+            </div>
+          </div>
+
+          <!-- Australia contextual inputs -->
+          <div class="nation-inputs" id="minputs-australia">
+            <div class="form-row form-row-3" style="margin-bottom:12px;">
+              <div class="field">
+                <label class="field-label">Serving Size (g/ml)</label>
+                <input class="field-input" type="number" placeholder="es. 125">
+              </div>
+              <div class="field">
+                <label class="field-label">Confezione/UV (g/ml)</label>
+                <input class="field-input" type="number" value="500">
+              </div>
+              <div class="field">
+                <label class="field-label">Pezzo (g/ml)</label>
+                <input class="field-input" type="number" value="500">
+              </div>
+            </div>
+          </div>
+
+          <!-- Arabi contextual inputs (same as USA) -->
+          <div class="nation-inputs" id="minputs-arabi">
+            <div class="form-row form-row-3" style="margin-bottom:6px;">
+              <div class="field">
+                <label class="field-label">CUP 240ml (g)</label>
+                <input class="field-input" type="number" placeholder="es. 128">
+              </div>
+              <div class="field">
+                <label class="field-label">Cucchiaio 15ml (g)</label>
+                <input class="field-input" type="number" placeholder="es. 8">
+              </div>
+              <div class="field">
+                <label class="field-label">Serving Size (g/ml)</label>
+                <input class="field-input" type="number" placeholder="es. 125">
+              </div>
+            </div>
+            <div class="form-row form-row-2" style="margin-bottom:12px;">
+              <div class="field">
+                <label class="field-label">Confezione/UV (g/ml)</label>
+                <input class="field-input" type="number" value="500">
+              </div>
+              <div class="field">
+                <label class="field-label">Pezzo (g/ml)</label>
+                <input class="field-input" type="number" value="500">
+              </div>
+            </div>
+          </div>
+
+          <!-- UE panel -->
+          <div class="mob-reg-panel active" id="mpanel-ue">
+            <div class="mob-subtab-bar" id="mob-ue-subtabs">
+              <button class="mob-subtab-btn active" onclick="setMobSubtab(this,'100g','mob-ue-sub-desc')">Per 100g</button>
+              <button class="mob-subtab-btn" onclick="setMobSubtab(this,'uv','mob-ue-sub-desc')">Per U.V.</button>
+              <button class="mob-subtab-btn" onclick="setMobSubtab(this,'porzione','mob-ue-sub-desc')">Per porzione</button>
+              <button class="mob-subtab-btn" onclick="setMobSubtab(this,'pezzo','mob-ue-sub-desc')">Per pezzo</button>
+            </div>
+            <div style="overflow-x:auto;">
+              <table style="width:100%;min-width:320px;border-collapse:collapse;border:2px solid #999;font-family:Arial,sans-serif;background:white;">
+                <thead>
+                  <tr>
+                    <th style="background:#f5f5f5;border:1px solid #999;padding:8px 10px;text-align:left;font-weight:700;font-size:14px;">DICHIARAZIONE NUTRIZIONALE</th>
+                    <th style="background:#f5f5f5;border:1px solid #999;padding:8px 10px;text-align:center;font-weight:700;font-size:13px;width:80px;">% AR *</th>
+                  </tr>
+                  <tr>
+                    <td style="background:#f5f5f5;border:1px solid #999;padding:5px 10px;font-size:11px;font-weight:600;" id="mob-ue-sub-desc">Valori nutrizionali medi per 100 g di prodotto</td>
+                    <td style="background:#f5f5f5;border:1px solid #999;padding:5px 10px;"></td>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr style="border-bottom:1px solid #999;"><td style="padding:8px 10px;font-size:13px;font-weight:700;border-right:1px solid #999;"><div style="display:flex;justify-content:space-between;align-items:flex-end;"><span>Energia</span><span style="margin-left:10px;font-weight:600;">1485 kJ / 355 kcal</span></div></td><td style="padding:8px 10px;font-size:12px;font-weight:700;text-align:center;">18%</td></tr>
+                  <tr style="border-bottom:1px solid #999;"><td style="padding:8px 10px;font-size:13px;font-weight:700;border-right:1px solid #999;"><div style="display:flex;justify-content:space-between;align-items:flex-end;"><span>Grassi</span><span style="margin-left:10px;font-weight:600;">4,2 g</span></div></td><td style="padding:8px 10px;font-size:12px;font-weight:700;text-align:center;">6%</td></tr>
+                  <tr style="border-bottom:1px solid #999;"><td style="padding:8px 20px;font-size:12px;font-weight:400;border-right:1px solid #999;"><div style="display:flex;justify-content:space-between;align-items:flex-end;"><span>di cui acidi grassi saturi</span><span style="margin-left:10px;font-weight:600;">0,8 g</span></div></td><td style="padding:8px 10px;font-size:12px;font-weight:400;text-align:center;">4%</td></tr>
+                  <tr style="border-bottom:1px solid #999;"><td style="padding:8px 10px;font-size:13px;font-weight:700;border-right:1px solid #999;"><div style="display:flex;justify-content:space-between;align-items:flex-end;"><span>Carboidrati</span><span style="margin-left:10px;font-weight:600;">68,4 g</span></div></td><td style="padding:8px 10px;font-size:12px;font-weight:700;text-align:center;">26%</td></tr>
+                  <tr style="border-bottom:1px solid #999;"><td style="padding:8px 20px;font-size:12px;font-weight:400;border-right:1px solid #999;"><div style="display:flex;justify-content:space-between;align-items:flex-end;"><span>di cui zuccheri</span><span style="margin-left:10px;font-weight:600;">2,1 g</span></div></td><td style="padding:8px 10px;font-size:12px;font-weight:400;text-align:center;">2%</td></tr>
+                  <tr style="border-bottom:1px solid #999;"><td style="padding:8px 10px;font-size:13px;font-weight:700;border-right:1px solid #999;"><div style="display:flex;justify-content:space-between;align-items:flex-end;"><span>Fibre</span><span style="margin-left:10px;font-weight:600;">3,2 g</span></div></td><td style="padding:8px 10px;font-size:12px;font-weight:700;text-align:center;">—</td></tr>
+                  <tr style="border-bottom:1px solid #999;"><td style="padding:8px 10px;font-size:13px;font-weight:700;border-right:1px solid #999;"><div style="display:flex;justify-content:space-between;align-items:flex-end;"><span>Proteine</span><span style="margin-left:10px;font-weight:600;">12,8 g</span></div></td><td style="padding:8px 10px;font-size:12px;font-weight:700;text-align:center;">26%</td></tr>
+                  <tr style="border-bottom:1px solid #999;"><td style="padding:8px 10px;font-size:13px;font-weight:700;border-right:1px solid #999;"><div style="display:flex;justify-content:space-between;align-items:flex-end;"><span>Sale</span><span style="margin-left:10px;font-weight:600;">1,14 g</span></div></td><td style="padding:8px 10px;font-size:12px;font-weight:700;text-align:center;">19%</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <p style="font-size:10px;color:#666;margin-top:8px;line-height:1.4;font-weight:500;">*Assunzioni di riferimento di un adulto medio (8400 kJ / 2000 kcal).</p>
+          </div>
+
+          <!-- USA panel -->
+          <div class="mob-reg-panel" id="mpanel-usa">
+            <div class="mob-subtab-bar">
+              <button class="mob-subtab-btn active" onclick="setMobSubtabGroup(this,'mob-usa-sub1')">Verticale</button>
+              <button class="mob-subtab-btn" onclick="setMobSubtabGroup(this,'mob-usa-sub1')">Orizzontale</button>
+              <button class="mob-subtab-btn" onclick="setMobSubtabGroup(this,'mob-usa-sub1')">Lineare</button>
+            </div>
+            <div class="mob-subtab-bar" id="mob-usa-sub2" style="margin-top:-6px;">
+              <button class="mob-subtab-btn active" onclick="setMobSubtabGroup(this,'mob-usa-sub2')">g/ml</button>
+              <button class="mob-subtab-btn" onclick="setMobSubtabGroup(this,'mob-usa-sub2')">Tazze</button>
+              <button class="mob-subtab-btn" onclick="setMobSubtabGroup(this,'mob-usa-sub2')">Cucchiai</button>
+              <button class="mob-subtab-btn" onclick="setMobSubtabGroup(this,'mob-usa-sub2')">Pezzi</button>
+            </div>
+            <div style="overflow-x:auto;margin-top:8px;">
+              <div style="max-width:310px;border:3px solid #000;padding:8px 8px 6px 8px;font-family:Arial,Helvetica,sans-serif;background:white;">
+                <div style="font-size:38px;font-weight:900;line-height:1;letter-spacing:-0.5px;">Nutrition Facts</div>
+                <div style="font-size:11px;border-bottom:1px solid #000;padding-bottom:2px;margin-bottom:2px;">4 servings per container</div>
+                <div style="display:flex;justify-content:space-between;align-items:baseline;border-top:8px solid #000;padding-top:2px;padding-bottom:2px;"><span style="font-size:13px;font-weight:700;">Serving size</span><span style="font-size:13px;font-weight:700;">125g</span></div>
+                <div style="border-top:4px solid #000;padding-top:1px;">
+                  <div style="font-size:10px;font-weight:700;">Amount per serving</div>
+                  <div style="display:flex;justify-content:space-between;align-items:baseline;border-bottom:4px solid #000;padding-bottom:2px;"><span style="font-size:28px;font-weight:900;">Calories</span><span style="font-size:48px;font-weight:900;line-height:1;">355</span></div>
+                </div>
+                <div style="text-align:right;font-size:10px;font-weight:700;border-bottom:1px solid #000;padding-bottom:1px;margin-bottom:1px;">% Daily Value*</div>
+                <div style="display:flex;justify-content:space-between;border-bottom:1px solid #aaa;padding-top:1px;padding-bottom:1px;"><span style="font-size:13px;font-weight:700;">Total Fat 4g</span><span style="font-size:12px;font-weight:700;">5%</span></div>
+                <div style="display:flex;justify-content:space-between;border-bottom:1px solid #aaa;padding-left:16px;padding-top:1px;padding-bottom:1px;"><span style="font-size:12px;">Saturated Fat 0g</span><span style="font-size:12px;font-weight:700;">4%</span></div>
+                <div style="display:flex;justify-content:space-between;border-bottom:1px solid #aaa;padding-left:16px;padding-top:1px;padding-bottom:1px;"><span style="font-size:12px;"><em>Trans</em> Fat 0g</span><span></span></div>
+                <div style="display:flex;justify-content:space-between;border-bottom:1px solid #aaa;padding-top:1px;padding-bottom:1px;"><span style="font-size:13px;font-weight:700;">Cholesterol 0mg</span><span style="font-size:12px;font-weight:700;">0%</span></div>
+                <div style="display:flex;justify-content:space-between;border-bottom:1px solid #aaa;padding-top:1px;padding-bottom:1px;"><span style="font-size:13px;font-weight:700;">Sodium 450mg</span><span style="font-size:12px;font-weight:700;">20%</span></div>
+                <div style="display:flex;justify-content:space-between;border-bottom:1px solid #aaa;padding-top:1px;padding-bottom:1px;"><span style="font-size:13px;font-weight:700;">Total Carbohydrate 68g</span><span style="font-size:12px;font-weight:700;">25%</span></div>
+                <div style="display:flex;justify-content:space-between;border-bottom:1px solid #aaa;padding-left:16px;padding-top:1px;padding-bottom:1px;"><span style="font-size:12px;">Dietary Fiber 3g</span><span style="font-size:12px;font-weight:700;">11%</span></div>
+                <div style="display:flex;justify-content:space-between;border-bottom:1px solid #aaa;padding-left:16px;padding-top:1px;padding-bottom:1px;"><span style="font-size:12px;">Total Sugars 2g</span><span></span></div>
+                <div style="display:flex;justify-content:space-between;border-bottom:1px solid #aaa;padding-left:32px;font-size:11px;padding-top:1px;padding-bottom:1px;"><span>Includes 0g Added Sugars</span><span style="font-weight:700;">0%</span></div>
+                <div style="display:flex;justify-content:space-between;border-bottom:1px solid #aaa;padding-top:1px;padding-bottom:1px;"><span style="font-size:13px;font-weight:700;">Protein 13g</span><span></span></div>
+                <div style="border-top:8px solid #000;margin-top:2px;">
+                  <div style="display:flex;justify-content:space-between;border-bottom:1px solid #ddd;padding-top:1px;padding-bottom:1px;font-size:11px;"><span>Vitamin D 0mcg</span><span style="font-weight:700;">0%</span></div>
+                  <div style="display:flex;justify-content:space-between;border-bottom:1px solid #ddd;padding-top:1px;padding-bottom:1px;font-size:11px;"><span>Calcium 20mg</span><span style="font-weight:700;">2%</span></div>
+                  <div style="display:flex;justify-content:space-between;border-bottom:1px solid #ddd;padding-top:1px;padding-bottom:1px;font-size:11px;"><span>Iron 3mg</span><span style="font-weight:700;">15%</span></div>
+                  <div style="display:flex;justify-content:space-between;padding-top:1px;padding-bottom:1px;font-size:11px;"><span>Potassium 130mg</span><span style="font-weight:700;">3%</span></div>
+                </div>
+                <div style="font-size:9px;padding-top:4px;border-top:1px solid #000;">*The % Daily Value (DV) tells you how much a nutrient in a serving of food contributes to a daily diet. 2,000 calories a day is used for general nutrition advice.</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Canada panel -->
+          <div class="mob-reg-panel" id="mpanel-canada">
+            <div class="mob-subtab-bar">
+              <button class="mob-subtab-btn active" onclick="setMobSubtabGroup(this,'mob-ca-sub1')">Verticale</button>
+              <button class="mob-subtab-btn" onclick="setMobSubtabGroup(this,'mob-ca-sub1')">Orizzontale</button>
+              <button class="mob-subtab-btn" onclick="setMobSubtabGroup(this,'mob-ca-sub1')">Lineare</button>
+            </div>
+            <div style="overflow-x:auto;margin-top:8px;">
+              <div style="width:340px;border:2px solid #000;padding:6px 8px;font-family:'Arial Black','Arial Bold',Arial,sans-serif;background:white;">
+                <div style="font-size:28px;font-weight:900;line-height:1.05;">Nutrition Facts<br>Valeur nutritive</div>
+                <div style="font-size:11px;font-family:Arial,sans-serif;border-bottom:5px solid #000;padding-bottom:3px;margin:3px 0 0 0;">
+                  <div>Per 125g</div><div>pour 125g</div>
+                </div>
+                <div style="border-bottom:8px solid #000;display:flex;justify-content:space-between;align-items:flex-start;padding-top:3px;padding-bottom:4px;">
+                  <div style="font-size:22px;font-weight:900;">Calories&nbsp;355</div>
+                  <div style="text-align:right;font-size:9px;font-family:Arial,sans-serif;line-height:1.5;">% Daily Value*<br>% valeur quotidienne*</div>
+                </div>
+                <div style="display:flex;justify-content:space-between;align-items:baseline;border-bottom:1px solid #aaa;padding-top:1px;padding-bottom:1px;"><span style="font-size:13px;font-weight:900;">Fat / Lipides 4,2g</span><span style="font-size:12px;font-weight:900;">5%</span></div>
+                <div style="display:flex;justify-content:space-between;align-items:baseline;border-bottom:1px solid #ddd;padding-left:16px;padding-top:1px;padding-bottom:1px;"><span style="font-size:11px;font-family:Arial,sans-serif;">Saturated / saturés 0,8g</span><span></span></div>
+                <div style="display:flex;justify-content:space-between;align-items:baseline;border-bottom:1px solid #aaa;padding-left:16px;padding-top:1px;padding-bottom:1px;"><span style="font-size:11px;font-family:Arial,sans-serif;">+ Trans / trans 0g</span><span style="font-size:12px;font-weight:900;">3%</span></div>
+                <div style="display:flex;justify-content:space-between;align-items:baseline;border-bottom:1px solid #aaa;padding-top:1px;padding-bottom:1px;"><span style="font-size:13px;font-weight:900;">Carbohydrate / Glucides 68g</span><span></span></div>
+                <div style="display:flex;justify-content:space-between;align-items:baseline;border-bottom:1px solid #ddd;padding-left:16px;padding-top:1px;padding-bottom:1px;"><span style="font-size:11px;font-family:Arial,sans-serif;">Fibre / Fibres 3g</span><span style="font-size:12px;font-weight:900;">12%</span></div>
+                <div style="display:flex;justify-content:space-between;align-items:baseline;border-bottom:1px solid #aaa;padding-left:16px;padding-top:1px;padding-bottom:1px;"><span style="font-size:11px;font-family:Arial,sans-serif;">Sugars / Sucres 2g</span><span style="font-size:12px;font-weight:900;">2%</span></div>
+                <div style="display:flex;justify-content:space-between;align-items:baseline;border-bottom:1px solid #aaa;padding-top:1px;padding-bottom:1px;"><span style="font-size:13px;font-weight:900;">Protein / Protéines 13g</span><span></span></div>
+                <div style="display:flex;justify-content:space-between;align-items:baseline;border-bottom:1px solid #aaa;padding-top:1px;padding-bottom:1px;"><span style="font-size:13px;font-weight:900;">Cholesterol / Cholestérol 0mg</span><span></span></div>
+                <div style="display:flex;justify-content:space-between;align-items:baseline;border-bottom:1px solid #000;padding-top:1px;padding-bottom:1px;"><span style="font-size:13px;font-weight:900;">Sodium 450mg</span><span style="font-size:12px;font-weight:900;">20%</span></div>
+                <div style="height:5px;background:#000;margin:2px 0;"></div>
+                <div style="display:flex;justify-content:space-between;align-items:baseline;border-bottom:1px solid #ddd;padding-top:1px;padding-bottom:1px;"><span style="font-size:11px;font-family:Arial,sans-serif;">Potassium 130mg</span><span style="font-size:12px;font-weight:900;">3%</span></div>
+                <div style="display:flex;justify-content:space-between;align-items:baseline;border-bottom:1px solid #ddd;padding-top:1px;padding-bottom:1px;"><span style="font-size:11px;font-family:Arial,sans-serif;">Calcium 20mg</span><span style="font-size:12px;font-weight:900;">2%</span></div>
+                <div style="display:flex;justify-content:space-between;align-items:baseline;border-bottom:1px solid #000;padding-top:1px;padding-bottom:1px;"><span style="font-size:11px;font-family:Arial,sans-serif;">Iron / Fer 2,1mg</span><span style="font-size:12px;font-weight:900;">15%</span></div>
+                <div style="height:5px;background:#000;margin:2px 0;"></div>
+                <div style="font-size:9px;font-family:Arial,sans-serif;">* 5% or less is a <b>little</b>, 15% or more is a <b>lot</b></div>
+                <div style="font-size:9px;font-family:Arial,sans-serif;">* 5% ou moins c'est <b>peu</b>, 15% ou plus c'est <b>beaucoup</b></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Australia panel -->
+          <div class="mob-reg-panel" id="mpanel-australia">
+            <div class="mob-subtab-bar">
+              <button class="mob-subtab-btn active" onclick="setMobSubtabGroup(this,'mob-au-sub1')">Verticale</button>
+              <button class="mob-subtab-btn" onclick="setMobSubtabGroup(this,'mob-au-sub1')">Orizzontale</button>
+              <button class="mob-subtab-btn" onclick="setMobSubtabGroup(this,'mob-au-sub1')">Lineare</button>
+            </div>
+            <div style="overflow-x:auto;margin-top:8px;">
+              <div style="border:2px solid #000;font-family:Arial,sans-serif;font-size:12px;min-width:440px;background:white;">
+                <div style="text-align:center;padding:8px 12px 6px;border-bottom:1px solid #000;">
+                  <span style="font-size:24px;font-weight:900;">NUTRITION INFORMATION</span>
+                </div>
+                <div style="padding:10px 12px;border-bottom:1px solid #000;line-height:1.8;">
+                  <div style="font-size:12px;font-weight:700;">Servings per Package: 4,0</div>
+                  <div style="font-size:12px;font-weight:700;">Serving Size:&nbsp;&nbsp;125 g</div>
+                </div>
+                <table style="border-collapse:collapse;width:100%;">
+                  <thead>
+                    <tr>
+                      <th style="padding:5px 10px;font-weight:700;font-size:12px;border-bottom:1px solid #000;vertical-align:bottom;text-align:left;width:34%;"></th>
+                      <th style="padding:5px 10px;font-weight:700;font-size:12px;border-bottom:1px solid #000;vertical-align:bottom;text-align:left;">Average Quantity<br>per Serving</th>
+                      <th style="padding:5px 10px;font-weight:700;font-size:12px;border-bottom:1px solid #000;vertical-align:bottom;text-align:left;">% Daily Intake*<br>(per Serving)</th>
+                      <th style="padding:5px 10px;font-weight:700;font-size:12px;border-bottom:1px solid #000;vertical-align:bottom;text-align:left;">Average Quantity<br>per 100 g</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr><td style="padding:8px 10px;font-size:12px;font-weight:700;color:#000;">Energy</td><td style="padding:8px 10px;font-size:12px;font-weight:700;color:#000;">1856 kJ  ( 443 Cal )</td><td style="padding:8px 10px;font-size:12px;font-weight:700;color:#000;">21 %</td><td style="padding:8px 10px;font-size:12px;font-weight:700;color:#000;">1485 kJ  ( 355 Cal )</td></tr>
+                    <tr><td style="padding:2px 10px;font-size:12px;font-weight:700;color:#000;">Protein</td><td style="padding:2px 10px;font-size:12px;font-weight:700;color:#000;">16,0 g</td><td style="padding:2px 10px;font-size:12px;font-weight:700;color:#000;">32 %</td><td style="padding:2px 10px;font-size:12px;font-weight:700;color:#000;">12,8 g</td></tr>
+                    <tr><td style="padding:2px 10px;font-size:12px;font-weight:700;color:#000;">Fat, total</td><td style="padding:2px 10px;font-size:12px;font-weight:700;color:#000;">5,3 g</td><td style="padding:2px 10px;font-size:12px;font-weight:700;color:#000;">8 %</td><td style="padding:2px 10px;font-size:12px;font-weight:700;color:#000;">4,2 g</td></tr>
+                    <tr><td style="padding:2px 10px 2px 22px;font-size:12px;font-weight:700;color:#000;">- saturated</td><td style="padding:2px 10px;font-size:12px;font-weight:700;color:#000;">1,0 g</td><td style="padding:2px 10px;font-size:12px;font-weight:700;color:#000;">4 %</td><td style="padding:2px 10px;font-size:12px;font-weight:700;color:#000;">0,8 g</td></tr>
+                    <tr><td style="padding:2px 10px;font-size:12px;font-weight:700;color:#000;">Carbohydrate</td><td style="padding:2px 10px;font-size:12px;font-weight:700;color:#000;">85,5 g</td><td style="padding:2px 10px;font-size:12px;font-weight:700;color:#000;">28 %</td><td style="padding:2px 10px;font-size:12px;font-weight:700;color:#000;">68,4 g</td></tr>
+                    <tr><td style="padding:2px 10px 2px 22px;font-size:12px;font-weight:700;color:#000;">- sugars</td><td style="padding:2px 10px;font-size:12px;font-weight:700;color:#000;">2,6 g</td><td style="padding:2px 10px;font-size:12px;font-weight:700;color:#000;">3 %</td><td style="padding:2px 10px;font-size:12px;font-weight:700;color:#000;">2,1 g</td></tr>
+                    <tr><td style="padding:2px 10px;font-size:12px;font-weight:700;color:#000;">Dietary fibre</td><td style="padding:2px 10px;font-size:12px;font-weight:700;color:#000;">4,0 g</td><td style="padding:2px 10px;font-size:12px;font-weight:700;color:#000;">13 %</td><td style="padding:2px 10px;font-size:12px;font-weight:700;color:#000;">3,2 g</td></tr>
+                    <tr><td style="padding:2px 10px;font-size:12px;font-weight:700;color:#000;">Sodium</td><td style="padding:2px 10px;font-size:12px;font-weight:700;color:#000;">563 mg</td><td style="padding:2px 10px;font-size:12px;font-weight:700;color:#000;">24 %</td><td style="padding:2px 10px;font-size:12px;font-weight:700;color:#000;">450 mg</td></tr>
+                  </tbody>
+                </table>
+                <div style="padding:6px 10px 8px;">
+                  <span style="font-size:10px;font-weight:700;">* Percentage daily intakes are based on an average adult diet of 8700 kJ</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Arabi panel -->
+          <div class="mob-reg-panel" id="mpanel-arabi">
+            <div class="mob-subtab-bar">
+              <button class="mob-subtab-btn active" onclick="setMobSubtabGroup(this,'mob-ar-sub1')">Verticale</button>
+              <button class="mob-subtab-btn" onclick="setMobSubtabGroup(this,'mob-ar-sub1')">Orizzontale</button>
+              <button class="mob-subtab-btn" onclick="setMobSubtabGroup(this,'mob-ar-sub1')">Lineare</button>
+            </div>
+            <div class="mob-subtab-bar" style="margin-top:-6px;">
+              <button class="mob-subtab-btn active" onclick="setMobSubtabGroup(this,'mob-ar-sub2')">g/ml</button>
+              <button class="mob-subtab-btn" onclick="setMobSubtabGroup(this,'mob-ar-sub2')">Tazze</button>
+              <button class="mob-subtab-btn" onclick="setMobSubtabGroup(this,'mob-ar-sub2')">Cucchiai</button>
+              <button class="mob-subtab-btn" onclick="setMobSubtabGroup(this,'mob-ar-sub2')">Pezzi</button>
+            </div>
+            <div style="overflow-x:auto;margin-top:8px;">
+              <div style="max-width:310px;border:3px solid #000;padding:8px 8px 6px 8px;font-family:Arial,Helvetica,sans-serif;background:white;">
+                <div style="font-size:38px;font-weight:900;line-height:1;letter-spacing:-0.5px;">Nutrition Facts</div>
+                <div style="font-size:11px;border-bottom:1px solid #000;padding-bottom:2px;margin-bottom:2px;">4 servings per container</div>
+                <div style="display:flex;justify-content:space-between;align-items:baseline;border-top:8px solid #000;padding-top:2px;padding-bottom:2px;"><span style="font-size:13px;font-weight:700;">Serving size</span><span style="font-size:13px;font-weight:700;">125g</span></div>
+                <div style="border-top:4px solid #000;padding-top:1px;">
+                  <div style="font-size:10px;font-weight:700;">Amount per serving</div>
+                  <div style="display:flex;justify-content:space-between;align-items:baseline;border-bottom:4px solid #000;padding-bottom:2px;"><span style="font-size:28px;font-weight:900;">Calories</span><span style="font-size:48px;font-weight:900;line-height:1;">355</span></div>
+                </div>
+                <div style="text-align:right;font-size:10px;font-weight:700;border-bottom:1px solid #000;padding-bottom:1px;margin-bottom:1px;">% Daily Value*</div>
+                <div style="display:flex;justify-content:space-between;border-bottom:1px solid #aaa;padding-top:1px;padding-bottom:1px;"><span style="font-size:13px;font-weight:700;">Total Fat 4g</span><span style="font-size:12px;font-weight:700;">6%</span></div>
+                <div style="display:flex;justify-content:space-between;border-bottom:1px solid #aaa;padding-left:16px;padding-top:1px;padding-bottom:1px;"><span style="font-size:12px;">Saturated Fat 0g</span><span style="font-size:12px;font-weight:700;">4%</span></div>
+                <div style="display:flex;justify-content:space-between;border-bottom:1px solid #aaa;padding-left:16px;padding-top:1px;padding-bottom:1px;"><span style="font-size:12px;"><em>Trans</em> Fat 0g</span><span></span></div>
+                <div style="display:flex;justify-content:space-between;border-bottom:1px solid #aaa;padding-top:1px;padding-bottom:1px;"><span style="font-size:13px;font-weight:700;">Cholesterol 0mg</span><span style="font-size:12px;font-weight:700;">0%</span></div>
+                <div style="display:flex;justify-content:space-between;border-bottom:1px solid #aaa;padding-top:1px;padding-bottom:1px;"><span style="font-size:13px;font-weight:700;">Sodium 450mg</span><span style="font-size:12px;font-weight:700;">19%</span></div>
+                <div style="display:flex;justify-content:space-between;border-bottom:1px solid #aaa;padding-top:1px;padding-bottom:1px;"><span style="font-size:13px;font-weight:700;">Total Carbohydrate 68g</span><span style="font-size:12px;font-weight:700;">26%</span></div>
+                <div style="display:flex;justify-content:space-between;border-bottom:1px solid #aaa;padding-left:16px;padding-top:1px;padding-bottom:1px;"><span style="font-size:12px;">Dietary Fiber 3g</span><span style="font-size:12px;font-weight:700;">11%</span></div>
+                <div style="display:flex;justify-content:space-between;border-bottom:1px solid #aaa;padding-left:16px;padding-top:1px;padding-bottom:1px;"><span style="font-size:12px;">Total Sugars 2g</span><span></span></div>
+                <div style="display:flex;justify-content:space-between;border-bottom:1px solid #aaa;padding-top:1px;padding-bottom:1px;"><span style="font-size:13px;font-weight:700;">Protein 13g</span><span></span></div>
+                <div style="display:flex;justify-content:space-between;border-bottom:1px solid #aaa;padding-left:32px;font-size:11px;padding-top:1px;padding-bottom:1px;"><span>Includes 0g Added Sugars</span><span style="font-weight:700;">0%</span></div>
+                <div style="font-size:9px;padding-top:4px;border-top:1px solid #000;">*The % Daily Value (DV) tells you how much a nutrient in a serving of food contributes to a daily diet. 2,000 calories a day is used for general nutrition advice.</div>
+              </div>
+            </div>
+          </div>
+
+          <div style="display:flex;flex-direction:column;gap:8px;margin-top:14px;">
+            <button class="btn btn-ghost btn-sm" style="width:100%;justify-content:center;" onclick="toast('Download PNG in corso...')">
+              <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              Scarica PNG
+            </button>
+            <button class="btn btn-sm" style="width:100%;justify-content:center;background:var(--navy);color:white;border:none;" onclick="toast('Ricetta salvata in archivio')">
+              <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="21 8 21 21 3 21 3 8"/><rect x="1" y="3" width="22" height="5"/><line x1="10" y1="12" x2="14" y2="12"/></svg>
+              Salva in archivio
+            </button>
+          </div>
+
+        </div>
+
+      </section><!-- /panel-left -->
+
+      <!-- PANEL RIGHT -->
+      <section class="panel-right" id="panelRight">
+
+        <div class="panel-right-header">
+          <div class="panel-right-title">Tabella nutrizionale</div>
+
+          <!-- Nation tabs -->
+          <div class="right-seg" role="group" aria-label="Mercato di riferimento">
+            <button class="right-seg-btn active" id="rnation-ue" onclick="setRightNation('ue')">EU</button>
+            <button class="right-seg-btn" id="rnation-usa" onclick="setRightNation('usa')">USA</button>
+            <button class="right-seg-btn" id="rnation-canada" onclick="setRightNation('canada')">Canada</button>
+            <button class="right-seg-btn" id="rnation-australia" onclick="setRightNation('australia')">Australia</button>
+            <button class="right-seg-btn" id="rnation-arabi" onclick="setRightNation('arabi')">Arabi</button>
+          </div>
+
+          <!-- Weight inputs per nation -->
+          <div class="nation-inputs active" id="rinputs-ue" style="padding:8px 0 4px;">
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;">
+              <div class="field">
+                <label class="field-label" style="font-size:10px;">Porzione (g/ml)</label>
+                <input class="field-input" type="number" placeholder="es. 100" style="padding:5px 8px;font-size:12px;">
+              </div>
+              <div class="field">
+                <label class="field-label" style="font-size:10px;">U.V. / Confezione (g/ml)</label>
+                <input class="field-input" type="number" value="500" style="padding:5px 8px;font-size:12px;">
+              </div>
+              <div class="field">
+                <label class="field-label" style="font-size:10px;">Pezzo (g/ml)</label>
+                <input class="field-input" type="number" value="500" style="padding:5px 8px;font-size:12px;">
+              </div>
+            </div>
+          </div>
+          <div class="nation-inputs" id="rinputs-usa" style="padding:8px 0 4px;">
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:6px;">
+              <div class="field">
+                <label class="field-label" style="font-size:10px;">CUP 240ml (g)</label>
+                <input class="field-input" type="number" placeholder="es. 128" style="padding:5px 8px;font-size:12px;">
+              </div>
+              <div class="field">
+                <label class="field-label" style="font-size:10px;">Cucchiaio 15ml (g)</label>
+                <input class="field-input" type="number" placeholder="es. 8" style="padding:5px 8px;font-size:12px;">
+              </div>
+              <div class="field">
+                <label class="field-label" style="font-size:10px;">Serving Size (g/ml)</label>
+                <input class="field-input" type="number" placeholder="es. 125" style="padding:5px 8px;font-size:12px;">
+              </div>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">
+              <div class="field">
+                <label class="field-label" style="font-size:10px;">Confezione/UV (g/ml)</label>
+                <input class="field-input" type="number" value="500" style="padding:5px 8px;font-size:12px;">
+              </div>
+              <div class="field">
+                <label class="field-label" style="font-size:10px;">Pezzo (g/ml)</label>
+                <input class="field-input" type="number" value="500" style="padding:5px 8px;font-size:12px;">
+              </div>
+            </div>
+          </div>
+          <div class="nation-inputs" id="rinputs-canada" style="padding:8px 0 4px;">
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:6px;">
+              <div class="field">
+                <label class="field-label" style="font-size:10px;">CUP 250ml (g)</label>
+                <input class="field-input" type="number" placeholder="es. 130" style="padding:5px 8px;font-size:12px;">
+              </div>
+              <div class="field">
+                <label class="field-label" style="font-size:10px;">Cucchiaio 15ml (g)</label>
+                <input class="field-input" type="number" placeholder="es. 8" style="padding:5px 8px;font-size:12px;">
+              </div>
+              <div class="field">
+                <label class="field-label" style="font-size:10px;">Serving Size (g/ml)</label>
+                <input class="field-input" type="number" placeholder="es. 125" style="padding:5px 8px;font-size:12px;">
+              </div>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">
+              <div class="field">
+                <label class="field-label" style="font-size:10px;">Confezione/UV (g/ml)</label>
+                <input class="field-input" type="number" value="500" style="padding:5px 8px;font-size:12px;">
+              </div>
+              <div class="field">
+                <label class="field-label" style="font-size:10px;">Pezzo (g/ml)</label>
+                <input class="field-input" type="number" value="500" style="padding:5px 8px;font-size:12px;">
+              </div>
+            </div>
+          </div>
+          <div class="nation-inputs" id="rinputs-australia" style="padding:8px 0 4px;">
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;">
+              <div class="field">
+                <label class="field-label" style="font-size:10px;">Serving Size (g/ml)</label>
+                <input class="field-input" type="number" placeholder="es. 125" style="padding:5px 8px;font-size:12px;">
+              </div>
+              <div class="field">
+                <label class="field-label" style="font-size:10px;">Confezione/UV (g/ml)</label>
+                <input class="field-input" type="number" value="500" style="padding:5px 8px;font-size:12px;">
+              </div>
+              <div class="field">
+                <label class="field-label" style="font-size:10px;">Pezzo (g/ml)</label>
+                <input class="field-input" type="number" value="500" style="padding:5px 8px;font-size:12px;">
+              </div>
+            </div>
+          </div>
+          <div class="nation-inputs" id="rinputs-arabi" style="padding:8px 0 4px;">
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:6px;">
+              <div class="field">
+                <label class="field-label" style="font-size:10px;">CUP 240ml (g)</label>
+                <input class="field-input" type="number" placeholder="es. 128" style="padding:5px 8px;font-size:12px;">
+              </div>
+              <div class="field">
+                <label class="field-label" style="font-size:10px;">Cucchiaio 15ml (g)</label>
+                <input class="field-input" type="number" placeholder="es. 8" style="padding:5px 8px;font-size:12px;">
+              </div>
+              <div class="field">
+                <label class="field-label" style="font-size:10px;">Serving Size (g/ml)</label>
+                <input class="field-input" type="number" placeholder="es. 125" style="padding:5px 8px;font-size:12px;">
+              </div>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">
+              <div class="field">
+                <label class="field-label" style="font-size:10px;">Confezione/UV (g/ml)</label>
+                <input class="field-input" type="number" value="500" style="padding:5px 8px;font-size:12px;">
+              </div>
+              <div class="field">
+                <label class="field-label" style="font-size:10px;">Pezzo (g/ml)</label>
+                <input class="field-input" type="number" value="500" style="padding:5px 8px;font-size:12px;">
+              </div>
+            </div>
+          </div>
+
+          <!-- UE subtabs: Per 100g | Per U.V. | Per porzione | Per pezzo -->
+          <div class="subtab-bar" id="rsubtabs-ue" role="group" aria-label="Quantita di riferimento UE">
+            <button class="subtab-btn active" onclick="setSubtab(this,'100g')">Per 100g</button>
+            <button class="subtab-btn" onclick="setSubtab(this,'uv')">Per U.V.</button>
+            <button class="subtab-btn" onclick="setSubtab(this,'porzione')">Per porzione</button>
+            <button class="subtab-btn" onclick="setSubtab(this,'pezzo')">Per pezzo</button>
+          </div>
+
+          <!-- USA subtabs row1: Verticale | Orizzontale | Lineare, row2: g/ml | Tazze | Cucchiai | Pezzi -->
+          <div id="rsubtabs-usa" style="display:none;">
+            <div class="subtab-bar" role="group" aria-label="Formato NFP">
+              <button class="subtab-btn active" onclick="setFormatSubtab(this,'verticale')">Verticale</button>
+              <button class="subtab-btn" onclick="setFormatSubtab(this,'orizzontale')">Orizzontale</button>
+              <button class="subtab-btn" onclick="setFormatSubtab(this,'lineare')">Lineare</button>
+            </div>
+            <div class="subtab-bar" style="padding-top:0;padding-bottom:8px;" role="group" aria-label="Unita di misura">
+              <button class="subtab-btn active" onclick="setFormatSubtab(this,'gml')">g/ml</button>
+              <button class="subtab-btn" onclick="setFormatSubtab(this,'tazze')">Tazze</button>
+              <button class="subtab-btn" onclick="setFormatSubtab(this,'cucchiai')">Cucchiai</button>
+              <button class="subtab-btn" onclick="setFormatSubtab(this,'pezzi')">Pezzi</button>
+            </div>
+          </div>
+
+          <!-- Canada subtabs: Verticale | Orizzontale | Lineare -->
+          <div id="rsubtabs-canada" style="display:none;">
+            <div class="subtab-bar" role="group" aria-label="Formato Canada">
+              <button class="subtab-btn active" onclick="setFormatSubtab(this,'verticale')">Verticale</button>
+              <button class="subtab-btn" onclick="setFormatSubtab(this,'orizzontale')">Orizzontale</button>
+              <button class="subtab-btn" onclick="setFormatSubtab(this,'lineare')">Lineare</button>
+            </div>
+          </div>
+
+          <!-- Australia subtabs: Verticale | Orizzontale | Lineare -->
+          <div id="rsubtabs-australia" style="display:none;">
+            <div class="subtab-bar" role="group" aria-label="Formato Australia">
+              <button class="subtab-btn active" onclick="setFormatSubtab(this,'verticale')">Verticale</button>
+              <button class="subtab-btn" onclick="setFormatSubtab(this,'orizzontale')">Orizzontale</button>
+              <button class="subtab-btn" onclick="setFormatSubtab(this,'lineare')">Lineare</button>
+            </div>
+          </div>
+
+          <!-- Arabi subtabs: same as USA -->
+          <div id="rsubtabs-arabi" style="display:none;">
+            <div class="subtab-bar" role="group" aria-label="Formato Arabi">
+              <button class="subtab-btn active" onclick="setFormatSubtab(this,'verticale')">Verticale</button>
+              <button class="subtab-btn" onclick="setFormatSubtab(this,'orizzontale')">Orizzontale</button>
+              <button class="subtab-btn" onclick="setFormatSubtab(this,'lineare')">Lineare</button>
+            </div>
+            <div class="subtab-bar" style="padding-top:0;padding-bottom:8px;" role="group" aria-label="Unita di misura">
+              <button class="subtab-btn active" onclick="setFormatSubtab(this,'gml')">g/ml</button>
+              <button class="subtab-btn" onclick="setFormatSubtab(this,'tazze')">Tazze</button>
+              <button class="subtab-btn" onclick="setFormatSubtab(this,'cucchiai')">Cucchiai</button>
+              <button class="subtab-btn" onclick="setFormatSubtab(this,'pezzi')">Pezzi</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel-right-content">
+
+          <!-- UE -->
+          <div class="region-panel active" id="panel-ue">
+            <div style="background:white;padding:12px;border-radius:0;display:inline-block;min-width:340px;max-width:500px;width:100%;">
+              <table style="width:100%;border-collapse:collapse;border:2px solid #999;font-family:Arial,sans-serif;">
+                <thead>
+                  <tr>
+                    <th style="background:#f5f5f5;border:1px solid #999;padding:8px 10px;text-align:left;font-weight:700;font-size:14px;">DICHIARAZIONE NUTRIZIONALE</th>
+                    <th style="background:#f5f5f5;border:1px solid #999;padding:8px 10px;text-align:center;font-weight:700;font-size:13px;width:100px;">% AR *</th>
+                  </tr>
+                  <tr>
+                    <td style="background:#f5f5f5;border:1px solid #999;padding:5px 10px;font-size:11px;font-weight:600;" id="eu-sub-desc">Valori nutrizionali medi per 100 g di prodotto</td>
+                    <td style="background:#f5f5f5;border:1px solid #999;padding:5px 10px;"></td>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr style="border-bottom:1px solid #999;">
+                    <td style="padding:10px 12px;font-size:13px;font-weight:700;border-right:1px solid #999;"><div style="display:flex;justify-content:space-between;align-items:flex-end;"><span>Energia</span><span style="margin-left:20px;font-weight:600;">1485 kJ / 355 kcal</span></div></td>
+                    <td style="padding:10px 12px;font-size:12px;font-weight:700;text-align:center;width:100px;">18%</td>
+                  </tr>
+                  <tr style="border-bottom:1px solid #999;">
+                    <td style="padding:10px 12px;font-size:13px;font-weight:700;border-right:1px solid #999;"><div style="display:flex;justify-content:space-between;align-items:flex-end;"><span>Grassi</span><span style="margin-left:20px;font-weight:600;">4,2 g</span></div></td>
+                    <td style="padding:10px 12px;font-size:12px;font-weight:700;text-align:center;width:100px;">6%</td>
+                  </tr>
+                  <tr style="border-bottom:1px solid #999;">
+                    <td style="padding:10px 28px;font-size:12px;font-weight:400;border-right:1px solid #999;"><div style="display:flex;justify-content:space-between;align-items:flex-end;"><span>di cui acidi grassi saturi</span><span style="margin-left:20px;font-weight:600;">0,8 g</span></div></td>
+                    <td style="padding:10px 12px;font-size:12px;font-weight:400;text-align:center;width:100px;">4%</td>
+                  </tr>
+                  <tr style="border-bottom:1px solid #999;">
+                    <td style="padding:10px 12px;font-size:13px;font-weight:700;border-right:1px solid #999;"><div style="display:flex;justify-content:space-between;align-items:flex-end;"><span>Carboidrati</span><span style="margin-left:20px;font-weight:600;">68,4 g</span></div></td>
+                    <td style="padding:10px 12px;font-size:12px;font-weight:700;text-align:center;width:100px;">26%</td>
+                  </tr>
+                  <tr style="border-bottom:1px solid #999;">
+                    <td style="padding:10px 28px;font-size:12px;font-weight:400;border-right:1px solid #999;"><div style="display:flex;justify-content:space-between;align-items:flex-end;"><span>di cui zuccheri</span><span style="margin-left:20px;font-weight:600;">2,1 g</span></div></td>
+                    <td style="padding:10px 12px;font-size:12px;font-weight:400;text-align:center;width:100px;">2%</td>
+                  </tr>
+                  <tr style="border-bottom:1px solid #999;">
+                    <td style="padding:10px 12px;font-size:13px;font-weight:700;border-right:1px solid #999;"><div style="display:flex;justify-content:space-between;align-items:flex-end;"><span>Fibre</span><span style="margin-left:20px;font-weight:600;">3,2 g</span></div></td>
+                    <td style="padding:10px 12px;font-size:12px;font-weight:700;text-align:center;width:100px;">—</td>
+                  </tr>
+                  <tr style="border-bottom:1px solid #999;">
+                    <td style="padding:10px 12px;font-size:13px;font-weight:700;border-right:1px solid #999;"><div style="display:flex;justify-content:space-between;align-items:flex-end;"><span>Proteine</span><span style="margin-left:20px;font-weight:600;">12,8 g</span></div></td>
+                    <td style="padding:10px 12px;font-size:12px;font-weight:700;text-align:center;width:100px;">26%</td>
+                  </tr>
+                  <tr style="border-bottom:1px solid #999;">
+                    <td style="padding:10px 12px;font-size:13px;font-weight:700;border-right:1px solid #999;"><div style="display:flex;justify-content:space-between;align-items:flex-end;"><span>Sale</span><span style="margin-left:20px;font-weight:600;">1,14 g</span></div></td>
+                    <td style="padding:10px 12px;font-size:12px;font-weight:700;text-align:center;width:100px;">19%</td>
+                  </tr>
+                </tbody>
+                <tbody class="optional-rows" id="optional-rows">
+                  <tr style="border-bottom:1px solid #999;">
+                    <td style="padding:10px 12px;font-size:12px;border-right:1px solid #999;"><div style="display:flex;justify-content:space-between;align-items:flex-end;"><span>Vitamina D</span><span style="margin-left:20px;font-weight:600;">0,8 µg</span></div></td>
+                    <td style="padding:10px 12px;font-size:12px;text-align:center;width:100px;">16%</td>
+                  </tr>
+                  <tr style="border-bottom:1px solid #999;">
+                    <td style="padding:10px 12px;font-size:12px;border-right:1px solid #999;"><div style="display:flex;justify-content:space-between;align-items:flex-end;"><span>Calcio</span><span style="margin-left:20px;font-weight:600;">28 mg</span></div></td>
+                    <td style="padding:10px 12px;font-size:12px;text-align:center;width:100px;">—</td>
+                  </tr>
+                  <tr style="border-bottom:1px solid #999;">
+                    <td style="padding:10px 12px;font-size:12px;border-right:1px solid #999;"><div style="display:flex;justify-content:space-between;align-items:flex-end;"><span>Ferro</span><span style="margin-left:20px;font-weight:600;">2,1 mg</span></div></td>
+                    <td style="padding:10px 12px;font-size:12px;text-align:center;width:100px;">15%</td>
+                  </tr>
+                  <tr style="border-bottom:1px solid #999;">
+                    <td style="padding:10px 12px;font-size:12px;border-right:1px solid #999;"><div style="display:flex;justify-content:space-between;align-items:flex-end;"><span>Potassio</span><span style="margin-left:20px;font-weight:600;">148 mg</span></div></td>
+                    <td style="padding:10px 12px;font-size:12px;text-align:center;width:100px;">7%</td>
+                  </tr>
+                </tbody>
+              </table>
+              <p style="font-size:10px;color:#666;margin-top:8px;line-height:1.4;font-weight:500;">*Assunzioni di riferimento di un adulto medio (8400 kJ / 2000 kcal).</p>
+            </div>
+            <button class="optional-btn" id="optionalBtn" onclick="toggleOptional()">
+              <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              Nutrienti opzionali
+            </button>
+          </div>
+
+          <!-- USA -->
+          <div class="region-panel" id="panel-usa">
+            <div style="background:white;padding:12px;display:inline-block;">
+              <div style="max-width:310px;border:3px solid #000;padding:8px 8px 6px 8px;font-family:Arial,Helvetica,sans-serif;background:white;">
+                <div style="font-size:38px;font-weight:900;line-height:1;letter-spacing:-0.5px;">Nutrition Facts</div>
+                <div style="font-size:11px;border-bottom:1px solid #000;padding-bottom:2px;margin-bottom:2px;">4 servings per container</div>
+                <div style="display:flex;justify-content:space-between;align-items:baseline;border-top:8px solid #000;padding-top:2px;padding-bottom:2px;">
+                  <span style="font-size:13px;font-weight:700;">Serving size</span>
+                  <span style="font-size:13px;font-weight:700;">125g</span>
+                </div>
+                <div style="border-top:4px solid #000;padding-top:1px;">
+                  <div style="font-size:10px;font-weight:700;">Amount per serving</div>
+                  <div style="display:flex;justify-content:space-between;align-items:baseline;border-bottom:4px solid #000;padding-bottom:2px;">
+                    <span style="font-size:28px;font-weight:900;">Calories</span>
+                    <span style="font-size:48px;font-weight:900;line-height:1;">355</span>
+                  </div>
+                </div>
+                <div style="text-align:right;font-size:10px;font-weight:700;border-bottom:1px solid #000;padding-bottom:1px;margin-bottom:1px;">% Daily Value*</div>
+                <div style="display:flex;justify-content:space-between;border-bottom:1px solid #aaa;padding-top:1px;padding-bottom:1px;"><span style="font-size:13px;font-weight:700;">Total Fat 4g</span><span style="font-size:12px;font-weight:700;">5%</span></div>
+                <div style="display:flex;justify-content:space-between;border-bottom:1px solid #aaa;padding-left:16px;padding-top:1px;padding-bottom:1px;"><span style="font-size:12px;">Saturated Fat 0g</span><span style="font-size:12px;font-weight:700;">4%</span></div>
+                <div style="display:flex;justify-content:space-between;border-bottom:1px solid #aaa;padding-left:16px;padding-top:1px;padding-bottom:1px;"><span style="font-size:12px;"><em>Trans</em> Fat 0g</span><span></span></div>
+                <div style="display:flex;justify-content:space-between;border-bottom:1px solid #aaa;padding-top:1px;padding-bottom:1px;"><span style="font-size:13px;font-weight:700;">Cholesterol 0mg</span><span style="font-size:12px;font-weight:700;">0%</span></div>
+                <div style="display:flex;justify-content:space-between;border-bottom:1px solid #aaa;padding-top:1px;padding-bottom:1px;"><span style="font-size:13px;font-weight:700;">Sodium 450mg</span><span style="font-size:12px;font-weight:700;">20%</span></div>
+                <div style="display:flex;justify-content:space-between;border-bottom:1px solid #aaa;padding-top:1px;padding-bottom:1px;"><span style="font-size:13px;font-weight:700;">Total Carbohydrate 68g</span><span style="font-size:12px;font-weight:700;">25%</span></div>
+                <div style="display:flex;justify-content:space-between;border-bottom:1px solid #aaa;padding-left:16px;padding-top:1px;padding-bottom:1px;"><span style="font-size:12px;">Dietary Fiber 3g</span><span style="font-size:12px;font-weight:700;">11%</span></div>
+                <div style="display:flex;justify-content:space-between;border-bottom:1px solid #aaa;padding-left:16px;padding-top:1px;padding-bottom:1px;"><span style="font-size:12px;">Total Sugars 2g</span><span></span></div>
+                <div style="display:flex;justify-content:space-between;border-bottom:1px solid #aaa;padding-left:32px;font-size:11px;padding-top:1px;padding-bottom:1px;"><span>Includes 0g Added Sugars</span><span style="font-weight:700;">0%</span></div>
+                <div style="display:flex;justify-content:space-between;border-bottom:1px solid #aaa;padding-top:1px;padding-bottom:1px;"><span style="font-size:13px;font-weight:700;">Protein 13g</span><span></span></div>
+                <div style="border-top:8px solid #000;margin-top:2px;">
+                  <div style="display:flex;justify-content:space-between;border-bottom:1px solid #ddd;padding-top:1px;padding-bottom:1px;font-size:11px;"><span>Vitamin D 0mcg</span><span style="font-weight:700;">0%</span></div>
+                  <div style="display:flex;justify-content:space-between;border-bottom:1px solid #ddd;padding-top:1px;padding-bottom:1px;font-size:11px;"><span>Calcium 20mg</span><span style="font-weight:700;">2%</span></div>
+                  <div style="display:flex;justify-content:space-between;border-bottom:1px solid #ddd;padding-top:1px;padding-bottom:1px;font-size:11px;"><span>Iron 3mg</span><span style="font-weight:700;">15%</span></div>
+                  <div style="display:flex;justify-content:space-between;padding-top:1px;padding-bottom:1px;font-size:11px;"><span>Potassium 130mg</span><span style="font-weight:700;">3%</span></div>
+                </div>
+                <div style="font-size:9px;padding-top:4px;border-top:1px solid #000;">*The % Daily Value (DV) tells you how much a nutrient in a serving of food contributes to a daily diet. 2,000 calories a day is used for general nutrition advice.</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Canada -->
+          <div class="region-panel" id="panel-canada">
+            <div style="background:white;padding:12px;display:inline-block;">
+              <div style="width:340px;border:2px solid #000;padding:6px 8px;font-family:'Arial Black','Arial Bold',Arial,sans-serif;background:white;">
+                <div style="font-size:30px;font-weight:900;line-height:1.05;">Nutrition Facts<br>Valeur nutritive</div>
+                <div style="font-size:11px;font-family:Arial,sans-serif;border-bottom:5px solid #000;padding-bottom:3px;margin:3px 0 0 0;">
+                  <div style="display:flex;justify-content:space-between;"><span>Per 125g</span></div>
+                  <div style="display:flex;justify-content:space-between;"><span>pour 125g</span></div>
+                </div>
+                <div style="border-bottom:8px solid #000;display:flex;justify-content:space-between;align-items:flex-start;padding-top:3px;padding-bottom:4px;">
+                  <div style="font-size:24px;font-weight:900;">Calories&nbsp;355</div>
+                  <div style="text-align:right;font-size:9px;font-family:Arial,sans-serif;line-height:1.5;">% Daily Value*<br>% valeur quotidienne*</div>
+                </div>
+                <div style="display:flex;justify-content:space-between;align-items:baseline;border-bottom:1px solid #aaa;padding-top:1px;padding-bottom:1px;"><span style="font-size:14px;font-weight:900;">Fat / Lipides 4,2g</span><span style="font-size:13px;font-weight:900;">5%</span></div>
+                <div style="display:flex;justify-content:space-between;align-items:baseline;border-bottom:1px solid #ddd;padding-left:16px;padding-top:1px;padding-bottom:1px;"><span style="font-size:12px;font-family:Arial,sans-serif;">Saturated / saturés 0,8g</span><span></span></div>
+                <div style="display:flex;justify-content:space-between;align-items:baseline;border-bottom:1px solid #aaa;padding-left:16px;padding-top:1px;padding-bottom:1px;"><span style="font-size:12px;font-family:Arial,sans-serif;">+ Trans / trans 0g</span><span style="font-size:13px;font-weight:900;">3%</span></div>
+                <div style="display:flex;justify-content:space-between;align-items:baseline;border-bottom:1px solid #aaa;padding-top:1px;padding-bottom:1px;"><span style="font-size:14px;font-weight:900;">Carbohydrate / Glucides 68g</span><span></span></div>
+                <div style="display:flex;justify-content:space-between;align-items:baseline;border-bottom:1px solid #ddd;padding-left:16px;padding-top:1px;padding-bottom:1px;"><span style="font-size:12px;font-family:Arial,sans-serif;">Fibre / Fibres 3g</span><span style="font-size:13px;font-weight:900;">12%</span></div>
+                <div style="display:flex;justify-content:space-between;align-items:baseline;border-bottom:1px solid #aaa;padding-left:16px;padding-top:1px;padding-bottom:1px;"><span style="font-size:12px;font-family:Arial,sans-serif;">Sugars / Sucres 2g</span><span style="font-size:13px;font-weight:900;">2%</span></div>
+                <div style="display:flex;justify-content:space-between;align-items:baseline;border-bottom:1px solid #aaa;padding-top:1px;padding-bottom:1px;"><span style="font-size:14px;font-weight:900;">Protein / Protéines 13g</span><span></span></div>
+                <div style="display:flex;justify-content:space-between;align-items:baseline;border-bottom:1px solid #aaa;padding-top:1px;padding-bottom:1px;"><span style="font-size:14px;font-weight:900;">Cholesterol / Cholestérol 0mg</span><span></span></div>
+                <div style="display:flex;justify-content:space-between;align-items:baseline;border-bottom:1px solid #000;padding-top:1px;padding-bottom:1px;"><span style="font-size:14px;font-weight:900;">Sodium 450mg</span><span style="font-size:13px;font-weight:900;">20%</span></div>
+                <div style="height:5px;background:#000;margin:2px 0;"></div>
+                <div style="display:flex;justify-content:space-between;align-items:baseline;border-bottom:1px solid #ddd;padding-top:1px;padding-bottom:1px;"><span style="font-size:12px;font-family:Arial,sans-serif;">Potassium 130mg</span><span style="font-size:13px;font-weight:900;">3%</span></div>
+                <div style="display:flex;justify-content:space-between;align-items:baseline;border-bottom:1px solid #ddd;padding-top:1px;padding-bottom:1px;"><span style="font-size:12px;font-family:Arial,sans-serif;">Calcium 20mg</span><span style="font-size:13px;font-weight:900;">2%</span></div>
+                <div style="display:flex;justify-content:space-between;align-items:baseline;border-bottom:1px solid #000;padding-top:1px;padding-bottom:1px;"><span style="font-size:12px;font-family:Arial,sans-serif;">Iron / Fer 2,1mg</span><span style="font-size:13px;font-weight:900;">15%</span></div>
+                <div style="height:5px;background:#000;margin:2px 0;"></div>
+                <div style="font-size:9px;font-family:Arial,sans-serif;">* 5% or less is a <b>little</b>, 15% or more is a <b>lot</b></div>
+                <div style="font-size:9px;font-family:Arial,sans-serif;">* 5% ou moins c'est <b>peu</b>, 15% ou plus c'est <b>beaucoup</b></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Australia -->
+          <div class="region-panel" id="panel-australia">
+            <div style="background:white;padding:12px;display:inline-block;">
+              <div style="border:2px solid #000;font-family:Arial,sans-serif;font-size:12px;min-width:440px;background:white;">
+                <div style="text-align:center;padding:8px 12px 6px;border-bottom:1px solid #000;">
+                  <span style="font-size:24px;font-weight:900;">NUTRITION INFORMATION</span>
+                </div>
+                <div style="padding:10px 12px;border-bottom:1px solid #000;line-height:1.8;font-weight:700;">
+                  <div style="font-size:12px;font-weight:700;">Servings per Package: 4,0</div>
+                  <div style="font-size:12px;font-weight:700;">Serving Size:&nbsp;&nbsp;125 g</div>
+                </div>
+                <table style="border-collapse:collapse;width:100%;">
+                  <thead>
+                    <tr>
+                      <th style="padding:5px 10px;font-weight:700;font-size:12px;border-bottom:1px solid #000;vertical-align:bottom;text-align:left;width:34%;"></th>
+                      <th style="padding:5px 10px;font-weight:700;font-size:12px;border-bottom:1px solid #000;vertical-align:bottom;text-align:left;">Average Quantity<br>per Serving</th>
+                      <th style="padding:5px 10px;font-weight:700;font-size:12px;border-bottom:1px solid #000;vertical-align:bottom;text-align:left;">% Daily Intake*<br>(per Serving)</th>
+                      <th style="padding:5px 10px;font-weight:700;font-size:12px;border-bottom:1px solid #000;vertical-align:bottom;text-align:left;">Average Quantity<br>per 100 g</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr><td style="padding:8px 10px;font-size:12px;font-weight:700;color:#000;">Energy</td><td style="padding:8px 10px;font-size:12px;font-weight:700;color:#000;">1856 kJ  ( 443 Cal )</td><td style="padding:8px 10px;font-size:12px;font-weight:700;color:#000;">21 %</td><td style="padding:8px 10px;font-size:12px;font-weight:700;color:#000;">1485 kJ  ( 355 Cal )</td></tr>
+                    <tr><td style="padding:2px 10px;font-size:12px;font-weight:700;color:#000;">Protein</td><td style="padding:2px 10px;font-size:12px;font-weight:700;color:#000;">16,0 g</td><td style="padding:2px 10px;font-size:12px;font-weight:700;color:#000;">32 %</td><td style="padding:2px 10px;font-size:12px;font-weight:700;color:#000;">12,8 g</td></tr>
+                    <tr><td style="padding:2px 10px;font-size:12px;font-weight:700;color:#000;">Fat, total</td><td style="padding:2px 10px;font-size:12px;font-weight:700;color:#000;">5,3 g</td><td style="padding:2px 10px;font-size:12px;font-weight:700;color:#000;">8 %</td><td style="padding:2px 10px;font-size:12px;font-weight:700;color:#000;">4,2 g</td></tr>
+                    <tr><td style="padding:2px 10px 2px 22px;font-size:12px;font-weight:700;color:#000;">- saturated</td><td style="padding:2px 10px;font-size:12px;font-weight:700;color:#000;">1,0 g</td><td style="padding:2px 10px;font-size:12px;font-weight:700;color:#000;">4 %</td><td style="padding:2px 10px;font-size:12px;font-weight:700;color:#000;">0,8 g</td></tr>
+                    <tr><td style="padding:2px 10px;font-size:12px;font-weight:700;color:#000;">Carbohydrate</td><td style="padding:2px 10px;font-size:12px;font-weight:700;color:#000;">85,5 g</td><td style="padding:2px 10px;font-size:12px;font-weight:700;color:#000;">28 %</td><td style="padding:2px 10px;font-size:12px;font-weight:700;color:#000;">68,4 g</td></tr>
+                    <tr><td style="padding:2px 10px 2px 22px;font-size:12px;font-weight:700;color:#000;">- sugars</td><td style="padding:2px 10px;font-size:12px;font-weight:700;color:#000;">2,6 g</td><td style="padding:2px 10px;font-size:12px;font-weight:700;color:#000;">3 %</td><td style="padding:2px 10px;font-size:12px;font-weight:700;color:#000;">2,1 g</td></tr>
+                    <tr><td style="padding:2px 10px;font-size:12px;font-weight:700;color:#000;">Dietary fibre</td><td style="padding:2px 10px;font-size:12px;font-weight:700;color:#000;">4,0 g</td><td style="padding:2px 10px;font-size:12px;font-weight:700;color:#000;">13 %</td><td style="padding:2px 10px;font-size:12px;font-weight:700;color:#000;">3,2 g</td></tr>
+                    <tr><td style="padding:2px 10px;font-size:12px;font-weight:700;color:#000;">Sodium</td><td style="padding:2px 10px;font-size:12px;font-weight:700;color:#000;">563 mg</td><td style="padding:2px 10px;font-size:12px;font-weight:700;color:#000;">24 %</td><td style="padding:2px 10px;font-size:12px;font-weight:700;color:#000;">450 mg</td></tr>
+                  </tbody>
+                </table>
+                <div style="padding:6px 10px 8px;">
+                  <span style="font-size:10px;font-weight:700;">* Percentage daily intakes are based on an average adult diet of 8700 kJ</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Arabi -->
+          <div class="region-panel" id="panel-arabi">
+            <div style="background:white;padding:12px;display:inline-block;">
+              <div style="max-width:310px;border:3px solid #000;padding:8px 8px 6px 8px;font-family:Arial,Helvetica,sans-serif;background:white;">
+                <div style="font-size:38px;font-weight:900;line-height:1;letter-spacing:-0.5px;">Nutrition Facts</div>
+                <div style="font-size:11px;border-bottom:1px solid #000;padding-bottom:2px;margin-bottom:2px;">4 servings per container</div>
+                <div style="display:flex;justify-content:space-between;align-items:baseline;border-top:8px solid #000;padding-top:2px;padding-bottom:2px;">
+                  <span style="font-size:13px;font-weight:700;">Serving size</span>
+                  <span style="font-size:13px;font-weight:700;">125g</span>
+                </div>
+                <div style="border-top:4px solid #000;padding-top:1px;">
+                  <div style="font-size:10px;font-weight:700;">Amount per serving</div>
+                  <div style="display:flex;justify-content:space-between;align-items:baseline;border-bottom:4px solid #000;padding-bottom:2px;">
+                    <span style="font-size:28px;font-weight:900;">Calories</span>
+                    <span style="font-size:48px;font-weight:900;line-height:1;">355</span>
+                  </div>
+                </div>
+                <div style="text-align:right;font-size:10px;font-weight:700;border-bottom:1px solid #000;padding-bottom:1px;margin-bottom:1px;">% Daily Value*</div>
+                <div style="display:flex;justify-content:space-between;border-bottom:1px solid #aaa;padding-top:1px;padding-bottom:1px;"><span style="font-size:13px;font-weight:700;">Total Fat 4g</span><span style="font-size:12px;font-weight:700;">6%</span></div>
+                <div style="display:flex;justify-content:space-between;border-bottom:1px solid #aaa;padding-left:16px;padding-top:1px;padding-bottom:1px;"><span style="font-size:12px;">Saturated Fat 0g</span><span style="font-size:12px;font-weight:700;">4%</span></div>
+                <div style="display:flex;justify-content:space-between;border-bottom:1px solid #aaa;padding-left:16px;padding-top:1px;padding-bottom:1px;"><span style="font-size:12px;"><em>Trans</em> Fat 0g</span><span></span></div>
+                <div style="display:flex;justify-content:space-between;border-bottom:1px solid #aaa;padding-top:1px;padding-bottom:1px;"><span style="font-size:13px;font-weight:700;">Cholesterol 0mg</span><span style="font-size:12px;font-weight:700;">0%</span></div>
+                <div style="display:flex;justify-content:space-between;border-bottom:1px solid #aaa;padding-top:1px;padding-bottom:1px;"><span style="font-size:13px;font-weight:700;">Sodium 450mg</span><span style="font-size:12px;font-weight:700;">19%</span></div>
+                <div style="display:flex;justify-content:space-between;border-bottom:1px solid #aaa;padding-top:1px;padding-bottom:1px;"><span style="font-size:13px;font-weight:700;">Total Carbohydrate 68g</span><span style="font-size:12px;font-weight:700;">26%</span></div>
+                <div style="display:flex;justify-content:space-between;border-bottom:1px solid #aaa;padding-left:16px;padding-top:1px;padding-bottom:1px;"><span style="font-size:12px;">Dietary Fiber 3g</span><span style="font-size:12px;font-weight:700;">11%</span></div>
+                <div style="display:flex;justify-content:space-between;border-bottom:1px solid #aaa;padding-left:16px;padding-top:1px;padding-bottom:1px;"><span style="font-size:12px;">Total Sugars 2g</span><span></span></div>
+                <div style="display:flex;justify-content:space-between;border-bottom:1px solid #aaa;padding-top:1px;padding-bottom:1px;"><span style="font-size:13px;font-weight:700;">Protein 13g</span><span></span></div>
+                <div style="display:flex;justify-content:space-between;border-bottom:1px solid #aaa;padding-left:32px;font-size:11px;padding-top:1px;padding-bottom:1px;"><span>Includes 0g Added Sugars</span><span style="font-weight:700;">0%</span></div>
+                <div style="font-size:9px;padding-top:4px;border-top:1px solid #000;">*The % Daily Value (DV) tells you how much a nutrient in a serving of food contributes to a daily diet. 2,000 calories a day is used for general nutrition advice.</div>
+              </div>
+            </div>
+          </div>
+
+        </div><!-- /panel-right-content -->
+
+        <div class="panel-right-footer">
+          <button class="btn btn-ghost btn-sm" onclick="toast('Download PNG in corso...')">
+            <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            Scarica PNG
+          </button>
+          <button class="btn btn-sm" style="flex:1;justify-content:center;background:var(--navy);color:white;border:1px solid transparent;" onclick="toast('Ricetta salvata in archivio')">
+            <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="21 8 21 21 3 21 3 8"/><rect x="1" y="3" width="22" height="5"/><line x1="10" y1="12" x2="14" y2="12"/></svg>
+            Salva in archivio
+          </button>
+        </div>
+
+      </section><!-- /panel-right -->
+
+    </div><!-- /split -->
+
+    <!-- MOBILE BOTTOM BAR -->
+    <nav class="mob-bottom-bar" id="mobBottomBar" aria-label="Navigazione principale">
+      <button class="mob-tab-item active" id="mob-tab-ricetta" onclick="setMobTab('ricetta')" aria-label="Ricetta">
+        <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M9 3H5a2 2 0 0 0-2 2v4m6-6h10a2 2 0 0 1 2 2v4M9 3v18m0 0h10a2 2 0 0 0 2-2V9M9 21H5a2 2 0 0 1-2-2V9m0 0h18"/></svg>
+        Ricetta
+      </button>
+      <button class="mob-tab-item" id="mob-tab-riepilogo" onclick="setMobTab('riepilogo')" aria-label="Riepilogo">
+        <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="8" y1="8" x2="16" y2="8"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="8" y1="16" x2="12" y2="16"/></svg>
+        Riepilogo
+      </button>
+      <button class="mob-tab-item" id="mob-tab-mercati" onclick="setMobTab('mercati')" aria-label="Mercati">
+        <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+        Mercati
+      </button>
+      <button class="mob-tab-item" id="mob-tab-archivio" onclick="showArchivio()" aria-label="Archivio">
+        <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><polyline points="21 8 21 21 3 21 3 8"/><rect x="1" y="3" width="22" height="5"/><line x1="10" y1="12" x2="14" y2="12"/></svg>
+        Archivio
+      </button>
+    </nav>
+
+  </div><!-- /main -->
+</div><!-- /shell -->
+
+<script>
+'use strict';
+
+// ─── FLYOUT ──────────────────────────────────────────────
+const sidebar = document.getElementById('sidebar');
+const flyout = document.getElementById('flyout');
+let flyoutTimer;
+
+sidebar.addEventListener('mouseenter', () => {
+  clearTimeout(flyoutTimer);
+  flyout.classList.add('visible');
+});
+sidebar.addEventListener('mouseleave', () => {
+  flyoutTimer = setTimeout(() => {
+    if (!flyout.matches(':hover')) flyout.classList.remove('visible');
+  }, 80);
+});
+flyout.addEventListener('mouseenter', () => clearTimeout(flyoutTimer));
+flyout.addEventListener('mouseleave', () => {
+  flyoutTimer = setTimeout(() => flyout.classList.remove('visible'), 120);
+});
+document.addEventListener('click', (e) => {
+  if (!sidebar.contains(e.target) && !flyout.contains(e.target)) {
+    flyout.classList.remove('visible');
+  }
+});
+
+// ─── TAB SWITCHING ────────────────────────────────────────
+function setTab(t) {
+  ['ricetta','riepilogo','mercati'].forEach(tab => {
+    const btn = document.getElementById('tab-' + tab);
+    const content = document.getElementById('content-' + tab);
+    if (!btn || !content) return;
+    const active = tab === t;
+    btn.classList.toggle('active', active);
+    btn.setAttribute('aria-selected', String(active));
+    content.style.display = active ? '' : 'none';
+  });
+}
+
+// ─── MOBILE BOTTOM TAB ────────────────────────────────────
+function setMobTab(t) {
+  setTab(t);
+  ['ricetta','riepilogo','mercati'].forEach(tab => {
+    const mobBtn = document.getElementById('mob-tab-' + tab);
+    if (mobBtn) mobBtn.classList.toggle('active', tab === t);
+  });
+  const archBtn = document.getElementById('mob-tab-archivio');
+  if (archBtn) archBtn.classList.remove('active');
+}
+
+// ─── RIGHT PANEL NATION SWITCHING ─────────────────────────
+const RIGHT_NATIONS = ['ue','usa','canada','australia','arabi'];
+
+function setRightNation(n) {
+  RIGHT_NATIONS.forEach(nation => {
+    const btn = document.getElementById('rnation-' + nation);
+    const panel = document.getElementById('panel-' + nation);
+    const subtabs = document.getElementById('rsubtabs-' + nation);
+    const inputs = document.getElementById('rinputs-' + nation);
+    if (btn) btn.classList.toggle('active', nation === n);
+    if (panel) panel.classList.toggle('active', nation === n);
+    if (subtabs) subtabs.style.display = nation === n ? '' : 'none';
+    if (inputs) inputs.classList.toggle('active', nation === n);
+  });
+}
+
+// ─── MOBILE NATION SWITCHING ──────────────────────────────
+function setMobileNation(n) {
+  RIGHT_NATIONS.forEach(nation => {
+    const btn = document.getElementById('mnation-' + nation);
+    const inputs = document.getElementById('minputs-' + nation);
+    const panel = document.getElementById('mpanel-' + nation);
+    if (btn) btn.classList.toggle('active', nation === n);
+    if (inputs) inputs.classList.toggle('active', nation === n);
+    if (panel) panel.classList.toggle('active', nation === n);
+  });
+}
+
+function setMobSubtab(btn, mode, descId) {
+  const bar = btn.closest('.mob-subtab-bar');
+  if(bar) bar.querySelectorAll('.mob-subtab-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  const labels = {
+    '100g':     'Valori medi per 100 g di prodotto',
+    'uv':       'Valori medi per U.V. / confezione (500 g)',
+    'porzione': 'Valori medi per porzione (100 g)',
+    'pezzo':    'Valori medi per pezzo (500 g)'
+  };
+  const desc = document.getElementById(descId);
+  if(desc) desc.textContent = labels[mode] || labels['100g'];
+}
+
+function setMobSubtabGroup(btn, groupId) {
+  const bar = btn.closest('.mob-subtab-bar');
+  if(bar) bar.querySelectorAll('.mob-subtab-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+// ─── SUBTAB SWITCHING ─────────────────────────────────────
+const subtabLabels = {
+  '100g':     'Valori medi per 100 g di prodotto',
+  'uv':       'Valori medi per U.V. / confezione (500 g)',
+  'porzione': 'Valori medi per porzione (100 g)',
+  'pezzo':    'Valori medi per pezzo (500 g)'
+};
+
+function setSubtab(btn, mode) {
+  const bar = document.getElementById('rsubtabs-ue');
+  if (bar) bar.querySelectorAll('.subtab-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  const desc = document.getElementById('eu-sub-desc');
+  if (desc) desc.textContent = subtabLabels[mode] || subtabLabels['100g'];
+}
+
+function setFormatSubtab(btn, mode) {
+  const bar = btn.closest('.subtab-bar');
+  if (bar) bar.querySelectorAll('.subtab-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  const formatLabels = { verticale:'Verticale', orizzontale:'Orizzontale', lineare:'Lineare', gml:'g/ml', tazze:'Tazze', cucchiai:'Cucchiai', pezzi:'Pezzi' };
+  toast('Formato: ' + (formatLabels[mode] || mode));
+}
+
+// ─── MODE SWITCHING ───────────────────────────────────────
+function setMode(m) {
+  document.getElementById('mode-guidato').classList.toggle('active', m === 'guidato');
+  document.getElementById('mode-esperto').classList.toggle('active', m === 'esperto');
+  toast(m === 'esperto' ? 'Modalita Esperto attiva' : 'Modalita Guidata attiva');
+}
+
+// ─── SECTION TOGGLE ───────────────────────────────────────
+function toggleSection(id) {
+  const body = document.getElementById('body-' + id);
+  const chev = document.getElementById('chev-' + id);
+  if (!body || !chev) return;
+  const hidden = body.classList.contains('hidden');
+  body.classList.toggle('hidden', !hidden);
+  chev.classList.toggle('open', hidden);
+}
+
+function toggleComp(bodyId) {
+  const body = document.getElementById(bodyId);
+  if (!body) return;
+  body.style.display = body.style.display === 'none' ? '' : 'none';
+}
+function toggleSearch(id) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.style.display = el.style.display === 'none' ? 'block' : 'none';
+}
+function toggleAdditivi(id) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.style.display = el.style.display === 'none' ? 'block' : 'none';
+}
+
+// ─── INGREDIENT COUNT BADGE ───────────────────────────────
+function updCount() {
+  const count = document.querySelectorAll('#componenti-pad .ing-row').length;
+  const badge = document.getElementById('ing-count');
+  if (badge) badge.textContent = count;
+}
+
+// ─── SEARCH DROPDOWN ──────────────────────────────────────
+function showDrop(dropId) {
+  // Only show if has input value
+}
+function hideDrop(dropId) {
+  setTimeout(() => {
+    const d = document.getElementById(dropId);
+    if (d) d.style.display = 'none';
+  }, 150);
+}
+function filterSearch(inp, dropId) {
+  const val = inp.value.trim().toLowerCase();
+  const drop = document.getElementById(dropId);
+  if (!drop) return;
+  if (val.length === 0) { drop.style.display = 'none'; return; }
+  const items = drop.querySelectorAll('.search-result');
+  let any = false;
+  items.forEach(item => {
+    const name = item.querySelector('strong').textContent.toLowerCase();
+    const match = name.includes(val);
+    item.style.display = match ? '' : 'none';
+    if (match) any = true;
+  });
+  drop.style.display = any ? '' : 'none';
+}
+function selectIngredient(name, grams, resa, price, listId, dropId) {
+  const drop = document.getElementById(dropId);
+  if (drop) drop.style.display = 'none';
+  // Clear the search input near the dropdown
+  const wrap = drop ? drop.previousElementSibling : null;
+  if (wrap) { const inp = wrap.querySelector('.search-input'); if (inp) inp.value = ''; }
+  addIngCard(listId, name, grams, resa, price);
+}
+
+// ─── ADD INGREDIENT ───────────────────────────────────────
+let ingCounter = 10;
+function addIng(listId) {
+  addIngCard(listId, 'Nuovo ingrediente', 100, 100, 1.00);
+}
+
+function addIngCard(listId, name, grams, resa, price) {
+  const list = document.getElementById(listId);
+  if (!list) return;
+  const id = 'ing-' + ingCounter++;
+  const row = document.createElement('div');
+  row.className = 'ing-row';
+  row.id = id;
+  row.style.cssText = 'display:flex;gap:6px;align-items:center;padding:7px 10px;border-bottom:1px solid var(--border);animation:fadeInUp 0.15s ease;';
+  row.innerHTML = `
+    <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="color:var(--muted);flex-shrink:0;"><polyline points="6 9 12 15 18 9"/></svg>
+    <div style="flex:1;min-width:0;">
+      <div style="font-size:12px;font-weight:600;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${name}</div>
+      <div style="font-size:10px;color:var(--muted);">— kcal/100g</div>
+    </div>
+    <input type="number" value="${grams}" style="width:58px;font-size:12px;border:1px solid var(--border);border-radius:5px;padding:3px 6px;text-align:right;">
+    <span style="font-size:12px;color:var(--muted);">g</span>
+    <button class="icon-btn danger" onclick="delIng('${id}')" style="width:24px;height:24px;flex-shrink:0;">
+      <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+    </button>`;
+  list.appendChild(row);
+  row.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  updCount();
+  toast('Ingrediente aggiunto: ' + name);
+}
+
+// ─── DELETE INGREDIENT ────────────────────────────────────
+function delIng(id) {
+  const card = document.getElementById(id);
+  if (!card) return;
+  card.style.animation = 'fadeOutDown 0.18s ease forwards';
+  setTimeout(() => {
+    card.remove();
+    updCount();
+    toast('Ingrediente rimosso');
+  }, 160);
+}
+
+// ─── ADD/REMOVE COMPONENT ────────────────────────────────
+let compCounter = 2;
+function addComp() {
+  const n = compCounter++;
+  const searchAreaId = 'searchArea-comp-' + n;
+  const dropId = 'drop-comp-' + n;
+  const listId = 'ingList-comp-' + n;
+  const compId = 'comp-dyn-' + n;
+  const bodyId = compId + '-body';
+  const additiviId = 'additivi-comp-' + n;
+  const pad = document.getElementById('componenti-pad');
+  const addBtn = document.getElementById('add-comp-btn');
+  const card = document.createElement('div');
+  card.style.cssText = 'border:1.5px solid var(--border);border-radius:10px;margin-bottom:10px;overflow:hidden;animation:fadeInUp 0.2s ease;';
+  card.id = compId;
+  card.innerHTML = `
+    <div style="display:flex;align-items:center;gap:8px;background:rgba(255,126,46,0.07);padding:8px 10px;border-bottom:1px solid var(--border);cursor:pointer;" onclick="toggleComp('${bodyId}')">
+      <span style="font-size:11px;font-weight:700;color:var(--orange);flex-shrink:0;min-width:20px;">C${n}</span>
+      <div style="flex:1;min-width:0;font-size:13px;font-weight:600;color:var(--text);">Componente ${n}</div>
+      <div style="display:flex;align-items:center;gap:4px;flex-shrink:0;" onclick="event.stopPropagation()">
+        <button class="icon-btn danger" onclick="removeComp('${compId}')" style="width:26px;height:26px;" title="Elimina componente">
+          <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+        </button>
+        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="color:var(--muted);flex-shrink:0;pointer-events:none;"><polyline points="6 9 12 15 18 9"/></svg>
+      </div>
+    </div>
+    <div id="${bodyId}" style="padding:10px 10px 6px;">
+      <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px;">
+        <input style="flex:1;font-size:13px;font-weight:600;border:1px solid var(--border);border-radius:6px;padding:5px 8px;color:var(--text);background:white;" placeholder="Nome componente">
+        <div style="display:flex;align-items:center;gap:4px;flex-shrink:0;">
+          <span style="font-size:11px;color:var(--muted);">pz/UV</span>
+          <input style="width:46px;font-size:12px;border:1px solid var(--border);border-radius:6px;padding:4px 6px;text-align:center;" type="number" value="1">
+        </div>
+      </div>
+      <button style="width:100%;border:1.5px dashed var(--orange);background:transparent;color:var(--orange);font-size:12px;font-weight:600;padding:7px 10px;border-radius:7px;cursor:pointer;display:flex;align-items:center;gap:6px;margin-bottom:8px;box-sizing:border-box;" onclick="toggleSearch('${searchAreaId}')">
+        <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        Cerca e aggiungi ingrediente…
+      </button>
+      <div id="${searchAreaId}" style="display:none;margin-bottom:8px;">
+        <div class="search-wrap">
+          <span class="search-icon"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></span>
+          <input class="search-input" type="text" placeholder="Cerca nel database…" oninput="filterSearch(this,'${dropId}')" onfocus="showDrop('${dropId}')" onblur="hideDrop('${dropId}')">
+        </div>
+        <div class="search-dropdown" id="${dropId}">
+          <div class="search-result" onmousedown="selectIngredient('Semola di grano duro',200,98,0.95,'${listId}','${dropId}')"><strong>Semola di grano duro</strong><span>Cereali · 0,95 €/kg</span></div>
+          <div class="search-result" onmousedown="selectIngredient('Acqua demineralizzata',50,100,0.01,'${listId}','${dropId}')"><strong>Acqua demineralizzata</strong><span>Liquidi · 0,01 €/kg</span></div>
+        </div>
+      </div>
+      <div id="${listId}"></div>
+      <div style="font-size:10px;text-align:right;color:var(--muted);padding:4px 10px 2px;">Totale: 0,0 g (normalizzato a 100g)</div>
+      <div style="border-top:1px dashed var(--border);margin-top:6px;padding-top:4px;">
+        <button style="font-size:11px;color:var(--muted);background:none;border:none;cursor:pointer;display:flex;align-items:center;gap:4px;padding:2px 0;" onclick="toggleAdditivi('${additiviId}')">
+          <svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M10 2v6l-2 4h8l-2-4V2"/><path d="M8.5 12c-2 1.5-3.5 3.5-3.5 6a7 7 0 0 0 14 0c0-2.5-1.5-4.5-3.5-6"/></svg>
+          Additivi
+          <svg width="10" height="10" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+        </button>
+        <div id="${additiviId}" style="display:none;padding:4px 0 2px;font-size:12px;color:var(--muted);">Nessun additivo aggiunto.</div>
+      </div>
+    </div>`;
+  pad.insertBefore(card, addBtn);
+  card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  toast('Componente ' + n + ' aggiunto');
+}
+
+function removeComp(compId) {
+  const card = document.getElementById(compId);
+  if (!card) return;
+  card.style.animation = 'fadeOutDown 0.18s ease forwards';
+  setTimeout(() => {
+    card.remove();
+    updCount();
+    toast('Componente rimosso');
+  }, 160);
+}
+
+// ─── RIEPILOGO TABS ───────────────────────────────────────
+function riTab(t) {
+  ['quantita','costi'].forEach(tab => {
+    const btn = document.getElementById('ri-btn-' + tab);
+    const panel = document.getElementById('panel-' + tab);
+    if (btn) btn.classList.toggle('active', tab === t);
+    if (panel) panel.classList.toggle('active', tab === t);
+  });
+}
+
+// ─── ARCHIVIO ─────────────────────────────────────────────
+function showArchivio() {
+  document.getElementById('archivioOverlay').classList.add('visible');
+  flyout.classList.remove('visible');
+}
+function closeArchivio() {
+  document.getElementById('archivioOverlay').classList.remove('visible');
+}
+function overlayClick(e) {
+  if (e.target === document.getElementById('archivioOverlay')) closeArchivio();
+}
+
+// ─── OPTIONAL NUTRIENTS ───────────────────────────────────
+let optionalVisible = false;
+function toggleOptional() {
+  optionalVisible = !optionalVisible;
+  document.getElementById('optional-rows').classList.toggle('visible', optionalVisible);
+  const btn = document.getElementById('optionalBtn');
+  if (optionalVisible) {
+    btn.innerHTML = `<svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/></svg> Nascondi nutrienti opzionali`;
+  } else {
+    btn.innerHTML = `<svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Nutrienti opzionali`;
+  }
+}
+
+// ─── TOAST ────────────────────────────────────────────────
+function toast(msg) {
+  const container = document.getElementById('toastContainer');
+  const t = document.createElement('div');
+  t.className = 'toast';
+  t.innerHTML = `<div class="toast-icon" aria-hidden="true">
+    <svg width="10" height="10" fill="none" stroke="white" stroke-width="3" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+  </div><span>${msg}</span>`;
+  container.appendChild(t);
+  setTimeout(() => {
+    t.classList.add('removing');
+    setTimeout(() => t.remove(), 200);
+  }, 2400);
+}
+
+// ─── KEYBOARD SHORTCUTS ───────────────────────────────────
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') { closeArchivio(); flyout.classList.remove('visible'); }
+  if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+    e.preventDefault();
+    toast('Ricetta salvata correttamente');
+  }
+});
+
+// ─── MOBILE INIT ─────────────────────────────────────────
+function initMobileTabs() {
+  const isMobile = window.innerWidth <= 768;
+  // Su mobile il tab Mercati è nascosto via CSS; se era attivo, torna a ricetta
+  if (isMobile) {
+    const mercatiContent = document.getElementById('content-mercati');
+    if (mercatiContent && mercatiContent.style.display !== 'none') {
+      setTab('ricetta');
+    }
+  }
+}
+
+// ─── INIT ─────────────────────────────────────────────────
+(function init() {
+  setTab('ricetta');
+  setRightNation('ue');
+  setMobileNation('ue');
+  updCount();
+  initMobileTabs();
+  setTimeout(() => toast('Modalita Esperto — ricetta caricata'), 700);
+})();
+
+window.addEventListener('resize', initMobileTabs);
+</script>
+</body>
+</html>

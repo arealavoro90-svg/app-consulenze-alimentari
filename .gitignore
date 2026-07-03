@@ -34,3 +34,9 @@ experiments/
 docs_riferimento/
 PROMPTS/
 .superpowers/
+
+# Agent worktrees (temporary)
+.claude/worktrees/
+
+# Env
+.env.local

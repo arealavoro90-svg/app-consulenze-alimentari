@@ -406,7 +406,8 @@ export function RintracciabilitaCalc() {
             {/* ── Ingredienti ── */}
             <div className="card" style={{ marginBottom: 20 }}>
                 <SectionHeader title="🌿 Ingredienti / Materie Prime" onAdd={() => set('ingredients', [...data.ingredients, mkIng()])} addLabel="+ Aggiungi ingrediente" />
-                <div style={{ overflowX: 'auto' }}>
+                <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
+                <div style={{ minWidth: 700 }}>
                     <ColHeader labels={['Ingrediente', 'Fornitore', 'N° Lotto', 'g/conf', '€/kg', 'Resa %', 'Fabb. reale g', '€/conf', 'Costo tot €', '']} />
                     {data.ingredients.map(ing => {
                         const fabb = ing.gPerConf / ((ing.resa || 100) / 100);
@@ -431,12 +432,14 @@ export function RintracciabilitaCalc() {
                         <span><strong>{result.ingPerConf > 0 && g(data.pesoNettoG) > 0 ? f2(result.ingPerConf / g(data.pesoNettoG) * 1000) : '—'} €/kg</strong></span>
                     </div>
                 </div>
+                </div>
             </div>
 
             {/* ── Imballi ── */}
             <div className="card" style={{ marginBottom: 20 }}>
                 <SectionHeader title="📦 Imballi" onAdd={() => set('imballaggi', [...data.imballaggi, mkImb()])} addLabel="+ Aggiungi imballo" />
-                <div style={{ overflowX: 'auto' }}>
+                <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
+                <div style={{ minWidth: 700 }}>
                     <ColHeader labels={['Descrizione', 'Costo unit. €', 'Pz/conf', 'Resa %', 'Fabb./conf', '€/conf', '€/kg', 'Fabb. tot.', 'Costo tot. €', '']} />
                     {data.imballaggi.map(im => {
                         const fabb = im.pzConf / ((im.resa || 100) / 100);
@@ -461,12 +464,14 @@ export function RintracciabilitaCalc() {
                         <span>Totale imballi: <strong style={{ color: 'var(--color-navy)' }}>{f2(result.imbPerConf)} €/conf</strong></span>
                     </div>
                 </div>
+                </div>
             </div>
 
             {/* ── Manodopera Diretta ── */}
             <div className="card" style={{ marginBottom: 20 }}>
                 <SectionHeader title="👷 Manodopera Diretta" onAdd={() => set('postazioni', [...data.postazioni, mkPost()])} addLabel="+ Aggiungi postazione" />
-                <div style={{ overflowX: 'auto' }}>
+                <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
+                <div style={{ minWidth: 700 }}>
                     <ColHeader labels={['Postazione', '€/ora', 'N° addetti', 'Conf./8h', 'Ore/100conf', '€/conf', '€/kg', 'Ore totali', 'Costo tot. €', '']} />
                     {data.postazioni.map(p => {
                         const ore100 = (8 * p.nAddetti / (p.conf8h || 1)) * 100;
@@ -491,6 +496,7 @@ export function RintracciabilitaCalc() {
                         <span>Totale manodopera diretta: <strong style={{ color: 'var(--color-navy)' }}>{f2(result.mdPerConf)} €/conf</strong></span>
                     </div>
                 </div>
+                </div>
             </div>
 
             {/* ── Costi fissi (shared kg/mese field) ── */}
@@ -505,7 +511,8 @@ export function RintracciabilitaCalc() {
 
                 {/* Manodopera indiretta */}
                 <SectionHeader title="🏢 Manodopera Indiretta" onAdd={() => set('mansioniIndirette', [...data.mansioniIndirette, mkMans()])} addLabel="+ Aggiungi mansione" />
-                <div style={{ overflowX: 'auto', marginBottom: 24 }}>
+                <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch', marginBottom: 24 }}>
+                <div style={{ minWidth: 600 }}>
                     <ColHeader labels={['Mansione', 'Costo/mese €', 'N° addetti', '€ mens. tot.', '€/conf', '€/kg', 'Costo tot. €', '']} />
                     {data.mansioniIndirette.map(m => {
                         const v = result.miRows.find(r => r.id === m.id);
@@ -526,10 +533,12 @@ export function RintracciabilitaCalc() {
                         <span>Totale: <strong style={{ color: 'var(--color-navy)' }}>{f2(result.miPerConf)} €/conf</strong></span>
                     </div>
                 </div>
+                </div>
 
                 {/* Altri costi */}
                 <SectionHeader title="💡 Altri Costi Fissi" onAdd={() => set('altriFissi', [...data.altriFissi, mkAltro()])} addLabel="+ Aggiungi voce" />
-                <div style={{ overflowX: 'auto' }}>
+                <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
+                <div style={{ minWidth: 500 }}>
                     <ColHeader labels={['Descrizione', '€/mese', '€/conf', '€/kg', 'Costo tot. €', '']} />
                     {data.altriFissi.map(a => {
                         const v = result.altriRows.find(r => r.id === a.id);
@@ -547,6 +556,7 @@ export function RintracciabilitaCalc() {
                     <div style={{ display: 'flex', justifyContent: 'flex-end', paddingTop: 8, borderTop: '2px solid var(--color-border)', fontSize: 13, fontWeight: 700 }}>
                         <span>Totale: <strong style={{ color: 'var(--color-navy)' }}>{f2(result.altriPerConf)} €/conf</strong></span>
                     </div>
+                </div>
                 </div>
             </div>
 

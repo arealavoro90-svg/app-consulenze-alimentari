@@ -65,21 +65,14 @@ function rUE_sale(v: number): string {
     if (v < 1) return fUE(v.toFixed(2));
     return fUE(v.toFixed(1));
 }
-function rUE_micro3sig(v: number): string {
-    if (v === 0) return '0';
-    const mag = Math.floor(Math.log10(Math.abs(v)));
-    const factor = Math.pow(10, 2 - mag);
-    return fUE(Math.round(v * factor) / factor);
-}
-function rUE_micro2sig(v: number): string {
-    if (v === 0) return '0';
-    const mag = Math.floor(Math.log10(Math.abs(v)));
-    const factor = Math.pow(10, 1 - mag);
-    return fUE(Math.round(v * factor) / factor);
+function rUE_micro(v: number): string {
+    if (v < 0.1) return '0';
+    if (v < 10) return fUE(v.toFixed(1));
+    return Math.round(v).toString();
 }
 function rUE_pct(v: number, ref: number): number | null {
-    const p = v / ref * 100;
-    return p >= 15 ? Math.round(p) : null;
+    if (v <= 0 || ref <= 0) return null;
+    return Math.round(v / ref * 100);
 }
 
 // ─── Local interfaces ─────────────────────────────────────────────────────────
@@ -93,8 +86,8 @@ interface CalcResult {
     zinco: number; vitA_eq: number; vitD: number; vitE: number; vitC: number;
     vitB1: number; vitB2: number; vitB3: number; vitB6: number; vitB9: number; vitB12: number;
     // Optional extended micronutrients
-    vitK?: number; vitB5?: number; rame?: number; manganese?: number;
-    selenio?: number; iodio?: number;
+    vitK: number; vitB5: number; rame: number; manganese: number;
+    selenio: number; iodio: number;
 }
 
 interface UEServing { porzione?: number; confezione?: number; pezzo?: number; }
@@ -105,8 +98,9 @@ const ZERO_CALC: CalcResult = {
     trans: 0, colesterolo: 0, carboidrati: 0, carboidratiTot: 0, zuccheri: 0,
     zuccheri_agg: 0, polioli: 0, amido: 0, fibre: 0, proteine: 0, sodio_mg: 0,
     sale: 0, potassio: 0, calcio: 0, fosforo: 0, magnesio: 0, ferro: 0, zinco: 0,
+    rame: 0, manganese: 0, selenio: 0, iodio: 0,
     vitA_eq: 0, vitD: 0, vitE: 0, vitC: 0, vitB1: 0, vitB2: 0, vitB3: 0, vitB6: 0,
-    vitB9: 0, vitB12: 0,
+    vitB9: 0, vitB12: 0, vitK: 0, vitB5: 0,
 };
 
 function scaleResult(r: CalcResult, grams: number): CalcResult {
@@ -180,33 +174,33 @@ export function TabUE({ p, ue, specificGravity, selectedOptionals, showOptionals
 
     type SOKey = keyof SelectedOptionals;
     const microRows: MicroRow[] = [
-        { label: 'Vitamina A', val: scaled.vitA_eq, ref: AR_UE.vitA_eq, unit: 'µg', fmt: rUE_micro3sig, key: 'vitA' as SOKey },
-        { label: 'Vitamina D', val: scaled.vitD, ref: AR_UE.vitD, unit: 'µg', fmt: rUE_micro3sig, key: 'vitD' as SOKey },
-        { label: 'Vitamina E', val: scaled.vitE, ref: AR_UE.vitE, unit: 'mg', fmt: rUE_micro3sig, key: 'vitE' as SOKey },
-        { label: 'Vitamina K', val: scaled.vitK ?? 0, ref: AR_UE.vitK, unit: 'µg', fmt: rUE_micro3sig, key: 'vitK' as SOKey },
-        { label: 'Vitamina C', val: scaled.vitC, ref: AR_UE.vitC, unit: 'mg', fmt: rUE_micro3sig, key: 'vitC' as SOKey },
-        { label: 'Vitamina B1 (Tiamina)', val: scaled.vitB1, ref: AR_UE.vitB1, unit: 'mg', fmt: rUE_micro3sig, key: 'vitB1' as SOKey },
-        { label: 'Vitamina B2 (Riboflavina)', val: scaled.vitB2, ref: AR_UE.vitB2, unit: 'mg', fmt: rUE_micro3sig, key: 'vitB2' as SOKey },
-        { label: 'Vitamina B3 (Niacina/PP)', val: scaled.vitB3, ref: AR_UE.vitB3, unit: 'mg', fmt: rUE_micro3sig, key: 'vitB3' as SOKey },
-        { label: 'Vitamina B6', val: scaled.vitB6, ref: AR_UE.vitB6, unit: 'mg', fmt: rUE_micro3sig, key: 'vitB6' as SOKey },
-        { label: 'Acido folico (B9)', val: scaled.vitB9, ref: AR_UE.vitB9, unit: 'µg', fmt: rUE_micro3sig, key: 'vitB9' as SOKey },
-        { label: 'Vitamina B12', val: scaled.vitB12, ref: AR_UE.vitB12, unit: 'µg', fmt: rUE_micro3sig, key: 'vitB12' as SOKey },
-        { label: 'Acido pantotenico (B5)', val: scaled.vitB5 ?? 0, ref: AR_UE.vitB5, unit: 'mg', fmt: rUE_micro3sig, key: 'vitB5' as SOKey },
-        { label: 'Potassio', val: scaled.potassio, ref: AR_UE.potassio, unit: 'mg', fmt: rUE_micro3sig, key: 'potassio' as SOKey },
-        { label: 'Calcio', val: scaled.calcio, ref: AR_UE.calcio, unit: 'mg', fmt: rUE_micro3sig, key: 'calcio' as SOKey },
-        { label: 'Fosforo', val: scaled.fosforo, ref: AR_UE.fosforo, unit: 'mg', fmt: rUE_micro3sig, key: 'fosforo' as SOKey },
-        { label: 'Magnesio', val: scaled.magnesio, ref: AR_UE.magnesio, unit: 'mg', fmt: rUE_micro3sig, key: 'magnesio' as SOKey },
-        { label: 'Ferro', val: scaled.ferro, ref: AR_UE.ferro, unit: 'mg', fmt: rUE_micro2sig, key: 'ferro' as SOKey },
-        { label: 'Zinco', val: scaled.zinco, ref: AR_UE.zinco, unit: 'mg', fmt: rUE_micro2sig, key: 'zinco' as SOKey },
-        { label: 'Rame', val: scaled.rame ?? 0, ref: AR_UE.rame, unit: 'mg', fmt: rUE_micro3sig, key: 'rame' as SOKey },
-        { label: 'Manganese', val: scaled.manganese ?? 0, ref: AR_UE.manganese, unit: 'mg', fmt: rUE_micro3sig, key: 'manganese' as SOKey },
-        { label: 'Selenio', val: scaled.selenio ?? 0, ref: AR_UE.selenio, unit: 'µg', fmt: rUE_micro3sig, key: 'selenio' as SOKey },
-        { label: 'Iodio', val: scaled.iodio ?? 0, ref: AR_UE.iodio, unit: 'µg', fmt: rUE_micro3sig, key: 'iodio' as SOKey },
+        { label: 'Vitamina A', val: scaled.vitA_eq, ref: AR_UE.vitA_eq, unit: 'µg', fmt: rUE_micro, key: 'vitA' as SOKey },
+        { label: 'Vitamina D', val: scaled.vitD, ref: AR_UE.vitD, unit: 'µg', fmt: rUE_micro, key: 'vitD' as SOKey },
+        { label: 'Vitamina E', val: scaled.vitE, ref: AR_UE.vitE, unit: 'mg', fmt: rUE_micro, key: 'vitE' as SOKey },
+        { label: 'Vitamina K', val: scaled.vitK, ref: AR_UE.vitK, unit: 'µg', fmt: rUE_micro, key: 'vitK' as SOKey },
+        { label: 'Vitamina C', val: scaled.vitC, ref: AR_UE.vitC, unit: 'mg', fmt: rUE_micro, key: 'vitC' as SOKey },
+        { label: 'Vitamina B1 (Tiamina)', val: scaled.vitB1, ref: AR_UE.vitB1, unit: 'mg', fmt: rUE_micro, key: 'vitB1' as SOKey },
+        { label: 'Vitamina B2 (Riboflavina)', val: scaled.vitB2, ref: AR_UE.vitB2, unit: 'mg', fmt: rUE_micro, key: 'vitB2' as SOKey },
+        { label: 'Vitamina B3 (Niacina/PP)', val: scaled.vitB3, ref: AR_UE.vitB3, unit: 'mg', fmt: rUE_micro, key: 'vitB3' as SOKey },
+        { label: 'Vitamina B6', val: scaled.vitB6, ref: AR_UE.vitB6, unit: 'mg', fmt: rUE_micro, key: 'vitB6' as SOKey },
+        { label: 'Acido folico (B9)', val: scaled.vitB9, ref: AR_UE.vitB9, unit: 'µg', fmt: rUE_micro, key: 'vitB9' as SOKey },
+        { label: 'Vitamina B12', val: scaled.vitB12, ref: AR_UE.vitB12, unit: 'µg', fmt: rUE_micro, key: 'vitB12' as SOKey },
+        { label: 'Acido pantotenico (B5)', val: scaled.vitB5, ref: AR_UE.vitB5, unit: 'mg', fmt: rUE_micro, key: 'vitB5' as SOKey },
+        { label: 'Potassio', val: scaled.potassio, ref: AR_UE.potassio, unit: 'mg', fmt: rUE_micro, key: 'potassio' as SOKey },
+        { label: 'Calcio', val: scaled.calcio, ref: AR_UE.calcio, unit: 'mg', fmt: rUE_micro, key: 'calcio' as SOKey },
+        { label: 'Fosforo', val: scaled.fosforo, ref: AR_UE.fosforo, unit: 'mg', fmt: rUE_micro, key: 'fosforo' as SOKey },
+        { label: 'Magnesio', val: scaled.magnesio, ref: AR_UE.magnesio, unit: 'mg', fmt: rUE_micro, key: 'magnesio' as SOKey },
+        { label: 'Ferro', val: scaled.ferro, ref: AR_UE.ferro, unit: 'mg', fmt: rUE_micro, key: 'ferro' as SOKey },
+        { label: 'Zinco', val: scaled.zinco, ref: AR_UE.zinco, unit: 'mg', fmt: rUE_micro, key: 'zinco' as SOKey },
+        { label: 'Rame', val: scaled.rame, ref: AR_UE.rame, unit: 'mg', fmt: rUE_micro, key: 'rame' as SOKey },
+        { label: 'Manganese', val: scaled.manganese, ref: AR_UE.manganese, unit: 'mg', fmt: rUE_micro, key: 'manganese' as SOKey },
+        { label: 'Selenio', val: scaled.selenio, ref: AR_UE.selenio, unit: 'µg', fmt: rUE_micro, key: 'selenio' as SOKey },
+        { label: 'Iodio', val: scaled.iodio, ref: AR_UE.iodio, unit: 'µg', fmt: rUE_micro, key: 'iodio' as SOKey },
     ].filter(m => showOptionals && selectedOptionals[m.key] && m.val > 0);
 
     return (
-        <div data-table-export style={{ background: 'white', padding: 12, borderRadius: 0 }}>
-            <div style={{ maxWidth: 'min(500px, 100%)' }}>
+        <div data-table-export style={{ background: 'white', padding: 12, borderRadius: 0, display: 'inline-block' }}>
+            <div style={{ width: 560 }}>
                 <table style={{ width: '100%', borderCollapse: 'collapse', border: '2px solid #999' }}>
                     <thead>
                         <tr>
@@ -233,9 +227,9 @@ export function TabUE({ p, ue, specificGravity, selectedOptionals, showOptionals
                                 <tr key={i} style={{ borderBottom: '1px solid #999' }}>
                                     <td style={{
                                         padding: '10px 12px',
-                                        fontSize: r.bold ? 13 : 12,
+                                        fontSize: r.bold ? 13 : r.indent ? 11 : 12,
                                         fontWeight: r.bold ? 700 : 400,
-                                        paddingLeft: r.indent ? 28 : 12,
+                                        paddingLeft: r.indent ? 24 : 12,
                                         borderRight: '1px solid #999',
                                     }}>
                                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>

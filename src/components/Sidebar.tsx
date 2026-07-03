@@ -72,26 +72,27 @@ export function Sidebar({ isOpen = false, onClose }: SidebarProps) {
                 onMouseLeave={closeFlyout}
             >
                 <div className="sidebar-logo-mark">AEA</div>
-                <div className="sidebar-divider" />
 
-                {[...allItems, ...toolItems].map((item) => (
-                    <NavLink
-                        key={item.key}
-                        to={item.to}
-                        title={item.label}
-                        className={({ isActive }) =>
-                            `sidebar-nav-icon-btn${isActive ? ' active' : ''}`
-                        }
-                        onClick={onClose}
-                    >
-                        {item.icon}
-                    </NavLink>
-                ))}
+                <nav className="sidebar-nav" aria-label="Strumenti">
+                    {[...allItems, ...toolItems].map((item) => (
+                        <NavLink
+                            key={item.key}
+                            to={item.to}
+                            title={item.label}
+                            className={({ isActive }) =>
+                                `sidebar-nav-icon-btn${isActive ? ' active' : ''}`
+                            }
+                            onClick={onClose}
+                        >
+                            {item.icon}
+                        </NavLink>
+                    ))}
+                </nav>
 
-                <div style={{ flex: 1 }} />
-
-                <div className="sidebar-user-avatar" title={user?.name ?? ''}>
-                    {initials}
+                <div className="sidebar-bottom">
+                    <div className="sidebar-user-avatar" title={user?.name ?? ''}>
+                        {initials}
+                    </div>
                 </div>
             </aside>
 
