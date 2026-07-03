@@ -34,44 +34,48 @@ const REGIONS: { id: Region; label: string; sub: string }[] = [
 
 function nf(v: string): number { const x = parseFloat(v); return isNaN(x) ? 0 : x; }
 
-// ─── Compact selector button strip ───────────────────────────────────────────
-function Pill<T extends string>({ options, value, onChange }: {
+// ─── Segmented control (44px touch targets) ───────────────────────────────────
+function SegmentedControl<T extends string>({
+    label,
+    options,
+    value,
+    onChange,
+}: {
+    label: string;
     options: { v: T; label: string }[];
     value: T;
     onChange: (v: T) => void;
 }) {
     return (
-        <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
-            {options.map(o => (
-                <button
-                    key={o.v}
-                    type="button"
-                    onClick={() => onChange(o.v)}
-                    style={{
-                        fontSize: 11, padding: '3px 9px', borderRadius: 20, cursor: 'pointer',
-                        background: value === o.v ? 'var(--m-orange, #ff7e2e)' : 'transparent',
-                        color: value === o.v ? 'white' : 'var(--m-text)',
-                        border: '1px solid var(--m-orange, #ff7e2e)',
-                        fontWeight: value === o.v ? 700 : 400,
-                    }}
-                >
-                    {o.label}
-                </button>
-            ))}
+        <div style={{ marginBottom: 10 }}>
+            <span className="m-segmented__label">{label}</span>
+            <div className="m-segmented">
+                {options.map(o => (
+                    <button
+                        key={o.v}
+                        type="button"
+                        className={`m-segmented__btn${value === o.v ? ' m-segmented__btn--active' : ''}`}
+                        onClick={() => onChange(o.v)}
+                        aria-pressed={value === o.v}
+                    >
+                        {o.label}
+                    </button>
+                ))}
+            </div>
         </div>
     );
 }
 
-// ─── Compact number input ─────────────────────────────────────────────────────
-function SField({ label, field, form, onChange }: {
+// ─── Serving field with grid layout ──────────────────────────────────────────
+function ServingField({ label, field, form, onChange }: {
     label: string;
     field: keyof MobileNutForm;
     form: MobileNutForm;
     onChange: (p: Partial<MobileNutForm>) => void;
 }) {
     return (
-        <div className="m-field" style={{ minWidth: 80 }}>
-            <label className="m-label" style={{ fontSize: 10 }}>{label}</label>
+        <div className="m-serving-field">
+            <label className="m-serving-field__label">{label}</label>
             <input
                 className="m-input m-input--num"
                 type="number"
@@ -81,8 +85,102 @@ function SField({ label, field, form, onChange }: {
                 placeholder="—"
                 value={form[field] as string}
                 onChange={e => onChange({ [field]: e.target.value } as Partial<MobileNutForm>)}
-                style={{ fontSize: 13 }}
             />
+        </div>
+    );
+}
+
+// ─── Table scale constants ────────────────────────────────────────────────────
+const TABLE_SCALES: Record<string, Record<string, number>> = {
+    UE:        { default: 0.92 },
+    USA:       { verticale: 0.88, orizzontale: 0.72, lineare: 0.88 },
+    Canada:    { verticale: 0.78, orizzontale: 0.70, lineare: 0.88 },
+    Australia: { default: 0.88 },
+    Arabi:     { default: 0.88 },
+};
+
+function getScale(region: string, layout: string): number {
+    const r = TABLE_SCALES[region];
+    if (!r) return 0.88;
+    return r[layout] ?? r['default'] ?? 0.88;
+}
+
+function TableScaleWrap({
+    region, layout, children, onExpand,
+}: {
+    region: string;
+    layout: string;
+    children: React.ReactNode;
+    onExpand: () => void;
+}) {
+    const scale = getScale(region, layout);
+    const isWide = scale < 0.80;
+    return (
+        <div style={{ padding: '0 16px 8px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
+                {isWide && (
+                    <span style={{ fontSize: 10, color: 'var(--m-text-muted)', fontStyle: 'italic' }}>
+                        ← scorri per vedere tutto →
+                    </span>
+                )}
+                <button
+                    type="button"
+                    className="m-expand-btn"
+                    onClick={onExpand}
+                    style={{ marginLeft: 'auto' }}
+                >
+                    <span className="m-expand-pulse" style={{ display: 'inline-block' }}>⤢</span>
+                    Espandi
+                </button>
+            </div>
+            <div className="m-table-scale-wrap">
+                <div
+                    className="m-table-scale-wrap__inner"
+                    style={{
+                        transform: `scale(${scale})`,
+                        transformOrigin: 'top left',
+                        width: `${Math.round(100 / scale)}%`,
+                    }}
+                >
+                    {children}
+                </div>
+            </div>
+        </div>
+    );
+}
+
+function FullscreenOverlay({
+    open, exiting, region, layout, onClose, children,
+}: {
+    open: boolean;
+    exiting: boolean;
+    region: string;
+    layout: string;
+    onClose: () => void;
+    children: React.ReactNode;
+}) {
+    React.useEffect(() => {
+        if (!open) return;
+        const h = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
+        document.addEventListener('keydown', h);
+        return () => document.removeEventListener('keydown', h);
+    }, [open, onClose]);
+
+    if (!open) return null;
+
+    return (
+        <div className={`m-fullscreen-overlay ${exiting ? 'm-fullscreen-exit' : 'm-fullscreen-enter'}`}>
+            <div className="m-fullscreen-overlay__header">
+                <span className="m-fullscreen-overlay__title">
+                    {region}{layout && layout !== 'default' ? ` — ${layout}` : ''}
+                </span>
+                <button type="button" className="m-fullscreen-overlay__close" onClick={onClose} aria-label="Chiudi">
+                    ×
+                </button>
+            </div>
+            <div className="m-fullscreen-overlay__body">
+                {children}
+            </div>
         </div>
     );
 }
@@ -111,6 +209,19 @@ export function TabellaTab({ calcResult, form, onChange, onSave, onExportPDF, ha
     const [arabiServingRef, setArabiServingRef] = useState<USAServingRef>('serving');
     const [arabiMeasure, setArabiMeasure] = useState<USAMeasure>('g');
 
+    // Fullscreen overlay
+    const [fullscreenOpen, setFullscreenOpen] = useState(false);
+    const [fullscreenExiting, setFullscreenExiting] = useState(false);
+
+    // Key to trigger M3 animation (table appear) on region change
+    const [tableKey, setTableKey] = useState(0);
+
+    // Collapsible serving section
+    const [servingOpen, setServingOpen] = useState(true);
+
+    // Save button flash state (M8)
+    const [saveFlash, setSaveFlash] = useState(false);
+
     const hasData = (hasIngredients ?? false) || calcResult.energyKcal > 0 || calcResult.proteine > 0 || calcResult.grassi > 0;
     const sg = nf(form.specificGravity);
 
@@ -119,11 +230,21 @@ export function TabellaTab({ calcResult, form, onChange, onSave, onExportPDF, ha
         setTimeout(() => setNotice(null), 3000);
     };
 
+    const closeFullscreen = () => {
+        setFullscreenExiting(true);
+        setTimeout(() => {
+            setFullscreenOpen(false);
+            setFullscreenExiting(false);
+        }, 200);
+    };
+
     const handleSave = () => {
         if (!selectedRegion) { showNotice('error', 'Seleziona prima una regione.'); return; }
         if (!form.denominazione.trim()) { showNotice('error', 'Inserisci la denominazione nel tab Calcolo.'); return; }
         onSave(selectedRegion);
         showNotice('success', 'Calcolo salvato in archivio.');
+        setSaveFlash(true);
+        setTimeout(() => setSaveFlash(false), 450);
     };
 
     const handlePDF = () => {
@@ -165,9 +286,9 @@ export function TabellaTab({ calcResult, form, onChange, onSave, onExportPDF, ha
     };
 
     return (
-        <div style={{ paddingTop: 8, paddingBottom: 100 }}>
+        <div style={{ paddingTop: 8, paddingBottom: 140 }}>
 
-            {/* ── Compact region chip bar ──────────────────────────────────── */}
+            {/* ── Region chip bar ─────────────────────────────────────────── */}
             <div className="m-region-tabs">
                 {REGIONS.map(r => {
                     const isActive = selectedRegion === r.id;
@@ -175,12 +296,16 @@ export function TabellaTab({ calcResult, form, onChange, onSave, onExportPDF, ha
                         <button
                             key={r.id}
                             type="button"
-                            onClick={() => setSelectedRegion(r.id)}
+                            onClick={() => {
+                                setSelectedRegion(r.id);
+                                setTableKey(k => k + 1);
+                                setServingOpen(true);
+                            }}
                             aria-pressed={isActive}
                             className={isActive ? 'm-region-tab m-region-tab--active' : 'm-region-tab'}
                         >
-                            <span style={{ fontSize: 13, fontWeight: 800, lineHeight: 1.2 }}>{r.label}</span>
-                            <span style={{ fontSize: 9, opacity: isActive ? 0.85 : 0.55, marginTop: 1 }}>{r.sub}</span>
+                            <span style={{ fontSize: 13, fontWeight: 800 }}>{r.label}</span>
+                            {r.sub && <span style={{ fontSize: 9, marginTop: 1 }}>{r.sub}</span>}
                         </button>
                     );
                 })}
@@ -205,25 +330,32 @@ export function TabellaTab({ calcResult, form, onChange, onSave, onExportPDF, ha
                 <>
                     {/* ── UE ───────────────────────────────────────────────── */}
                     {selectedRegion === 'UE' && (
-                        <>
-                            {/* EU serving sizes */}
+                        <div key={`UE-${tableKey}`} className="m-market-enter">
+                            {/* Serving section — collapsible */}
                             <div className="m-section">
-                                <div className="m-section__header" style={{ cursor: 'default' }}>
+                                <div
+                                    className="m-section__header"
+                                    onClick={() => setServingOpen(o => !o)}
+                                    style={{ cursor: 'pointer' }}
+                                >
                                     <div className="m-section__line" />
                                     <span className="m-section__title">Porzioni EU</span>
+                                    <span style={{ transform: servingOpen ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s', fontSize: 14 }}>▾</span>
                                     <div className="m-section__line" />
                                 </div>
-                                <div className="m-input-group">
-                                    <SField label="Porzione (g)" field="ue_porzione" form={form} onChange={onChange} />
-                                    <SField label="Confezione (g)" field="ue_confezione" form={form} onChange={onChange} />
-                                    <SField label="Pezzo (g)" field="ue_pezzo" form={form} onChange={onChange} />
+                                <div className={`m-collapsible${servingOpen ? '' : ' m-collapsible--closed'}`}>
+                                    <div className="m-serving-grid" style={{ padding: '8px 16px' }}>
+                                        <ServingField label="Porzione (g)" field="ue_porzione" form={form} onChange={onChange} />
+                                        <ServingField label="Confezione (g)" field="ue_confezione" form={form} onChange={onChange} />
+                                        <ServingField label="Pezzo (g)" field="ue_pezzo" form={form} onChange={onChange} />
+                                    </div>
                                 </div>
                             </div>
                             {/* EU sub-tab selector + nutrienti button */}
                             <div style={{ padding: '0 16px 12px' }}>
-                                <p style={{ fontSize: 11, color: 'var(--m-text-muted)', margin: '0 0 6px' }}>Vista tabella:</p>
                                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-                                    <Pill<EUSubTab>
+                                    <SegmentedControl<EUSubTab>
+                                        label="Vista tabella:"
                                         options={[
                                             { v: '100g', label: 'per 100g' },
                                             { v: 'porzione', label: 'Porzione' },
@@ -248,7 +380,25 @@ export function TabellaTab({ calcResult, form, onChange, onSave, onExportPDF, ha
                                 </div>
                             </div>
                             {/* EU table */}
-                            <div className="m-table-preview">
+                            <TableScaleWrap region="UE" layout={euSubTab} onExpand={() => setFullscreenOpen(true)}>
+                                <div key={`tbl-UE-${euSubTab}`} className="m-table-appear">
+                                    <TabUE
+                                        p={calcResult as Parameters<typeof TabUE>[0]['p']}
+                                        ue={ue}
+                                        specificGravity={sg > 0 ? sg : undefined}
+                                        selectedOptionals={selectedOptionals}
+                                        showOptionals={true}
+                                        activeSubTab={euSubTab}
+                                    />
+                                </div>
+                            </TableScaleWrap>
+                            <FullscreenOverlay
+                                open={fullscreenOpen}
+                                exiting={fullscreenExiting}
+                                region="EU"
+                                layout={euSubTab}
+                                onClose={closeFullscreen}
+                            >
                                 <TabUE
                                     p={calcResult as Parameters<typeof TabUE>[0]['p']}
                                     ue={ue}
@@ -257,66 +407,85 @@ export function TabellaTab({ calcResult, form, onChange, onSave, onExportPDF, ha
                                     showOptionals={true}
                                     activeSubTab={euSubTab}
                                 />
-                            </div>
-                        </>
+                            </FullscreenOverlay>
+                        </div>
                     )}
 
                     {/* ── USA ──────────────────────────────────────────────── */}
                     {selectedRegion === 'USA' && (
-                        <>
+                        <div key={`USA-${tableKey}`} className="m-market-enter">
                             <div className="m-section">
-                                <div className="m-section__header" style={{ cursor: 'default' }}>
+                                <div
+                                    className="m-section__header"
+                                    onClick={() => setServingOpen(o => !o)}
+                                    style={{ cursor: 'pointer' }}
+                                >
                                     <div className="m-section__line" />
                                     <span className="m-section__title">Porzioni USA</span>
+                                    <span style={{ transform: servingOpen ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s', fontSize: 14 }}>▾</span>
                                     <div className="m-section__line" />
                                 </div>
-                                <div className="m-input-group">
-                                    <SField label="Serving (g)" field="usa_serving" form={form} onChange={onChange} />
-                                    <SField label="Confezione (g)" field="usa_confezione" form={form} onChange={onChange} />
-                                    <SField label="Cup (g)" field="usa_cup" form={form} onChange={onChange} />
-                                    <SField label="Cucchiaio (g)" field="usa_cucchiaio" form={form} onChange={onChange} />
-                                    <SField label="Pezzo (g)" field="usa_pezzo" form={form} onChange={onChange} />
+                                <div className={`m-collapsible${servingOpen ? '' : ' m-collapsible--closed'}`}>
+                                    <div className="m-serving-grid" style={{ padding: '8px 16px' }}>
+                                        <ServingField label="Serving (g)" field="usa_serving" form={form} onChange={onChange} />
+                                        <ServingField label="Confezione (g)" field="usa_confezione" form={form} onChange={onChange} />
+                                        <ServingField label="Cup (g)" field="usa_cup" form={form} onChange={onChange} />
+                                        <ServingField label="Cucchiaio (g)" field="usa_cucchiaio" form={form} onChange={onChange} />
+                                        <ServingField label="Pezzo (g)" field="usa_pezzo" form={form} onChange={onChange} />
+                                    </div>
                                 </div>
                             </div>
                             <div style={{ padding: '0 16px 12px', display: 'flex', flexDirection: 'column', gap: 8 }}>
-                                <div>
-                                    <p style={{ fontSize: 11, color: 'var(--m-text-muted)', margin: '0 0 6px' }}>Layout:</p>
-                                    <Pill<SubTab>
-                                        options={[
-                                            { v: 'verticale', label: 'Verticale' },
-                                            { v: 'orizzontale', label: 'Orizzontale' },
-                                            { v: 'lineare', label: 'Lineare' },
-                                        ]}
-                                        value={usaSubTab}
-                                        onChange={setUsaSubTab}
-                                    />
-                                </div>
-                                <div>
-                                    <p style={{ fontSize: 11, color: 'var(--m-text-muted)', margin: '0 0 6px' }}>Riferimento:</p>
-                                    <Pill<USAServingRef>
-                                        options={[
-                                            { v: 'serving', label: 'Porzione' },
-                                            { v: 'confezione', label: 'Confezione' },
-                                        ]}
-                                        value={usaServingRef}
-                                        onChange={setUsaServingRef}
-                                    />
-                                </div>
-                                <div>
-                                    <p style={{ fontSize: 11, color: 'var(--m-text-muted)', margin: '0 0 6px' }}>Unità di misura:</p>
-                                    <Pill<USAMeasure>
-                                        options={[
-                                            { v: 'g', label: 'g' },
-                                            { v: 'tazze', label: 'Tazze' },
-                                            { v: 'cucchiai', label: 'Cucchiai' },
-                                            { v: 'pezzi', label: 'Pezzi' },
-                                        ]}
-                                        value={usaMeasure}
-                                        onChange={setUsaMeasure}
-                                    />
-                                </div>
+                                <SegmentedControl<SubTab>
+                                    label="Layout:"
+                                    options={[
+                                        { v: 'verticale', label: 'Verticale' },
+                                        { v: 'orizzontale', label: 'Orizzontale' },
+                                        { v: 'lineare', label: 'Lineare' },
+                                    ]}
+                                    value={usaSubTab}
+                                    onChange={setUsaSubTab}
+                                />
+                                <SegmentedControl<USAServingRef>
+                                    label="Riferimento:"
+                                    options={[
+                                        { v: 'serving', label: 'Porzione' },
+                                        { v: 'confezione', label: 'Confezione' },
+                                    ]}
+                                    value={usaServingRef}
+                                    onChange={setUsaServingRef}
+                                />
+                                <SegmentedControl<USAMeasure>
+                                    label="Unità di misura:"
+                                    options={[
+                                        { v: 'g', label: 'g' },
+                                        { v: 'tazze', label: 'Tazze' },
+                                        { v: 'cucchiai', label: 'Cucchiai' },
+                                        { v: 'pezzi', label: 'Pezzi' },
+                                    ]}
+                                    value={usaMeasure}
+                                    onChange={setUsaMeasure}
+                                />
                             </div>
-                            <div className="m-table-preview">
+                            <TableScaleWrap region="USA" layout={usaSubTab} onExpand={() => setFullscreenOpen(true)}>
+                                <div key={`tbl-USA-${usaSubTab}-${usaServingRef}-${usaMeasure}`} className="m-table-appear">
+                                    <TabUSA
+                                        p={calcResult as Parameters<typeof TabUSA>[0]['p']}
+                                        usa={usa}
+                                        specificGravity={sg > 0 ? sg : 1}
+                                        servingRef={usaServingRef}
+                                        measure={usaMeasure}
+                                        subTab={usaSubTab}
+                                    />
+                                </div>
+                            </TableScaleWrap>
+                            <FullscreenOverlay
+                                open={fullscreenOpen}
+                                exiting={fullscreenExiting}
+                                region="USA"
+                                layout={usaSubTab}
+                                onClose={closeFullscreen}
+                            >
                                 <TabUSA
                                     p={calcResult as Parameters<typeof TabUSA>[0]['p']}
                                     usa={usa}
@@ -325,66 +494,86 @@ export function TabellaTab({ calcResult, form, onChange, onSave, onExportPDF, ha
                                     measure={usaMeasure}
                                     subTab={usaSubTab}
                                 />
-                            </div>
-                        </>
+                            </FullscreenOverlay>
+                        </div>
                     )}
 
                     {/* ── Canada ───────────────────────────────────────────── */}
                     {selectedRegion === 'Canada' && (
-                        <>
+                        <div key={`Canada-${tableKey}`} className="m-market-enter">
                             <div className="m-section">
-                                <div className="m-section__header" style={{ cursor: 'default' }}>
+                                <div
+                                    className="m-section__header"
+                                    onClick={() => setServingOpen(o => !o)}
+                                    style={{ cursor: 'pointer' }}
+                                >
                                     <div className="m-section__line" />
                                     <span className="m-section__title">Porzioni Canada</span>
+                                    <span style={{ transform: servingOpen ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s', fontSize: 14 }}>▾</span>
                                     <div className="m-section__line" />
                                 </div>
-                                <div className="m-input-group">
-                                    <SField label="Serving (g)" field="ca_serving" form={form} onChange={onChange} />
-                                    <SField label="Confezione (g)" field="ca_confezione" form={form} onChange={onChange} />
-                                    <SField label="Cup (g, 250ml)" field="ca_cup" form={form} onChange={onChange} />
-                                    <SField label="Cucchiaio (g)" field="ca_cucchiaio" form={form} onChange={onChange} />
-                                    <SField label="Pezzo (g)" field="ca_pezzo" form={form} onChange={onChange} />
+                                <div className={`m-collapsible${servingOpen ? '' : ' m-collapsible--closed'}`}>
+                                    <div className="m-serving-grid" style={{ padding: '8px 16px' }}>
+                                        <ServingField label="Serving (g)" field="ca_serving" form={form} onChange={onChange} />
+                                        <ServingField label="Confezione (g)" field="ca_confezione" form={form} onChange={onChange} />
+                                        <ServingField label="Cup (g, 250ml)" field="ca_cup" form={form} onChange={onChange} />
+                                        <ServingField label="Cucchiaio (g)" field="ca_cucchiaio" form={form} onChange={onChange} />
+                                        <ServingField label="Pezzo (g)" field="ca_pezzo" form={form} onChange={onChange} />
+                                    </div>
                                 </div>
                             </div>
                             <div style={{ padding: '0 16px 12px', display: 'flex', flexDirection: 'column', gap: 8 }}>
-                                <div>
-                                    <p style={{ fontSize: 11, color: 'var(--m-text-muted)', margin: '0 0 6px' }}>Layout:</p>
-                                    <Pill<SubTab>
-                                        options={[
-                                            { v: 'verticale', label: 'Verticale' },
-                                            { v: 'orizzontale', label: 'Orizzontale' },
-                                            { v: 'lineare', label: 'Lineare' },
-                                        ]}
-                                        value={caSubTab}
-                                        onChange={setCaSubTab}
-                                    />
-                                </div>
-                                <div>
-                                    <p style={{ fontSize: 11, color: 'var(--m-text-muted)', margin: '0 0 6px' }}>Riferimento:</p>
-                                    <Pill<USAServingRef>
-                                        options={[
-                                            { v: 'serving', label: 'Porzione' },
-                                            { v: 'confezione', label: 'Confezione' },
-                                        ]}
-                                        value={caServingRef}
-                                        onChange={setCaServingRef}
-                                    />
-                                </div>
-                                <div>
-                                    <p style={{ fontSize: 11, color: 'var(--m-text-muted)', margin: '0 0 6px' }}>Unità:</p>
-                                    <Pill<USAMeasure>
-                                        options={[
-                                            { v: 'g', label: 'g' },
-                                            { v: 'tazze', label: 'Tazze' },
-                                            { v: 'cucchiai', label: 'Cucchiai' },
-                                            { v: 'pezzi', label: 'Pezzi' },
-                                        ]}
-                                        value={caMeasure}
-                                        onChange={setCaMeasure}
-                                    />
-                                </div>
+                                <SegmentedControl<SubTab>
+                                    label="Layout:"
+                                    options={[
+                                        { v: 'verticale', label: 'Verticale' },
+                                        { v: 'orizzontale', label: 'Orizzontale' },
+                                        { v: 'lineare', label: 'Lineare' },
+                                    ]}
+                                    value={caSubTab}
+                                    onChange={setCaSubTab}
+                                />
+                                <SegmentedControl<USAServingRef>
+                                    label="Riferimento:"
+                                    options={[
+                                        { v: 'serving', label: 'Porzione' },
+                                        { v: 'confezione', label: 'Confezione' },
+                                    ]}
+                                    value={caServingRef}
+                                    onChange={setCaServingRef}
+                                />
+                                <SegmentedControl<USAMeasure>
+                                    label="Unità:"
+                                    options={[
+                                        { v: 'g', label: 'g' },
+                                        { v: 'tazze', label: 'Tazze' },
+                                        { v: 'cucchiai', label: 'Cucchiai' },
+                                        { v: 'pezzi', label: 'Pezzi' },
+                                    ]}
+                                    value={caMeasure}
+                                    onChange={setCaMeasure}
+                                />
                             </div>
-                            <div className="m-table-preview">
+                            <TableScaleWrap region="Canada" layout={caSubTab} onExpand={() => setFullscreenOpen(true)}>
+                                <div key={`tbl-Canada-${caSubTab}-${caServingRef}-${caMeasure}`} className="m-table-appear">
+                                    <TabCanada
+                                        p={calcResult}
+                                        ca={ca}
+                                        servingRef={caServingRef}
+                                        measure={caMeasure}
+                                        subTab={caSubTab}
+                                        setSubTab={setCaSubTab}
+                                        full
+                                    />
+                                </div>
+                            </TableScaleWrap>
+                            <FullscreenOverlay
+                                open={fullscreenOpen}
+                                exiting={fullscreenExiting}
+                                region="Canada"
+                                layout={caSubTab}
+                                onClose={closeFullscreen}
+                            >
                                 <TabCanada
                                     p={calcResult}
                                     ca={ca}
@@ -394,75 +583,114 @@ export function TabellaTab({ calcResult, form, onChange, onSave, onExportPDF, ha
                                     setSubTab={setCaSubTab}
                                     full
                                 />
-                            </div>
-                        </>
+                            </FullscreenOverlay>
+                        </div>
                     )}
 
                     {/* ── Australia ────────────────────────────────────────── */}
                     {selectedRegion === 'Australia' && (
-                        <>
+                        <div key={`Australia-${tableKey}`} className="m-market-enter">
                             <div className="m-section">
-                                <div className="m-section__header" style={{ cursor: 'default' }}>
+                                <div
+                                    className="m-section__header"
+                                    onClick={() => setServingOpen(o => !o)}
+                                    style={{ cursor: 'pointer' }}
+                                >
                                     <div className="m-section__line" />
                                     <span className="m-section__title">Porzioni Australia</span>
+                                    <span style={{ transform: servingOpen ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s', fontSize: 14 }}>▾</span>
                                     <div className="m-section__line" />
                                 </div>
-                                <div className="m-input-group">
-                                    <SField label="Serving (g)" field="au_serving" form={form} onChange={onChange} />
-                                    <SField label="Confezione (g)" field="au_confezione" form={form} onChange={onChange} />
-                                    <SField label="Pezzo (g)" field="au_pezzo" form={form} onChange={onChange} />
+                                <div className={`m-collapsible${servingOpen ? '' : ' m-collapsible--closed'}`}>
+                                    <div className="m-serving-grid" style={{ padding: '8px 16px' }}>
+                                        <ServingField label="Serving (g)" field="au_serving" form={form} onChange={onChange} />
+                                        <ServingField label="Confezione (g)" field="au_confezione" form={form} onChange={onChange} />
+                                        <ServingField label="Pezzo (g)" field="au_pezzo" form={form} onChange={onChange} />
+                                    </div>
                                 </div>
                             </div>
-                            <div className="m-table-preview">
+                            <TableScaleWrap region="Australia" layout="default" onExpand={() => setFullscreenOpen(true)}>
+                                <div key={`tbl-Australia`} className="m-table-appear">
+                                    <TabAustralia p={calcResult} au={au} full />
+                                </div>
+                            </TableScaleWrap>
+                            <FullscreenOverlay
+                                open={fullscreenOpen}
+                                exiting={fullscreenExiting}
+                                region="Australia"
+                                layout="default"
+                                onClose={closeFullscreen}
+                            >
                                 <TabAustralia p={calcResult} au={au} full />
-                            </div>
-                        </>
+                            </FullscreenOverlay>
+                        </div>
                     )}
 
                     {/* ── Arabi ────────────────────────────────────────────── */}
                     {selectedRegion === 'Arabi' && (
-                        <>
+                        <div key={`Arabi-${tableKey}`} className="m-market-enter">
                             <div className="m-section">
-                                <div className="m-section__header" style={{ cursor: 'default' }}>
+                                <div
+                                    className="m-section__header"
+                                    onClick={() => setServingOpen(o => !o)}
+                                    style={{ cursor: 'pointer' }}
+                                >
                                     <div className="m-section__line" />
                                     <span className="m-section__title">Porzioni Gulf/Arabi</span>
+                                    <span style={{ transform: servingOpen ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s', fontSize: 14 }}>▾</span>
                                     <div className="m-section__line" />
                                 </div>
-                                <div className="m-input-group">
-                                    <SField label="Serving (g)" field="arabi_serving" form={form} onChange={onChange} />
-                                    <SField label="Confezione (g)" field="arabi_confezione" form={form} onChange={onChange} />
-                                    <SField label="Cup (g, 240ml)" field="arabi_cup" form={form} onChange={onChange} />
-                                    <SField label="Cucchiaio (g)" field="arabi_cucchiaio" form={form} onChange={onChange} />
-                                    <SField label="Pezzo (g)" field="arabi_pezzo" form={form} onChange={onChange} />
+                                <div className={`m-collapsible${servingOpen ? '' : ' m-collapsible--closed'}`}>
+                                    <div className="m-serving-grid" style={{ padding: '8px 16px' }}>
+                                        <ServingField label="Serving (g)" field="arabi_serving" form={form} onChange={onChange} />
+                                        <ServingField label="Confezione (g)" field="arabi_confezione" form={form} onChange={onChange} />
+                                        <ServingField label="Cup (g, 240ml)" field="arabi_cup" form={form} onChange={onChange} />
+                                        <ServingField label="Cucchiaio (g)" field="arabi_cucchiaio" form={form} onChange={onChange} />
+                                        <ServingField label="Pezzo (g)" field="arabi_pezzo" form={form} onChange={onChange} />
+                                    </div>
                                 </div>
                             </div>
                             <div style={{ padding: '0 16px 12px', display: 'flex', flexDirection: 'column', gap: 8 }}>
-                                <div>
-                                    <p style={{ fontSize: 11, color: 'var(--m-text-muted)', margin: '0 0 6px' }}>Riferimento:</p>
-                                    <Pill<USAServingRef>
-                                        options={[
-                                            { v: 'serving', label: 'Porzione' },
-                                            { v: 'confezione', label: 'Confezione' },
-                                        ]}
-                                        value={arabiServingRef}
-                                        onChange={setArabiServingRef}
-                                    />
-                                </div>
-                                <div>
-                                    <p style={{ fontSize: 11, color: 'var(--m-text-muted)', margin: '0 0 6px' }}>Unità:</p>
-                                    <Pill<USAMeasure>
-                                        options={[
-                                            { v: 'g', label: 'g' },
-                                            { v: 'tazze', label: 'Tazze' },
-                                            { v: 'cucchiai', label: 'Cucchiai' },
-                                            { v: 'pezzi', label: 'Pezzi' },
-                                        ]}
-                                        value={arabiMeasure}
-                                        onChange={setArabiMeasure}
-                                    />
-                                </div>
+                                <SegmentedControl<USAServingRef>
+                                    label="Riferimento:"
+                                    options={[
+                                        { v: 'serving', label: 'Porzione' },
+                                        { v: 'confezione', label: 'Confezione' },
+                                    ]}
+                                    value={arabiServingRef}
+                                    onChange={setArabiServingRef}
+                                />
+                                <SegmentedControl<USAMeasure>
+                                    label="Unità:"
+                                    options={[
+                                        { v: 'g', label: 'g' },
+                                        { v: 'tazze', label: 'Tazze' },
+                                        { v: 'cucchiai', label: 'Cucchiai' },
+                                        { v: 'pezzi', label: 'Pezzi' },
+                                    ]}
+                                    value={arabiMeasure}
+                                    onChange={setArabiMeasure}
+                                />
                             </div>
-                            <div className="m-table-preview">
+                            <TableScaleWrap region="Arabi" layout="default" onExpand={() => setFullscreenOpen(true)}>
+                                <div key={`tbl-Arabi-${arabiServingRef}-${arabiMeasure}`} className="m-table-appear">
+                                    <TabArabi
+                                        p={calcResult}
+                                        arabi={arabi}
+                                        servingRef={arabiServingRef}
+                                        measure={arabiMeasure}
+                                        specificGravity={sg > 0 ? sg : undefined}
+                                        full
+                                    />
+                                </div>
+                            </TableScaleWrap>
+                            <FullscreenOverlay
+                                open={fullscreenOpen}
+                                exiting={fullscreenExiting}
+                                region="Arabi"
+                                layout="default"
+                                onClose={closeFullscreen}
+                            >
                                 <TabArabi
                                     p={calcResult}
                                     arabi={arabi}
@@ -471,8 +699,8 @@ export function TabellaTab({ calcResult, form, onChange, onSave, onExportPDF, ha
                                     specificGravity={sg > 0 ? sg : undefined}
                                     full
                                 />
-                            </div>
-                        </>
+                            </FullscreenOverlay>
+                        </div>
                     )}
                 </>
             )}
@@ -524,12 +752,22 @@ export function TabellaTab({ calcResult, form, onChange, onSave, onExportPDF, ha
                 </div>
             )}
 
-            {/* Action buttons */}
-            <div className="m-btn-row" style={{ marginTop: 16, marginBottom: 16 }}>
-                <button type="button" className="m-btn m-btn--primary" style={{ flex: 1 }} onClick={handleSave}>
-                    Salva
+            {/* ─── Sticky CTA bar ─────────────────────────────────────────── */}
+            <div className="m-cta-bar">
+                <button
+                    type="button"
+                    className={`m-btn m-btn--primary${saveFlash ? ' m-btn--saved' : ''}`}
+                    style={{ flex: 1 }}
+                    onClick={handleSave}
+                >
+                    {saveFlash ? '✓ Salvato' : 'Salva'}
                 </button>
-                <button type="button" className="m-btn m-btn--green" style={{ flex: 1 }} onClick={handlePDF}>
+                <button
+                    type="button"
+                    className="m-btn m-btn--green"
+                    style={{ flex: 1 }}
+                    onClick={handlePDF}
+                >
                     PDF ↗
                 </button>
             </div>
