@@ -2585,3 +2585,60 @@ body:has(.calc-outer-shell) {
 .value-flash {
   animation: value-flash 0.6s ease-out;
 }
+
+/* ── Phase 3: ingredient row CSS classes (3.1) ─────────────────────────────── */
+.ing-row-compact {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 10px;
+}
+.ing-row-name {
+  flex: 1;
+  min-width: 0;
+}
+.ing-row-name-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ing-row-kcal {
+  font-size: 10px;
+  color: var(--color-text-muted);
+}
+.ing-row-grams {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+/* ── Phase 3: micro-animazioni (3.3) ───────────────────────────────────────── */
+@keyframes ing-slide-in {
+  from { opacity: 0; transform: translateX(-10px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+.ing-row-enter {
+  animation: ing-slide-in 0.2s ease-out;
+}
+
+/* ── kbd badge per keyboard shortcuts ──────────────────────────────────────── */
+kbd.shortcut {
+  font-size: 10px;
+  font-family: inherit;
+  background: rgba(255,255,255,0.15);
+  border: 1px solid rgba(255,255,255,0.25);
+  border-radius: 3px;
+  padding: 1px 4px;
+  margin-left: 4px;
+  vertical-align: middle;
+  letter-spacing: 0;
+}
+.topbar-btn-ghost kbd.shortcut {
+  background: rgba(0,0,0,0.07);
+  border-color: var(--color-border);
+  color: var(--color-text-muted);
+}

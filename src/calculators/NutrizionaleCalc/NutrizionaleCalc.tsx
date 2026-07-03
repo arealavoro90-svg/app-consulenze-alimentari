@@ -1444,6 +1444,8 @@ export function NutrizionaleCalc() {
     const [currentId, setCurrentId] = useState<string | undefined>(undefined);
     const [, setCurrentName] = useState('');
     const [isFlashing, setIsFlashing] = useState(false);
+    const [lastAddedRowId, setLastAddedRowId] = useState('');
+    const isMac = typeof navigator !== 'undefined' && navigator.platform.toUpperCase().includes('MAC');
 
     // ── Auto-save draft ──────────────────────────────────────────────────────
     const [isDirty, setIsDirty] = useState(false);
@@ -1582,9 +1584,12 @@ export function NutrizionaleCalc() {
         setComponents(prev => prev.map(c => c.id === id ? { ...c, pzUV } : c));
     };
     const addRowToComp = useCallback((compId: string, ing: DBIngredient) => {
+        const newId = String(Date.now() + Math.random());
         setComponents(prev => prev.map(c => c.id !== compId ? c : {
-            ...c, rows: [...c.rows, { id: String(Date.now() + Math.random()), ing, grams: 100, eurKg: 0, resa: 100 }]
+            ...c, rows: [...c.rows, { id: newId, ing, grams: 100, eurKg: 0, resa: 100 }]
         }));
+        setLastAddedRowId(newId);
+        setTimeout(() => setLastAddedRowId(''), 250);
     }, []);
     const updateGrams = (compId: string, rowId: string, g: number) => {
         const errorKey = `${compId}-${rowId}-grams`;
@@ -1785,6 +1790,17 @@ export function NutrizionaleCalc() {
         }
         doResetRecipe();
     };
+
+    useEffect(() => {
+        const handler = (e: KeyboardEvent) => {
+            if ((e.metaKey || e.ctrlKey) && e.key === 's') { e.preventDefault(); handleSave(); }
+            if ((e.metaKey || e.ctrlKey) && e.key === 'n') { e.preventDefault(); handleNew(); }
+            if ((e.metaKey || e.ctrlKey) && e.key === 'f') { e.preventDefault(); document.querySelector<HTMLInputElement>('.ing-search-input')?.focus(); }
+        };
+        window.addEventListener('keydown', handler);
+        return () => window.removeEventListener('keydown', handler);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
     const handleDownloadPNG = async () => {
         if (!tableRef.current) { toast.error('Tabella non trovata.'); return; }
@@ -2268,6 +2284,7 @@ export function NutrizionaleCalc() {
                     <button type="button" className="topbar-btn-primary" onClick={handleNew}>
                         <Plus size={13} />
                         Nuova Ricetta
+                        <kbd className="shortcut">{isMac ? '⌘N' : 'Ctrl+N'}</kbd>
                     </button>
                     <button type="button" className="topbar-btn-ghost" onClick={() => setArchiveOpen(true)}>
                         <Archive size={13} />
@@ -2287,6 +2304,7 @@ export function NutrizionaleCalc() {
                         )}
                         <Save size={13} />
                         Salva
+                        <kbd className="shortcut">{isMac ? '⌘S' : 'Ctrl+S'}</kbd>
                     </button>
                 </div>,
                 document.getElementById('topbar-mode-toggle-slot') ?? document.body
@@ -2539,9 +2557,9 @@ export function NutrizionaleCalc() {
                         const isExpanded = expandedRows.has(rowKey);
                         const isLast = rowIdx === comp.rows.length - 1;
                         return (
-                            <div key={row.id} style={{ borderBottom: isLast && !isExpanded ? 'none' : '1px solid var(--color-border)' }}>
+                            <div key={row.id} className={row.id === lastAddedRowId ? 'ing-row-enter' : undefined} style={{ borderBottom: isLast && !isExpanded ? 'none' : '1px solid var(--color-border)' }}>
                                 {/* Compact row */}
-                                <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '7px 10px' }}>
+                                <div className="ing-row-compact">
                                     <button
                                         onClick={() => toggleExpandRow(rowKey)}
                                         style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 2, color: 'var(--color-text-muted)', flexShrink: 0, display: 'flex', alignItems: 'center' }}
@@ -2549,13 +2567,13 @@ export function NutrizionaleCalc() {
                                     >
                                         <ChevronDown size={12} style={{ transform: isExpanded ? 'rotate(0deg)' : 'rotate(-90deg)', transition: 'transform 0.15s' }} />
                                     </button>
-                                    <div style={{ flex: 1, minWidth: 0 }}>
-                                        <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--color-text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{row.ing.nome}</div>
+                                    <div className="ing-row-name">
+                                        <div className="ing-row-name-label">{row.ing.nome}</div>
                                         {row.ing.kcal != null && (
-                                            <div style={{ fontSize: 10, color: 'var(--color-text-muted)' }}>{row.ing.kcal} kcal/100g</div>
+                                            <div className="ing-row-kcal">{row.ing.kcal} kcal/100g</div>
                                         )}
                                     </div>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: 4, flexShrink: 0 }}>
+                                    <div className="ing-row-grams">
                                         <input type="text" inputMode="decimal"
                                             style={{ width: 58, fontSize: 12, border: '1px solid var(--color-border)', borderRadius: 5, padding: '3px 6px', textAlign: 'right', fontFamily: 'inherit', color: 'var(--color-text)', background: 'var(--color-bg-input)', outline: 'none' }}
                                             value={gramsRaw[rowKey] ?? String(row.grams)}
