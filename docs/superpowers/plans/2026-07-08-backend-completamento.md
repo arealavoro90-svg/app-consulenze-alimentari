@@ -1,341 +1,222 @@
 # Piano Backend — AEA Consulenze Alimentari
 **Data:** 2026-07-08 | **Stack:** Django 5.1 + PostgreSQL + DRF + simplejwt | **Deploy:** Vercel (WSGI)
+**Revisione:** v2 — verificata sul codice reale, non su assunzioni
 
 ---
 
-## Stato attuale (sintesi)
+## Stato attuale (da codice letto)
 
-Il backend è strutturalmente completo: modelli, endpoint REST, JWT, engine di calcolo esistono tutti. Manca la parte finale che lo rende utilizzabile in produzione: registrazione utenti, sicurezza hardening, variabili d'ambiente, e soprattutto il collegamento con il frontend.
-
-| Componente | Stato |
+| Componente | Stato reale |
 |---|---|
 | Modelli DB (13 modelli, 5 app) | ✅ Completo |
-| Endpoint REST CRUD (calcoli, etichette, schede, ingredienti) | ✅ Completo |
-| JWT login / logout / refresh + token blacklist | ✅ Funzionante |
+| Endpoint REST CRUD (tutti i tool) | ✅ Presente — ma con bug `perform_create` |
+| JWT login / logout / refresh + blacklist | ✅ Funzionante |
 | Permission `HasTool` per accesso per strumento | ✅ Funzionante |
-| Engine: calcolo nutrizionale, F0, costi | ✅ Skeleton presente |
-| Configurazione Vercel (WSGI, build script, health check) | 🟡 Configurato, non testato in prod |
-| Registrazione utenti pubblica | 🔴 Manca |
-| Sicurezza produzione (HTTPS, rate limit, cookie) | 🔴 Manca |
-| Logging / monitoring | 🔴 Manca |
-| Frontend connesso al backend reale | 🔴 Manca (usa ancora mock localStorage) |
+| Engine nutrizionale con localizzazione | ✅ Implementato |
+| Engine termico F0 (Bigelow, trapezoidale) | ✅ Implementato |
+| Engine costi produzione | ✅ Implementato (con bug porzione hardcoded) |
+| Endpoint registrazione pubblica | 🔴 Manca (serializer esiste, view no) |
+| Deploy Vercel | 🔴 Rotto — 4 bug critici bloccano il boot |
+| Static files (admin CSS/JS) | 🔴 Non serviti — whitenoise non nel middleware |
+| Frontend connesso al backend | 🔴 Usa ancora mock localStorage |
 
 ---
 
-## Fase 0 — Database in produzione (prerequisito)
+## Bug critici verificati (bloccano il deploy)
 
-Prima di qualsiasi deploy, serve un PostgreSQL raggiungibile da Vercel.
+### BUG-1 — `base.py` crasha se si usa solo `DATABASE_URL`
+**File:** `config/settings/base.py:48-53` e `config/settings/production.py:7-9`
 
-### Task 0.1 — Scegliere e creare il DB
+`base.py` chiama `config('DB_NAME')`, `config('DB_USER')`, `config('DB_PASSWORD')` incondizionatamente.
+In produzione `base.py` viene eseguito PRIMA che `production.py` possa sovrascrivere `DATABASES` con `DATABASE_URL`.
+Se le env var `DB_NAME/USER/PASSWORD` non sono definite → `UndefinedValueError` → boot crash.
 
-Opzioni consigliate (gratuite o quasi per MVP):
+**Fix:** rendere le variabili con default vuoto in `base.py` o spostarle dietro un guard.
 
-| Servizio | Piano gratuito | Note |
-|---|---|---|
-| **Neon** (neon.tech) | 512 MB, serverless | Ideale per Vercel, integrazione nativa |
-| **Supabase** | 500 MB | Più feature (auth, storage) ma overkill qui |
-| **Railway** | $5/mese | Semplice, ottimo DX |
+### BUG-2 — `ALLOWED_HOSTS` e `CORS_ALLOWED_ORIGINS` senza default
+**File:** `config/settings/base.py:9` e `:80`
 
-**Azione:** Creare DB su Neon → copiare `DATABASE_URL` (formato: `postgresql://user:pass@host/db`).
+Entrambe senza `default=`. Se mancano le env var → `UndefinedValueError` → boot crash.
 
-### Task 0.2 — Configurare variabili d'ambiente su Vercel (backend)
+**Fix:** aggiungere `default=''` / `default='localhost'`.
 
-Nel progetto Vercel del backend, aggiungere:
+### BUG-3 — `vercel.json` non esegue `build_files.sh`
+**File:** `vercel.json`
 
-```
-SECRET_KEY=<genera con: python -c "from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())">
-DATABASE_URL=postgresql://...
-DJANGO_SETTINGS_MODULE=config.settings.production
-ALLOWED_HOSTS=tuo-backend.vercel.app
-CORS_ALLOWED_ORIGINS=https://app-consulenze-alimentari.vercel.app
-DEBUG=False
-```
+`build_files.sh` esiste ma non è referenziato in `vercel.json` (nessun `buildCommand`).
+Risultato: `collectstatic` e `migrate` non girano mai al deploy.
 
-### Task 0.3 — Prima migrazione in produzione
+**Fix:** aggiungere `"buildCommand": "bash build_files.sh"` in `vercel.json`.
 
-```bash
-# Dopo aver configurato DATABASE_URL in locale:
-cd Beck-end/backend
-DATABASE_URL=postgresql://... python manage.py migrate
-python manage.py createsuperuser  # crea admin iniziale
-```
+### BUG-4 — `whitenoise` in `requirements.txt` ma non nel middleware
+**File:** `config/settings/base.py:16-26`
+
+`whitenoise` è installato ma non aggiunto a `MIDDLEWARE`. Con `DEBUG=False` Django non serve static files → Django Admin senza CSS/JS → errori 404 su `/static/`.
+
+**Fix:** aggiungere `'whitenoise.middleware.WhiteNoiseMiddleware'` dopo `SecurityMiddleware`.
 
 ---
 
-## Fase 1 — Security hardening (2h)
+## Bug alti (non bloccano il boot ma rompono funzionalità)
 
-### Task 1.1 — HTTPS e cookie sicuri in `production.py`
+### BUG-5 — `perform_create` mancante in tutti e 3 i ViewSet calcoli
+**File:** `apps/calculations/views.py`
 
-**File:** `Beck-end/backend/config/settings/production.py`
+`NutritionalViewSet`, `ThermalViewSet`, `CostViewSet` sono `ModelViewSet` completi.
+Nessuno ha `perform_create(self, serializer): serializer.save(user=self.request.user)`.
+Una chiamata diretta a `POST /api/calc/nutritional/` (non via `/compute/`) → `IntegrityError`: user NOT NULL.
 
-Aggiungere dopo le righe esistenti:
+**Fix:** aggiungere `perform_create` a tutti e 3.
+
+### BUG-6 — Validazione mancante sui dict annidati → `KeyError` 500
+**File:** `apps/calculations/serializers.py`
+
+- `NutritionalComputeSerializer.recipe`: accettato come `ListField(child=DictField())`. La view accede a `item['ingredient_id']` e `item['grams']` senza try/except → `KeyError` 500 se il client manda dict incompleto.
+- `CostComputeSerializer.ingredients`: view accede a `ing['quantity']`, `ing['unit_cost']`, `ing['waste']` senza validazione.
+- `ThermalComputeSerializer.data_points`: view accede a `pt['temperature']` e `pt['time']` senza validazione.
+
+**Fix:** sostituire `DictField()` con serializer dedicati per ogni struttura annidata.
+
+### BUG-7 — `TokenRefreshView` import fragile
+**File:** `apps/users/views/auth.py:7` + `apps/users/urls/auth.py:2`
+
+`auth.py` importa `TokenRefreshView` da simplejwt ma non lo usa direttamente. `urls/auth.py` lo importa DA `apps.users.views.auth` (non da simplejwt). Funziona per ora, ma se l'import "inutile" in views viene rimosso → `ImportError` sull'URL refresh.
+
+**Fix:** importare `TokenRefreshView` direttamente da simplejwt negli url.
+
+---
+
+## Bug medi / inconsistenze
+
+### BUG-8 — `cost_per_portion` hardcoded a 150g
+**File:** `apps/calculations/engines/costs.py:26`
+`cost_per_portion = r2(cost_per_kg * 0.15)` — 0.15 = 150g, ma nessun campo `portion_size` nel serializer. Da parametrizzare.
+
+### BUG-9 — `IngredientSerializer` incompleto
+**File:** `apps/ingredients/serializers.py`
+Campi `alcohol`, `erythritol`, `organic_acids` del model non esposti nel serializer.
+`fibre` esposto con nome del model (coerente con gli altri campi italiani, ma non mappato esplicitamente).
+
+### BUG-10 — `gunicorn` in requirements ma non usato
+Vercel usa WSGI diretto (`api/index.py`), gunicorn non serve. Peso morto.
+
+---
+
+## Piano di implementazione (ordinato per dipendenze)
+
+---
+
+### Sprint 0 — Prerequisito: DB cloud (30 min)
+
+Senza PostgreSQL live tutto il resto è inutile.
+
+**Task 0.1 — Creare DB su Neon (gratuito)**
+1. Registrarsi su [neon.tech](https://neon.tech)
+2. Creare progetto → copiare `DATABASE_URL` (formato: `postgresql://user:pass@host/db?sslmode=require`)
+
+---
+
+### Sprint 1 — Fix deploy (bloccante, 1-2h)
+
+Questi fix devono andare in produzione PRIMA di qualsiasi altra cosa.
+
+**Task 1.1 — Fix BUG-1: DB config compatibile con `DATABASE_URL`**
+
+**File:** `config/settings/base.py`
 
 ```python
-# HTTPS
-SECURE_SSL_REDIRECT = True
-SECURE_HSTS_SECONDS = 31536000
-SECURE_HSTS_INCLUDE_SUBDOMAINS = True
-SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')  # necessario per Vercel
-
-# Cookie
-SESSION_COOKIE_SECURE = True
-CSRF_COOKIE_SECURE = True
-SESSION_COOKIE_HTTPONLY = True
-
-# Referrer
-SECURE_REFERRER_POLICY = 'same-origin'
-```
-
-### Task 1.2 — Rate limiting su login e calcoli
-
-**File:** `Beck-end/backend/config/settings/base.py`
-
-Aggiungere in `REST_FRAMEWORK`:
-
-```python
-REST_FRAMEWORK = {
-    # ... configurazione esistente ...
-    'DEFAULT_THROTTLE_CLASSES': [
-        'rest_framework.throttling.AnonRateThrottle',
-        'rest_framework.throttling.UserRateThrottle',
-    ],
-    'DEFAULT_THROTTLE_RATES': {
-        'anon': '20/hour',    # login tentativi
-        'user': '200/hour',   # calcoli per utente
-    },
+# Sostituire il blocco DATABASES esistente con:
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': config('DB_NAME', default=''),
+        'USER': config('DB_USER', default=''),
+        'PASSWORD': config('DB_PASSWORD', default=''),
+        'HOST': config('DB_HOST', default='localhost'),
+        'PORT': config('DB_PORT', default='5432'),
+    }
 }
 ```
 
-Per il solo endpoint di login, throttle più stretto:
+`production.py` sovrascrive questo con `DATABASE_URL` se presente — ora senza crash.
+
+**Task 1.2 — Fix BUG-2: default per ALLOWED_HOSTS e CORS**
+
+**File:** `config/settings/base.py`
 
 ```python
-# apps/users/views/auth.py — LoginView
-from rest_framework.throttling import AnonRateThrottle
+# Riga 9
+ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='localhost,127.0.0.1', cast=Csv())
 
-class LoginRateThrottle(AnonRateThrottle):
-    rate = '5/minute'
+# Riga 80
+CORS_ALLOWED_ORIGINS = config('CORS_ALLOWED_ORIGINS', default='http://localhost:5173', cast=Csv())
+```
 
-class LoginView(APIView):
-    throttle_classes = [LoginRateThrottle]
+**Task 1.3 — Fix BUG-3: buildCommand in vercel.json**
+
+**File:** `vercel.json`
+
+```json
+{
+  "buildCommand": "bash build_files.sh",
+  "builds": [
+    { "src": "api/health.py", "use": "@vercel/python" },
+    { "src": "api/index.py", "use": "@vercel/python" }
+  ],
+  "routes": [
+    { "src": "/health", "dest": "api/health.py" },
+    { "src": "/(.*)", "dest": "api/index.py" }
+  ]
+}
+```
+
+**Task 1.4 — Fix BUG-4: whitenoise nel middleware**
+
+**File:** `config/settings/base.py`
+
+```python
+MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',
+    'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',  # ← aggiungere qui
     # ... resto invariato
+]
+
+# Aggiungere in fondo a base.py:
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 ```
 
----
+**Task 1.5 — Fix BUG-7: import TokenRefreshView diretto**
 
-## Fase 2 — Registrazione utenti (1h)
-
-Attualmente solo un admin può creare utenti via `POST /api/users/` (IsAdminUser). Serve un endpoint pubblico.
-
-### Task 2.1 — View registrazione
-
-**File:** `Beck-end/backend/apps/users/views/auth.py`
-
-Aggiungere dopo `LogoutView`:
+**File:** `apps/users/urls/auth.py`
 
 ```python
-class RegisterView(APIView):
-    permission_classes = [AllowAny]
-
-    def post(self, request):
-        serializer = UserCreateSerializer(data=request.data)
-        if not serializer.is_valid():
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-        user = serializer.save()
-        refresh = RefreshToken.for_user(user)
-        return Response({
-            'access': str(refresh.access_token),
-            'refresh': str(refresh),
-            'user': UserSerializer(user).data,
-        }, status=status.HTTP_201_CREATED)
+# Sostituire:
+from apps.users.views.auth import LoginView, LogoutView, MeView, TokenRefreshView
+# Con:
+from apps.users.views.auth import LoginView, LogoutView, MeView
+from rest_framework_simplejwt.views import TokenRefreshView
 ```
 
-### Task 2.2 — URL
-
-**File:** `Beck-end/backend/apps/users/urls/auth.py`
-
+**File:** `apps/users/views/auth.py` — rimuovere la riga:
 ```python
-path('register/', RegisterView.as_view(), name='register'),
+from rest_framework_simplejwt.views import TokenRefreshView  # ← eliminare
 ```
 
-### Task 2.3 — Validazione in UserCreateSerializer
-
-**File:** `Beck-end/backend/apps/users/serializers.py`
-
-Verificare che `UserCreateSerializer` abbia:
-- `email` unique validation
-- `password` minimo 8 caratteri
-- `confirm_password` field con check di corrispondenza
-
----
-
-## Fase 3 — Logging (1h)
-
-### Task 3.1 — Configurazione logging base
-
-**File:** `Beck-end/backend/config/settings/base.py`
-
-```python
-LOGGING = {
-    'version': 1,
-    'disable_existing_loggers': False,
-    'formatters': {
-        'verbose': {
-            'format': '{levelname} {asctime} {module} {message}',
-            'style': '{',
-        },
-    },
-    'handlers': {
-        'console': {
-            'class': 'logging.StreamHandler',
-            'formatter': 'verbose',
-        },
-    },
-    'root': {
-        'handlers': ['console'],
-        'level': 'WARNING',
-    },
-    'loggers': {
-        'django': {
-            'handlers': ['console'],
-            'level': 'ERROR',
-            'propagate': False,
-        },
-        'apps': {
-            'handlers': ['console'],
-            'level': 'INFO',
-            'propagate': False,
-        },
-    },
-}
-```
-
-### Task 3.2 — Sentry (opzionale, raccomandato per produzione)
-
-```bash
-pip install sentry-sdk
-```
-
-In `production.py`:
-
-```python
-import sentry_sdk
-sentry_sdk.init(
-    dsn=config('SENTRY_DSN', default=''),
-    traces_sample_rate=0.1,
-)
-```
-
----
-
-## Fase 4 — Connessione frontend ↔ backend (3h)
-
-Questa è la fase più impattante: il frontend usa ancora mock localStorage per l'auth.
-
-### Task 4.1 — Variabile d'ambiente frontend
-
-**File:** `.env.local` (frontend, non committare)
-
-```
-VITE_API_URL=https://tuo-backend.vercel.app
-```
-
-Su Vercel frontend (dashboard):
-```
-VITE_API_URL=https://tuo-backend.vercel.app
-```
-
-### Task 4.2 — Verificare `src/api/client.ts`
-
-Il file esiste già. Verificare che:
-- `BASE_URL` legga `import.meta.env.VITE_API_URL`
-- Interceptor alleghi `Authorization: Bearer <token>` da localStorage
-- Interceptor su 401 chiami il refresh token
-
-### Task 4.3 — Connettere login
-
-**File:** `src/api/auth.ts`
-
-Verificare che `login()` chiami `POST /api/auth/login/` e salvi `access` + `refresh` in localStorage.
-
-**File:** `src/pages/LoginPage.tsx`
-
-Rimuovere il blocco mock (guard `import.meta.env.PROD` già presente da S4 — verificare che il percorso mock sia effettivamente escluso in produzione).
-
-### Task 4.4 — Connettere archivio calcoli nutrizionali
-
-Il tool nutrizionale salva attualmente in localStorage. Con il backend attivo:
-
-1. Al salvataggio: `POST /api/calc/nutritional/` con `recipe_data` e `result_data`
-2. Al caricamento archivio: `GET /api/calc/nutritional/` invece di localStorage
-3. Mantenere fallback localStorage per utenti offline (S0 ancora aperto)
-
-**File da modificare:** `src/calculators/NutrizionaleCalc/NutrizionaleCalc.tsx` — funzioni `handleSave`, `handleLoad`, `SavedTablesModal`
-
-### Task 4.5 — Connettere ingredienti custom
-
-Attualmente in localStorage (M5 risolto con export/import JSON). Con backend:
-
-- `GET /api/ingredients/?category=custom&search=...` per ricerca
-- `POST /api/ingredients/` per aggiungere custom (verificare se l'endpoint è read-only — se sì, aggiungere azione custom o flag `is_custom`)
-
-> ⚠️ L'endpoint ingredienti attuale è read-only. Prima di Task 4.5: decidere se gli ingredienti custom vivono nel backend o restano in localStorage con sync manuale.
-
----
-
-## Fase 5 — Validazione engine calcolo (2h)
-
-Gli engine esistono ma non sono stati testati contro i casi edge già noti dal frontend.
-
-### Task 5.1 — Allineare engine backend a `nutrizionaleCalcEngine.ts`
-
-**File backend:** `Beck-end/backend/apps/calculations/engines/nutritional.py`
-
-Verificare che `calculate_from_recipe()` implementi:
-- Resa di cottura (`g_cooked = g_raw × resa/100`) — bug già fixato nel frontend (V5)
-- Peso finito (`finishedWeight`) per normalizzazione a 100g
-- `pz/UV` (pezzi per unità di vendita) per prodotti multi-componente
-- Sale da sodio: `sale = sodio_mg × 2.5 / 1000`
-
-> Se l'engine backend diverge da `nutrizionaleCalcEngine.ts`, i risultati calcolati lato server saranno diversi da quelli mostrati all'utente. Verificare con i 18 golden test già presenti in `src/engines/nutrizionaleCalcEngine.test.ts`.
-
-### Task 5.2 — Test engine backend
+**Task 1.6 — Variabili d'ambiente su Vercel backend**
 
 ```bash
 cd Beck-end/backend
-python manage.py test apps.calculations.tests
+vercel env add SECRET_KEY          # genera: python -c "from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())"
+vercel env add DATABASE_URL        # da Neon
+vercel env add ALLOWED_HOSTS       # es: tuo-backend.vercel.app
+vercel env add CORS_ALLOWED_ORIGINS  # es: https://app-consulenze-alimentari.vercel.app
 ```
 
-Se non esistono test: creare `apps/calculations/tests/test_nutritional_engine.py` con almeno:
-- Olio puro 100g → 900 kcal
-- Ingrediente con resa 80% → concentrazione corretta
-- Sale da sodio: 400mg sodio → 1.0g sale
-
----
-
-## Fase 6 — Deploy backend su Vercel (1h)
-
-### Task 6.1 — Creare progetto Vercel separato per il backend
-
-```bash
-cd Beck-end/backend
-vercel link   # collega o crea nuovo progetto
-vercel env add SECRET_KEY
-vercel env add DATABASE_URL
-vercel env add DJANGO_SETTINGS_MODULE
-vercel env add ALLOWED_HOSTS
-vercel env add CORS_ALLOWED_ORIGINS
-```
-
-### Task 6.2 — Deploy
+**Task 1.7 — Deploy e smoke test**
 
 ```bash
 vercel --prod
-```
-
-### Task 6.3 — Smoke test
-
-```bash
 curl https://tuo-backend.vercel.app/health
 # Expected: {"status": "ok"}
 
@@ -347,53 +228,263 @@ curl -X POST https://tuo-backend.vercel.app/api/auth/login/ \
 
 ---
 
-## Ordine di esecuzione consigliato (sprint)
+### Sprint 2 — Fix funzionalità API (1-2h)
 
+**Task 2.1 — Fix BUG-5: `perform_create` nei ViewSet calcoli**
+
+**File:** `apps/calculations/views.py`
+
+Aggiungere in `NutritionalViewSet`, `ThermalViewSet`, `CostViewSet`:
+
+```python
+def perform_create(self, serializer):
+    serializer.save(user=self.request.user)
 ```
-Sprint 1 — "DB live" (mezza giornata)
-  → Task 0.1 (Neon DB)
-  → Task 0.2 (env vars Vercel)
-  → Task 0.3 (prima migrazione)
-  → Task 1.1 + 1.2 (security)
-  → Task 6.1 + 6.2 (deploy backend)
-  → Task 6.3 (smoke test)
 
-Sprint 2 — "Auth completa" (mezza giornata)
-  → Task 2.1 + 2.2 + 2.3 (registrazione)
-  → Task 4.1 + 4.2 + 4.3 (connessione login frontend)
-  → Test: login reale dal frontend su Vercel
+**Task 2.2 — Fix BUG-6: validazione serializer annidati**
 
-Sprint 3 — "Dati connessi" (1 giornata)
-  → Task 5.1 + 5.2 (allineamento engine)
-  → Task 4.4 (archivio calcoli su DB)
-  → Task 4.5 (ingredienti custom — decidere strategia)
+**File:** `apps/calculations/serializers.py`
 
-Sprint 4 — "Produzione stabile" (mezza giornata)
-  → Task 3.1 + 3.2 (logging + Sentry)
-  → Rimozione definitiva mock auth dal bundle prod
-  → Test end-to-end completo
+Creare serializer per le strutture annidate:
+
+```python
+class RecipeItemSerializer(serializers.Serializer):
+    ingredient_id = serializers.IntegerField()
+    grams = serializers.FloatField(min_value=0)
+
+class NutritionalComputeSerializer(serializers.Serializer):
+    recipe = RecipeItemSerializer(many=True, min_length=1)
+    portion_size = serializers.FloatField(default=100)
+    region = serializers.ChoiceField(choices=['UE','USA','CA','AU','ARABI'], default='UE')
+    finished_weight = serializers.FloatField(required=False, allow_null=True)
+    cooking_loss = serializers.FloatField(default=0, min_value=0, max_value=100)
+    product_name = serializers.CharField(default='')
+    save = serializers.BooleanField(default=False)
+
+class DataPointSerializer(serializers.Serializer):
+    time = serializers.FloatField()
+    temperature = serializers.FloatField()
+
+class ThermalComputeSerializer(serializers.Serializer):
+    data_points = DataPointSerializer(many=True, min_length=2)
+    z_value = serializers.FloatField(default=10)
+    t_ref = serializers.FloatField(default=121.1)
+    target_f0 = serializers.FloatField(default=3)
+    name = serializers.CharField(default='')
+    save = serializers.BooleanField(default=False)
+
+class CostIngredientSerializer(serializers.Serializer):
+    name = serializers.CharField()
+    supplier = serializers.CharField(default='')
+    lot_number = serializers.CharField(default='')
+    quantity = serializers.FloatField(min_value=0)
+    unit = serializers.CharField(default='kg')
+    unit_cost = serializers.FloatField(min_value=0)
+    waste = serializers.FloatField(default=0, min_value=0, max_value=100)
+
+class CostComputeSerializer(serializers.Serializer):
+    product_name = serializers.CharField()
+    batch_size_kg = serializers.FloatField(min_value=0.001)
+    ingredients = CostIngredientSerializer(many=True, min_length=1)
+    overhead_percent = serializers.FloatField(default=15)
+    save = serializers.BooleanField(default=False)
+```
+
+**Task 2.3 — Endpoint registrazione pubblica**
+
+**File:** `apps/users/views/auth.py`
+
+```python
+from apps.users.serializers import LoginSerializer, UserSerializer, UserCreateSerializer
+
+class RegisterView(APIView):
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        serializer = UserCreateSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        user = serializer.save()
+        refresh = RefreshToken.for_user(user)
+        return Response({
+            'access': str(refresh.access_token),
+            'refresh': str(refresh),
+            'user': UserSerializer(user).data,
+        }, status=status.HTTP_201_CREATED)
+```
+
+**File:** `apps/users/urls/auth.py`
+
+```python
+from apps.users.views.auth import LoginView, LogoutView, MeView, RegisterView
+
+urlpatterns = [
+    path('login/', LoginView.as_view(), name='auth-login'),
+    path('register/', RegisterView.as_view(), name='auth-register'),
+    path('refresh/', TokenRefreshView.as_view(), name='auth-refresh'),
+    path('logout/', LogoutView.as_view(), name='auth-logout'),
+    path('me/', MeView.as_view(), name='auth-me'),
+]
 ```
 
 ---
 
-## File chiave da non dimenticare
+### Sprint 3 — Security hardening (30 min)
 
-| File | Cosa fa | Stato |
-|---|---|---|
-| `Beck-end/backend/config/settings/production.py` | Settings produzione | Incompleto — manca security |
-| `Beck-end/backend/config/settings/base.py` | Settings base | Incompleto — manca logging, throttle |
-| `Beck-end/backend/apps/users/views/auth.py` | Login/logout/me | OK — aggiungere register |
-| `Beck-end/backend/apps/users/urls/auth.py` | URL auth | OK — aggiungere register |
-| `Beck-end/backend/apps/calculations/engines/nutritional.py` | Engine calcolo | Da verificare contro frontend |
-| `Beck-end/backend/api/index.py` | Entry point Vercel | OK |
-| `src/api/client.ts` | HTTP client frontend | Esiste — da verificare |
-| `src/api/auth.ts` | Auth API frontend | Esiste — da connettere |
-| `.env.local` | Env frontend | Aggiungere VITE_API_URL |
+**Task 3.1 — HTTPS e rate limiting**
+
+**File:** `config/settings/production.py`
+
+```python
+from .base import *
+import dj_database_url
+from decouple import config as env
+
+DEBUG = False
+
+database_url = env('DATABASE_URL', default=None)
+if database_url:
+    DATABASES = {'default': dj_database_url.config(default=database_url)}
+
+# HTTPS (Vercel termina SSL upstream)
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+SECURE_SSL_REDIRECT = False  # Vercel gestisce il redirect, non Django
+SESSION_COOKIE_SECURE = True
+CSRF_COOKIE_SECURE = True
+SECURE_REFERRER_POLICY = 'same-origin'
+```
+
+**File:** `config/settings/base.py` — aggiungere in `REST_FRAMEWORK`:
+
+```python
+'DEFAULT_THROTTLE_CLASSES': [
+    'rest_framework.throttling.AnonRateThrottle',
+    'rest_framework.throttling.UserRateThrottle',
+],
+'DEFAULT_THROTTLE_RATES': {
+    'anon': '10/minute',
+    'user': '200/hour',
+},
+```
+
+---
+
+### Sprint 4 — Connessione frontend ↔ backend (3-4h)
+
+Questo sprint converte il frontend dal mock localStorage all'API reale.
+
+**Task 4.1 — VITE_API_URL**
+
+`.env.local` (non committare):
+```
+VITE_API_URL=https://tuo-backend.vercel.app
+```
+
+Su Vercel (dashboard frontend):
+```
+VITE_API_URL=https://tuo-backend.vercel.app
+```
+
+**Task 4.2 — Verificare `src/api/client.ts`**
+
+Deve avere:
+- `baseURL = import.meta.env.VITE_API_URL`
+- Interceptor request: allega `Authorization: Bearer <access_token>` da localStorage
+- Interceptor response su 401: chiama `POST /api/auth/refresh/`, salva nuovo access, riprova la request originale
+
+**Task 4.3 — Connettere auth login**
+
+**File:** `src/pages/LoginPage.tsx`
+
+Il mock è già escluso in prod tramite `import.meta.env.PROD` (fix S4). Verificare che il percorso reale chiami `src/api/auth.ts:login()` → `POST /api/auth/login/`.
+
+**Task 4.4 — Connettere archivio calcoli nutrizionali**
+
+Il tool salva in localStorage. Con backend:
+- Salvataggio: `POST /api/calc/nutritional/` con `recipe_data` e `result_data`
+- Caricamento archivio: `GET /api/calc/nutritional/` invece di localStorage
+
+**File da modificare:** `src/calculators/NutrizionaleCalc/NutrizionaleCalc.tsx`
+Funzioni coinvolte: `handleSave`, `SavedTablesModal` (load list)
+
+> ⚠️ Mantenere fallback localStorage per sessioni senza rete (consulenti in stabilimento).
+
+**Task 4.5 — Ingredienti: DB backend vs fetch JSON**
+
+Attualmente: fetch `ingredientsDB.json` da `public/data/` (S0 ancora aperto).
+Con backend: `GET /api/ingredients/?search=<query>` restituisce risultati paginati.
+
+Problema: il frontend carica l'intero DB a inizio sessione per la ricerca locale.
+Con backend la ricerca diventa server-side — richiede debounce sull'input di ricerca.
+
+Decisione da prendere prima di implementare:
+- **Opzione A** (minima): continuare con fetch JSON + spostare dietro auth (risolve S0)
+- **Opzione B** (corretta): endpoint ricerca backend con debounce 300ms
+
+---
+
+### Sprint 5 — Fix minori e pulizia (1h)
+
+**Task 5.1 — Fix BUG-8: `cost_per_portion` parametrizzata**
+
+**File:** `apps/calculations/engines/costs.py` e `apps/calculations/serializers.py`
+
+Aggiungere `portion_size_g` (default 100) al serializer e passarlo all'engine.
+
+**Task 5.2 — Fix BUG-9: IngredientSerializer completo**
+
+Aggiungere al serializer: `alcol`, `eritritolo`, `acidi_organici` (con source sui campi model).
+
+**Task 5.3 — Rimuovere gunicorn da requirements**
+
+Non serve con Vercel WSGI. Riduce install time del deploy.
+
+---
+
+## Ordine di esecuzione (sprint consigliato)
+
+```
+Giorno 1 — "Fa il boot"
+  Sprint 0: DB su Neon
+  Sprint 1: fix deploy (BUG-1/2/3/4/7) + env vars + primo deploy
+
+Giorno 2 — "API funzionanti"
+  Sprint 2: perform_create + serializer validation + registrazione
+
+Giorno 3 — "Sicurezza"
+  Sprint 3: HTTPS hardening + rate limiting
+
+Giorni 4-5 — "Frontend connesso"
+  Sprint 4: client.ts + login reale + archivio calcoli su DB
+
+Post-lancio
+  Sprint 5: fix minori
+```
+
+---
+
+## File da toccare (tutti verificati sul codice reale)
+
+| File | Bug da fixare |
+|---|---|
+| `config/settings/base.py` | BUG-1 (DB default), BUG-2 (ALLOWED_HOSTS), BUG-4 (whitenoise), throttle |
+| `config/settings/production.py` | BUG-1 (production db), HTTPS headers |
+| `vercel.json` | BUG-3 (buildCommand) |
+| `apps/users/urls/auth.py` | BUG-7 (import), registrazione |
+| `apps/users/views/auth.py` | BUG-7 (import), RegisterView |
+| `apps/calculations/views.py` | BUG-5 (perform_create ×3) |
+| `apps/calculations/serializers.py` | BUG-6 (serializer annidati) |
+| `apps/calculations/engines/costs.py` | BUG-8 (porzione hardcoded) |
+| `apps/ingredients/serializers.py` | BUG-9 (campi mancanti) |
+| `requirements.txt` | rimuovere gunicorn |
+| `src/api/client.ts` | verifica interceptor |
+| `src/pages/LoginPage.tsx` | verifica mock/real branch |
+| `src/calculators/NutrizionaleCalc/NutrizionaleCalc.tsx` | archivio → API |
+| `.env.local` | aggiungere VITE_API_URL |
 
 ---
 
 ## Dipendenze esterne necessarie
 
-- [ ] Account Neon (o altro PostgreSQL cloud) — gratuito
-- [ ] Progetto Vercel separato per il backend — già disponibile con account esistente
-- [ ] (Opzionale) Account Sentry — piano free sufficiente per MVP
+- [ ] Account Neon — gratuito, 512 MB
+- [ ] Progetto Vercel separato per il backend (o stesso progetto con root `Beck-end/backend`)
+- [ ] Env vars configurate su Vercel (vedi Task 1.6)
