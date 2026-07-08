@@ -12,6 +12,10 @@ import html2canvas from 'html2canvas';
 import { readBridge } from './sessionBridge';
 import { useToast } from '../../components/ui/Toast';
 import { ConfirmDialog } from '../../components/ui/ConfirmDialog';
+import {
+    ALLERGEN_FIELDS as _ALLERGEN_FIELDS,
+    CROSS_FIELDS as _CROSS_FIELDS,
+} from './shared/constants';
 
 // ─── DB type ──────────────────────────────────────────────────────────────────
 export interface DBIngredient {
@@ -43,26 +47,11 @@ export interface DBIngredient {
     cross_molluschi?: boolean;
 }
 
-// ─── Allergen fields ──────────────────────────────────────────────────────────
-export const ALLERGEN_FIELDS: { key: keyof DBIngredient; label: string }[] = [
-    { key: 'all_glutine', label: 'GLUTINE' }, { key: 'all_grano', label: 'GRANO' },
-    { key: 'all_crostacei', label: 'CROSTACEI' }, { key: 'all_uova', label: 'UOVA' },
-    { key: 'all_pesci', label: 'PESCE' }, { key: 'all_arachidi', label: 'ARACHIDI' },
-    { key: 'all_soia', label: 'SOIA' }, { key: 'all_latte', label: 'LATTE' },
-    { key: 'all_frutta_guscio', label: 'FRUTTA A GUSCIO' }, { key: 'all_anacardi', label: 'ANACARDI' },
-    { key: 'all_solfiti', label: 'SOLFITI (>10 ppm)' }, { key: 'all_lupini', label: 'LUPINI' },
-    { key: 'all_molluschi', label: 'MOLLUSCHI' },
-];
-export const CROSS_FIELDS: { key: keyof DBIngredient; label: string }[] = [
-    { key: 'cross_glutine', label: 'GLUTINE' }, { key: 'cross_grano', label: 'GRANO' },
-    { key: 'cross_crostacei', label: 'CROSTACEI' }, { key: 'cross_uova', label: 'UOVA' },
-    { key: 'cross_pesci', label: 'PESCE' }, { key: 'cross_arachidi', label: 'ARACHIDI' },
-    { key: 'cross_soia', label: 'SOIA' }, { key: 'cross_latte', label: 'LATTE' },
-    { key: 'cross_frutta_guscio', label: 'FRUTTA A GUSCIO' }, { key: 'cross_anacardi', label: 'ANACARDI' },
-    { key: 'cross_sedano', label: 'SEDANO' }, { key: 'cross_senape', label: 'SENAPE' },
-    { key: 'cross_sesamo', label: 'SESAMO' }, { key: 'cross_solfiti', label: 'SOLFITI' },
-    { key: 'cross_lupini', label: 'LUPINI' }, { key: 'cross_molluschi', label: 'MOLLUSCHI' },
-];
+// ─── Allergen fields — fonte unica: shared/constants ─────────────────────────
+// ponytail: cast necessario — shared/constants usa DBIngredient dell'engine (string),
+// mobile usa boolean; stessa struttura runtime, keyof incompatibile a compile-time.
+export const ALLERGEN_FIELDS = _ALLERGEN_FIELDS as { key: keyof DBIngredient; label: string }[];
+export const CROSS_FIELDS = _CROSS_FIELDS as { key: keyof DBIngredient; label: string }[];
 
 // ─── Recipe / additive rows ───────────────────────────────────────────────────
 export interface RecipeRow {
