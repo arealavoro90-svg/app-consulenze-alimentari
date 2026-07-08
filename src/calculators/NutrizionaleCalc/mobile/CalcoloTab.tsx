@@ -24,6 +24,7 @@ interface Props {
     onAddAdditiveRow: (compId: string) => void;
     onRemoveAdditiveRow: (compId: string, rowId: string) => void;
     onUpdateAdditiveRow: (compId: string, rowId: string, patch: Partial<AdditiveRow>) => void;
+    onOpenSmartImport: () => void;
 }
 
 function searchDB(q: string, db: DBIngredient[]): DBIngredient[] {
@@ -567,6 +568,7 @@ export function CalcoloTab({
     onUpdateComponentName, onUpdateComponentPzUV,
     onAddRow, onRemoveRow, onUpdateRow,
     onAddAdditiveRow, onRemoveAdditiveRow, onUpdateAdditiveRow,
+    onOpenSmartImport,
 }: Props) {
     const hasIngredients = components.some(c => c.rows.length > 0);
 
@@ -709,7 +711,17 @@ export function CalcoloTab({
             </div>
 
             {/* CTA */}
-            <div className="m-btn-row" style={{ marginTop: 8, marginBottom: 16 }}>
+            <div className="m-btn-row" style={{ marginTop: 8, marginBottom: 4 }}>
+                <button
+                    type="button"
+                    className="m-btn m-btn--ghost"
+                    onClick={onOpenSmartImport}
+                    style={{ fontSize: 12, padding: '6px 12px', display: 'flex', alignItems: 'center', gap: 4 }}
+                >
+                    ✨ Importa ricetta
+                </button>
+            </div>
+            <div className="m-btn-row" style={{ marginTop: 4, marginBottom: 16 }}>
                 <button
                     type="button"
                     className="m-btn m-btn--primary m-btn--full"

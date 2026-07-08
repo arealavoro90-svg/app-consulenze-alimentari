@@ -7,8 +7,10 @@ import {
     ClipboardList, Scale, Layers, FlaskConical, Table2, Euro,
     AlertTriangle, Compass, SlidersHorizontal, ChevronRight, ChevronLeft,
     Trash2, X, BookOpen, CheckCircle, ChevronDown,
-    Salad, Flame, Globe, Package, ImageDown, Download, Upload,
+    Salad, Flame, Globe, Package, ImageDown, Download, Sparkles,
 } from 'lucide-react';
+import { SmartImportModal } from './SmartImportModal';
+import type { SmartImportResult } from './SmartImportModal';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import { useArchive } from '../../hooks/useArchive';
@@ -1020,6 +1022,7 @@ export function NutrizionaleCalc() {
     const [archiveOpen, setArchiveOpen] = useState(false);
     const [showCustomModal, setShowCustomModal] = useState(false);
     const [showBrowseModal, setShowBrowseModal] = useState(false);
+    const [showSmartImport, setShowSmartImport] = useState(false);
     const [editIngredient, setEditIngredient] = useState<{ ing: DBIngredient; isCustom: boolean } | null>(null);
     // const [toolTab, setToolTab] = useState<'tabelle' | 'lista'>('tabelle');
     const [servingOpen, setServingOpen] = useState<Record<string, boolean>>({
@@ -1132,41 +1135,6 @@ export function NutrizionaleCalc() {
 
     const addCustomIngredient = (ing: DBIngredient) => setDb(prev => [...prev, ing]);
 
-    const exportCustomIngredients = useCallback(() => {
-        const rawCustom = JSON.parse(localStorage.getItem('custom_ingredients') || '[]');
-        const custom = (Array.isArray(rawCustom) ? (rawCustom as unknown[]).filter(isValidDBIngredient) : []) as DBIngredient[];
-        if (!custom.length) { toast.info('Nessun ingrediente custom da esportare.'); return; }
-        const blob = new Blob([JSON.stringify(custom, null, 2)], { type: 'application/json' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url; a.download = 'ingredienti_custom.json'; a.click();
-        URL.revokeObjectURL(url);
-    }, [toast]);
-
-    const importCustomIngredients = useCallback((file: File) => {
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            try {
-                const parsed = JSON.parse(e.target?.result as string);
-                if (!Array.isArray(parsed)) throw new Error();
-                const arr = (parsed as unknown[]).filter(isValidDBIngredient) as DBIngredient[];
-                const existingRaw = JSON.parse(localStorage.getItem('custom_ingredients') || '[]');
-                const existing = Array.isArray(existingRaw) ? (existingRaw as unknown[]).filter(isValidDBIngredient) as DBIngredient[] : [];
-                const existingNames = new Set(existing.map(i => i.nome));
-                const newOnes = arr.filter(i => i.nome && !existingNames.has(i.nome));
-                const merged = [...existing, ...newOnes];
-                localStorage.setItem('custom_ingredients', JSON.stringify(merged));
-                setDb(prev => {
-                    const prevNames = new Set(prev.map(i => i.nome));
-                    return [...prev, ...newOnes.filter(i => !prevNames.has(i.nome))];
-                });
-                toast.success(`Importati ${newOnes.length} ingredienti (${arr.length - newOnes.length} già presenti ignorati).`);
-            } catch { toast.error('File non valido. Usare un JSON esportato da questa app.'); }
-        };
-        reader.readAsText(file);
-    }, [toast]);
-
-    const importInputRef = useRef<HTMLInputElement>(null);
 
     const [usa, setUSA] = useState<ServingSizesNation>({});
     useEffect(() => {
@@ -1332,6 +1300,22 @@ export function NutrizionaleCalc() {
 
     // Component modifiers
     const addComp = () => { setComponents(prev => [...prev, makeComp()]); };
+    const handleSmartImport = useCallback((result: SmartImportResult) => {
+        const targetId = components[0]?.id;
+        if (!targetId) return;
+        setComponents(prev => prev.map(c => {
+            if (c.id !== targetId) return c;
+            const newRows: RecipeRow[] = result.rows.map(r => ({
+                id: String(Date.now() + Math.random()),
+                ing: r.ing,
+                grams: r.grams,
+                eurKg: r.ing.eur_kg ?? 0,
+                resa: 100,
+            }));
+            return { ...c, rows: [...c.rows, ...newRows] };
+        }));
+        toast.success(`${result.rows.length} ingredienti importati.`);
+    }, [components, toast]);
     const removeComp = (id: string) => setComponents(prev => prev.filter(c => c.id !== id));
     const updateCompName = (id: string, name: string) => setComponents(prev => prev.map(c => c.id === id ? { ...c, name } : c));
     const updateCompPzUV = (id: string, pzUV: number) => {
@@ -2023,20 +2007,14 @@ export function NutrizionaleCalc() {
                         <Archive size={13} />
                         Archivio
                     </button>
+                    <button type="button" className="topbar-btn-ghost" onClick={() => setShowSmartImport(true)}>
+                        <Sparkles size={13} />
+                        Importa Ricetta
+                    </button>
                     <button type="button" className="topbar-btn-ghost" onClick={() => setShowCustomModal(true)}>
                         <Database size={13} />
                         Nuovo Ingrediente
                     </button>
-                    <button type="button" className="topbar-btn-ghost" onClick={exportCustomIngredients} title="Esporta ingredienti custom in JSON">
-                        <Download size={13} />
-                        Esporta Custom
-                    </button>
-                    <button type="button" className="topbar-btn-ghost" onClick={() => importInputRef.current?.click()} title="Importa ingredienti custom da JSON">
-                        <Upload size={13} />
-                        Importa Custom
-                    </button>
-                    <input ref={importInputRef} type="file" accept=".json,application/json" style={{ display: 'none' }}
-                        onChange={e => { const f = e.target.files?.[0]; if (f) { importCustomIngredients(f); e.target.value = ''; } }} />
                     <button type="button" className="topbar-btn-ghost" onClick={() => setShowBrowseModal(true)}>
                         <Database size={13} />
                         Sfoglia DB
@@ -2062,6 +2040,13 @@ export function NutrizionaleCalc() {
                 onConfirm={confirmState.onConfirm}
                 onCancel={closeConfirm}
             />
+            {showSmartImport && (
+                <SmartImportModal
+                    db={db}
+                    onClose={() => setShowSmartImport(false)}
+                    onImport={handleSmartImport}
+                />
+            )}
             {showCustomModal && (
                 <CustomIngredientModal
                     onClose={() => setShowCustomModal(false)}

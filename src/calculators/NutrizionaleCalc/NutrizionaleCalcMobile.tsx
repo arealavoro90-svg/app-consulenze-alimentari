@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Salad, ClipboardList, Globe, Archive } from 'lucide-react';
 import { useAuth } from '../../auth/AuthContext';
@@ -10,6 +10,8 @@ import { ArchivioTab } from './mobile/ArchivioTab';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import { readBridge } from './sessionBridge';
+import { SmartImportModal } from './SmartImportModal';
+import type { SmartImportResult } from './SmartImportModal';
 import { useToast } from '../../components/ui/Toast';
 import {
     type DBIngredient,
@@ -123,6 +125,7 @@ export function NutrizionaleCalcMobile() {
     const [activeTab, setActiveTab] = useState<MobileTab>('ricetta');
     const [form, setForm] = useState<MobileNutForm>(EMPTY_FORM);
     const [components, setComponents] = useState<MobileComponent[]>([makeComponent()]);
+    const [showSmartImport, setShowSmartImport] = useState(false);
 
     // Database ingredienti
     const [db, setDb] = useState<DBIngredient[]>([]);
@@ -214,6 +217,22 @@ export function NutrizionaleCalcMobile() {
     // ── Component handlers ────────────────────────────────────────────────────
     const addComponent = () =>
         setComponents(prev => [...prev, makeComponent()]);
+
+    const handleSmartImportMobile = useCallback((result: SmartImportResult) => {
+        const targetId = components[0]?.id;
+        if (!targetId) return;
+        setComponents((prev: MobileComponent[]) => prev.map((c: MobileComponent) => {
+            if (c.id !== targetId) return c;
+            const newRows: RecipeRow[] = result.rows.map(r => ({
+                id: String(Date.now() + Math.random()),
+                ing: r.ing,
+                grams: r.grams,
+                eurKg: r.ing.eur_kg ?? 0,
+                resa: 100,
+            }));
+            return { ...c, rows: [...c.rows, ...newRows] };
+        }));
+    }, [components]);
 
     const removeComponent = (id: string) =>
         setComponents(prev => prev.length > 1 ? prev.filter(c => c.id !== id) : prev);
@@ -331,6 +350,7 @@ export function NutrizionaleCalcMobile() {
                         onAddAdditiveRow={addAdditiveRow}
                         onRemoveAdditiveRow={removeAdditiveRow}
                         onUpdateAdditiveRow={updateAdditiveRow}
+                        onOpenSmartImport={() => setShowSmartImport(true)}
                     />
                 );
             case 'riepilogo':
@@ -386,6 +406,14 @@ export function NutrizionaleCalcMobile() {
             <div key={activeTab} className="m-tab-content m-tab-enter">
                 {renderTab()}
             </div>
+
+            {showSmartImport && (
+                <SmartImportModal
+                    db={db}
+                    onClose={() => setShowSmartImport(false)}
+                    onImport={handleSmartImportMobile}
+                />
+            )}
 
             {/* Bottom Tab Bar */}
             <nav className="m-tabbar" aria-label="Navigazione principale">
