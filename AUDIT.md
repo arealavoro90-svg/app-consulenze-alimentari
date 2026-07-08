@@ -354,7 +354,7 @@ Punti con impatto potenzialmente critico che l'audit non ha esaminato. Da esegui
 | 🔴 Ora | V8 | Test pratico PDF con caratteri speciali (`<`, `"`, parentesi) — collegato a S1 |
 | 🟡 Pianificare | S0 | Togliere `ingredientsDB.json` da `public/` → endpoint autenticato Django |
 | 🟡 Pianificare | S5 | Token JWT in localStorage → httpOnly cookies (cambio backend Django) |
-| ✅ Done (parziale) | M2-nota | Costanti ALLERGEN/CROSS/ADDITIVI deduplicate in `shared/constants.ts` (~650 righe rimosse). DBIngredient/CalcResult/calcNutrients differiti: tipi mobile e engine incompatibili (boolean vs string per allergeni; 6 micronutrienti extra nell'engine). Archivio differito: schemi ArchiveData vs MobileArchiveEntry incompatibili. |
+| ✅ Done | M2-nota | Costanti e logica unificate: `shared/constants.ts` per ALLERGEN/CROSS/ADDITIVI, engine per DBIngredient/CalcResult/RecipeRow/AdditiveRow/calcNutrients. ~750 righe duplicate rimosse. Archivio differito (schemi ArchiveData vs MobileArchiveEntry incompatibili — design separato). |
 | 🟡 Pianificare | Q4 | Unificare `IngredientDB` e `DBIngredient` (due schemi stesso dominio) — roadmap Q4 |
 | 🟢 Quando comodo | 🆕 S8 | Checklist GDPR/privacy prima del go-live commerciale |
 | 🟢 Roadmap | 🆕 M6 | PWA/offline (pianificare dopo S0) |
