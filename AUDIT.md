@@ -351,7 +351,7 @@ Punti con impatto potenzialmente critico che l'audit non ha esaminato. Da esegui
 | ✅ Done | V5 | Bug confermato e corretto: `resa` ignorata in `peso_totale_pz`. Fix in `nutrizionaleCalcEngine.ts`: usa `g_cooked = g_raw × (resa/100)` nel denominatore, nutrienti restano su `g_raw`. Aggiunto golden test (125g crudi resa 80% → 1000 kcal/100g). 18/18 test passano. |
 | 🔴 Ora | V6 | Campione 20 ingredienti vs tabelle CREA/BDA |
 | 🔴 Ora | V7 | Accessibilità: label input, contrasto, focus, navigazione tastiera |
-| 🔴 Ora | V8 | Test pratico PDF con caratteri speciali (`<`, `"`, parentesi) — collegato a S1 |
+| ✅ Done | V8 | Analisi completa: no FreeText annotations, no "open in new window" → CVE S1 non applicabili. Fix UX: filename sanitizzato in `NutrizionaleCalc.tsx:1701` e `pdfGenerator.ts:140` (rimozione `<>"` dal nome file). |
 | 🟡 Pianificare | S0 | Togliere `ingredientsDB.json` da `public/` → endpoint autenticato Django |
 | 🟡 Pianificare | S5 | Token JWT in localStorage → httpOnly cookies (cambio backend Django) |
 | ✅ Done | M2-nota | Costanti e logica unificate: `shared/constants.ts` per ALLERGEN/CROSS/ADDITIVI, engine per DBIngredient/CalcResult/RecipeRow/AdditiveRow/calcNutrients. ~750 righe duplicate rimosse. Archivio differito (schemi ArchiveData vs MobileArchiveEntry incompatibili — design separato). |

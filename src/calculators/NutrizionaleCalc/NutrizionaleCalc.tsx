@@ -1698,7 +1698,8 @@ export function NutrizionaleCalc() {
                 doc.text(`AEA Consulenze Alimentari — pag. ${i}/${pageCount}`, M, 292);
             }
 
-            doc.save(`${productName || 'ricetta'}_scheda_${activeTab}.pdf`);
+            const safeName = (productName || 'ricetta').replace(/[^\w\sÀ-ÿ\-]/g, '').trim().replace(/\s+/g, '_');
+            doc.save(`${safeName}_scheda_${activeTab}.pdf`);
         } catch (e) {
             console.error('PDF export error:', e);
             toast.error('Errore durante la generazione del PDF.');
