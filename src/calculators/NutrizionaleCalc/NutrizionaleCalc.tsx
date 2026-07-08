@@ -7,7 +7,7 @@ import {
     ClipboardList, Scale, Layers, FlaskConical, Table2, Euro,
     AlertTriangle, Compass, SlidersHorizontal, ChevronRight, ChevronLeft,
     Trash2, X, BookOpen, CheckCircle, ChevronDown,
-    Salad, Flame, Globe, Package, ImageDown,
+    Salad, Flame, Globe, Package, ImageDown, Download, Upload,
 } from 'lucide-react';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
@@ -22,6 +22,7 @@ import {
     validateFinishedWeight,
     validateIngredientQuantity,
     validatePieces,
+    isValidDBIngredient,
 } from '../../utils/validation';
 // import DB_RAW from '../../data/ingredientsDB.json'; // Removed static import for Part 5d
 import { TabUE, DEFAULT_OPTIONALS } from './TabUE';
@@ -31,65 +32,13 @@ import { TabUSA } from './TabUSA';
 import type { USAServingRef, USAMeasure } from './TabUSA';
 import { SplitShell } from './SplitShell';
 import { BrowseIngredientsModal } from './BrowseIngredientsModal';
+import {
+    type DBIngredient, type CalcResult, type RecipeRow, type AdditiveRow, type Component,
+    ZERO_CALC, calcNutrients, scaleResult,
+} from '../../engines/nutrizionaleCalcEngine';
+import { ALLERGEN_FIELDS, CROSS_FIELDS, ADDITIVI_CATEGORIE, ADDITIVI_SPECIFICI } from './shared/constants';
 
-
-// ─── DB Types ─────────────────────────────────────────────────────────────────
-interface DBIngredient {
-    nome: string; etichetta: string;
-    kcal: number; kj: number; acqua?: number;
-    grassi: number; saturi: number; monoins?: number; polins?: number;
-    trans?: number; colesterolo?: number;
-    carboidrati: number; zuccheri: number; zuccheri_agg?: number;
-    polioli?: number; amido?: number; fibre?: number;
-    proteine: number; sodio_mg: number;
-    potassio?: number; calcio?: number; fosforo?: number;
-    magnesio?: number; ferro?: number; zinco?: number;
-    vitA_eq?: number; vitD?: number; vitE?: number; vitC?: number;
-    vitB1?: number; vitB2?: number; vitB3?: number;
-    vitB6?: number; vitB9?: number; vitB12?: number;
-    alcol?: number; eur_kg?: number;
-    eritritolo?: number; acidi_organici?: number; glicerolo?: number;
-    iodio?: number; rame?: number; manganese?: number; selenio?: number;
-    betaCarotene?: number; retinolo?: number; vitA_iu?: number;
-    vitK?: number; vitB5?: number;
-    categoria?: string;
-    fonte_dati?: string; fonte_link?: string;
-    all_glutine?: string; all_grano?: string; all_crostacei?: string;
-    all_uova?: string; all_pesci?: string; all_arachidi?: string;
-    all_soia?: string; all_latte?: string; all_frutta_guscio?: string;
-    all_anacardi?: string; all_sedano?: string; all_senape?: string; all_sesamo?: string;
-    all_solfiti?: string; all_lupini?: string; all_molluschi?: string;
-    cross_glutine?: string; cross_grano?: string; cross_crostacei?: string;
-    cross_uova?: string; cross_pesci?: string; cross_arachidi?: string;
-    cross_soia?: string; cross_latte?: string; cross_frutta_guscio?: string;
-    cross_anacardi?: string; cross_sedano?: string; cross_senape?: string; cross_sesamo?: string;
-    cross_solfiti?: string; cross_lupini?: string; cross_molluschi?: string;
-}
 // const DB = DB_RAW as unknown as DBIngredient[]; // Replaced with fetch state
-
-
-// ─── Allergen config ──────────────────────────────────────────────────────────
-const ALLERGEN_FIELDS: { key: keyof DBIngredient; label: string }[] = [
-    { key: 'all_glutine', label: 'GLUTINE' }, { key: 'all_grano', label: 'GRANO' },
-    { key: 'all_crostacei', label: 'CROSTACEI' }, { key: 'all_uova', label: 'UOVA' },
-    { key: 'all_pesci', label: 'PESCE' }, { key: 'all_arachidi', label: 'ARACHIDI' },
-    { key: 'all_soia', label: 'SOIA' }, { key: 'all_latte', label: 'LATTE' },
-    { key: 'all_frutta_guscio', label: 'FRUTTA A GUSCIO' },
-    { key: 'all_anacardi', label: 'ANACARDI' },
-    { key: 'all_solfiti', label: 'SOLFITI (>10 ppm)' }, { key: 'all_lupini', label: 'LUPINI' },
-    { key: 'all_molluschi', label: 'MOLLUSCHI' },
-];
-const CROSS_FIELDS: { key: keyof DBIngredient; label: string }[] = [
-    { key: 'cross_glutine', label: 'GLUTINE' }, { key: 'cross_grano', label: 'GRANO' },
-    { key: 'cross_crostacei', label: 'CROSTACEI' }, { key: 'cross_uova', label: 'UOVA' },
-    { key: 'cross_pesci', label: 'PESCE' }, { key: 'cross_arachidi', label: 'ARACHIDI' },
-    { key: 'cross_soia', label: 'SOIA' }, { key: 'cross_latte', label: 'LATTE' },
-    { key: 'cross_frutta_guscio', label: 'FRUTTA A GUSCIO' },
-    { key: 'cross_anacardi', label: 'ANACARDI' },
-    { key: 'cross_sedano', label: 'SEDANO' }, { key: 'cross_senape', label: 'SENAPE' },
-    { key: 'cross_sesamo', label: 'SESAMO' }, { key: 'cross_solfiti', label: 'SOLFITI' },
-    { key: 'cross_lupini', label: 'LUPINI' }, { key: 'cross_molluschi', label: 'MOLLUSCHI' },
-];
 
 // ─── DV / AR References ───────────────────────────────────────────────────────
 const DV_CA = {
@@ -107,35 +56,7 @@ const AR_ARABI = {
     vitB2: 1.2, vitB3: 15, vitB6: 1.3, vitB9: 400, vitB12: 2.4, vitA_eq: 800,
 };
 
-// ─── Calc result ──────────────────────────────────────────────────────────────
-interface CalcResult {
-    energyKcal: number; energyKj: number; grassi: number; saturi: number;
-    monoins: number; polins: number; trans: number; colesterolo: number;
-    carboidrati: number; carboidratiTot: number; zuccheri: number;
-    zuccheri_agg: number; polioli: number; amido: number; fibre: number;
-    proteine: number; sodio_mg: number; sale: number; potassio: number;
-    calcio: number; fosforo: number; magnesio: number; ferro: number;
-    zinco: number; rame: number; manganese: number; selenio: number; iodio: number;
-    vitA_eq: number; vitD: number; vitE: number; vitC: number;
-    vitB1: number; vitB2: number; vitB3: number; vitB6: number; vitB9: number; vitB12: number;
-    vitK: number; vitB5: number;
-}
-const ZERO_CALC: CalcResult = {
-    energyKcal: 0, energyKj: 0, grassi: 0, saturi: 0, monoins: 0, polins: 0,
-    trans: 0, colesterolo: 0, carboidrati: 0, carboidratiTot: 0, zuccheri: 0,
-    zuccheri_agg: 0, polioli: 0, amido: 0, fibre: 0, proteine: 0, sodio_mg: 0,
-    sale: 0, potassio: 0, calcio: 0, fosforo: 0, magnesio: 0, ferro: 0, zinco: 0,
-    rame: 0, manganese: 0, selenio: 0, iodio: 0,
-    vitA_eq: 0, vitD: 0, vitE: 0, vitC: 0, vitB1: 0, vitB2: 0, vitB3: 0, vitB6: 0,
-    vitB9: 0, vitB12: 0, vitK: 0, vitB5: 0,
-};
-
 // ─── State types ──────────────────────────────────────────────────────────────
-interface RecipeRow { id: string; ing: DBIngredient; grams: number; eurKg: number; resa: number; postCottura?: boolean; acquaAggiunta?: boolean; }
-interface AdditiveRow { id: string; categoria: string; nomeSpecifico: string; grams: number; eurKg: number; resa: number; }
-interface Component {
-    id: string; name: string; rows: RecipeRow[]; additiveRows: AdditiveRow[]; pzUV: number;
-}
 interface ServingSizesNation {
     cup?: number; cucchiaio?: number; serving?: number; confezione?: number; pezzo?: number;
 }
@@ -194,104 +115,9 @@ function rArabi_energy(v: number): string { return Math.round(v).toString(); }
 function rArabi_g(v: number): string { return v < 0.1 ? '0' : v.toFixed(1); }
 function rArabi_mg(v: number): string { return Math.round(v).toString(); }
 
-// ─── Calculation engine ───────────────────────────────────────────────────────
+// ─── Local display helper (n() used by rCA_*/rAU_* formatters below) ─────────
 function n(v: unknown): number { const num = Number(v); return isNaN(num) ? 0 : num; }
 
-function calcNutrients(components: Component[], pesoFinitoVal: number): CalcResult {
-    let peso_totale_pz = 0;
-    const g_per_pz_list: { ing: DBIngredient; g: number; postCottura?: boolean; acquaAggiunta?: boolean }[] = [];
-
-    for (const c of components) {
-        const pzUV = c.pzUV || 1;
-        for (const r of c.rows) {
-            const g = r.grams / pzUV;
-            peso_totale_pz += g;
-            g_per_pz_list.push({ ing: r.ing, g, postCottura: r.postCottura, acquaAggiunta: r.acquaAggiunta });
-        }
-        // Additivi: contribuiscono al peso crudo ma non ai nutrienti (nessun DBIngredient)
-        for (const r of c.additiveRows) {
-            peso_totale_pz += (r.grams || 0) / pzUV;
-        }
-    }
-
-    const pf_pz = pesoFinitoVal > 0 ? pesoFinitoVal : peso_totale_pz;
-    if (pf_pz === 0) return { ...ZERO_CALC };
-
-    const sum = { ...ZERO_CALC };
-    for (const item of g_per_pz_list) {
-        const f = item.g / 100;
-        sum.energyKcal += n(item.ing.kcal) * f;
-        sum.energyKj += n(item.ing.kj) * f;
-        sum.grassi += n(item.ing.grassi) * f;
-        sum.saturi += n(item.ing.saturi) * f;
-        sum.monoins += n(item.ing.monoins) * f;
-        sum.polins += n(item.ing.polins) * f;
-        sum.trans += n(item.ing.trans) * f;
-        sum.colesterolo += n(item.ing.colesterolo) * f;
-        sum.carboidrati += n(item.ing.carboidrati) * f;
-        sum.zuccheri += n(item.ing.zuccheri) * f;
-        sum.zuccheri_agg += n(item.ing.zuccheri_agg) * f;
-        sum.polioli += n(item.ing.polioli) * f;
-        sum.amido += n(item.ing.amido) * f;
-        sum.fibre += n(item.ing.fibre) * f;
-        sum.proteine += n(item.ing.proteine) * f;
-        sum.sodio_mg += n(item.ing.sodio_mg) * f;
-        sum.potassio += n(item.ing.potassio) * f;
-        sum.calcio += n(item.ing.calcio) * f;
-        sum.fosforo += n(item.ing.fosforo) * f;
-        sum.magnesio += n(item.ing.magnesio) * f;
-        sum.ferro += n(item.ing.ferro) * f;
-        sum.zinco += n(item.ing.zinco) * f;
-        sum.vitA_eq += n(item.ing.vitA_eq) * f;
-        sum.vitD += n(item.ing.vitD) * f;
-        sum.vitE += n(item.ing.vitE) * f;
-        sum.vitC += n(item.ing.vitC) * f;
-        sum.vitB1 += n(item.ing.vitB1) * f;
-        sum.vitB2 += n(item.ing.vitB2) * f;
-        sum.vitB3 += n(item.ing.vitB3) * f;
-        sum.vitB6 += n(item.ing.vitB6) * f;
-        sum.vitB9 += n(item.ing.vitB9) * f;
-        sum.vitB12 += n(item.ing.vitB12) * f;
-        sum.vitK += n(item.ing.vitK) * f;
-        sum.vitB5 += n(item.ing.vitB5) * f;
-        sum.rame += n(item.ing.rame) * f;
-        sum.manganese += n(item.ing.manganese) * f;
-        sum.selenio += n(item.ing.selenio) * f;
-        sum.iodio += n(item.ing.iodio) * f;
-    }
-
-    // --- Alcohol evaporation cascade (EU Reg 1169/2011: 7 kcal/g, 29 kJ/g) ---
-    // Pre-cottura alcohol: rows NOT flagged postCottura where ing.alcol > 0
-    // Weight loss priority: alcohol evaporates first, then added water, then natural water
-    const calo_peso = Math.max(0, peso_totale_pz - pf_pz);
-    if (calo_peso > 0) {
-        const alcol_pre_abs = g_per_pz_list.reduce((s, item) =>
-            !item.postCottura ? s + (n(item.ing.alcol) / 100) * item.g : s, 0);
-        const evaporated_alcol_abs = Math.min(calo_peso, alcol_pre_abs);
-        if (evaporated_alcol_abs > 0) {
-            sum.energyKcal -= evaporated_alcol_abs * 7;
-            sum.energyKj   -= evaporated_alcol_abs * 29;
-        }
-    }
-
-    const factor = 100 / pf_pz;
-    const r: CalcResult = { ...ZERO_CALC };
-    for (const k of Object.keys(sum) as (keyof CalcResult)[]) {
-        (r as unknown as Record<string, number>)[k] = (sum as unknown as Record<string, number>)[k] * factor;
-    }
-    r.sale = r.sodio_mg / 1000 * 2.5;
-    r.carboidratiTot = r.carboidrati + r.fibre;
-    return r;
-}
-
-function scaleResult(r: CalcResult, grams: number): CalcResult {
-    const f = grams / 100;
-    const s: CalcResult = { ...ZERO_CALC };
-    for (const k of Object.keys(r) as (keyof CalcResult)[]) {
-        (s as unknown as Record<string, number>)[k] = (r as unknown as Record<string, number>)[k] * f;
-    }
-    return s;
-}
 
 // ─── Search ───────────────────────────────────────────────────────────────────
 function searchDB(q: string, db: DBIngredient[]): DBIngredient[] {
@@ -324,148 +150,6 @@ function searchAdditiviDB(q: string, db: DBIngredient[]): DBIngredient[] {
         .slice(0, 15);
 }
 
-const ADDITIVI_CATEGORIE = [
-    'addensante','agente di rivestimento','agente di trattamento della farina',
-    'agente lievitante','antiagglomerante','antiossidante','conservante',
-    'correttore di acidità','edulcorante','emulsionante','esaltatore di sapidità',
-    'gas per confezionamento','gas propellente','lecitina di girasole bio',
-    'lecitina di soia bio','lucidante','rassodante','sbiancante','schiumogeno',
-    'stabilizzante del colore','stabilizzatore di schiuma','umettante',
-] as const;
-
-const ADDITIVI_SPECIFICI: Record<string, string[]> = {
-    'addensante': [
-        'Agar (E406)','Alginato di calcio (E404)','Alginato di potassio (E402)',
-        'Alginato di sodio (E401)','Amido modificato (E1400-E1451)','Carragenina (E407)',
-        'Cellulosa (E460)','Farina di semi di carrube (E410)','Gelatina',
-        'Gomma arabica (E414)','Gomma di guar (E412)','Gomma di tara (E417)',
-        'Gomma gellano (E418)','Gomma konjac (E425)','Gomma xantano (E415)',
-        'Idrossipropilcellulosa (E463)','Idrossipropilmetilcellulosa (E464)',
-        'Metilcellulosa (E461)','Pectine (E440)',
-    ],
-    'agente di rivestimento': [
-        'Cera carnauba (E903)','Cera d\'api bianca (E901i)','Cera d\'api gialla (E901ii)',
-        'Cera di candelilla (E902)','Cera microcristallina (E905)','Gomma lacca (E904)',
-        'Paraffina (E905)','Polietilenglicole (E1521)','Shellac (E904)',
-    ],
-    'agente di trattamento della farina': [
-        'Acido ascorbico (E300)','Azodicarbonamide (E927a)','Carbonato di magnesio (E504)',
-        'Cloruro di ammonio (E510)','L-cisteina (E920)','Perossido di benzoile (E928)',
-    ],
-    'agente lievitante': [
-        'Bicarbonato di ammonio (E503)','Bicarbonato di potassio (E501)',
-        'Bicarbonato di sodio (E500)','Cremor tartaro (E336)','Difosfati (E450)',
-        'Glucono-delta-lattone (E575)','Monofosfato di calcio (E341)','Trifosfati (E451)',
-    ],
-    'antiagglomerante': [
-        'Carbonato di calcio (E170)','Carbonato di magnesio (E504)',
-        'Diossido di silicio (E551)','Ferrocianuro di potassio (E536)',
-        'Ferrocianuro di sodio (E535)','Fosfato tricalcico (E341iii)',
-        'Silicato di alluminio e sodio (E554)','Silicato di calcio (E552)',
-        'Silicato di magnesio (E553a)','Stearato di magnesio (E572)','Talco (E553b)',
-    ],
-    'antiossidante': [
-        'Acido ascorbico (E300)','Acido eritorbico (E315)','Alfa-tocoferolo (E307)',
-        'Ascorbato di calcio (E302)','Ascorbato di sodio (E301)',
-        'BHA - butidrossianisolo (E320)','BHT - butidrossitoluene (E321)',
-        'Delta-tocoferolo (E309)','Eritorbato di sodio (E316)',
-        'Estratti di rosmarino (E392)','Estratti ricchi di tocoferoli (E306)',
-        'Gamma-tocoferolo (E308)','Gallato di dodecile (E312)','Gallato di ottile (E311)',
-        'Gallato di propile (E310)','Lecitina (E322)','Palmitato di ascorbile (E304)',
-        'TBHQ - terzbutilidrochinone (E319)',
-    ],
-    'conservante': [
-        'Acido benzoico (E210)','Acido propionico (E280)','Acido sorbico (E200)',
-        'Anidride solforosa (E220)','Benzoato di calcio (E213)','Benzoato di potassio (E212)',
-        'Benzoato di sodio (E211)','Bisolfito di calcio (E227)','Bisolfito di sodio (E222)',
-        'Esametilentetrammina (E239)','Etile p-idrossibenzoato (E214)',
-        'Lisozima (E1105)','Metabisolfito di potassio (E224)','Metabisolfito di sodio (E223)',
-        'Metile p-idrossibenzoato (E218)','Natamicina (E235)','Nisina (E234)',
-        'Nitrato di potassio (E252)','Nitrato di sodio (E251)',
-        'Nitrito di potassio (E249)','Nitrito di sodio (E250)',
-        'Propionato di calcio (E282)','Propionato di potassio (E283)',
-        'Propionato di sodio (E281)','Solfito di calcio (E226)',
-        'Solfito di sodio (E221)','Sorbato di calcio (E203)','Sorbato di potassio (E202)',
-    ],
-    'correttore di acidità': [
-        'Acido acetico (E260)','Acido citrico (E330)','Acido fumarico (E297)',
-        'Acido lattico (E270)','Acido L-malico (E296)','Acido ortofosforico (E338)',
-        'Acido succinico (E363)','Acido tartarico (E334)','Bicarbonato di sodio (E500)',
-        'Carbonato di calcio (E170)','Citrato di calcio (E333)','Citrato di potassio (E332)',
-        'Citrato di sodio (E331)','Fumarato di sodio (E365)','Idrossido di calcio (E526)',
-        'Idrossido di sodio (E524)','Lattato di calcio (E327)','Lattato di potassio (E326)',
-        'Lattato di sodio (E325)','Malato di calcio (E352)','Malato di sodio (E350)',
-        'Tartrato di potassio (E336)','Tartrato di sodio (E335)',
-    ],
-    'edulcorante': [
-        'Acesulfame K (E950)','Advantame (E969)','Aspartame (E951)',
-        'Ciclamato di calcio (E952)','Ciclamato di sodio (E952ii)',
-        'Eritritolo (E968)','Isomalto (E953)','Lattitolo (E966)',
-        'Maltitolo (E965)','Mannitolo (E421)','Neoesperidina DC (E959)',
-        'Saccarina (E954)','Sorbitolo (E420)','Steviolo glicoside (E960)',
-        'Sucralosio (E955)','Taumatina (E957)','Xilitolo (E967)',
-    ],
-    'emulsionante': [
-        'Esteri citrici di mono e digliceridi (E472c)',
-        'Esteri diacetiltartarici di mono e digliceridi (E472e)',
-        'Esteri lattici di mono e digliceridi (E472b)',
-        'Esteri monoacetiltartarici di mono e digliceridi (E472a)',
-        'Lecitine (E322)','Mono e digliceridi degli acidi grassi (E471)',
-        'Poliglicerolo estere degli acidi grassi (E475)',
-        'Polisorbato 20 (E432)','Polisorbato 60 (E435)','Polisorbato 80 (E433)',
-        'Stearoil-2-lattilato di calcio (E482)','Stearoil-2-lattilato di sodio (E481)',
-        'Sucroesteri (E473)','Sucrostere (E474)',
-    ],
-    'esaltatore di sapidità': [
-        "5'-guanilato di disodio (E627)","5'-inosinato di disodio (E631)",
-        "5'-ribonucleotidi di disodio (E635)",
-        'Acido glutammico (E620)','Glutammato di ammonio (E624)',
-        'Glutammato di calcio (E623)','Glutammato di magnesio (E625)',
-        'Glutammato di potassio (E622)','Glutammato monossodico - MSG (E621)',
-        'Maltolo (E636)','Etilmaltolo (E637)',
-    ],
-    'gas per confezionamento': [
-        'Anidride carbonica (E290)','Argon (E938)','Azoto (E941)',
-        'Elio (E939)','Idrogeno (E949)','Ossigeno (E948)',
-    ],
-    'gas propellente': [
-        'Anidride carbonica (E290)','Azoto (E941)','Butano (E943a)',
-        'Isobutano (E943b)','Ossido di azoto (E942)','Propano (E944)',
-    ],
-    'lecitina di girasole bio': ['Lecitina di girasole bio'],
-    'lecitina di soia bio': ['Lecitina di soia bio'],
-    'lucidante': [
-        'Cera carnauba (E903)','Cera d\'api bianca (E901i)','Cera d\'api gialla (E901ii)',
-        'Cera di candelilla (E902)','Cera microcristallina (E905)',
-        'Gomma lacca (E904)','Paraffina (E905)','Polietilenglicole (E1521)','Shellac (E904)',
-    ],
-    'rassodante': [
-        'Calcio cloruro (E509)','Carbonato di calcio (E170)','Citrato di calcio (E333)',
-        'Fosfato monocalcico (E341i)','Gluconato di calcio (E578)',
-        'Idrossido di calcio (E526)','Lattato di calcio (E327)','Solfato di calcio (E516)',
-    ],
-    'sbiancante': [
-        'Biossido di titanio (E171)','Diossido di cloro (E926)',
-        'Perossido di benzoile (E928)','Perossido di calcio (E930)',
-    ],
-    'schiumogeno': [
-        'Estratto di quillaia (E999)','Alcool stearilico (E430)',
-    ],
-    'stabilizzante del colore': [
-        'Acido ascorbico (E300)','Acido citrico (E330)','Ascorbato di sodio (E301)',
-        'Eritorbato di sodio (E316)','Nitrato di potassio (E252)','Nitrato di sodio (E251)',
-        'Nitrito di potassio (E249)','Nitrito di sodio (E250)',
-    ],
-    'stabilizzatore di schiuma': [
-        'Albumina d\'uovo','Estratto di quillaia (E999)','Gomma arabica (E414)',
-        'Lecitina (E322)','Metilcellulosa (E461)',
-    ],
-    'umettante': [
-        'Glicerolo (E422)','Isomalto (E953)','Lattitolo (E966)',
-        'Maltitolo (E965)','Mannitolo (E421)','Propilen glicole (E1520)',
-        'Sorbitolo (E420)','Xilitolo (E967)',
-    ],
-};
 
 // ─── Tooltip component ────────────────────────────────────────────────────────
 function InfoTooltip({ text }: { text: string }) {
@@ -538,7 +222,7 @@ function saveRecente(ing: DBIngredient): void {
     } catch { /* ignore */ }
 }
 
-function IngSearch({ onAdd, db, loading, error }: { onAdd: (ing: DBIngredient) => void; db: DBIngredient[]; loading: boolean; error: string | null }) {
+function IngSearch({ onAdd, db, loading, error, onRetry }: { onAdd: (ing: DBIngredient) => void; db: DBIngredient[]; loading: boolean; error: string | null; onRetry: () => void }) {
     const [searchOpen, setSearchOpen] = useState(false);
     const [q, setQ] = useState('');
     const [res, setRes] = useState<DBIngredient[]>([]);
@@ -616,7 +300,7 @@ function IngSearch({ onAdd, db, loading, error }: { onAdd: (ing: DBIngredient) =
                     <Plus size={13} /> Aggiungi ingrediente
                 </button>
                 {loading && <span style={{ fontSize: 11, color: 'var(--color-text-muted)' }}>Caricamento DB...</span>}
-                {error && <span style={{ fontSize: 11, color: 'var(--color-danger)' }}>{error}</span>}
+                {error && <span style={{ fontSize: 11, color: 'var(--color-danger)', display: 'flex', alignItems: 'center', gap: 6 }}>{error} <button type="button" onClick={onRetry} style={{ fontSize: 11, textDecoration: 'underline', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-danger)', padding: 0 }}>Riprova</button></span>}
             </div>
 
             {/* Barra di ricerca */}
@@ -1021,7 +705,8 @@ function CustomIngredientModal({ onClose, onSave, initialIngredient, originalNom
             vitB12:       vitB12      ? parseFloat(vitB12): undefined,
         };
         try {
-            let ex = JSON.parse(localStorage.getItem('custom_ingredients') || '[]') as DBIngredient[];
+            const rawEx = JSON.parse(localStorage.getItem('custom_ingredients') || '[]');
+            let ex = (Array.isArray(rawEx) ? (rawEx as unknown[]).filter(isValidDBIngredient) : []) as DBIngredient[];
             // Se stiamo modificando un ingrediente esistente, rimuoviamo il vecchio
             if (originalNome) {
                 ex = ex.filter(i => i.nome !== originalNome);
@@ -1389,22 +1074,63 @@ export function NutrizionaleCalc() {
     const [loadingDB, setLoadingDB] = useState(true);
     const [dbError, setDbError] = useState<string | null>(null);
 
-    useEffect(() => {
+    const loadDB = React.useCallback(() => {
+        setLoadingDB(true);
+        setDbError(null);
         fetch('/data/ingredientsDB.json')
             .then(r => r.json())
             .then(data => {
                 let base = data as DBIngredient[];
                 try {
-                    const custom = JSON.parse(localStorage.getItem('custom_ingredients') || '[]') as DBIngredient[];
+                    const raw = JSON.parse(localStorage.getItem('custom_ingredients') || '[]') as unknown[];
+                    const custom = Array.isArray(raw) ? raw.filter(isValidDBIngredient) as DBIngredient[] : [];
                     if (custom.length) base = [...base, ...custom];
                 } catch {}
                 setDb(base);
                 setLoadingDB(false);
             })
-            .catch(err => { console.error('Error loading DB:', err); setLoadingDB(false); setDbError('Impossibile caricare il database ingredienti. Ricarica la pagina.'); });
+            .catch(err => { console.error('Error loading DB:', err); setLoadingDB(false); setDbError('Impossibile caricare il database ingredienti.'); });
     }, []);
 
+    useEffect(() => { loadDB(); }, [loadDB]);
+
     const addCustomIngredient = (ing: DBIngredient) => setDb(prev => [...prev, ing]);
+
+    const exportCustomIngredients = useCallback(() => {
+        const rawCustom = JSON.parse(localStorage.getItem('custom_ingredients') || '[]');
+        const custom = (Array.isArray(rawCustom) ? (rawCustom as unknown[]).filter(isValidDBIngredient) : []) as DBIngredient[];
+        if (!custom.length) { toast.info('Nessun ingrediente custom da esportare.'); return; }
+        const blob = new Blob([JSON.stringify(custom, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url; a.download = 'ingredienti_custom.json'; a.click();
+        URL.revokeObjectURL(url);
+    }, [toast]);
+
+    const importCustomIngredients = useCallback((file: File) => {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            try {
+                const parsed = JSON.parse(e.target?.result as string);
+                if (!Array.isArray(parsed)) throw new Error();
+                const arr = (parsed as unknown[]).filter(isValidDBIngredient) as DBIngredient[];
+                const existingRaw = JSON.parse(localStorage.getItem('custom_ingredients') || '[]');
+                const existing = Array.isArray(existingRaw) ? (existingRaw as unknown[]).filter(isValidDBIngredient) as DBIngredient[] : [];
+                const existingNames = new Set(existing.map(i => i.nome));
+                const newOnes = arr.filter(i => i.nome && !existingNames.has(i.nome));
+                const merged = [...existing, ...newOnes];
+                localStorage.setItem('custom_ingredients', JSON.stringify(merged));
+                setDb(prev => {
+                    const prevNames = new Set(prev.map(i => i.nome));
+                    return [...prev, ...newOnes.filter(i => !prevNames.has(i.nome))];
+                });
+                toast.success(`Importati ${newOnes.length} ingredienti (${arr.length - newOnes.length} già presenti ignorati).`);
+            } catch { toast.error('File non valido. Usare un JSON esportato da questa app.'); }
+        };
+        reader.readAsText(file);
+    }, [toast]);
+
+    const importInputRef = useRef<HTMLInputElement>(null);
 
     const [usa, setUSA] = useState<ServingSizesNation>({});
     useEffect(() => {
@@ -2281,6 +2007,16 @@ export function NutrizionaleCalc() {
                         <Database size={13} />
                         Nuovo Ingrediente
                     </button>
+                    <button type="button" className="topbar-btn-ghost" onClick={exportCustomIngredients} title="Esporta ingredienti custom in JSON">
+                        <Download size={13} />
+                        Esporta Custom
+                    </button>
+                    <button type="button" className="topbar-btn-ghost" onClick={() => importInputRef.current?.click()} title="Importa ingredienti custom da JSON">
+                        <Upload size={13} />
+                        Importa Custom
+                    </button>
+                    <input ref={importInputRef} type="file" accept=".json,application/json" style={{ display: 'none' }}
+                        onChange={e => { const f = e.target.files?.[0]; if (f) { importCustomIngredients(f); e.target.value = ''; } }} />
                     <button type="button" className="topbar-btn-ghost" onClick={() => setShowBrowseModal(true)}>
                         <Database size={13} />
                         Sfoglia DB
@@ -2531,7 +2267,7 @@ export function NutrizionaleCalc() {
                         </div>
                     </div>
                     <ValidationError message={fieldErrors[`${comp.id}-pzuv`]} visible={!!fieldErrors[`${comp.id}-pzuv`]} />
-                    <IngSearch onAdd={(ing) => addRowToComp(comp.id, ing)} db={db} loading={loadingDB} error={dbError} />
+                    <IngSearch onAdd={(ing) => addRowToComp(comp.id, ing)} db={db} loading={loadingDB} error={dbError} onRetry={loadDB} />
                     {comp.rows.length > 0 && (
                     <div style={{ border: '1px solid var(--color-border)', borderRadius: 8, overflow: 'hidden', marginBottom: 6 }}>
                     {comp.rows.map((row, rowIdx) => {
