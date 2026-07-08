@@ -337,8 +337,8 @@ Punti con impatto potenzialmente critico che l'audit non ha esaminato. Da esegui
 | ✅ Done | 🆕 S7 | Security headers aggiunti in `vercel.json`: `X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`, `Permissions-Policy`, CSP enforcing (era report-only — 2026-07-07). Bonus: `Cache-Control: immutable` su `ingredientsDB.json` (chiude P3) |
 | ✅ Done | P1 | `React.lazy()` + `Suspense` su tutti e 9 i calculator in `App.tsx`; named export gestiti con `.then(m => ({ default: m.X }))` |
 | ✅ Done | 🆕 M4 | Fetch DB estratto in `loadDB` (richiamabile); bottone "Riprova" in `IngSearch` quando `dbError` è set |
-| 🟡 Pianificare | Q1 | Estrarre `calcNutrients()` in engine separato (prerequisito per Q2) |
-| 🟡 Pianificare | Q2 | Test Vitest: golden tests ricette, soglie claim, parsing IT, resa |
+| ✅ Done | Q1 | `calcNutrients()` e `scaleResult()` estratti in `src/engines/nutrizionaleCalcEngine.ts`; mobile ora usa lo stesso engine del desktop |
+| ✅ Done | Q2 | 17 test in `src/engines/nutrizionaleCalcEngine.test.ts` — golden tests ricette, soglie claim, parsing IT, resa |
 | ✅ Done | 🆕 Q6 | `.github/workflows/ci.yml` — type-check + lint + build su push/PR a `main` |
 | ✅ Done | S4 | `IS_PROD` → `import.meta.env.PROD` (compile-time); `MOCK_USERS` spostato in dynamic import nel ramo dev — eliminato dal bundle di produzione via tree-shaking |
 | ✅ Done | 🆕 M5 | Export/import JSON ingredienti custom in topbar (bridge; sync backend = roadmap) |
@@ -347,7 +347,7 @@ Punti con impatto potenzialmente critico che l'audit non ha esaminato. Da esegui
 | 🟡 Pianificare | 🆕 V5–V8 | Verifiche resa, dati sorgente, a11y, PDF injection pratica |
 | ✅ Done | Q3 | `noUnusedLocals: true` + `noUnusedParameters: true` in tsconfig — zero errori generati |
 | ✅ Done | P3 | Cache-Control immutable su `ingredientsDB.json` (fatto insieme a S7) |
-| 🔴 Ora | M3 | Touch target sidebar ≥ 44 px — nessun CSS esplicito trovato, richiede verifica DevTools |
+| ✅ Done | M3 | `.sidebar-nav-icon-btn` portato da 40×40 px a 44×44 px in `index.css:668-669` |
 | 🔴 Ora | V5 | Verificare ricalcolo nutrienti dopo resa cottura in `NutrizionaleCalc.tsx` |
 | 🔴 Ora | V6 | Campione 20 ingredienti vs tabelle CREA/BDA |
 | 🔴 Ora | V7 | Accessibilità: label input, contrasto, focus, navigazione tastiera |
