@@ -328,7 +328,7 @@ Punti con impatto potenzialmente critico che l'audit non ha esaminato. Da esegui
 |---|---|---|
 | ✅ Done | B1 | Aggiunto `sodium: 'SODIO'` a `nutrientNames` in `nutritionalEngine.ts:243` |
 | ✅ Done | B2 | Cambiato `< 0.12` in `<= 0.12` in `nutritionalEngine.ts:273` |
-| 🔴 Ora | 🆕 S0 | Togliere `ingredientsDB.json` da `public/` → endpoint autenticato Django |
+| 🟡 Pianificare | 🆕 S0 | Togliere `ingredientsDB.json` da `public/` → endpoint autenticato Django (richiede backend attivo) |
 | ✅ N/A | S1 | jsPDF 4.2.1 installato — fix range era ≤4.2.0, già patched |
 | ✅ Done | 🆕 V1–V4 | V1: corretti potassium NRV 3500→2000 mg (era US DV) e claim proteine da RI-based a energy-based (≥12%/≥20% kcal). V2/V3/V4: nessun errore trovato |
 | ✅ Done | B3 | Parametro `isLiquid` aggiunto a `generateNutritionalClaims` — soglie zuccheri (5/2,5 g) e grassi (3/1,5 g) ora differenziate. ⚠️ La funzione risulta non chiamata da nessun componente (B5 confermato): il fix è in standby fino al collegamento UI. |
