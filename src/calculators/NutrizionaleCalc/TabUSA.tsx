@@ -86,7 +86,6 @@ function rCalcium(v: number): number { return v < 2 ? 0 : Math.round(v / 5) * 5;
 // Iron: 21 CFR 101.9(c)(9) — <0.1mg→0, else→nearest 0.1mg
 function rIron(v: number): number { return v < 0.1 ? 0 : Math.round(v * 10) / 10; }
 // Potassium: 21 CFR 101.9(c)(9) — <5mg→0, else→nearest 5mg (same as rMg)
-function rVit(v: number): number { return Math.round(v); } // fallback, not used for minerals
 
 // C-2 fix: USA uses period as decimal separator (not comma)
 function dec1(n: number): string { return n.toFixed(1); }
@@ -341,7 +340,7 @@ function NutrRow({ r, noBorder }: { r: NRow; noBorder?: boolean }) {
 // ════════════════════════════════════════════════════════════════════════════════
 // ORIZZONTALE
 // ════════════════════════════════════════════════════════════════════════════════
-function HorizLayout({ d, si, addedSugarsG, addedSugarsPct, rows, vitamins, measure, servingRef }:
+function HorizLayout({ d, si, addedSugarsG, addedSugarsPct, rows, vitamins, measure: _measure, servingRef }:
     { d: CalcResult; si: ServingInfo; addedSugarsG: number; addedSugarsPct: number; rows: NRow[]; vitamins: VitRow[]; measure: USAMeasure; servingRef: USAServingRef }) {
     const F = 'Arial, Helvetica, sans-serif';
     const perLabel = servingRef === 'confezione' ? 'per container' : 'per serving';

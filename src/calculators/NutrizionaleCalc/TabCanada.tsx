@@ -1,5 +1,3 @@
-import React from 'react';
-
 // ─── Shared types ─────────────────────────────────────────────────────────────
 export interface CalcResult {
     energyKcal: number; energyKj: number; grassi: number; saturi: number;

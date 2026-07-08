@@ -11,7 +11,6 @@ import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import { readBridge } from './sessionBridge';
 import { useToast } from '../../components/ui/Toast';
-import { ConfirmDialog } from '../../components/ui/ConfirmDialog';
 import {
     type DBIngredient,
     type CalcResult,

@@ -1,5 +1,3 @@
-import React from 'react';
-
 // ─── Exported types ───────────────────────────────────────────────────────────
 export type EUSubTab = '100g' | 'uv' | 'porzione' | 'pezzo';
 

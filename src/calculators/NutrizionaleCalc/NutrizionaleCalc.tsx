@@ -1033,7 +1033,7 @@ export function NutrizionaleCalc() {
     const [nutrModalOpen, setNutrModalOpen] = useState(false);
     const [usaServingRef, setUsaServingRef] = useState<USAServingRef>('serving');
     const [usaMeasure, setUsaMeasure] = useState<USAMeasure>('g');
-    const [pesoCardOpen, setPesoCardOpen] = useState(true);
+    useState(true); // pesoCardOpen — dead state, hook order preserved
     const [compOpen, setCompOpen] = useState<Record<string, boolean>>({});
     const [pzUVRaw, setPzUVRaw] = useState<Record<string, string>>({});
     const [gramsRaw, setGramsRaw] = useState<Record<string, string>>({});
@@ -1045,14 +1045,13 @@ export function NutrizionaleCalc() {
         if (next.has(rowId)) next.delete(rowId); else next.add(rowId);
         return next;
     });
-    const [additiveOpen, setAdditiveOpen] = useState(true);
-    const [riepilogoOpen, setRiepilogoOpen] = useState(true);
+    useState(true); // additiveOpen — dead state, hook order preserved
+    useState(true); // riepilogoOpen — dead state, hook order preserved
     const [riepilogoTab, setRiepilogoTab] = useState<'q' | 'c'>('q');
-    const [ricettaOpen, setRicettaOpen] = useLocalStorage<boolean>('nutri_ricetta_open', true);
+    useLocalStorage<boolean>('nutri_ricetta_open', true); // ricettaOpen — dead
 
-    // Quick-guide state — using useLocalStorage hook for persistence
-    const [guideOpen, setGuideOpen] = useLocalStorage<boolean>('nutri_guide_open', true);
-    const toggleGuide = () => setGuideOpen(prev => !prev);
+    // Quick-guide state — dead, hook order preserved
+    useLocalStorage<boolean>('nutri_guide_open', true);
 
     const [expertTab, setExpertTab] = useState<'ricetta' | 'riepilogo'>('ricetta');
 
@@ -1167,7 +1166,7 @@ export function NutrizionaleCalc() {
     const tableRef = useRef<HTMLDivElement>(null);
 
     const { items: archiveItems, saveItem, deleteItem } = useArchive<ArchiveData>('nutrizionale-v3');
-    const [currentId, setCurrentId] = useState<string | undefined>(undefined);
+    const [, setCurrentId] = useState<string | undefined>(undefined);
     const [, setCurrentName] = useState('');
     const [isFlashing, setIsFlashing] = useState(false);
     const [lastAddedRowId, setLastAddedRowId] = useState('');
@@ -1532,26 +1531,7 @@ export function NutrizionaleCalc() {
         }
     };
 
-    const handleDownloadEtichettaPDF = async () => {
-        try {
-            // Find the TabUE container in the DOM
-            const etichettaElement = document.querySelector('[data-testid="tab-ue"]') as HTMLElement ||
-                                   document.querySelector('div[style*="maxWidth: 480"]') as HTMLElement;
-
-            if (!etichettaElement) {
-                toast.error('Tabella etichetta non trovata. Assicurati di essere sulla tab UE.');
-                return;
-            }
-
-            const fileName = `${productName || 'etichetta'}_${new Date().toLocaleDateString('it-IT').replace(/\//g, '-')}.pdf`;
-            await generateEtichettaPDF(etichettaElement, fileName);
-        } catch (error) {
-            console.error('Etichetta PDF export error:', error);
-            toast.error('Errore durante l\'esportazione del PDF etichetta.');
-        }
-    };
-
-    const handlePDF = async () => {
+    const _handlePDF = async () => {
         if (allRows.length === 0 || !productName) { toast.warning('Inserisci il nome del prodotto e almeno un ingrediente prima di scaricare.'); return; }
         try {
             const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
@@ -1705,6 +1685,7 @@ export function NutrizionaleCalc() {
             toast.error('Errore durante la generazione del PDF.');
         }
     };
+    void _handlePDF; // dead — UI button removed; logic preserved in git
 
     // ─── (wizard renderer removed) ────────────────────────────────────────────
 
@@ -2657,42 +2638,7 @@ export function NutrizionaleCalc() {
 }
 
 // ─── Allergen & Ingredient sections ──────────────────────────────────────────
-function AllergenSection({ present, cross }: { present: string[]; cross: string[] }) {
-    if (present.length === 0 && cross.length === 0) return <div />;
-    return (
-        <div style={{ marginTop: 14 }}>
-            <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--color-text-muted)', marginBottom: 6 }}>Allergeni dichiarati</div>
-            {present.length > 0 && (
-                <div style={{ marginBottom: 8 }}>
-                    <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--color-text)', marginBottom: 6 }}>Contiene</div>
-                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-                        {present.map(a => <span key={a} style={{ background: 'var(--color-navy)', color: 'white', fontWeight: 700, padding: '3px 10px', borderRadius: 20, fontSize: 11 }}>{a}</span>)}
-                    </div>
-                </div>
-            )}
-            {cross.length > 0 && (
-                <div>
-                    <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--color-text)', marginBottom: 6 }}>Può contenere tracce</div>
-                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-                        {cross.map(a => <span key={a} style={{ border: '1.5px solid var(--color-border)', color: 'var(--color-text-muted)', padding: '3px 10px', borderRadius: 20, fontSize: 11 }}>{a}</span>)}
-                    </div>
-                </div>
-            )}
-        </div>
-    );
-}
 // ─── Shared table styling ───────────────────────────────────────────────────
-const TS = {
-    table: { borderCollapse: 'collapse' as const, width: '100%', fontSize: 12 },
-    th: { background: '#000', color: 'white', padding: '5px 8px', textAlign: 'left' as const, fontSize: 11, fontWeight: 600 as const },
-    thR: { background: '#000', color: 'white', padding: '5px 8px', textAlign: 'right' as const, fontSize: 11, fontWeight: 600 as const },
-    td: { padding: '4px 8px', borderBottom: '1px solid #ddd', fontSize: 12 },
-    tdR: { padding: '4px 8px', borderBottom: '1px solid #ddd', textAlign: 'right' as const, fontSize: 12 },
-    tdB: { padding: '4px 8px', borderBottom: '1px solid #ddd', fontSize: 12, fontWeight: 700 as const },
-    tdBR: { padding: '4px 8px', borderBottom: '1px solid #ddd', textAlign: 'right' as const, fontSize: 12, fontWeight: 700 as const },
-    tdSub: { padding: '4px 8px 4px 20px', borderBottom: '1px solid #ddd', fontSize: 12, color: '#666' },
-    tdSubR: { padding: '4px 8px 4px 20px', borderBottom: '1px solid #ddd', textAlign: 'right' as const, fontSize: 12, color: '#666' },
-};
 
 // ─── TabCanada ──────────────────────────────────────────────────────────────
 function TabCanada({ p, ca, servingRef, measure, subTab, setSubTab, full }: {
@@ -2816,7 +2762,6 @@ function TabCanada({ p, ca, servingRef, measure, subTab, setSubTab, full }: {
                 // Helvetica Neue Condensed: separate font families for bold vs regular (macOS fontStretch unreliable for regular)
                 const FB = '"Helvetica Neue Condensed Bold", "HelveticaNeue-CondensedBold", "Helvetica Neue", Helvetica, Arial, sans-serif';
                 const FR = '"Helvetica Neue Condensed", "HelveticaNeue-Condensed", "Arial Narrow", Helvetica, Arial, sans-serif';
-                const F = FR; // fallback alias for non-nutrient text (serving size, DV note, footnote)
                 // Col2 row: label+val left, pct right, optional bottom rule
                 const C2 = (label: string, val: string, pct: string | null, sub: boolean, bold: boolean, rule?: 'thin' | 'thick') => (
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline',
@@ -3100,7 +3045,6 @@ function TabArabi({ p, arabi, servingRef, measure, specificGravity, full }: {
     const F  = 'Arial, Helvetica, sans-serif';
 
     const addedSugarsG   = arRndG(d.zuccheri_agg);
-    const addedSugarsPct = arPct(addedSugarsG, DV_GULF.zuccheri_agg);
     const addedSugarsStr = arFmtG(d.zuccheri_agg);
 
     const nutriRows = [
