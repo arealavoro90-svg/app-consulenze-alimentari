@@ -350,7 +350,7 @@ Punti con impatto potenzialmente critico che l'audit non ha esaminato. Da esegui
 | ✅ Done | M3 | `.sidebar-nav-icon-btn` portato da 40×40 px a 44×44 px in `index.css:668-669` |
 | ✅ Done | V5 | Bug confermato e corretto: `resa` ignorata in `peso_totale_pz`. Fix in `nutrizionaleCalcEngine.ts`: usa `g_cooked = g_raw × (resa/100)` nel denominatore, nutrienti restano su `g_raw`. Aggiunto golden test (125g crudi resa 80% → 1000 kcal/100g). 18/18 test passano. |
 | ✅ Done | V6 | Campione 10 ingredienti vs USDA/INRAN — 3 errori critici trovati (vedi sezione 7) |
-| 🔴 Ora | V7 | Accessibilità: label input, contrasto, focus, navigazione tastiera |
+| 🟡 Pianificare | V7 | Accessibilità: 6 label mancanti (CalcoloTab input), 3 modal senza role="dialog", 1 div→button, 8 testi muted <12px — vedi sezione 7 audit agente 2026-07-08 |
 | ✅ Done | V8 | Analisi completa: no FreeText annotations, no "open in new window" → CVE S1 non applicabili. Fix UX: filename sanitizzato in `NutrizionaleCalc.tsx:1701` e `pdfGenerator.ts:140` (rimozione `<>"` dal nome file). |
 | 🟡 Pianificare | S0 | Togliere `ingredientsDB.json` da `public/` → endpoint autenticato Django |
 | 🟡 Pianificare | S5 | Token JWT in localStorage → httpOnly cookies (cambio backend Django) |
