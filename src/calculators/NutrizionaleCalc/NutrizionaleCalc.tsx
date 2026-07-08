@@ -37,6 +37,7 @@ import {
     ZERO_CALC, calcNutrients, scaleResult,
 } from '../../engines/nutrizionaleCalcEngine';
 import { ALLERGEN_FIELDS, CROSS_FIELDS, ADDITIVI_CATEGORIE, ADDITIVI_SPECIFICI } from './shared/constants';
+import { writeBridge, readBridge, buildDesktopDraft } from './sessionBridge';
 
 // const DB = DB_RAW as unknown as DBIngredient[]; // Replaced with fetch state
 
@@ -1093,6 +1094,42 @@ export function NutrizionaleCalc() {
 
     useEffect(() => { loadDB(); }, [loadDB]);
 
+    // Ripristina sessione bridge quando il DB è pronto (es. dopo resize desktop↔mobile)
+    useEffect(() => {
+        if (loadingDB || db.length === 0) return;
+        const draft = readBridge();
+        if (!draft || draft.source !== 'desktop' || Date.now() - draft.timestamp > 300_000) return;
+        setProductName(draft.denominazione);
+        setFinishedWeight(draft.pesoFinito_g);
+        setSpecificGravity(draft.specificGravity);
+        const n = (s: string) => Number(s) || undefined;
+        setUE({ porzione: n(draft.ue_porzione), confezione: n(draft.ue_confezione), pezzo: n(draft.ue_pezzo) });
+        setUSA({ serving: n(draft.usa_serving), confezione: n(draft.usa_confezione), cup: n(draft.usa_cup), cucchiaio: n(draft.usa_cucchiaio), pezzo: n(draft.usa_pezzo) });
+        setCA({ serving: n(draft.ca_serving), confezione: n(draft.ca_confezione), cup: n(draft.ca_cup), cucchiaio: n(draft.ca_cucchiaio), pezzo: n(draft.ca_pezzo) });
+        setAU({ serving: n(draft.au_serving), confezione: n(draft.au_confezione), pezzo: n(draft.au_pezzo) });
+        setArabi({ serving: n(draft.arabi_serving), confezione: n(draft.arabi_confezione), cup: n(draft.arabi_cup), cucchiaio: n(draft.arabi_cucchiaio), pezzo: n(draft.arabi_pezzo) });
+        const restoredComps: Component[] = draft.components.map(c => ({
+            id: String(Date.now() + Math.random()),
+            name: c.name,
+            pzUV: c.pzUV,
+            rows: c.rows.flatMap(r => {
+                const found = db.find(dbi => dbi.nome === r.ingNome);
+                return found ? [{ id: String(Date.now() + Math.random()), ing: found, grams: r.grams, eurKg: r.eurKg, resa: r.resa }] : [];
+            }),
+            additiveRows: c.additiveRows.map(ar => ({
+                id: String(Date.now() + Math.random()),
+                categoria: ar.categoria, nomeSpecifico: ar.nomeSpecifico,
+                grams: 0, eurKg: 0, resa: 100,
+            })),
+        }));
+        const compsToSet = restoredComps.length ? restoredComps : [makeComp()];
+        setComponents(compsToSet);
+        const pzRaw: Record<string, string> = {};
+        compsToSet.forEach(c => { pzRaw[c.id] = String(c.pzUV); });
+        setPzUVRaw(pzRaw);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [loadingDB]);
+
     const addCustomIngredient = (ing: DBIngredient) => setDb(prev => [...prev, ing]);
 
     const exportCustomIngredients = useCallback(() => {
@@ -1486,6 +1523,7 @@ export function NutrizionaleCalc() {
         setCurrentId(item.id);
         setCurrentName(item.name);
         setArchiveOpen(false);
+        writeBridge(buildDesktopDraft(d, compsToSet));
     };
 
     const doResetRecipe = () => {
