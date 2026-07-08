@@ -348,7 +348,7 @@ Punti con impatto potenzialmente critico che l'audit non ha esaminato. Da esegui
 | ✅ Done | Q3 | `noUnusedLocals: true` + `noUnusedParameters: true` in tsconfig — zero errori generati |
 | ✅ Done | P3 | Cache-Control immutable su `ingredientsDB.json` (fatto insieme a S7) |
 | ✅ Done | M3 | `.sidebar-nav-icon-btn` portato da 40×40 px a 44×44 px in `index.css:668-669` |
-| 🔴 Ora | V5 | Verificare ricalcolo nutrienti dopo resa cottura in `NutrizionaleCalc.tsx` |
+| ✅ Done | V5 | Bug confermato e corretto: `resa` ignorata in `peso_totale_pz`. Fix in `nutrizionaleCalcEngine.ts`: usa `g_cooked = g_raw × (resa/100)` nel denominatore, nutrienti restano su `g_raw`. Aggiunto golden test (125g crudi resa 80% → 1000 kcal/100g). 18/18 test passano. |
 | 🔴 Ora | V6 | Campione 20 ingredienti vs tabelle CREA/BDA |
 | 🔴 Ora | V7 | Accessibilità: label input, contrasto, focus, navigazione tastiera |
 | 🔴 Ora | V8 | Test pratico PDF con caratteri speciali (`<`, `"`, parentesi) — collegato a S1 |
