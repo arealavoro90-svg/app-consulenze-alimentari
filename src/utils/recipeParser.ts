@@ -50,8 +50,16 @@ const UNIT_RE = new RegExp(
   'i'
 );
 
+// Priorità: numero ADIACENTE a unità (gestisce "500gr", "1Kg.", "350 g")
+// Evita di catturare numeri che fanno parte del nome (es: "farina 00")
+const UNIT_ATTACHED_RE = new RegExp(
+  `(\\d+\\/\\d+|\\d+[.,]\\d+|\\d+)\\s*(${UNIT_KEYS.map(k => k.replace('.', '\\.')).join('|')})\\b`,
+  'i'
+);
+
 function parseQuantity(raw: string): number {
-  const m = raw.match(QTY_RE);
+  const attached = raw.match(UNIT_ATTACHED_RE);
+  const m = attached ?? raw.match(QTY_RE);
   if (!m) return 0;
   const s = m[1];
   if (s.includes('/')) {
@@ -62,6 +70,8 @@ function parseQuantity(raw: string): number {
 }
 
 function parseUnit(text: string): string {
+  const attached = text.match(UNIT_ATTACHED_RE);
+  if (attached) return UNIT_ALIASES[attached[2].toLowerCase()] ?? 'g';
   const m = text.match(UNIT_RE);
   if (!m) return 'g';
   return UNIT_ALIASES[m[1].toLowerCase()] ?? 'g';
