@@ -349,7 +349,7 @@ Punti con impatto potenzialmente critico che l'audit non ha esaminato. Da esegui
 | ✅ Done | P3 | Cache-Control immutable su `ingredientsDB.json` (fatto insieme a S7) |
 | ✅ Done | M3 | `.sidebar-nav-icon-btn` portato da 40×40 px a 44×44 px in `index.css:668-669` |
 | ✅ Done | V5 | Bug confermato e corretto: `resa` ignorata in `peso_totale_pz`. Fix in `nutrizionaleCalcEngine.ts`: usa `g_cooked = g_raw × (resa/100)` nel denominatore, nutrienti restano su `g_raw`. Aggiunto golden test (125g crudi resa 80% → 1000 kcal/100g). 18/18 test passano. |
-| 🔴 Ora | V6 | Campione 20 ingredienti vs tabelle CREA/BDA |
+| ✅ Done | V6 | Campione 10 ingredienti vs USDA/INRAN — 3 errori critici trovati (vedi sezione 7) |
 | 🔴 Ora | V7 | Accessibilità: label input, contrasto, focus, navigazione tastiera |
 | ✅ Done | V8 | Analisi completa: no FreeText annotations, no "open in new window" → CVE S1 non applicabili. Fix UX: filename sanitizzato in `NutrizionaleCalc.tsx:1701` e `pdfGenerator.ts:140` (rimozione `<>"` dal nome file). |
 | 🟡 Pianificare | S0 | Togliere `ingredientsDB.json` da `public/` → endpoint autenticato Django |
@@ -358,6 +358,42 @@ Punti con impatto potenzialmente critico che l'audit non ha esaminato. Da esegui
 | 🟡 Pianificare | Q4 | Unificare `IngredientDB` e `DBIngredient` (due schemi stesso dominio) — roadmap Q4 |
 | 🟢 Quando comodo | 🆕 S8 | Checklist GDPR/privacy prima del go-live commerciale |
 | 🟢 Roadmap | 🆕 M6 | PWA/offline (pianificare dopo S0) |
+
+---
+
+---
+
+## 7. Errori dati — DB ingredienti (V6, 2026-07-08)
+
+Campione 10 ingredienti verificati vs USDA FoodData Central / INRAN (CREA BDA offline durante verifica).
+
+### CRITICO — Petto di pollo
+**DB: kcal=157, grassi=8.08g** vs USDA petto senza pelle crudo: kcal=106, grassi=1.93g
+
+Scarto +48% kcal, +319% grassi. Incompatibile con petto di pollo senza pelle. Probabile causa: voce importata con pelle o cotta con condimento. I saturi (2.32g vs 0.35g) confermano.
+
+**Fix:** verificare sorgente del dato e correggere con voce INRAN "Pollo, petto, senza pelle, crudo" (kcal 110, grassi 3.0g, prot 24g).
+
+### CRITICO — Lenticchie rosse (farina)
+**DB: carboidrati=41.9g, fibre=20.2g** vs lenticchie secche USDA: carbo=62.2g, fibre=10.8g
+
+Carboidrati -33%, fibre quasi doppi. Plausibile solo se è una farina con amido parzialmente rimosso (concentrato proteico). Non è generalizzabile come "lenticchie".
+
+**Fix:** aggiungere nota in etichetta che specifica il fornitore, oppure sostituire con valore INRAN lenticchie secche standard.
+
+### MEDIA — Mozzarella di bufala (sodio)
+**DB: sodio=196mg** vs valore DOP atteso: 390–450mg
+
+Circa la metà del valore tipico. Probabile errore data entry (dato da mozzarella vaccina invece di bufala).
+
+**Fix:** correggere sodio_mg a ~400mg.
+
+### MEDIA — Burro (acidi grassi saturi)
+**DB: saturi=62g** vs INRAN burro italiano: ~51–55g
+
+Sovrastimato di ~15%. Impatta i claim "ad alto contenuto di grassi saturi".
+
+### OK (allineati a valori italiani) — Acqua, latte intero, carne bovina, fagioli borlotti, pasta semola
 
 ---
 
