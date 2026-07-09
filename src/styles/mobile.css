@@ -547,3 +547,41 @@
   max-height: 0;
   opacity: 0;
 }
+
+/* ── Save flash ──────────────────────────────────────────────────────────── */
+.m-btn--saved { background: var(--m-green); color: #fff; }
+
+/* ── Scroll container ────────────────────────────────────────────────────── */
+.m-scroll-container {
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding-bottom: calc(var(--m-tabbar-h) + env(safe-area-inset-bottom, 0px) + 16px);
+}
+
+.m-section-anchor {
+  min-height: 40vh;
+  border-top: 3px solid var(--m-border);
+  padding-top: 4px;
+}
+.m-section-anchor:first-child {
+  border-top: none;
+  padding-top: 0;
+}
+
+/* ── Section sticky header ───────────────────────────────────────────────── */
+.m-section-header-sticky {
+  position: sticky;
+  top: 0;
+  z-index: 9;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 16px;
+  background: var(--m-bg);
+  border-bottom: 1px solid var(--m-border-light);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  color: var(--m-text-muted);
+}

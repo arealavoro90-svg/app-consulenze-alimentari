@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { apiFetch } from '../../api/client';
 import { useNavigate } from 'react-router-dom';
 import { Salad, ClipboardList, Globe, Archive } from 'lucide-react';
 import { useAuth } from '../../auth/AuthContext';
@@ -117,12 +118,50 @@ export type MobileTab = 'ricetta' | 'riepilogo' | 'mercati' | 'archivio';
 
 // ─── Component ────────────────────────────────────────────────────────────────
 export function NutrizionaleCalcMobile() {
-    const { user } = useAuth();
+    const { user, hasTool } = useAuth();
+    const hasExcelImport = hasTool('excel-import');
     const navigate = useNavigate();
     const archive = useArchive<MobileArchiveEntry>('nut_mobile_v2');
     const toast = useToast();
 
     const [activeTab, setActiveTab] = useState<MobileTab>('ricetta');
+
+    // ── Scroll-based navigation ───────────────────────────────────────────────
+    const sectionRefs = {
+        ricetta:   useRef<HTMLDivElement>(null),
+        riepilogo: useRef<HTMLDivElement>(null),
+        mercati:   useRef<HTMLDivElement>(null),
+        archivio:  useRef<HTMLDivElement>(null),
+    };
+
+    const goToSection = useCallback((tab: MobileTab) => {
+        setActiveTab(tab);
+        sectionRefs[tab].current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    // ponytail: refs are stable, no dep needed
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+
+    useEffect(() => {
+        const candidates = Object.entries(sectionRefs) as [MobileTab, React.RefObject<HTMLDivElement>][];
+        const observer = new IntersectionObserver(
+            (entries) => {
+                // pick the entry with highest intersectionRatio that is intersecting
+                const best = entries
+                    .filter(e => e.isIntersecting)
+                    .sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
+                if (best) {
+                    const tab = best.target.getAttribute('data-section') as MobileTab;
+                    if (tab) setActiveTab(tab);
+                }
+            },
+            { threshold: [0.2, 0.5], rootMargin: '0px 0px -30% 0px' },
+        );
+        candidates.forEach(([, ref]) => { if (ref.current) observer.observe(ref.current); });
+        return () => observer.disconnect();
+    // ponytail: refs are stable objects, intentionally omitted from deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+
     const [form, setForm] = useState<MobileNutForm>(EMPTY_FORM);
     const [components, setComponents] = useState<MobileComponent[]>([makeComponent()]);
     const [showSmartImport, setShowSmartImport] = useState(false);
@@ -133,8 +172,11 @@ export function NutrizionaleCalcMobile() {
     const [dbError, setDbError] = useState<string | null>(null);
 
     useEffect(() => {
-        fetch('/data/ingredientsDB.json')
-            .then(r => r.json())
+        // S0: carica da endpoint Django autenticato; in dev senza backend → fallback statico
+        const fromAPI = () => apiFetch<DBIngredient[]>('/api/ingredients/');
+        const fromStatic = () => fetch('/data/ingredientsDB.json').then(r => r.json() as Promise<DBIngredient[]>);
+        fromAPI()
+            .catch(() => fromStatic())
             .then((data: DBIngredient[]) => {
                 let base = data;
                 try {
@@ -219,19 +261,27 @@ export function NutrizionaleCalcMobile() {
         setComponents(prev => [...prev, makeComponent()]);
 
     const handleSmartImportMobile = useCallback((result: SmartImportResult) => {
-        const targetId = components[0]?.id;
-        if (!targetId) return;
-        setComponents((prev: MobileComponent[]) => prev.map((c: MobileComponent) => {
-            if (c.id !== targetId) return c;
-            const newRows: RecipeRow[] = result.rows.map(r => ({
-                id: String(Date.now() + Math.random()),
-                ing: r.ing,
-                grams: r.grams,
-                eurKg: r.ing.eur_kg ?? 0,
-                resa: 100,
-            }));
-            return { ...c, rows: [...c.rows, ...newRows] };
-        }));
+        if (!result.components.length) return;
+        const firstId = components[0]?.id;
+        setComponents((prev: MobileComponent[]) => {
+            let updated = prev;
+            result.components.forEach((comp, ci) => {
+                const newRows: RecipeRow[] = comp.rows.map(r => ({
+                    id: String(Date.now() + Math.random()),
+                    ing: r.ing,
+                    grams: r.grams,
+                    eurKg: r.ing.eur_kg ?? 0,
+                    resa: 100,
+                }));
+                if (ci === 0 && firstId) {
+                    const name = result.productName || comp.name;
+                    updated = updated.map((c: MobileComponent) => c.id !== firstId ? c : { ...c, rows: [...c.rows, ...newRows], name: c.name || name });
+                } else {
+                    updated = [...updated, { ...makeComponent(), name: comp.name, rows: newRows }];
+                }
+            });
+            return updated;
+        });
     }, [components]);
 
     const removeComponent = (id: string) =>
@@ -281,7 +331,7 @@ export function NutrizionaleCalcMobile() {
     const loadFromArchive = (entry: MobileArchiveEntry) => {
         setForm(entry.form ?? EMPTY_FORM);
         setComponents(entry.components?.length ? entry.components : [makeComponent()]);
-        setActiveTab('ricetta');
+        goToSection('ricetta');
     };
 
     const pesoFinito = parseFloat(form.pesoFinito_g) || 0;
@@ -328,14 +378,22 @@ export function NutrizionaleCalcMobile() {
 
     const hasIngredients = components.some(c => c.rows.length > 0);
 
-    const renderTab = () => {
-        switch (activeTab) {
-            case 'ricetta':
-                return (
+    // Redirect se non autenticato
+    if (!user) { navigate('/login'); return null; }
+
+    return (
+        <div style={{ minHeight: '100%', background: 'var(--m-bg)' }}>
+            <div className="m-scroll-container">
+                {/* ── Ricetta ── */}
+                <div ref={sectionRefs.ricetta} data-section="ricetta" className="m-section-anchor">
+                    <div className="m-section-header-sticky">
+                        <Salad size={14} style={{ color: 'var(--m-orange)' }} />
+                        Ricetta
+                    </div>
                     <CalcoloTab
                         form={form}
                         onChange={updateForm}
-                        onGoToTabella={() => setActiveTab('mercati')}
+                        onGoToTabella={() => goToSection('mercati')}
                         db={db}
                         loadingDB={loadingDB}
                         dbError={dbError}
@@ -351,19 +409,31 @@ export function NutrizionaleCalcMobile() {
                         onRemoveAdditiveRow={removeAdditiveRow}
                         onUpdateAdditiveRow={updateAdditiveRow}
                         onOpenSmartImport={() => setShowSmartImport(true)}
+                        onOpenArchive={() => goToSection('archivio')}
+                        hasExcelImport={hasExcelImport}
                     />
-                );
-            case 'riepilogo':
-                return (
+                </div>
+
+                {/* ── Riepilogo ── */}
+                <div ref={sectionRefs.riepilogo} data-section="riepilogo" className="m-section-anchor">
+                    <div className="m-section-header-sticky">
+                        <ClipboardList size={14} style={{ color: 'var(--m-orange)' }} />
+                        Riepilogo
+                    </div>
                     <RiepilogoTab
                         components={components}
                         pesoFinito={parseFloat(form.pesoFinito_g) || 0}
                         presentAllergens={presentAllergens}
                         crossAllergens={crossAllergens}
                     />
-                );
-            case 'mercati':
-                return (
+                </div>
+
+                {/* ── Mercati ── */}
+                <div ref={sectionRefs.mercati} data-section="mercati" className="m-section-anchor">
+                    <div className="m-section-header-sticky">
+                        <Globe size={14} style={{ color: 'var(--m-orange)' }} />
+                        Mercati
+                    </div>
                     <TabellaTab
                         calcResult={calcResult}
                         form={form}
@@ -386,25 +456,20 @@ export function NutrizionaleCalcMobile() {
                         presentAllergens={presentAllergens}
                         crossAllergens={crossAllergens}
                     />
-                );
-            case 'archivio':
-                return (
+                </div>
+
+                {/* ── Archivio ── */}
+                <div ref={sectionRefs.archivio} data-section="archivio" className="m-section-anchor">
+                    <div className="m-section-header-sticky">
+                        <Archive size={14} style={{ color: 'var(--m-orange)' }} />
+                        Archivio
+                    </div>
                     <ArchivioTab
                         items={archive.items}
                         onLoad={(entry) => loadFromArchive(entry)}
                         onDelete={(id) => archive.deleteItem(id)}
                     />
-                );
-        }
-    };
-
-    // Redirect se non autenticato
-    if (!user) { navigate('/login'); return null; }
-
-    return (
-        <div style={{ minHeight: '100%', background: 'var(--m-bg)' }}>
-            <div key={activeTab} className="m-tab-content m-tab-enter">
-                {renderTab()}
+                </div>
             </div>
 
             {showSmartImport && (
@@ -422,7 +487,7 @@ export function NutrizionaleCalcMobile() {
                         key={tab.id}
                         type="button"
                         className="m-tabbar__item"
-                        onClick={() => setActiveTab(tab.id)}
+                        onClick={() => goToSection(tab.id)}
                         aria-current={activeTab === tab.id ? 'page' : undefined}
                     >
                         <span className={`m-tabbar__icon${activeTab === tab.id ? ' m-tabbar__icon--active' : ''}`}>
