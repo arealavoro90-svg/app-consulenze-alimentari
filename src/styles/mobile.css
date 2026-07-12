@@ -14,6 +14,7 @@
   --m-text-faint:   rgba(12, 19, 38, 0.25);
   --m-topbar-h:     52px;
   --m-tabbar-h:     64px;
+  --m-inner-tabs-h: 36px;
   --m-radius-sm:    6px;
   --m-radius-md:    10px;
   --m-radius-lg:    14px;
@@ -568,6 +569,27 @@
   padding-top: 0;
 }
 
+/* ── Print (tabella stampabile) ─────────────────────────────────────────── */
+@media print {
+  /* Nascondi tutto tranne la tabella attiva */
+  body > *:not(#root) { display: none !important; }
+  .m-tabbar,
+  .m-cta-bar,
+  .m-section-header-sticky,
+  .m-region-tabs,
+  .m-section,
+  .m-serving-grid,
+  .m-segmented,
+  .m-expand-btn,
+  nav,
+  button { display: none !important; }
+
+  /* Mostra solo il contenuto della tabella */
+  .m-scroll-container { overflow: visible !important; padding: 0 !important; }
+  .m-section-anchor { border: none !important; min-height: unset !important; }
+  .m-market-enter { page-break-inside: avoid; }
+}
+
 /* ── Section sticky header ───────────────────────────────────────────────── */
 .m-section-header-sticky {
   position: sticky;
@@ -585,3 +607,276 @@
   text-transform: uppercase;
   color: var(--m-text-muted);
 }
+
+/* ── m-page variante tool (no overflow, no padding-bottom fisso) ─────────── */
+.m-page--tool {
+  overflow: hidden;
+  padding-bottom: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── Topbar variante tool ────────────────────────────────────────────────── */
+.m-topbar--tool {
+  background: linear-gradient(135deg, #0c1326 0%, #111d35 100%);
+}
+.m-topbar__back {
+  color: var(--m-orange);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: -0.2px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  -webkit-tap-highlight-color: transparent;
+  display: flex;
+  align-items: center;
+}
+.m-topbar__center {
+  text-align: center;
+  flex: 1;
+}
+.m-topbar__sub {
+  color: rgba(255, 126, 46, 0.6);
+  font-size: 8px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  margin-top: 1px;
+}
+
+/* ── Inner tabs (sezioni del tool, sotto topbar) ─────────────────────────── */
+.m-inner-tabs {
+  display: flex;
+  background: var(--m-navy);
+  height: var(--m-inner-tabs-h);
+  flex-shrink: 0;
+}
+.m-inner-tab {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 8px;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.3);
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  cursor: pointer;
+  position: relative;
+  border: none;
+  background: none;
+  -webkit-tap-highlight-color: transparent;
+  transition: color 0.15s;
+}
+.m-inner-tab--active {
+  color: var(--m-orange);
+}
+.m-inner-tab--active::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 20%;
+  right: 20%;
+  height: 2px;
+  background: var(--m-orange);
+  border-radius: 2px 2px 0 0;
+}
+
+/* ── Slide container ─────────────────────────────────────────────────────── */
+.m-slide-wrapper {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+}
+.m-slide-container {
+  flex: 1;
+  overflow: hidden;
+  min-height: 0;
+}
+.m-slide-track {
+  display: flex;
+  width: 400%;
+  height: 100%;
+  transition: transform 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+  will-change: transform;
+}
+.m-slide-panel {
+  width: 25%;
+  height: 100%;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  flex-shrink: 0;
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+/* ── Dot indicator (posizione slide) ─────────────────────────────────────── */
+.m-dot-indicator {
+  display: flex;
+  justify-content: center;
+  gap: 5px;
+  padding: 7px 0;
+  background: var(--m-bg);
+  flex-shrink: 0;
+}
+.m-dot-indicator__pip {
+  width: 18px;
+  height: 3px;
+  border-radius: 2px;
+  background: rgba(12, 19, 38, 0.1);
+  transition: width 0.2s, background 0.2s;
+}
+.m-dot-indicator__pip--active {
+  background: var(--m-orange);
+  width: 24px;
+}
+
+/* ── Bold/Branded: product header ────────────────────────────────────────── */
+.m-product-header {
+  background: var(--m-surface);
+  border-left: 3px solid var(--m-orange);
+  border-radius: var(--m-radius-md);
+  padding: 10px 12px;
+  margin: 12px 16px 8px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+}
+.m-product-header__label {
+  font-size: 9px;
+  font-weight: 700;
+  color: var(--m-text-muted);
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  margin-bottom: 3px;
+}
+.m-product-header__name {
+  font-size: 14px;
+  font-weight: 900;
+  color: var(--m-text);
+  letter-spacing: -0.3px;
+}
+.m-product-header__meta {
+  font-size: 10px;
+  color: var(--m-text-muted);
+  margin-top: 2px;
+}
+
+/* ── Bold/Branded: ingredient card ──────────────────────────────────────── */
+.m-ing-card {
+  background: var(--m-surface);
+  border-radius: var(--m-radius-md);
+  padding: 8px 10px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+.m-ing-card__dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--m-orange);
+  flex-shrink: 0;
+}
+.m-ing-card__name {
+  flex: 1;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--m-text);
+}
+.m-ing-card__grams {
+  font-size: 12px;
+  font-weight: 900;
+  color: var(--m-orange);
+  font-family: 'Courier New', monospace;
+}
+
+/* ── Bold/Branded: energy strip ──────────────────────────────────────────── */
+.m-energy-strip {
+  background: linear-gradient(135deg, var(--m-orange) 0%, #dd5c0c 100%);
+  border-radius: var(--m-radius-md);
+  padding: 12px 16px;
+  margin: 12px 16px 8px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.m-energy-strip__label {
+  font-size: 9px;
+  font-weight: 800;
+  color: rgba(255, 255, 255, 0.8);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.m-energy-strip__unit {
+  font-size: 9px;
+  color: rgba(255, 255, 255, 0.6);
+  margin-top: 2px;
+}
+.m-energy-strip__value {
+  font-size: 28px;
+  font-weight: 900;
+  color: #fff;
+  font-family: 'Courier New', monospace;
+  letter-spacing: -1px;
+  line-height: 1;
+  text-align: right;
+}
+.m-energy-strip__kj {
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.7);
+  text-align: right;
+  margin-top: 2px;
+}
+
+/* ── Bold/Branded: nutrient card ─────────────────────────────────────────── */
+.m-nut-card {
+  background: var(--m-surface);
+  border-radius: var(--m-radius-md);
+  overflow: hidden;
+  margin: 0 16px 8px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+}
+.m-nut-card__header {
+  background: var(--m-navy);
+  padding: 8px 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.m-nut-card__title {
+  color: #fff;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+}
+.m-nut-card__per {
+  color: rgba(255, 126, 46, 0.8);
+  font-size: 9px;
+  font-weight: 600;
+}
+.m-nut-card__row {
+  padding: 7px 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid rgba(12, 19, 38, 0.04);
+}
+.m-nut-card__row:last-child { border-bottom: none; }
+.m-nut-card__key {
+  font-size: 11px;
+  color: var(--m-text-muted);
+  font-weight: 600;
+}
+.m-nut-card__key--sub {
+  padding-left: 12px;
+  font-size: 10px;
+}
+.m-nut-card__val {
+  font-size: 12px;
+  font-weight: 900;
+  color: var(--m-text);
+  font-family: 'Courier New', monospace;
+}
+.m-nut-card__val--accent { color: var(--m-orange); }
