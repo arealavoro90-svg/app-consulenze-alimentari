@@ -1,15 +1,14 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { apiFetch } from '../../api/client';
 import { useNavigate } from 'react-router-dom';
 import { Salad, ClipboardList, Globe, Archive } from 'lucide-react';
 import { useAuth } from '../../auth/AuthContext';
 import { useArchive } from '../../hooks/useArchive';
+import { useAutosave } from '../../hooks/useAutosave';
 import { CalcoloTab } from './mobile/CalcoloTab';
 import { TabellaTab } from './mobile/TabellaTab';
 import { RiepilogoTab } from './mobile/RiepilogoTab';
 import { ArchivioTab } from './mobile/ArchivioTab';
-import jsPDF from 'jspdf';
-import html2canvas from 'html2canvas';
 import { readBridge } from './sessionBridge';
 import { SmartImportModal } from './SmartImportModal';
 import type { SmartImportResult } from './SmartImportModal';
@@ -126,45 +125,18 @@ export function NutrizionaleCalcMobile() {
 
     const [activeTab, setActiveTab] = useState<MobileTab>('ricetta');
 
-    // ── Scroll-based navigation ───────────────────────────────────────────────
-    const sectionRefs = {
-        ricetta:   useRef<HTMLDivElement>(null),
-        riepilogo: useRef<HTMLDivElement>(null),
-        mercati:   useRef<HTMLDivElement>(null),
-        archivio:  useRef<HTMLDivElement>(null),
-    };
+    const TAB_ORDER: MobileTab[] = ['ricetta', 'riepilogo', 'mercati', 'archivio'];
 
     const goToSection = useCallback((tab: MobileTab) => {
         setActiveTab(tab);
-        sectionRefs[tab].current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    // ponytail: refs are stable, no dep needed
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
-
-    useEffect(() => {
-        const candidates = Object.entries(sectionRefs) as [MobileTab, React.RefObject<HTMLDivElement>][];
-        const observer = new IntersectionObserver(
-            (entries) => {
-                // pick the entry with highest intersectionRatio that is intersecting
-                const best = entries
-                    .filter(e => e.isIntersecting)
-                    .sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
-                if (best) {
-                    const tab = best.target.getAttribute('data-section') as MobileTab;
-                    if (tab) setActiveTab(tab);
-                }
-            },
-            { threshold: [0.2, 0.5], rootMargin: '0px 0px -30% 0px' },
-        );
-        candidates.forEach(([, ref]) => { if (ref.current) observer.observe(ref.current); });
-        return () => observer.disconnect();
-    // ponytail: refs are stable objects, intentionally omitted from deps
-    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     const [form, setForm] = useState<MobileNutForm>(EMPTY_FORM);
     const [components, setComponents] = useState<MobileComponent[]>([makeComponent()]);
     const [showSmartImport, setShowSmartImport] = useState(false);
+
+    const AUTOSAVE_KEY = 'nut_mobile_autosave_v1';
+    const { loadDraft } = useAutosave(AUTOSAVE_KEY, { form, components }, true, 2000);
 
     // Database ingredienti
     const [db, setDb] = useState<DBIngredient[]>([]);
@@ -214,7 +186,7 @@ export function NutrizionaleCalcMobile() {
                             resa: (ar as { resa?: number }).resa ?? 100,
                         })),
                     }));
-                    if (mobileComps.some(c => c.rows.length > 0)) {
+                    if (mobileComps.some((c: MobileComponent) => c.rows.length > 0)) {
                         setComponents(mobileComps);
                         setForm({
                             denominazione:    draft.denominazione,
@@ -243,6 +215,14 @@ export function NutrizionaleCalcMobile() {
                             arabi_pezzo:      draft.arabi_pezzo,
                             specificGravity:  draft.specificGravity,
                         });
+                    }
+                } else {
+                    // Nessun bridge desktop → ripristina autosave mobile (se presente)
+                    const saved = loadDraft();
+                    if (saved?.components?.some((c: MobileComponent) => c.rows.length > 0)) {
+                        setForm(saved.form);
+                        setComponents(saved.components);
+                        console.info('[autosave] Bozza mobile ripristinata.');
                     }
                 }
             })
@@ -359,21 +339,8 @@ export function NutrizionaleCalcMobile() {
         { id: 'archivio',  label: 'Archivio',  icon: <Archive size={18} /> },
     ];
 
-    const handleExportPDF = async (_region: string) => {
-        const previewEl = document.querySelector('.m-table-preview') as HTMLElement | null;
-        if (!previewEl) return;
-        try {
-            const canvas = await html2canvas(previewEl, { scale: 2, useCORS: true });
-            const imgData = canvas.toDataURL('image/png');
-            const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
-            const w = pdf.internal.pageSize.getWidth();
-            const ratio = canvas.height / canvas.width;
-            pdf.addImage(imgData, 'PNG', 10, 10, w - 20, (w - 20) * ratio);
-            pdf.save(`${form.denominazione || 'tabella'}_${_region}.pdf`);
-        } catch (e) {
-            console.error('PDF export failed', e);
-            toast.error('Errore durante l\'esportazione.');
-        }
+    const handleExportPDF = (_region: string) => {
+        window.print();
     };
 
     const hasIngredients = components.some(c => c.rows.length > 0);
@@ -381,97 +348,116 @@ export function NutrizionaleCalcMobile() {
     // Redirect se non autenticato
     if (!user) { navigate('/login'); return null; }
 
+    const tabIndex = TAB_ORDER.indexOf(activeTab);
+
     return (
-        <div style={{ minHeight: '100%', background: 'var(--m-bg)' }}>
-            <div className="m-scroll-container">
-                {/* ── Ricetta ── */}
-                <div ref={sectionRefs.ricetta} data-section="ricetta" className="m-section-anchor">
-                    <div className="m-section-header-sticky">
-                        <Salad size={14} style={{ color: 'var(--m-orange)' }} />
-                        Ricetta
-                    </div>
-                    <CalcoloTab
-                        form={form}
-                        onChange={updateForm}
-                        onGoToTabella={() => goToSection('mercati')}
-                        db={db}
-                        loadingDB={loadingDB}
-                        dbError={dbError}
-                        components={components}
-                        onAddComponent={addComponent}
-                        onRemoveComponent={removeComponent}
-                        onUpdateComponentName={updateComponentName}
-                        onUpdateComponentPzUV={updateComponentPzUV}
-                        onAddRow={addRow}
-                        onRemoveRow={removeRow}
-                        onUpdateRow={updateRow}
-                        onAddAdditiveRow={addAdditiveRow}
-                        onRemoveAdditiveRow={removeAdditiveRow}
-                        onUpdateAdditiveRow={updateAdditiveRow}
-                        onOpenSmartImport={() => setShowSmartImport(true)}
-                        onOpenArchive={() => goToSection('archivio')}
-                        hasExcelImport={hasExcelImport}
-                    />
-                </div>
+        <div className="m-slide-wrapper">
+            {/* ── Inner tabs (sezioni) ── */}
+            <nav className="m-inner-tabs" role="tablist">
+                {tabs.map(tab => (
+                    <button
+                        key={tab.id}
+                        type="button"
+                        role="tab"
+                        aria-selected={activeTab === tab.id}
+                        className={`m-inner-tab${activeTab === tab.id ? ' m-inner-tab--active' : ''}`}
+                        onClick={() => setActiveTab(tab.id)}
+                    >
+                        {tab.label}
+                    </button>
+                ))}
+            </nav>
 
-                {/* ── Riepilogo ── */}
-                <div ref={sectionRefs.riepilogo} data-section="riepilogo" className="m-section-anchor">
-                    <div className="m-section-header-sticky">
-                        <ClipboardList size={14} style={{ color: 'var(--m-orange)' }} />
-                        Riepilogo
+            {/* ── Slide container ── */}
+            <div className="m-slide-container">
+                <div
+                    className="m-slide-track"
+                    style={{ transform: `translateX(-${tabIndex * 25}%)` }}
+                >
+                    {/* Panel 0: Ricetta */}
+                    <div className="m-slide-panel">
+                        <CalcoloTab
+                            form={form}
+                            onChange={updateForm}
+                            onGoToTabella={() => goToSection('mercati')}
+                            db={db}
+                            loadingDB={loadingDB}
+                            dbError={dbError}
+                            components={components}
+                            onAddComponent={addComponent}
+                            onRemoveComponent={removeComponent}
+                            onUpdateComponentName={updateComponentName}
+                            onUpdateComponentPzUV={updateComponentPzUV}
+                            onAddRow={addRow}
+                            onRemoveRow={removeRow}
+                            onUpdateRow={updateRow}
+                            onAddAdditiveRow={addAdditiveRow}
+                            onRemoveAdditiveRow={removeAdditiveRow}
+                            onUpdateAdditiveRow={updateAdditiveRow}
+                            onOpenSmartImport={() => setShowSmartImport(true)}
+                            onOpenArchive={() => goToSection('archivio')}
+                            hasExcelImport={hasExcelImport}
+                        />
                     </div>
-                    <RiepilogoTab
-                        components={components}
-                        pesoFinito={parseFloat(form.pesoFinito_g) || 0}
-                        presentAllergens={presentAllergens}
-                        crossAllergens={crossAllergens}
-                    />
-                </div>
 
-                {/* ── Mercati ── */}
-                <div ref={sectionRefs.mercati} data-section="mercati" className="m-section-anchor">
-                    <div className="m-section-header-sticky">
-                        <Globe size={14} style={{ color: 'var(--m-orange)' }} />
-                        Mercati
+                    {/* Panel 1: Riepilogo */}
+                    <div className="m-slide-panel">
+                        <RiepilogoTab
+                            components={components}
+                            pesoFinito={parseFloat(form.pesoFinito_g) || 0}
+                            presentAllergens={presentAllergens}
+                            crossAllergens={crossAllergens}
+                        />
                     </div>
-                    <TabellaTab
-                        calcResult={calcResult}
-                        form={form}
-                        onChange={updateForm}
-                        onSave={(region) => {
-                            archive.saveItem(
-                                form.denominazione || 'Senza nome',
-                                {
-                                    denominazione: form.denominazione,
-                                    porzione_g: parseFloat(form.porzione_g) || 100,
-                                    region,
-                                    calcResult,
-                                    form,
-                                    components,
-                                }
-                            );
-                        }}
-                        onExportPDF={handleExportPDF}
-                        hasIngredients={hasIngredients}
-                        presentAllergens={presentAllergens}
-                        crossAllergens={crossAllergens}
-                    />
-                </div>
 
-                {/* ── Archivio ── */}
-                <div ref={sectionRefs.archivio} data-section="archivio" className="m-section-anchor">
-                    <div className="m-section-header-sticky">
-                        <Archive size={14} style={{ color: 'var(--m-orange)' }} />
-                        Archivio
+                    {/* Panel 2: Mercati */}
+                    <div className="m-slide-panel">
+                        <TabellaTab
+                            calcResult={calcResult}
+                            form={form}
+                            onChange={updateForm}
+                            onSave={(region) => {
+                                archive.saveItem(
+                                    form.denominazione || 'Senza nome',
+                                    {
+                                        denominazione: form.denominazione,
+                                        porzione_g: parseFloat(form.porzione_g) || 100,
+                                        region,
+                                        calcResult,
+                                        form,
+                                        components,
+                                    }
+                                );
+                            }}
+                            onExportPDF={handleExportPDF}
+                            hasIngredients={hasIngredients}
+                            presentAllergens={presentAllergens}
+                            crossAllergens={crossAllergens}
+                        />
                     </div>
-                    <ArchivioTab
-                        items={archive.items}
-                        onLoad={(entry) => loadFromArchive(entry)}
-                        onDelete={(id) => archive.deleteItem(id)}
-                    />
+
+                    {/* Panel 3: Archivio */}
+                    <div className="m-slide-panel">
+                        <ArchivioTab
+                            items={archive.items}
+                            onLoad={(entry) => loadFromArchive(entry)}
+                            onDelete={(id) => archive.deleteItem(id)}
+                        />
+                    </div>
                 </div>
             </div>
 
+            {/* ── Dot indicator ── */}
+            <div className="m-dot-indicator" aria-hidden="true">
+                {TAB_ORDER.map((t, i) => (
+                    <div
+                        key={t}
+                        className={`m-dot-indicator__pip${i === tabIndex ? ' m-dot-indicator__pip--active' : ''}`}
+                    />
+                ))}
+            </div>
+
+            {/* ── SmartImport modal ── */}
             {showSmartImport && (
                 <SmartImportModal
                     db={db}
@@ -479,26 +465,6 @@ export function NutrizionaleCalcMobile() {
                     onImport={handleSmartImportMobile}
                 />
             )}
-
-            {/* Bottom Tab Bar */}
-            <nav className="m-tabbar" aria-label="Navigazione principale">
-                {tabs.map(tab => (
-                    <button
-                        key={tab.id}
-                        type="button"
-                        className="m-tabbar__item"
-                        onClick={() => goToSection(tab.id)}
-                        aria-current={activeTab === tab.id ? 'page' : undefined}
-                    >
-                        <span className={`m-tabbar__icon${activeTab === tab.id ? ' m-tabbar__icon--active' : ''}`}>
-                            {tab.icon}
-                        </span>
-                        <span className={`m-tabbar__label${activeTab === tab.id ? ' m-tabbar__label--active' : ''}`}>
-                            {tab.label}
-                        </span>
-                    </button>
-                ))}
-            </nav>
         </div>
     );
 }
