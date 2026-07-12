@@ -24,7 +24,8 @@ export function AppShell() {
     const pageLabel = ROUTE_LABELS[location.pathname] ?? 'Portale';
 
     if (isMobile) {
-        return <MobileShell pageLabel={pageLabel} />;
+        const insideTool = location.pathname.startsWith('/tool/');
+        return <MobileShell pageLabel={pageLabel} insideTool={insideTool} />;
     }
 
     return (
