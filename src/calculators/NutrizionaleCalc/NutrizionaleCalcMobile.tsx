@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { apiFetch } from '../../api/client';
 import { useNavigate } from 'react-router-dom';
 import { Salad, ClipboardList, Globe, Archive } from 'lucide-react';
@@ -134,6 +134,7 @@ export function NutrizionaleCalcMobile() {
     const [form, setForm] = useState<MobileNutForm>(EMPTY_FORM);
     const [components, setComponents] = useState<MobileComponent[]>([makeComponent()]);
     const [showSmartImport, setShowSmartImport] = useState(false);
+    const [currentRegion, setCurrentRegion] = useState<MobileArchiveEntry['region'] | null>(null);
 
     const AUTOSAVE_KEY = 'nut_mobile_autosave_v1';
     const { loadDraft } = useAutosave(AUTOSAVE_KEY, { form, components }, true, 2000);
@@ -222,7 +223,6 @@ export function NutrizionaleCalcMobile() {
                     if (saved?.components?.some((c: MobileComponent) => c.rows.length > 0)) {
                         setForm(saved.form);
                         setComponents(saved.components);
-                        console.info('[autosave] Bozza mobile ripristinata.');
                     }
                 }
             })
@@ -311,32 +311,33 @@ export function NutrizionaleCalcMobile() {
     const loadFromArchive = (entry: MobileArchiveEntry) => {
         setForm(entry.form ?? EMPTY_FORM);
         setComponents(entry.components?.length ? entry.components : [makeComponent()]);
+        setCurrentRegion(entry.region);
         goToSection('ricetta');
     };
 
     const pesoFinito = parseFloat(form.pesoFinito_g) || 0;
-    const calcResult = calcNutrients(components, pesoFinito);
+    const calcResult = useMemo(() => calcNutrients(components, pesoFinito), [components, pesoFinito]);
 
     // Allergenici calcolati dagli ingredienti
-    const allIngredients = components.flatMap(c => c.rows.map(r => r.ing));
-    const presentAllergens: string[] = (() => {
+    const allIngredients = useMemo(() => components.flatMap(c => c.rows.map(r => r.ing)), [components]);
+    const presentAllergens = useMemo<string[]>(() => {
         const set = new Set<string>();
         allIngredients.forEach(ing => ALLERGEN_FIELDS.forEach(({ key, label }) => { if (ing[key]) set.add(label); }));
         return [...set];
-    })();
-    const crossAllergens: string[] = (() => {
+    }, [allIngredients]);
+    const crossAllergens = useMemo<string[]>(() => {
         const set = new Set<string>();
         allIngredients.forEach(ing => CROSS_FIELDS.forEach(({ key, label }) => {
             if (ing[key] && !presentAllergens.includes(label)) set.add(label);
         }));
         return [...set];
-    })();
+    }, [allIngredients, presentAllergens]);
 
     const tabs: { id: MobileTab; label: string; icon: React.ReactNode }[] = [
-        { id: 'ricetta',   label: 'Ricetta',   icon: <Salad size={18} /> },
-        { id: 'riepilogo', label: 'Riepilogo', icon: <ClipboardList size={18} /> },
-        { id: 'mercati',   label: 'Mercati',   icon: <Globe size={18} /> },
-        { id: 'archivio',  label: 'Archivio',  icon: <Archive size={18} /> },
+        { id: 'ricetta',   label: 'Ricetta',   icon: <Salad size={21} /> },
+        { id: 'riepilogo', label: 'Riepilogo', icon: <ClipboardList size={21} /> },
+        { id: 'mercati',   label: 'Mercati',   icon: <Globe size={21} /> },
+        { id: 'archivio',  label: 'Archivio',  icon: <Archive size={21} /> },
     ];
 
     const handleExportPDF = (_region: string) => {
@@ -352,22 +353,6 @@ export function NutrizionaleCalcMobile() {
 
     return (
         <div className="m-slide-wrapper">
-            {/* ── Inner tabs (sezioni) ── */}
-            <nav className="m-inner-tabs" role="tablist">
-                {tabs.map(tab => (
-                    <button
-                        key={tab.id}
-                        type="button"
-                        role="tab"
-                        aria-selected={activeTab === tab.id}
-                        className={`m-inner-tab${activeTab === tab.id ? ' m-inner-tab--active' : ''}`}
-                        onClick={() => setActiveTab(tab.id)}
-                    >
-                        {tab.label}
-                    </button>
-                ))}
-            </nav>
-
             {/* ── Slide container ── */}
             <div className="m-slide-container">
                 <div
@@ -397,6 +382,7 @@ export function NutrizionaleCalcMobile() {
                             onOpenSmartImport={() => setShowSmartImport(true)}
                             onOpenArchive={() => goToSection('archivio')}
                             hasExcelImport={hasExcelImport}
+                            calcResult={calcResult}
                         />
                     </div>
 
@@ -433,6 +419,7 @@ export function NutrizionaleCalcMobile() {
                             hasIngredients={hasIngredients}
                             presentAllergens={presentAllergens}
                             crossAllergens={crossAllergens}
+                            initialRegion={currentRegion ?? undefined}
                         />
                     </div>
 
@@ -447,15 +434,25 @@ export function NutrizionaleCalcMobile() {
                 </div>
             </div>
 
-            {/* ── Dot indicator ── */}
-            <div className="m-dot-indicator" aria-hidden="true">
-                {TAB_ORDER.map((t, i) => (
-                    <div
-                        key={t}
-                        className={`m-dot-indicator__pip${i === tabIndex ? ' m-dot-indicator__pip--active' : ''}`}
-                    />
-                ))}
-            </div>
+            {/* ── Section tab bar (icone in basso) ── */}
+            <nav className="m-section-tabbar" role="tablist" aria-label="Sezioni">
+                {tabs.map(tab => {
+                    const isActive = activeTab === tab.id;
+                    return (
+                        <button
+                            key={tab.id}
+                            type="button"
+                            role="tab"
+                            aria-selected={isActive}
+                            className={`m-section-tabbar__item${isActive ? ' m-section-tabbar__item--active' : ''}`}
+                            onClick={() => setActiveTab(tab.id)}
+                        >
+                            <span className="m-section-tabbar__icon">{tab.icon}</span>
+                            <span className="m-section-tabbar__label">{tab.label}</span>
+                        </button>
+                    );
+                })}
+            </nav>
 
             {/* ── SmartImport modal ── */}
             {showSmartImport && (

@@ -1,3 +1,5 @@
+import { rCA_energy, rCA_fat, rCA_carb, rCA_chol, rCA_na, rCA_iron, rCA_pct } from '../../utils/nutritionalRounding';
+
 // ─── Shared types ─────────────────────────────────────────────────────────────
 export interface CalcResult {
     energyKcal: number; energyKj: number; grassi: number; saturi: number;
@@ -39,31 +41,6 @@ function scaleResult(r: CalcResult, grams: number): CalcResult {
     }
     return s;
 }
-
-// ─── Rounding helpers (Health Canada) ────────────────────────────────────────
-function rCA_energy(v: number): string {
-    if (v < 5) return '0';
-    if (v <= 50) return (Math.round(v / 5) * 5).toString();
-    return (Math.round(v / 10) * 10).toString();
-}
-function rCA_fat(v: number): string {
-    if (v < 0.5) return '0';
-    if (v <= 5) return (Math.round(v / 0.5) * 0.5).toFixed(1);
-    return Math.round(v).toString();
-}
-function rCA_carb(v: number): string { return v < 0.5 ? '0' : Math.round(v).toString(); }
-function rCA_chol(v: number): string {
-    if (v < 2) return '0';
-    if (v <= 5) return 'less than 5';
-    return Math.round(v).toString();
-}
-function rCA_na(v: number): string {
-    if (v < 5) return '0';
-    if (v <= 140) return (Math.round(v / 5) * 5).toString();
-    return (Math.round(v / 10) * 10).toString();
-}
-function rCA_iron(v: number): string { return v < 0.05 ? '0' : v.toFixed(1); }
-function rCA_pct(v: number, dv: number): string { return Math.round(v / dv * 100).toString(); }
 
 // ─── Props ────────────────────────────────────────────────────────────────────
 interface TabCanadaProps {

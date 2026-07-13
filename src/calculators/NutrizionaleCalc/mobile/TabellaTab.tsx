@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Settings2 } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Settings2, X, Maximize2, Download } from 'lucide-react';
 import { TabUE, DEFAULT_OPTIONALS } from '../TabUE';
 import { TabUSA } from '../TabUSA';
 import { TabCanada } from '../TabCanada';
@@ -9,6 +9,7 @@ import { NutrientSelectModal } from '../NutrientSelectModal';
 import type { EUSubTab, SelectedOptionals } from '../TabUE';
 import type { USAServingRef, USAMeasure } from '../TabUSA';
 import type { CalcResult, MobileNutForm } from '../NutrizionaleCalcMobile';
+import { calcClaims } from '../../../engines/nutrizionaleCalcEngine';
 
 type Region = 'UE' | 'USA' | 'Canada' | 'Australia' | 'Arabi';
 type SubTab = 'verticale' | 'orizzontale' | 'lineare';
@@ -22,6 +23,7 @@ interface Props {
     hasIngredients?: boolean;
     presentAllergens?: string[];
     crossAllergens?: string[];
+    initialRegion?: Region;
 }
 
 const REGIONS: { id: Region; label: string; sub: string }[] = [
@@ -35,26 +37,33 @@ const REGIONS: { id: Region; label: string; sub: string }[] = [
 function nf(v: string): number { const x = parseFloat(v); return isNaN(x) ? 0 : x; }
 
 // ─── Segmented control (44px touch targets) ───────────────────────────────────
+// inline: label + chips su una riga sola (M2). disabled: opzione spenta finché manca il peso (M3).
 function SegmentedControl<T extends string>({
     label,
     options,
     value,
     onChange,
+    inline = false,
 }: {
     label: string;
-    options: { v: T; label: string }[];
+    options: { v: T; label: string; disabled?: boolean }[];
     value: T;
     onChange: (v: T) => void;
+    inline?: boolean;
 }) {
     return (
-        <div style={{ marginBottom: 10 }}>
-            <span className="m-segmented__label">{label}</span>
+        <div style={inline
+            ? { display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }
+            : { marginBottom: 10 }}>
+            <span className="m-segmented__label" style={inline ? { marginBottom: 0, flexShrink: 0 } : undefined}>{label}</span>
             <div className="m-segmented">
                 {options.map(o => (
                     <button
                         key={o.v}
                         type="button"
+                        disabled={o.disabled}
                         className={`m-segmented__btn${value === o.v ? ' m-segmented__btn--active' : ''}`}
+                        title={o.disabled ? 'Inserisci prima il peso corrispondente nelle porzioni' : undefined}
                         onClick={() => onChange(o.v)}
                         aria-pressed={value === o.v}
                     >
@@ -90,60 +99,87 @@ function ServingField({ label, field, form, onChange }: {
     );
 }
 
-// ─── Table scale constants ────────────────────────────────────────────────────
-const TABLE_SCALES: Record<string, Record<string, number>> = {
-    UE:        { default: 0.92 },
-    USA:       { verticale: 0.88, orizzontale: 0.72, lineare: 0.88 },
-    Canada:    { verticale: 0.78, orizzontale: 0.70, lineare: 0.88 },
-    Australia: { default: 0.88 },
-    Arabi:     { default: 0.88 },
-};
-
-function getScale(region: string, layout: string): number {
-    const r = TABLE_SCALES[region];
-    if (!r) return 0.88;
-    return r[layout] ?? r['default'] ?? 0.88;
-}
-
-function TableScaleWrap({
-    region, layout, children, onExpand,
+// ─── Table preview wrapper — always visible, no scaling ──────────────────────
+// La preview inline mostra il formato reale selezionato (scroll orizzontale se largo).
+function TablePreviewWrap({
+    layout, children, onExpand,
 }: {
-    region: string;
     layout: string;
     children: React.ReactNode;
     onExpand: () => void;
 }) {
-    const scale = getScale(region, layout);
-    const isWide = scale < 0.80;
+    const isWide = layout === 'orizzontale' || layout === 'lineare';
     return (
         <div style={{ padding: '0 16px 8px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
-                {isWide && (
-                    <span style={{ fontSize: 10, color: 'var(--m-text-muted)', fontStyle: 'italic' }}>
-                        ← scorri per vedere tutto →
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+                {isWide ? (
+                    <span style={{ fontSize: 10, color: 'var(--m-text-muted, #5e6b80)', fontStyle: 'italic' }}>
+                        Scorri lateralmente per vedere tutta la tabella
                     </span>
+                ) : (
+                    <span />
                 )}
                 <button
                     type="button"
                     className="m-expand-btn"
                     onClick={onExpand}
-                    style={{ marginLeft: 'auto' }}
                 >
-                    <span className="m-expand-pulse" style={{ display: 'inline-block' }}>⤢</span>
-                    Espandi
+                    <Maximize2 size={13} /> Schermo intero
                 </button>
             </div>
-            <div className="m-table-scale-wrap">
-                <div
-                    className="m-table-scale-wrap__inner"
-                    style={{
-                        transform: `scale(${scale})`,
-                        transformOrigin: 'top left',
-                        width: `${Math.round(100 / scale)}%`,
-                    }}
-                >
-                    {children}
+            <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
+                {children}
+            </div>
+        </div>
+    );
+}
+
+// ─── Sezione porzioni smart (M4) ──────────────────────────────────────────────
+// Primi 2 campi sempre visibili; il resto dietro "+ Altri formati".
+// ponytail: remount su cambio regione (key sul blocco padre) ricalcola lo stato iniziale.
+function ServingSection({ title, fields, form, onChange, open, onToggle }: {
+    title: string;
+    fields: { label: string; field: keyof MobileNutForm }[];
+    form: MobileNutForm;
+    onChange: (p: Partial<MobileNutForm>) => void;
+    open: boolean;
+    onToggle: () => void;
+}) {
+    const extras = fields.slice(2);
+    const hasExtraValue = extras.some(f => nf(form[f.field] as string) > 0);
+    const [extraOpen, setExtraOpen] = useState(hasExtraValue);
+    const showExtra = extraOpen || hasExtraValue;
+
+    return (
+        <div className="m-section">
+            <div className="m-section__header" onClick={onToggle} style={{ cursor: 'pointer' }}>
+                <div className="m-section__line" />
+                <span className="m-section__title">{title}</span>
+                <span style={{ transform: open ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s', fontSize: 14 }}>▾</span>
+                <div className="m-section__line" />
+            </div>
+            <div className={`m-collapsible${open ? '' : ' m-collapsible--closed'}`}>
+                <div className="m-serving-grid" style={{ padding: '8px 16px' }}>
+                    {fields.slice(0, 2).map(f => (
+                        <ServingField key={f.field} label={f.label} field={f.field} form={form} onChange={onChange} />
+                    ))}
+                    {showExtra && extras.map(f => (
+                        <ServingField key={f.field} label={f.label} field={f.field} form={form} onChange={onChange} />
+                    ))}
                 </div>
+                {extras.length > 0 && !hasExtraValue && (
+                    <button
+                        type="button"
+                        onClick={() => setExtraOpen(o => !o)}
+                        style={{
+                            background: 'none', border: 'none', cursor: 'pointer',
+                            fontSize: 12, color: 'var(--m-orange, #ff7e2e)', fontWeight: 600,
+                            padding: '0 16px 8px',
+                        }}
+                    >
+                        {showExtra ? '− Meno formati' : `+ Altri formati (${extras.map(e => e.label.split(' ')[0]).join(', ')})`}
+                    </button>
+                )}
             </div>
         </div>
     );
@@ -175,7 +211,7 @@ function FullscreenOverlay({
                     {region}{layout && layout !== 'default' ? ` — ${layout}` : ''}
                 </span>
                 <button type="button" className="m-fullscreen-overlay__close" onClick={onClose} aria-label="Chiudi">
-                    ×
+                    <X size={20} />
                 </button>
             </div>
             <div className="m-fullscreen-overlay__body">
@@ -186,8 +222,9 @@ function FullscreenOverlay({
 }
 
 // ─── Component ────────────────────────────────────────────────────────────────
-export function TabellaTab({ calcResult, form, onChange, onSave, onExportPDF, hasIngredients, presentAllergens = [], crossAllergens = [] }: Props) {
-    const [selectedRegion, setSelectedRegion] = useState<Region | null>(null);
+export function TabellaTab({ calcResult, form, onChange, onSave, onExportPDF, hasIngredients, presentAllergens = [], crossAllergens = [], initialRegion }: Props) {
+    const [selectedRegion, setSelectedRegion] = useState<Region | null>(initialRegion ?? null);
+    useEffect(() => { if (initialRegion) setSelectedRegion(initialRegion); }, [initialRegion]);
     const [notice, setNotice] = useState<{ type: 'success' | 'error'; msg: string } | null>(null);
 
     // EU display options
@@ -218,6 +255,7 @@ export function TabellaTab({ calcResult, form, onChange, onSave, onExportPDF, ha
 
     // Collapsible serving section
     const [servingOpen, setServingOpen] = useState(true);
+    const [isLiquid, setIsLiquid] = useState(false);
 
     // Save button flash state (M8)
     const [saveFlash, setSaveFlash] = useState(false);
@@ -241,6 +279,9 @@ export function TabellaTab({ calcResult, form, onChange, onSave, onExportPDF, ha
     const handleSave = () => {
         if (!selectedRegion) { showNotice('error', 'Seleziona prima una regione.'); return; }
         if (!form.denominazione.trim()) { showNotice('error', 'Inserisci la denominazione nel tab Calcolo.'); return; }
+        if (!hasIngredients) { showNotice('error', 'Aggiungi almeno un ingrediente prima di salvare.'); return; }
+        const porzione = nf(form.ue_porzione || form.porzione_g);
+        if (porzione <= 0) { showNotice('error', 'Imposta una porzione valida (> 0 g).'); return; }
         onSave(selectedRegion);
         showNotice('success', 'Calcolo salvato in archivio.');
         setSaveFlash(true);
@@ -285,8 +326,28 @@ export function TabellaTab({ calcResult, form, onChange, onSave, onExportPDF, ha
         pezzo: nf(form.arabi_pezzo) || undefined,
     };
 
+    // ─── Guard: se il peso di riferimento viene rimosso, torna al default ───
+    // (stesso pattern del desktop per euSubTab)
+    React.useEffect(() => {
+        if (euSubTab === 'porzione' && !ue.porzione) setEuSubTab('100g');
+        if (euSubTab === 'uv' && !ue.confezione) setEuSubTab('100g');
+        if (euSubTab === 'pezzo' && !ue.pezzo) setEuSubTab('100g');
+    }, [euSubTab, ue.porzione, ue.confezione, ue.pezzo]);
+    React.useEffect(() => {
+        if (usaServingRef === 'confezione' && !usa.confezione) setUsaServingRef('serving');
+        if ((usaMeasure === 'tazze' && !usa.cup) || (usaMeasure === 'cucchiai' && !usa.cucchiaio) || (usaMeasure === 'pezzi' && !usa.pezzo)) setUsaMeasure('g');
+    }, [usaServingRef, usaMeasure, usa.confezione, usa.cup, usa.cucchiaio, usa.pezzo]);
+    React.useEffect(() => {
+        if (caServingRef === 'confezione' && !ca.confezione) setCaServingRef('serving');
+        if ((caMeasure === 'tazze' && !ca.cup) || (caMeasure === 'cucchiai' && !ca.cucchiaio) || (caMeasure === 'pezzi' && !ca.pezzo)) setCaMeasure('g');
+    }, [caServingRef, caMeasure, ca.confezione, ca.cup, ca.cucchiaio, ca.pezzo]);
+    React.useEffect(() => {
+        if (arabiServingRef === 'confezione' && !arabi.confezione) setArabiServingRef('serving');
+        if ((arabiMeasure === 'tazze' && !arabi.cup) || (arabiMeasure === 'cucchiai' && !arabi.cucchiaio) || (arabiMeasure === 'pezzi' && !arabi.pezzo)) setArabiMeasure('g');
+    }, [arabiServingRef, arabiMeasure, arabi.confezione, arabi.cup, arabi.cucchiaio, arabi.pezzo]);
+
     return (
-        <div style={{ paddingTop: 8, paddingBottom: 140 }}>
+        <div style={{ paddingTop: 8, paddingBottom: 0, flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
 
             {/* ── Region chip bar ─────────────────────────────────────────── */}
             <div className="m-region-tabs">
@@ -331,36 +392,27 @@ export function TabellaTab({ calcResult, form, onChange, onSave, onExportPDF, ha
                     {/* ── UE ───────────────────────────────────────────────── */}
                     {selectedRegion === 'UE' && (
                         <div key={`UE-${tableKey}`} className="m-market-enter">
-                            {/* Serving section — collapsible */}
-                            <div className="m-section">
-                                <div
-                                    className="m-section__header"
-                                    onClick={() => setServingOpen(o => !o)}
-                                    style={{ cursor: 'pointer' }}
-                                >
-                                    <div className="m-section__line" />
-                                    <span className="m-section__title">Porzioni EU</span>
-                                    <span style={{ transform: servingOpen ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s', fontSize: 14 }}>▾</span>
-                                    <div className="m-section__line" />
-                                </div>
-                                <div className={`m-collapsible${servingOpen ? '' : ' m-collapsible--closed'}`}>
-                                    <div className="m-serving-grid" style={{ padding: '8px 16px' }}>
-                                        <ServingField label="Porzione (g)" field="ue_porzione" form={form} onChange={onChange} />
-                                        <ServingField label="Confezione (g)" field="ue_confezione" form={form} onChange={onChange} />
-                                        <ServingField label="Pezzo (g)" field="ue_pezzo" form={form} onChange={onChange} />
-                                    </div>
-                                </div>
-                            </div>
+                            <ServingSection
+                                title="Porzioni EU"
+                                fields={[
+                                    { label: 'Porzione (g)', field: 'ue_porzione' },
+                                    { label: 'Confezione (g)', field: 'ue_confezione' },
+                                    { label: 'Pezzo (g)', field: 'ue_pezzo' },
+                                ]}
+                                form={form} onChange={onChange}
+                                open={servingOpen} onToggle={() => setServingOpen(o => !o)}
+                            />
                             {/* EU sub-tab selector + nutrienti button */}
                             <div style={{ padding: '0 16px 12px' }}>
                                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
                                     <SegmentedControl<EUSubTab>
                                         label="Vista tabella:"
+                                        inline
                                         options={[
                                             { v: '100g', label: 'per 100g' },
-                                            { v: 'porzione', label: 'Porzione' },
-                                            { v: 'uv', label: 'Confezione' },
-                                            { v: 'pezzo', label: 'Pezzo' },
+                                            { v: 'porzione', label: 'Porzione', disabled: !ue.porzione },
+                                            { v: 'uv', label: 'Confezione', disabled: !ue.confezione },
+                                            { v: 'pezzo', label: 'Pezzo', disabled: !ue.pezzo },
                                         ]}
                                         value={euSubTab}
                                         onChange={setEuSubTab}
@@ -380,7 +432,7 @@ export function TabellaTab({ calcResult, form, onChange, onSave, onExportPDF, ha
                                 </div>
                             </div>
                             {/* EU table */}
-                            <TableScaleWrap region="UE" layout={euSubTab} onExpand={() => setFullscreenOpen(true)}>
+                            <TablePreviewWrap layout={euSubTab} onExpand={() => setFullscreenOpen(true)}>
                                 <div key={`tbl-UE-${euSubTab}`} className="m-table-appear">
                                     <TabUE
                                         p={calcResult as Parameters<typeof TabUE>[0]['p']}
@@ -391,7 +443,7 @@ export function TabellaTab({ calcResult, form, onChange, onSave, onExportPDF, ha
                                         activeSubTab={euSubTab}
                                     />
                                 </div>
-                            </TableScaleWrap>
+                            </TablePreviewWrap>
                             <FullscreenOverlay
                                 open={fullscreenOpen}
                                 exiting={fullscreenExiting}
@@ -408,36 +460,68 @@ export function TabellaTab({ calcResult, form, onChange, onSave, onExportPDF, ha
                                     activeSubTab={euSubTab}
                                 />
                             </FullscreenOverlay>
+                            {/* ── Claim nutrizionali EU (Reg. 2006/1924) ──── */}
+                            {(() => {
+                                const claims = calcClaims(calcResult as Parameters<typeof calcClaims>[0], isLiquid);
+                                return (
+                                    <div style={{ padding: '12px 16px 0', borderTop: '1px solid #eaecf0' }}>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
+                                            <span style={{ fontSize: 12, fontWeight: 600 }}>Claim nutrizionali EU</span>
+                                            <label style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 12, cursor: 'pointer', color: 'var(--m-text-muted, #5e6b80)' }}>
+                                                <input
+                                                    type="checkbox"
+                                                    checked={isLiquid}
+                                                    onChange={e => setIsLiquid(e.target.checked)}
+                                                    style={{ width: 14, height: 14, cursor: 'pointer', accentColor: 'var(--m-orange, #ff7e2e)' }}
+                                                />
+                                                Prodotto liquido
+                                            </label>
+                                        </div>
+                                        {claims.length === 0 ? (
+                                            <p style={{ fontSize: 11, color: 'var(--m-text-muted, #5e6b80)', fontStyle: 'italic', margin: 0 }}>
+                                                Nessun claim applicabile.
+                                            </p>
+                                        ) : (
+                                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                                                {claims.map(c => (
+                                                    <span key={c} style={{
+                                                        fontSize: 11, fontWeight: 700, letterSpacing: '0.03em',
+                                                        background: 'var(--m-navy, #1a2340)', color: '#fff',
+                                                        borderRadius: 5, padding: '4px 8px',
+                                                    }}>
+                                                        {c}
+                                                    </span>
+                                                ))}
+                                            </div>
+                                        )}
+                                        <p style={{ fontSize: 10, color: 'var(--m-text-muted, #5e6b80)', margin: '6px 0 8px', lineHeight: 1.4 }}>
+                                            Reg. 2006/1924 — verificare con consulente prima di apporli in etichetta.
+                                        </p>
+                                    </div>
+                                );
+                            })()}
                         </div>
                     )}
 
                     {/* ── USA ──────────────────────────────────────────────── */}
                     {selectedRegion === 'USA' && (
                         <div key={`USA-${tableKey}`} className="m-market-enter">
-                            <div className="m-section">
-                                <div
-                                    className="m-section__header"
-                                    onClick={() => setServingOpen(o => !o)}
-                                    style={{ cursor: 'pointer' }}
-                                >
-                                    <div className="m-section__line" />
-                                    <span className="m-section__title">Porzioni USA</span>
-                                    <span style={{ transform: servingOpen ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s', fontSize: 14 }}>▾</span>
-                                    <div className="m-section__line" />
-                                </div>
-                                <div className={`m-collapsible${servingOpen ? '' : ' m-collapsible--closed'}`}>
-                                    <div className="m-serving-grid" style={{ padding: '8px 16px' }}>
-                                        <ServingField label="Serving (g)" field="usa_serving" form={form} onChange={onChange} />
-                                        <ServingField label="Confezione (g)" field="usa_confezione" form={form} onChange={onChange} />
-                                        <ServingField label="Cup (g)" field="usa_cup" form={form} onChange={onChange} />
-                                        <ServingField label="Cucchiaio (g)" field="usa_cucchiaio" form={form} onChange={onChange} />
-                                        <ServingField label="Pezzo (g)" field="usa_pezzo" form={form} onChange={onChange} />
-                                    </div>
-                                </div>
-                            </div>
-                            <div style={{ padding: '0 16px 12px', display: 'flex', flexDirection: 'column', gap: 8 }}>
+                            <ServingSection
+                                title="Porzioni USA"
+                                fields={[
+                                    { label: 'Serving (g)', field: 'usa_serving' },
+                                    { label: 'Confezione (g)', field: 'usa_confezione' },
+                                    { label: 'Cup (g)', field: 'usa_cup' },
+                                    { label: 'Cucchiaio (g)', field: 'usa_cucchiaio' },
+                                    { label: 'Pezzo (g)', field: 'usa_pezzo' },
+                                ]}
+                                form={form} onChange={onChange}
+                                open={servingOpen} onToggle={() => setServingOpen(o => !o)}
+                            />
+                            <div style={{ padding: '0 16px 12px', display: 'flex', flexWrap: 'wrap', gap: 10, rowGap: 8 }}>
                                 <SegmentedControl<SubTab>
                                     label="Layout:"
+                                    inline
                                     options={[
                                         { v: 'verticale', label: 'Verticale' },
                                         { v: 'orizzontale', label: 'Orizzontale' },
@@ -448,26 +532,28 @@ export function TabellaTab({ calcResult, form, onChange, onSave, onExportPDF, ha
                                 />
                                 <SegmentedControl<USAServingRef>
                                     label="Riferimento:"
+                                    inline
                                     options={[
                                         { v: 'serving', label: 'Porzione' },
-                                        { v: 'confezione', label: 'Confezione' },
+                                        { v: 'confezione', label: 'Confezione', disabled: !usa.confezione },
                                     ]}
                                     value={usaServingRef}
                                     onChange={setUsaServingRef}
                                 />
                                 <SegmentedControl<USAMeasure>
-                                    label="Unità di misura:"
+                                    label="Unità:"
+                                    inline
                                     options={[
                                         { v: 'g', label: 'g' },
-                                        { v: 'tazze', label: 'Tazze' },
-                                        { v: 'cucchiai', label: 'Cucchiai' },
-                                        { v: 'pezzi', label: 'Pezzi' },
+                                        { v: 'tazze', label: 'Tazze', disabled: !usa.cup },
+                                        { v: 'cucchiai', label: 'Cucchiai', disabled: !usa.cucchiaio },
+                                        { v: 'pezzi', label: 'Pezzi', disabled: !usa.pezzo },
                                     ]}
                                     value={usaMeasure}
                                     onChange={setUsaMeasure}
                                 />
                             </div>
-                            <TableScaleWrap region="USA" layout={usaSubTab} onExpand={() => setFullscreenOpen(true)}>
+                            <TablePreviewWrap layout={usaSubTab} onExpand={() => setFullscreenOpen(true)}>
                                 <div key={`tbl-USA-${usaSubTab}-${usaServingRef}-${usaMeasure}`} className="m-table-appear">
                                     <TabUSA
                                         p={calcResult as Parameters<typeof TabUSA>[0]['p']}
@@ -478,7 +564,7 @@ export function TabellaTab({ calcResult, form, onChange, onSave, onExportPDF, ha
                                         subTab={usaSubTab}
                                     />
                                 </div>
-                            </TableScaleWrap>
+                            </TablePreviewWrap>
                             <FullscreenOverlay
                                 open={fullscreenOpen}
                                 exiting={fullscreenExiting}
@@ -486,6 +572,16 @@ export function TabellaTab({ calcResult, form, onChange, onSave, onExportPDF, ha
                                 layout={usaSubTab}
                                 onClose={closeFullscreen}
                             >
+                                <SegmentedControl<SubTab>
+                                    label="Layout:"
+                                    options={[
+                                        { v: 'verticale', label: 'Verticale' },
+                                        { v: 'orizzontale', label: 'Orizzontale' },
+                                        { v: 'lineare', label: 'Lineare' },
+                                    ]}
+                                    value={usaSubTab}
+                                    onChange={setUsaSubTab}
+                                />
                                 <TabUSA
                                     p={calcResult as Parameters<typeof TabUSA>[0]['p']}
                                     usa={usa}
@@ -501,30 +597,22 @@ export function TabellaTab({ calcResult, form, onChange, onSave, onExportPDF, ha
                     {/* ── Canada ───────────────────────────────────────────── */}
                     {selectedRegion === 'Canada' && (
                         <div key={`Canada-${tableKey}`} className="m-market-enter">
-                            <div className="m-section">
-                                <div
-                                    className="m-section__header"
-                                    onClick={() => setServingOpen(o => !o)}
-                                    style={{ cursor: 'pointer' }}
-                                >
-                                    <div className="m-section__line" />
-                                    <span className="m-section__title">Porzioni Canada</span>
-                                    <span style={{ transform: servingOpen ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s', fontSize: 14 }}>▾</span>
-                                    <div className="m-section__line" />
-                                </div>
-                                <div className={`m-collapsible${servingOpen ? '' : ' m-collapsible--closed'}`}>
-                                    <div className="m-serving-grid" style={{ padding: '8px 16px' }}>
-                                        <ServingField label="Serving (g)" field="ca_serving" form={form} onChange={onChange} />
-                                        <ServingField label="Confezione (g)" field="ca_confezione" form={form} onChange={onChange} />
-                                        <ServingField label="Cup (g, 250ml)" field="ca_cup" form={form} onChange={onChange} />
-                                        <ServingField label="Cucchiaio (g)" field="ca_cucchiaio" form={form} onChange={onChange} />
-                                        <ServingField label="Pezzo (g)" field="ca_pezzo" form={form} onChange={onChange} />
-                                    </div>
-                                </div>
-                            </div>
-                            <div style={{ padding: '0 16px 12px', display: 'flex', flexDirection: 'column', gap: 8 }}>
+                            <ServingSection
+                                title="Porzioni Canada"
+                                fields={[
+                                    { label: 'Serving (g)', field: 'ca_serving' },
+                                    { label: 'Confezione (g)', field: 'ca_confezione' },
+                                    { label: 'Cup (g, 250ml)', field: 'ca_cup' },
+                                    { label: 'Cucchiaio (g)', field: 'ca_cucchiaio' },
+                                    { label: 'Pezzo (g)', field: 'ca_pezzo' },
+                                ]}
+                                form={form} onChange={onChange}
+                                open={servingOpen} onToggle={() => setServingOpen(o => !o)}
+                            />
+                            <div style={{ padding: '0 16px 12px', display: 'flex', flexWrap: 'wrap', gap: 10, rowGap: 8 }}>
                                 <SegmentedControl<SubTab>
                                     label="Layout:"
+                                    inline
                                     options={[
                                         { v: 'verticale', label: 'Verticale' },
                                         { v: 'orizzontale', label: 'Orizzontale' },
@@ -535,26 +623,28 @@ export function TabellaTab({ calcResult, form, onChange, onSave, onExportPDF, ha
                                 />
                                 <SegmentedControl<USAServingRef>
                                     label="Riferimento:"
+                                    inline
                                     options={[
                                         { v: 'serving', label: 'Porzione' },
-                                        { v: 'confezione', label: 'Confezione' },
+                                        { v: 'confezione', label: 'Confezione', disabled: !ca.confezione },
                                     ]}
                                     value={caServingRef}
                                     onChange={setCaServingRef}
                                 />
                                 <SegmentedControl<USAMeasure>
                                     label="Unità:"
+                                    inline
                                     options={[
                                         { v: 'g', label: 'g' },
-                                        { v: 'tazze', label: 'Tazze' },
-                                        { v: 'cucchiai', label: 'Cucchiai' },
-                                        { v: 'pezzi', label: 'Pezzi' },
+                                        { v: 'tazze', label: 'Tazze', disabled: !ca.cup },
+                                        { v: 'cucchiai', label: 'Cucchiai', disabled: !ca.cucchiaio },
+                                        { v: 'pezzi', label: 'Pezzi', disabled: !ca.pezzo },
                                     ]}
                                     value={caMeasure}
                                     onChange={setCaMeasure}
                                 />
                             </div>
-                            <TableScaleWrap region="Canada" layout={caSubTab} onExpand={() => setFullscreenOpen(true)}>
+                            <TablePreviewWrap layout={caSubTab} onExpand={() => setFullscreenOpen(true)}>
                                 <div key={`tbl-Canada-${caSubTab}-${caServingRef}-${caMeasure}`} className="m-table-appear">
                                     <TabCanada
                                         p={calcResult}
@@ -566,7 +656,7 @@ export function TabellaTab({ calcResult, form, onChange, onSave, onExportPDF, ha
                                         full
                                     />
                                 </div>
-                            </TableScaleWrap>
+                            </TablePreviewWrap>
                             <FullscreenOverlay
                                 open={fullscreenOpen}
                                 exiting={fullscreenExiting}
@@ -574,6 +664,16 @@ export function TabellaTab({ calcResult, form, onChange, onSave, onExportPDF, ha
                                 layout={caSubTab}
                                 onClose={closeFullscreen}
                             >
+                                <SegmentedControl<SubTab>
+                                    label="Layout:"
+                                    options={[
+                                        { v: 'verticale', label: 'Verticale' },
+                                        { v: 'orizzontale', label: 'Orizzontale' },
+                                        { v: 'lineare', label: 'Lineare' },
+                                    ]}
+                                    value={caSubTab}
+                                    onChange={setCaSubTab}
+                                />
                                 <TabCanada
                                     p={calcResult}
                                     ca={ca}
@@ -590,30 +690,21 @@ export function TabellaTab({ calcResult, form, onChange, onSave, onExportPDF, ha
                     {/* ── Australia ────────────────────────────────────────── */}
                     {selectedRegion === 'Australia' && (
                         <div key={`Australia-${tableKey}`} className="m-market-enter">
-                            <div className="m-section">
-                                <div
-                                    className="m-section__header"
-                                    onClick={() => setServingOpen(o => !o)}
-                                    style={{ cursor: 'pointer' }}
-                                >
-                                    <div className="m-section__line" />
-                                    <span className="m-section__title">Porzioni Australia</span>
-                                    <span style={{ transform: servingOpen ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s', fontSize: 14 }}>▾</span>
-                                    <div className="m-section__line" />
-                                </div>
-                                <div className={`m-collapsible${servingOpen ? '' : ' m-collapsible--closed'}`}>
-                                    <div className="m-serving-grid" style={{ padding: '8px 16px' }}>
-                                        <ServingField label="Serving (g)" field="au_serving" form={form} onChange={onChange} />
-                                        <ServingField label="Confezione (g)" field="au_confezione" form={form} onChange={onChange} />
-                                        <ServingField label="Pezzo (g)" field="au_pezzo" form={form} onChange={onChange} />
-                                    </div>
-                                </div>
-                            </div>
-                            <TableScaleWrap region="Australia" layout="default" onExpand={() => setFullscreenOpen(true)}>
+                            <ServingSection
+                                title="Porzioni Australia"
+                                fields={[
+                                    { label: 'Serving (g)', field: 'au_serving' },
+                                    { label: 'Confezione (g)', field: 'au_confezione' },
+                                    { label: 'Pezzo (g)', field: 'au_pezzo' },
+                                ]}
+                                form={form} onChange={onChange}
+                                open={servingOpen} onToggle={() => setServingOpen(o => !o)}
+                            />
+                            <TablePreviewWrap layout="verticale" onExpand={() => setFullscreenOpen(true)}>
                                 <div key={`tbl-Australia`} className="m-table-appear">
                                     <TabAustralia p={calcResult} au={au} full />
                                 </div>
-                            </TableScaleWrap>
+                            </TablePreviewWrap>
                             <FullscreenOverlay
                                 open={fullscreenOpen}
                                 exiting={fullscreenExiting}
@@ -629,50 +720,43 @@ export function TabellaTab({ calcResult, form, onChange, onSave, onExportPDF, ha
                     {/* ── Arabi ────────────────────────────────────────────── */}
                     {selectedRegion === 'Arabi' && (
                         <div key={`Arabi-${tableKey}`} className="m-market-enter">
-                            <div className="m-section">
-                                <div
-                                    className="m-section__header"
-                                    onClick={() => setServingOpen(o => !o)}
-                                    style={{ cursor: 'pointer' }}
-                                >
-                                    <div className="m-section__line" />
-                                    <span className="m-section__title">Porzioni Gulf/Arabi</span>
-                                    <span style={{ transform: servingOpen ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s', fontSize: 14 }}>▾</span>
-                                    <div className="m-section__line" />
-                                </div>
-                                <div className={`m-collapsible${servingOpen ? '' : ' m-collapsible--closed'}`}>
-                                    <div className="m-serving-grid" style={{ padding: '8px 16px' }}>
-                                        <ServingField label="Serving (g)" field="arabi_serving" form={form} onChange={onChange} />
-                                        <ServingField label="Confezione (g)" field="arabi_confezione" form={form} onChange={onChange} />
-                                        <ServingField label="Cup (g, 240ml)" field="arabi_cup" form={form} onChange={onChange} />
-                                        <ServingField label="Cucchiaio (g)" field="arabi_cucchiaio" form={form} onChange={onChange} />
-                                        <ServingField label="Pezzo (g)" field="arabi_pezzo" form={form} onChange={onChange} />
-                                    </div>
-                                </div>
-                            </div>
-                            <div style={{ padding: '0 16px 12px', display: 'flex', flexDirection: 'column', gap: 8 }}>
+                            <ServingSection
+                                title="Porzioni Gulf/Arabi"
+                                fields={[
+                                    { label: 'Serving (g)', field: 'arabi_serving' },
+                                    { label: 'Confezione (g)', field: 'arabi_confezione' },
+                                    { label: 'Cup (g, 240ml)', field: 'arabi_cup' },
+                                    { label: 'Cucchiaio (g)', field: 'arabi_cucchiaio' },
+                                    { label: 'Pezzo (g)', field: 'arabi_pezzo' },
+                                ]}
+                                form={form} onChange={onChange}
+                                open={servingOpen} onToggle={() => setServingOpen(o => !o)}
+                            />
+                            <div style={{ padding: '0 16px 12px', display: 'flex', flexWrap: 'wrap', gap: 10, rowGap: 8 }}>
                                 <SegmentedControl<USAServingRef>
                                     label="Riferimento:"
+                                    inline
                                     options={[
                                         { v: 'serving', label: 'Porzione' },
-                                        { v: 'confezione', label: 'Confezione' },
+                                        { v: 'confezione', label: 'Confezione', disabled: !arabi.confezione },
                                     ]}
                                     value={arabiServingRef}
                                     onChange={setArabiServingRef}
                                 />
                                 <SegmentedControl<USAMeasure>
                                     label="Unità:"
+                                    inline
                                     options={[
                                         { v: 'g', label: 'g' },
-                                        { v: 'tazze', label: 'Tazze' },
-                                        { v: 'cucchiai', label: 'Cucchiai' },
-                                        { v: 'pezzi', label: 'Pezzi' },
+                                        { v: 'tazze', label: 'Tazze', disabled: !arabi.cup },
+                                        { v: 'cucchiai', label: 'Cucchiai', disabled: !arabi.cucchiaio },
+                                        { v: 'pezzi', label: 'Pezzi', disabled: !arabi.pezzo },
                                     ]}
                                     value={arabiMeasure}
                                     onChange={setArabiMeasure}
                                 />
                             </div>
-                            <TableScaleWrap region="Arabi" layout="default" onExpand={() => setFullscreenOpen(true)}>
+                            <TablePreviewWrap layout="verticale" onExpand={() => setFullscreenOpen(true)}>
                                 <div key={`tbl-Arabi-${arabiServingRef}-${arabiMeasure}`} className="m-table-appear">
                                     <TabArabi
                                         p={calcResult}
@@ -683,7 +767,7 @@ export function TabellaTab({ calcResult, form, onChange, onSave, onExportPDF, ha
                                         full
                                     />
                                 </div>
-                            </TableScaleWrap>
+                            </TablePreviewWrap>
                             <FullscreenOverlay
                                 open={fullscreenOpen}
                                 exiting={fullscreenExiting}
@@ -768,7 +852,7 @@ export function TabellaTab({ calcResult, form, onChange, onSave, onExportPDF, ha
                     style={{ flex: 1 }}
                     onClick={handlePDF}
                 >
-                    PDF ↗
+                    <Download size={14} /> PDF
                 </button>
             </div>
 

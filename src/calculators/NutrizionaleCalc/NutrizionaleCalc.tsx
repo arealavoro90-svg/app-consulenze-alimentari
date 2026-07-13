@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useRef, useEffect, useCallback } from 'react';
+import { apiFetch } from '../../api/client';
 import { createPortal } from 'react-dom';
 import { ConfirmDialog } from '../../components/ui/ConfirmDialog';
 import { useToast } from '../../components/ui/Toast';
@@ -7,8 +8,9 @@ import {
     ClipboardList, Scale, Layers, FlaskConical, Table2, Euro,
     AlertTriangle, Compass, SlidersHorizontal, ChevronRight, ChevronLeft,
     Trash2, X, BookOpen, CheckCircle, ChevronDown,
-    Salad, Flame, Globe, Package, ImageDown, Download, Sparkles,
+    Salad, Flame, Globe, Package, ImageDown, Download, Sparkles, FileSpreadsheet,
 } from 'lucide-react';
+import { useAuth } from '../../auth/AuthContext';
 import { SmartImportModal } from './SmartImportModal';
 import type { SmartImportResult } from './SmartImportModal';
 import jsPDF from 'jspdf';
@@ -36,10 +38,15 @@ import { SplitShell } from './SplitShell';
 import { BrowseIngredientsModal } from './BrowseIngredientsModal';
 import {
     type DBIngredient, type CalcResult, type RecipeRow, type AdditiveRow, type Component,
-    ZERO_CALC, calcNutrients, scaleResult,
+    ZERO_CALC, calcNutrients, scaleResult, calcClaims,
 } from '../../engines/nutrizionaleCalcEngine';
 import { ALLERGEN_FIELDS, CROSS_FIELDS, ADDITIVI_CATEGORIE, ADDITIVI_SPECIFICI } from './shared/constants';
 import { writeBridge, readBridge, buildDesktopDraft } from './sessionBridge';
+import {
+    rCA_energy, rCA_fat, rCA_carb, rCA_chol, rCA_na, rCA_iron, rCA_pct,
+    rAU_kj, rAU_kcal, rAU_g1, rAU_mg,
+    rArabi_energy, rArabi_g, rArabi_mg,
+} from '../../utils/nutritionalRounding';
 
 // const DB = DB_RAW as unknown as DBIngredient[]; // Replaced with fetch state
 
@@ -81,42 +88,6 @@ interface ArchiveData {
 type NationTab = 'UE' | 'USA' | 'Canada' | 'Australia' | 'Arabi';
 type SubTab = 'verticale' | 'orizzontale' | 'lineare';
 
-// ─── Rounding helpers ─────────────────────────────────────────────────────────
-// Canada
-function rCA_energy(v: number): string {
-    if (v < 5) return '0';
-    if (v <= 50) return (Math.round(v / 5) * 5).toString();
-    return (Math.round(v / 10) * 10).toString();
-}
-function rCA_fat(v: number): string {
-    if (v < 0.5) return '0';
-    if (v <= 5) return (Math.round(v / 0.5) * 0.5).toFixed(1);
-    return Math.round(v).toString();
-}
-function rCA_carb(v: number): string { return v < 0.5 ? '0' : Math.round(v).toString(); }
-function rCA_chol(v: number): string {
-    if (v < 2) return '0';
-    if (v <= 5) return 'less than 5';
-    return Math.round(v).toString();
-}
-function rCA_na(v: number): string {
-    if (v < 5) return '0';
-    if (v <= 140) return (Math.round(v / 5) * 5).toString();
-    return (Math.round(v / 10) * 10).toString();
-}
-function rCA_iron(v: number): string { return v < 0.05 ? '0' : v.toFixed(1); }
-function rCA_pct(v: number, dv: number): string { return Math.round(v / dv * 100).toString(); }
-
-// Australia
-function rAU_kj(v: number): string { return v < 40 ? 'less than 40' : Math.round(v).toString(); }
-function rAU_kcal(v: number): string { return v < 9.5 ? 'less than 9.5' : Math.round(v).toString(); }
-function rAU_g1(v: number): string { return v < 1 ? 'less than 1' : v.toFixed(1); }
-function rAU_mg(v: number): string { return v < 5 ? 'less than 5' : Math.round(v).toString(); }
-
-// Arabi
-function rArabi_energy(v: number): string { return Math.round(v).toString(); }
-function rArabi_g(v: number): string { return v < 0.1 ? '0' : v.toFixed(1); }
-function rArabi_mg(v: number): string { return Math.round(v).toString(); }
 
 // ─── Local display helper (n() used by rCA_*/rAU_* formatters below) ─────────
 function n(v: unknown): number { const num = Number(v); return isNaN(num) ? 0 : num; }
@@ -580,6 +551,15 @@ function CustomIngredientModal({ onClose, onSave, initialIngredient, originalNom
     const [vitB12, setVitB12] = useState(s(initialIngredient?.vitB12));
     // Validazione
     const [errors, setErrors] = useState<string[]>([]);
+    // Allergenici presenti e tracce
+    const [allergens, setAllergens] = useState<Record<string, boolean>>(() => {
+        if (!initialIngredient) return {};
+        return Object.fromEntries(CI_ALLERGEN_KEYS.map(k => [k, !!initialIngredient[k as keyof DBIngredient]]));
+    });
+    const [crossAllergens, setCrossAllergens] = useState<Record<string, boolean>>(() => {
+        if (!initialIngredient) return {};
+        return Object.fromEntries(CI_CROSS_KEYS.map(k => [k, !!initialIngredient[k as keyof DBIngredient]]));
+    });
 
     // Valori calcolati automaticamente (EU Reg 1169/2011)
     const grassiN      = parseFloat(grassi)        || 0;
@@ -707,6 +687,10 @@ function CustomIngredientModal({ onClose, onSave, initialIngredient, originalNom
             vitB9:        vitB9       ? parseFloat(vitB9) : undefined,
             vitB12:       vitB12      ? parseFloat(vitB12): undefined,
         };
+        // Allergenici presenti
+        CI_ALLERGEN_KEYS.forEach(k => { if (allergens[k]) (ing as unknown as Record<string, unknown>)[k] = 'SI'; });
+        // Tracce (contaminazione crociata)
+        CI_CROSS_KEYS.forEach(k => { if (crossAllergens[k]) (ing as unknown as Record<string, unknown>)[k] = 'SI'; });
         try {
             const rawEx = JSON.parse(localStorage.getItem('custom_ingredients') || '[]');
             let ex = (Array.isArray(rawEx) ? (rawEx as unknown[]).filter(isValidDBIngredient) : []) as DBIngredient[];
@@ -729,7 +713,7 @@ function CustomIngredientModal({ onClose, onSave, initialIngredient, originalNom
     const grid2: React.CSSProperties = { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: 8 };
 
     // Accordion state per sezioni collassabili
-    const [openSec, setOpenSec] = useState({ facoltativi: false, condizionali: false, micro: false });
+    const [openSec, setOpenSec] = useState({ facoltativi: false, condizionali: false, micro: false, allergenici: false });
     const toggleSec = (k: keyof typeof openSec) => setOpenSec(prev => ({ ...prev, [k]: !prev[k] }));
     const AccHead = ({ label, sKey, color = '#718096' }: { label: string; sKey: keyof typeof openSec; color?: string }) => (
         <button type="button" onClick={() => toggleSec(sKey)} style={{ display: 'flex', alignItems: 'center', gap: 6, width: '100%', background: 'none', border: 'none', cursor: 'pointer', padding: 0, textAlign: 'left' }}>
@@ -994,6 +978,21 @@ function CustomIngredientModal({ onClose, onSave, initialIngredient, originalNom
                     </div>
                 </div>
 
+                {/* 5 — Allergeni (Reg. UE 1169/2011) */}
+                <div style={secS}>
+                    <AccHead label="Allergeni (Reg. UE 1169/2011)" sKey="allergenici" color="#c53030" />
+                    {openSec.allergenici && (<>
+                        <div style={{ marginTop: 10, marginBottom: 8 }}>
+                            <div style={{ fontSize: 11, fontWeight: 600, color: '#c53030', marginBottom: 6 }}>Contiene:</div>
+                            <AllergenRow keys={CI_ALLERGEN_KEYS} labels={CI_ALLERGEN_LABELS} state={allergens} setState={setAllergens} />
+                        </div>
+                        <div>
+                            <div style={{ fontSize: 11, fontWeight: 600, color: '#e65100', marginBottom: 6 }}>Può contenere tracce di (contaminazione crociata):</div>
+                            <AllergenRow keys={CI_CROSS_KEYS} labels={CI_CROSS_LABELS} state={crossAllergens} setState={setCrossAllergens} />
+                        </div>
+                    </>)}
+                </div>
+
                 {/* Footer */}
                 <div style={{ display: 'flex', gap: 10, paddingTop: 4 }}>
                     <button className="btn btn-primary" onClick={handleSave} style={{ display: 'flex', alignItems: 'center', gap: 6 }}><Save size={14} /> Salva nel database personale</button>
@@ -1023,6 +1022,8 @@ export function NutrizionaleCalc() {
     const [showCustomModal, setShowCustomModal] = useState(false);
     const [showBrowseModal, setShowBrowseModal] = useState(false);
     const [showSmartImport, setShowSmartImport] = useState(false);
+    const { hasTool } = useAuth();
+    const hasExcelImport = hasTool('excel-import');
     const [editIngredient, setEditIngredient] = useState<{ ing: DBIngredient; isCustom: boolean } | null>(null);
     // const [toolTab, setToolTab] = useState<'tabelle' | 'lista'>('tabelle');
     const [servingOpen, setServingOpen] = useState<Record<string, boolean>>({
@@ -1032,6 +1033,7 @@ export function NutrizionaleCalc() {
     const [subTab, setSubTab] = useState<SubTab>('verticale');
     const [auShowDI, setAuShowDI] = useState(true);
     const [showOptionals, setShowOptionals] = useState(false);
+    const [isLiquid, setIsLiquid] = useState(false);
     const [euSubTab, setEuSubTab] = useState<EUSubTab>('100g');
     const [selectedOptionals, setSelectedOptionals] = useState<SelectedOptionals>({ ...DEFAULT_OPTIONALS });
     const [nutrModalOpen, setNutrModalOpen] = useState(false);
@@ -1080,10 +1082,13 @@ export function NutrizionaleCalc() {
     const loadDB = React.useCallback(() => {
         setLoadingDB(true);
         setDbError(null);
-        fetch('/data/ingredientsDB.json')
-            .then(r => r.json())
+        // S0: carica da endpoint Django autenticato; in dev senza backend → fallback statico
+        const fromAPI = () => apiFetch<DBIngredient[]>('/api/ingredients/');
+        const fromStatic = () => fetch('/data/ingredientsDB.json').then(r => r.json() as Promise<DBIngredient[]>);
+        fromAPI()
+            .catch(() => fromStatic())
             .then(data => {
-                let base = data as DBIngredient[];
+                let base = data;
                 try {
                     const raw = JSON.parse(localStorage.getItem('custom_ingredients') || '[]') as unknown[];
                     const custom = Array.isArray(raw) ? raw.filter(isValidDBIngredient) as DBIngredient[] : [];
@@ -1169,6 +1174,16 @@ export function NutrizionaleCalc() {
       if (euSubTab === 'pezzo' && ue.pezzo == null) setEuSubTab('100g');
     }, [euSubTab, ue.confezione, ue.porzione, ue.pezzo]);
     const tableRef = useRef<HTMLDivElement>(null);
+
+    // ─── Griglia porzioni collassabile (D1): auto-chiusa se la regione attiva ha già valori ───
+    const [servingsGridOpen, setServingsGridOpen] = useState(true);
+    const servingValsRef = useRef({ ue, usa, ca, au, arabi });
+    servingValsRef.current = { ue, usa, ca, au, arabi };
+    useEffect(() => {
+        const v = servingValsRef.current;
+        const map: Record<NationTab, object> = { UE: v.ue, USA: v.usa, Canada: v.ca, Australia: v.au, Arabi: v.arabi };
+        setServingsGridOpen(!Object.values(map[activeTab]).some(x => x != null));
+    }, [activeTab]);
 
     const { items: archiveItems, saveItem, deleteItem } = useArchive<ArchiveData>('nutrizionale-v3');
     const [, setCurrentId] = useState<string | undefined>(undefined);
@@ -1301,20 +1316,31 @@ export function NutrizionaleCalc() {
     // Component modifiers
     const addComp = () => { setComponents(prev => [...prev, makeComp()]); };
     const handleSmartImport = useCallback((result: SmartImportResult) => {
-        const targetId = components[0]?.id;
-        if (!targetId) return;
-        setComponents(prev => prev.map(c => {
-            if (c.id !== targetId) return c;
-            const newRows: RecipeRow[] = result.rows.map(r => ({
-                id: String(Date.now() + Math.random()),
-                ing: r.ing,
-                grams: r.grams,
-                eurKg: r.ing.eur_kg ?? 0,
-                resa: 100,
-            }));
-            return { ...c, rows: [...c.rows, ...newRows] };
-        }));
-        toast.success(`${result.rows.length} ingredienti importati.`);
+        if (!result.components.length) return;
+        const firstId = components[0]?.id;
+        setComponents(prev => {
+            let updated = prev;
+            result.components.forEach((comp, ci) => {
+                const newRows: RecipeRow[] = comp.rows.map(r => ({
+                    id: String(Date.now() + Math.random()),
+                    ing: r.ing,
+                    grams: r.grams,
+                    eurKg: r.ing.eur_kg ?? 0,
+                    resa: 100,
+                }));
+                if (ci === 0 && firstId) {
+                    // primo componente → aggiunge al componente esistente
+                    const name = result.productName || comp.name;
+                    updated = updated.map(c => c.id !== firstId ? c : { ...c, rows: [...c.rows, ...newRows], name: c.name || name });
+                } else {
+                    updated = [...updated, { ...makeComp(), name: comp.name, rows: newRows }];
+                }
+            });
+            return updated;
+        });
+        const total = result.components.reduce((s, c) => s + c.rows.length, 0);
+        const label = result.productName ? `"${result.productName}"` : `${result.components.length} componente${result.components.length > 1 ? 'i' : ''}`;
+        toast.success(`${total} ingredienti importati — ${label}.`);
     }, [components, toast]);
     const removeComp = (id: string) => setComponents(prev => prev.filter(c => c.id !== id));
     const updateCompName = (id: string, name: string) => setComponents(prev => prev.map(c => c.id === id ? { ...c, name } : c));
@@ -1729,7 +1755,21 @@ export function NutrizionaleCalc() {
                     })}
                 </div>
 
-                {/* Serving inputs — contextual per nation */}
+                {/* Serving inputs — contestuali per nazione, collassabili (D1) */}
+                <button
+                    type="button"
+                    onClick={() => setServingsGridOpen(o => !o)}
+                    style={{
+                        display: 'flex', alignItems: 'center', gap: 5,
+                        background: 'none', border: 'none', cursor: 'pointer',
+                        padding: '4px 0', fontSize: 10, fontWeight: 700,
+                        color: 'var(--color-text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em',
+                    }}
+                >
+                    Porzioni {activeTab}
+                    <span style={{ transform: servingsGridOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s', fontSize: 11 }}>▾</span>
+                </button>
+                {servingsGridOpen && (
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(110px, 1fr))', gap: 6, padding: '4px 0 8px' }}>
                     {activeTab === 'UE' && (['porzione', 'confezione', 'pezzo'] as const).map((k, i) => {
                         const labels = ['Porzione (g/ml)', 'U.V. / Confezione (g/ml)', 'Pezzo (g/ml)'];
@@ -1787,6 +1827,7 @@ export function NutrizionaleCalc() {
                         );
                     })}
                 </div>
+                )}
             </div>{/* /table-panel-header */}
 
                 {/* Active tab */}
@@ -1845,12 +1886,54 @@ export function NutrizionaleCalc() {
                                     </button>
                                 )}
                             </div>
+                            {/* ── Claim nutrizionali EU (Reg. 2006/1924) ──────── */}
+                            {(() => {
+                                const claims = calcClaims(per100display, isLiquid);
+                                return (
+                                    <div style={{ marginTop: 12, borderTop: '1px solid #eaecf0', paddingTop: 10 }}>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
+                                            <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--color-text)' }}>
+                                                Claim nutrizionali EU
+                                            </span>
+                                            <label style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 11, cursor: 'pointer', color: 'var(--color-text-muted)' }}>
+                                                <input
+                                                    type="checkbox"
+                                                    checked={isLiquid}
+                                                    onChange={e => setIsLiquid(e.target.checked)}
+                                                    style={{ width: 12, height: 12, cursor: 'pointer', accentColor: 'var(--color-orange)' }}
+                                                />
+                                                Prodotto liquido
+                                            </label>
+                                        </div>
+                                        {claims.length === 0 ? (
+                                            <span style={{ fontSize: 11, color: 'var(--color-text-muted)', fontStyle: 'italic' }}>
+                                                Nessun claim applicabile con i valori attuali.
+                                            </span>
+                                        ) : (
+                                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}>
+                                                {claims.map(c => (
+                                                    <span key={c} style={{
+                                                        fontSize: 10, fontWeight: 700, letterSpacing: '0.03em',
+                                                        background: 'var(--color-navy)', color: '#fff',
+                                                        borderRadius: 4, padding: '3px 7px',
+                                                    }}>
+                                                        {c}
+                                                    </span>
+                                                ))}
+                                            </div>
+                                        )}
+                                        <p style={{ fontSize: 10, color: 'var(--color-text-muted)', margin: '6px 0 0', lineHeight: 1.4 }}>
+                                            Reg. 2006/1924 — verificare sempre con il consulente prima di apporli in etichetta.
+                                        </p>
+                                    </div>
+                                );
+                            })()}
                         </>
                     )}
                     {activeTab === 'USA' && (
                         <>
-                            {/* Row 1: layout toggles + serving ref */}
-                            <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                            {/* Toolbar unica: layout | riferimento | unità (D1) */}
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
                                 {(['verticale', 'orizzontale', 'lineare'] as SubTab[]).map(t => (
                                     <button key={t} type="button" onClick={() => setSubTab(t)}
                                         className={`btn ${subTab === t ? 'btn-accent' : 'btn-outline'}`}
@@ -1870,9 +1953,7 @@ export function NutrizionaleCalc() {
                                         ))}
                                     </>
                                 )}
-                            </div>
-                            {/* Row 2: unit measures */}
-                            <div style={{ display: 'flex', gap: 6, marginTop: 6, flexWrap: 'wrap' }}>
+                                <span style={{ width: 1, background: '#e2e8f0', alignSelf: 'stretch', margin: '0 4px' }} />
                                 {([
                                     { key: 'g' as USAMeasure, label: 'g / ml', disabled: false },
                                     { key: 'tazze' as USAMeasure, label: 'Tazze', disabled: usa.cup == null },
@@ -1894,20 +1975,20 @@ export function NutrizionaleCalc() {
                     )}
                     {activeTab === 'Canada' && (
                         <>
-                            {/* Row 1: serving ref */}
-                            {(ca.confezione != null && ca.confezione > 0) && (
-                                <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-                                    {(['serving', 'confezione'] as USAServingRef[]).map(ref => (
-                                        <button key={ref} type="button" onClick={() => setCaServingRef(ref)}
-                                            className={`btn ${caServingRef === ref ? 'btn-accent' : 'btn-outline'}`}
-                                            style={{ fontSize: 11, padding: '3px 8px' }}>
-                                            {ref === 'serving' ? 'Per Serving' : 'Per Confezione'}
-                                        </button>
-                                    ))}
-                                </div>
-                            )}
-                            {/* Row 2: unit measures */}
-                            <div style={{ display: 'flex', gap: 6, marginTop: 6, flexWrap: 'wrap' }}>
+                            {/* Toolbar unica: riferimento | unità (D1) */}
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                                {(ca.confezione != null && ca.confezione > 0) && (
+                                    <>
+                                        {(['serving', 'confezione'] as USAServingRef[]).map(ref => (
+                                            <button key={ref} type="button" onClick={() => setCaServingRef(ref)}
+                                                className={`btn ${caServingRef === ref ? 'btn-accent' : 'btn-outline'}`}
+                                                style={{ fontSize: 11, padding: '3px 8px' }}>
+                                                {ref === 'serving' ? 'Per Serving' : 'Per Confezione'}
+                                            </button>
+                                        ))}
+                                        <span style={{ width: 1, background: '#e2e8f0', alignSelf: 'stretch', margin: '0 4px' }} />
+                                    </>
+                                )}
                                 {([
                                     { key: 'g' as USAMeasure, label: 'g / ml', disabled: false },
                                     { key: 'tazze' as USAMeasure, label: 'Tazze (250ml)', disabled: ca.cup == null },
@@ -1933,20 +2014,20 @@ export function NutrizionaleCalc() {
                     )}
                     {activeTab === 'Arabi' && (
                         <>
-                            {/* Row 1: serving ref */}
-                            {(arabi.confezione != null && arabi.confezione > 0) && (
-                                <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-                                    {(['serving', 'confezione'] as USAServingRef[]).map(ref => (
-                                        <button key={ref} type="button" onClick={() => setArabiServingRef(ref)}
-                                            className={`btn ${arabiServingRef === ref ? 'btn-accent' : 'btn-outline'}`}
-                                            style={{ fontSize: 11, padding: '3px 8px' }}>
-                                            {ref === 'serving' ? 'Per Serving' : 'Per Confezione'}
-                                        </button>
-                                    ))}
-                                </div>
-                            )}
-                            {/* Row 2: unit measures */}
-                            <div style={{ display: 'flex', gap: 6, marginTop: 6, flexWrap: 'wrap' }}>
+                            {/* Toolbar unica: riferimento | unità (D1) */}
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                                {(arabi.confezione != null && arabi.confezione > 0) && (
+                                    <>
+                                        {(['serving', 'confezione'] as USAServingRef[]).map(ref => (
+                                            <button key={ref} type="button" onClick={() => setArabiServingRef(ref)}
+                                                className={`btn ${arabiServingRef === ref ? 'btn-accent' : 'btn-outline'}`}
+                                                style={{ fontSize: 11, padding: '3px 8px' }}>
+                                                {ref === 'serving' ? 'Per Serving' : 'Per Confezione'}
+                                            </button>
+                                        ))}
+                                        <span style={{ width: 1, background: '#e2e8f0', alignSelf: 'stretch', margin: '0 4px' }} />
+                                    </>
+                                )}
                                 {([
                                     { key: 'g' as USAMeasure, label: 'g / ml', disabled: false },
                                     { key: 'tazze' as USAMeasure, label: 'Tazze', disabled: arabi.cup == null },
@@ -2147,22 +2228,107 @@ export function NutrizionaleCalc() {
 
                         {expertTab === 'ricetta' && (<>
 
-            {/* ── Empty State — shown when no ingredients yet ── */}
+            {/* ── Empty State ── */}
             {allRows.length === 0 && !productName && (
-                <div className="empty-state" style={{ marginBottom: 16 }}>
-                    <div className="empty-state-icon">🍳</div>
-                    <div className="empty-state-title">Inizia la tua ricetta</div>
-                    <div className="empty-state-desc">Crea una tabella nutrizionale professionale in pochi passi</div>
-                    <ul className="empty-state-steps">
-                        <li><span className="empty-state-step-num">1</span> Dai un nome al prodotto</li>
-                        <li><span className="empty-state-step-num">2</span> Cerca e aggiungi gli ingredienti</li>
-                        <li><span className="empty-state-step-num">3</span> Visualizza la tabella nutrizionale</li>
-                    </ul>
-                    <div className="empty-state-actions">
-                        <button type="button" className="btn btn-outline" style={{ fontSize: 13, padding: '8px 16px' }} onClick={() => setArchiveOpen(true)}>
-                            <FolderOpen size={14} /> Carica da archivio
+                <div style={{
+                    marginBottom: 16,
+                    borderRadius: 14,
+                    border: '1.5px solid #e5e7eb',
+                    background: '#fafafa',
+                    overflow: 'hidden',
+                }}>
+                    {/* Hero: Smart Import */}
+                    <div style={{ padding: '24px 24px 20px', textAlign: 'center' }}>
+                        <div style={{
+                            width: 48, height: 48, borderRadius: 14,
+                            background: 'linear-gradient(135deg, #ff7e2e, #dd5c0c)',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            margin: '0 auto 14px',
+                        }}>
+                            <Sparkles size={24} color="#fff" />
+                        </div>
+                        <div style={{ fontWeight: 700, fontSize: 17, color: '#111827', marginBottom: 6 }}>
+                            Importazione intelligente
+                        </div>
+                        <div style={{ fontSize: 13, color: '#6b7280', lineHeight: 1.5, marginBottom: 18, maxWidth: 300, margin: '0 auto 18px' }}>
+                            Incolla la lista ingredienti dalla tua ricetta — abbino io al database in automatico
+                        </div>
+                        <button
+                            type="button"
+                            onClick={() => setShowSmartImport(true)}
+                            style={{
+                                display: 'inline-flex', alignItems: 'center', gap: 8,
+                                padding: '11px 24px', borderRadius: 10, border: 'none',
+                                background: 'linear-gradient(135deg, #ff7e2e, #dd5c0c)',
+                                color: '#fff', fontWeight: 700, fontSize: 14, cursor: 'pointer',
+                                boxShadow: '0 4px 12px rgba(255,126,46,0.35)',
+                            }}
+                        >
+                            <Sparkles size={16} /> Inizia l'import intelligente
                         </button>
                     </div>
+
+                    {/* Divider */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '0 24px' }}>
+                        <div style={{ flex: 1, height: 1, background: '#e5e7eb' }} />
+                        <span style={{ fontSize: 11, color: '#9ca3af', fontWeight: 500 }}>oppure</span>
+                        <div style={{ flex: 1, height: 1, background: '#e5e7eb' }} />
+                    </div>
+
+                    {/* Secondary actions */}
+                    <div style={{ display: 'flex', gap: 10, padding: '16px 24px 20px' }}>
+                        <button
+                            type="button"
+                            onClick={() => setArchiveOpen(true)}
+                            style={{
+                                flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                gap: 7, padding: '9px 12px', borderRadius: 9,
+                                border: '1.5px solid #e5e7eb', background: '#fff',
+                                color: '#374151', fontSize: 13, fontWeight: 600, cursor: 'pointer',
+                            }}
+                        >
+                            <FolderOpen size={15} /> Carica da archivio
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => document.querySelector<HTMLInputElement>('.field-input')?.focus()}
+                            style={{
+                                flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                gap: 7, padding: '9px 12px', borderRadius: 9,
+                                border: '1.5px solid #e5e7eb', background: '#fff',
+                                color: '#374151', fontSize: 13, fontWeight: 600, cursor: 'pointer',
+                            }}
+                        >
+                            <Plus size={15} /> Inserisci manualmente
+                        </button>
+                    </div>
+
+                    {/* Excel import — solo utenti con tool 'excel-import' */}
+                    {hasExcelImport && (
+                        <div style={{
+                            borderTop: '1px solid #e5e7eb',
+                            padding: '12px 24px',
+                            display: 'flex', alignItems: 'center', gap: 10,
+                            background: '#f0fdf4',
+                        }}>
+                            <FileSpreadsheet size={16} color="#16a34a" style={{ flexShrink: 0 }} />
+                            <span style={{ flex: 1, fontSize: 12, color: '#15803d' }}>
+                                Hai il Programma Excel AEA?
+                            </span>
+                            <button
+                                type="button"
+                                onClick={() => setShowSmartImport(true)}
+                                style={{
+                                    padding: '5px 12px', borderRadius: 7,
+                                    border: '1.5px solid #16a34a', background: '#fff',
+                                    color: '#15803d', fontSize: 12, fontWeight: 600, cursor: 'pointer',
+                                    display: 'flex', alignItems: 'center', gap: 5,
+                                }}
+                            >
+                                <FileSpreadsheet size={13} /> Importa da .xlsx
+                            </button>
+                        </div>
+                    )}
                 </div>
             )}
 

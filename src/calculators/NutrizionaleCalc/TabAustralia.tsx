@@ -1,4 +1,5 @@
 import React from 'react';
+import { rAU_kj, rAU_kcal, rAU_g1, rAU_mg } from '../../utils/nutritionalRounding';
 
 // ─── Shared types ─────────────────────────────────────────────────────────────
 export interface CalcResult {
@@ -38,12 +39,6 @@ function scaleResult(r: CalcResult, grams: number): CalcResult {
     }
     return s;
 }
-
-// ─── Rounding helpers (FSANZ) ────────────────────────────────────────────────
-function rAU_kj(v: number): string { return v < 40 ? 'less than 40' : Math.round(v).toString(); }
-function rAU_kcal(v: number): string { return v < 9.5 ? 'less than 9.5' : Math.round(v).toString(); }
-function rAU_g1(v: number): string { return v < 1 ? 'less than 1' : v.toFixed(1); }
-function rAU_mg(v: number): string { return v < 5 ? 'less than 5' : Math.round(v).toString(); }
 
 // ─── Props ────────────────────────────────────────────────────────────────────
 interface TabAustraliaProps {

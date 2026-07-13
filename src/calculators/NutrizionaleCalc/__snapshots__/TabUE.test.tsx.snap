@@ -1,0 +1,2210 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`TabUE — snapshot rendering > 100g — solo obbligatori 1`] = `
+<div>
+  <div
+    data-table-export="true"
+    style="background: white; padding: 12px; border-radius: 0px; display: inline-block; min-width: 300px; width: 100%; box-sizing: border-box;"
+  >
+    <div>
+      <table
+        style="width: 100%; border-collapse: collapse; border: 2px solid rgb(153, 153, 153);"
+      >
+        <thead>
+          <tr>
+            <th
+              style="background: rgb(245, 245, 245); border: 1px solid rgb(153, 153, 153); padding: 8px 10px; text-align: left; font-weight: 700; font-size: 14px;"
+            >
+              DICHIARAZIONE NUTRIZIONALE
+            </th>
+            <th
+              style="background: rgb(245, 245, 245); border: 1px solid rgb(153, 153, 153); padding: 8px 10px; text-align: center; font-weight: 700; font-size: 13px; width: 100px;"
+            >
+              % AR *
+            </th>
+          </tr>
+          <tr>
+            <td
+              style="background: rgb(245, 245, 245); border: 1px solid rgb(153, 153, 153); padding: 5px 10px; font-size: 11px; font-weight: 600;"
+            >
+              Valori nutrizionali medi per 
+              100 g
+               di prodotto
+            </td>
+            <td
+              style="background: rgb(245, 245, 245); border: 1px solid rgb(153, 153, 153); padding: 5px 10px;"
+            />
+          </tr>
+        </thead>
+      </table>
+      <div
+        style="overflow-x: auto;"
+      >
+        <table
+          style="border-collapse: collapse; width: 100%; font-size: 12px; border-width: 1px 2px 2px; border-style: solid; border-color: rgb(153, 153, 153); border-image: none;"
+        >
+          <tbody>
+            <tr
+              style="border-bottom: 1px solid rgb(153, 153, 153);"
+            >
+              <td
+                style="font-size: 13px; font-weight: 700; padding: 10px 12px; border-right: 1px solid rgb(153, 153, 153);"
+              >
+                <div
+                  style="display: flex; justify-content: space-between; align-items: flex-end;"
+                >
+                  <span>
+                    Energia
+                  </span>
+                  <span
+                    style="margin-left: 20px; font-weight: 600;"
+                  >
+                    1063 kJ / 254 kcal
+                  </span>
+                </div>
+              </td>
+              <td
+                style="padding: 10px 12px; font-size: 12px; font-weight: 700; text-align: center; width: 100px;"
+              >
+                13%
+              </td>
+            </tr>
+            <tr
+              style="border-bottom: 1px solid rgb(153, 153, 153);"
+            >
+              <td
+                style="font-size: 13px; font-weight: 700; padding: 10px 12px; border-right: 1px solid rgb(153, 153, 153);"
+              >
+                <div
+                  style="display: flex; justify-content: space-between; align-items: flex-end;"
+                >
+                  <span>
+                    Grassi
+                  </span>
+                  <span
+                    style="margin-left: 20px; font-weight: 600;"
+                  >
+                    20 g
+                  </span>
+                </div>
+              </td>
+              <td
+                style="padding: 10px 12px; font-size: 12px; font-weight: 700; text-align: center; width: 100px;"
+              >
+                28%
+              </td>
+            </tr>
+            <tr
+              style="border-bottom: 1px solid rgb(153, 153, 153);"
+            >
+              <td
+                style="font-size: 11px; font-weight: 400; padding: 10px 12px 10px 24px; border-right: 1px solid rgb(153, 153, 153);"
+              >
+                <div
+                  style="display: flex; justify-content: space-between; align-items: flex-end;"
+                >
+                  <span>
+                    di cui acidi grassi saturi
+                  </span>
+                  <span
+                    style="margin-left: 20px; font-weight: 600;"
+                  >
+                    13 g
+                  </span>
+                </div>
+              </td>
+              <td
+                style="padding: 10px 12px; font-size: 12px; font-weight: 400; text-align: center; width: 100px;"
+              >
+                66%
+              </td>
+            </tr>
+            <tr
+              style="border-bottom: 1px solid rgb(153, 153, 153);"
+            >
+              <td
+                style="font-size: 13px; font-weight: 700; padding: 10px 12px; border-right: 1px solid rgb(153, 153, 153);"
+              >
+                <div
+                  style="display: flex; justify-content: space-between; align-items: flex-end;"
+                >
+                  <span>
+                    Carboidrati
+                  </span>
+                  <span
+                    style="margin-left: 20px; font-weight: 600;"
+                  >
+                    2,1 g
+                  </span>
+                </div>
+              </td>
+              <td
+                style="padding: 10px 12px; font-size: 12px; font-weight: 700; text-align: center; width: 100px;"
+              >
+                1%
+              </td>
+            </tr>
+            <tr
+              style="border-bottom: 1px solid rgb(153, 153, 153);"
+            >
+              <td
+                style="font-size: 11px; font-weight: 400; padding: 10px 12px 10px 24px; border-right: 1px solid rgb(153, 153, 153);"
+              >
+                <div
+                  style="display: flex; justify-content: space-between; align-items: flex-end;"
+                >
+                  <span>
+                    di cui zuccheri
+                  </span>
+                  <span
+                    style="margin-left: 20px; font-weight: 600;"
+                  >
+                    2,1 g
+                  </span>
+                </div>
+              </td>
+              <td
+                style="padding: 10px 12px; font-size: 12px; font-weight: 400; text-align: center; width: 100px;"
+              >
+                2%
+              </td>
+            </tr>
+            <tr
+              style="border-bottom: 1px solid rgb(153, 153, 153);"
+            >
+              <td
+                style="font-size: 13px; font-weight: 700; padding: 10px 12px; border-right: 1px solid rgb(153, 153, 153);"
+              >
+                <div
+                  style="display: flex; justify-content: space-between; align-items: flex-end;"
+                >
+                  <span>
+                    Fibre
+                  </span>
+                  <span
+                    style="margin-left: 20px; font-weight: 600;"
+                  >
+                    0 g
+                  </span>
+                </div>
+              </td>
+              <td
+                style="padding: 10px 12px; font-size: 12px; font-weight: 700; text-align: center; width: 100px;"
+              >
+                —
+              </td>
+            </tr>
+            <tr
+              style="border-bottom: 1px solid rgb(153, 153, 153);"
+            >
+              <td
+                style="font-size: 13px; font-weight: 700; padding: 10px 12px; border-right: 1px solid rgb(153, 153, 153);"
+              >
+                <div
+                  style="display: flex; justify-content: space-between; align-items: flex-end;"
+                >
+                  <span>
+                    Proteine
+                  </span>
+                  <span
+                    style="margin-left: 20px; font-weight: 600;"
+                  >
+                    18 g
+                  </span>
+                </div>
+              </td>
+              <td
+                style="padding: 10px 12px; font-size: 12px; font-weight: 700; text-align: center; width: 100px;"
+              >
+                37%
+              </td>
+            </tr>
+            <tr
+              style="border-bottom: 1px solid rgb(153, 153, 153);"
+            >
+              <td
+                style="font-size: 13px; font-weight: 700; padding: 10px 12px; border-right: 1px solid rgb(153, 153, 153);"
+              >
+                <div
+                  style="display: flex; justify-content: space-between; align-items: flex-end;"
+                >
+                  <span>
+                    Sale
+                  </span>
+                  <span
+                    style="margin-left: 20px; font-weight: 600;"
+                  >
+                    0,84 g
+                  </span>
+                </div>
+              </td>
+              <td
+                style="padding: 10px 12px; font-size: 12px; font-weight: 700; text-align: center; width: 100px;"
+              >
+                14%
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p
+        style="font-size: 10px; color: rgb(102, 102, 102); margin-top: 8px; line-height: 1.4; font-weight: 500;"
+      >
+        *Assunzioni di riferimento di un adulto medio (8400 kJ / 2000 kcal).
+      </p>
+    </div>
+  </div>
+</div>
+`;
+
+exports[`TabUE — snapshot rendering > 100g — tutti gli opzionali 1`] = `
+<div>
+  <div
+    data-table-export="true"
+    style="background: white; padding: 12px; border-radius: 0px; display: inline-block; min-width: 300px; width: 100%; box-sizing: border-box;"
+  >
+    <div>
+      <table
+        style="width: 100%; border-collapse: collapse; border: 2px solid rgb(153, 153, 153);"
+      >
+        <thead>
+          <tr>
+            <th
+              style="background: rgb(245, 245, 245); border: 1px solid rgb(153, 153, 153); padding: 8px 10px; text-align: left; font-weight: 700; font-size: 14px;"
+            >
+              DICHIARAZIONE NUTRIZIONALE
+            </th>
+            <th
+              style="background: rgb(245, 245, 245); border: 1px solid rgb(153, 153, 153); padding: 8px 10px; text-align: center; font-weight: 700; font-size: 13px; width: 100px;"
+            >
+              % AR *
+            </th>
+          </tr>
+          <tr>
+            <td
+              style="background: rgb(245, 245, 245); border: 1px solid rgb(153, 153, 153); padding: 5px 10px; font-size: 11px; font-weight: 600;"
+            >
+              Valori nutrizionali medi per 
+              100 g
+               di prodotto
+            </td>
+            <td
+              style="background: rgb(245, 245, 245); border: 1px solid rgb(153, 153, 153); padding: 5px 10px;"
+            />
+          </tr>
+        </thead>
+      </table>
+      <div
+        style="overflow-x: auto;"
+      >
+        <table
+          style="border-collapse: collapse; width: 100%; font-size: 12px; border-width: 1px 2px 2px; border-style: solid; border-color: rgb(153, 153, 153); border-image: none;"
+        >
+          <tbody>
+            <tr
+              style="border-bottom: 1px solid rgb(153, 153, 153);"
+            >
+              <td
+                style="font-size: 13px; font-weight: 700; padding: 10px 12px; border-right: 1px solid rgb(153, 153, 153);"
+              >
+                <div
+                  style="display: flex; justify-content: space-between; align-items: flex-end;"
+                >
+                  <span>
+                    Energia
+                  </span>
+                  <span
+                    style="margin-left: 20px; font-weight: 600;"
+                  >
+                    1063 kJ / 254 kcal
+                  </span>
+                </div>
+              </td>
+              <td
+                style="padding: 10px 12px; font-size: 12px; font-weight: 700; text-align: center; width: 100px;"
+              >
+                13%
+              </td>
+            </tr>
+            <tr
+              style="border-bottom: 1px solid rgb(153, 153, 153);"
+            >
+              <td
+                style="font-size: 13px; font-weight: 700; padding: 10px 12px; border-right: 1px solid rgb(153, 153, 153);"
+              >
+                <div
+                  style="display: flex; justify-content: space-between; align-items: flex-end;"
+                >
+                  <span>
+                    Grassi
+                  </span>
+                  <span
+                    style="margin-left: 20px; font-weight: 600;"
+                  >
+                    20 g
+                  </span>
+                </div>
+              </td>
+              <td
+                style="padding: 10px 12px; font-size: 12px; font-weight: 700; text-align: center; width: 100px;"
+              >
+                28%
+              </td>
+            </tr>
+            <tr
+              style="border-bottom: 1px solid rgb(153, 153, 153);"
+            >
+              <td
+                style="font-size: 11px; font-weight: 400; padding: 10px 12px 10px 24px; border-right: 1px solid rgb(153, 153, 153);"
+              >
+                <div
+                  style="display: flex; justify-content: space-between; align-items: flex-end;"
+                >
+                  <span>
+                    di cui acidi grassi saturi
+                  </span>
+                  <span
+                    style="margin-left: 20px; font-weight: 600;"
+                  >
+                    13 g
+                  </span>
+                </div>
+              </td>
+              <td
+                style="padding: 10px 12px; font-size: 12px; font-weight: 400; text-align: center; width: 100px;"
+              >
+                66%
+              </td>
+            </tr>
+            <tr
+              style="border-bottom: 1px solid rgb(153, 153, 153);"
+            >
+              <td
+                style="font-size: 11px; font-weight: 400; padding: 10px 12px 10px 24px; border-right: 1px solid rgb(153, 153, 153);"
+              >
+                <div
+                  style="display: flex; justify-content: space-between; align-items: flex-end;"
+                >
+                  <span>
+                    di cui acidi grassi monoinsaturi
+                  </span>
+                  <span
+                    style="margin-left: 20px; font-weight: 600;"
+                  >
+                    5,1 g
+                  </span>
+                </div>
+              </td>
+              <td
+                style="padding: 10px 12px; font-size: 12px; font-weight: 400; text-align: center; width: 100px;"
+              >
+                —
+              </td>
+            </tr>
+            <tr
+              style="border-bottom: 1px solid rgb(153, 153, 153);"
+            >
+              <td
+                style="font-size: 11px; font-weight: 400; padding: 10px 12px 10px 24px; border-right: 1px solid rgb(153, 153, 153);"
+              >
+                <div
+                  style="display: flex; justify-content: space-between; align-items: flex-end;"
+                >
+                  <span>
+                    di cui acidi grassi polinsaturi
+                  </span>
+                  <span
+                    style="margin-left: 20px; font-weight: 600;"
+                  >
+                    0,8 g
+                  </span>
+                </div>
+              </td>
+              <td
+                style="padding: 10px 12px; font-size: 12px; font-weight: 400; text-align: center; width: 100px;"
+              >
+                —
+              </td>
+            </tr>
+            <tr
+              style="border-bottom: 1px solid rgb(153, 153, 153);"
+            >
+              <td
+                style="font-size: 13px; font-weight: 700; padding: 10px 12px; border-right: 1px solid rgb(153, 153, 153);"
+              >
+                <div
+                  style="display: flex; justify-content: space-between; align-items: flex-end;"
+                >
+                  <span>
+                    Carboidrati
+                  </span>
+                  <span
+                    style="margin-left: 20px; font-weight: 600;"
+                  >
+                    2,1 g
+                  </span>
+                </div>
+              </td>
+              <td
+                style="padding: 10px 12px; font-size: 12px; font-weight: 700; text-align: center; width: 100px;"
+              >
+                1%
+              </td>
+            </tr>
+            <tr
+              style="border-bottom: 1px solid rgb(153, 153, 153);"
+            >
+              <td
+                style="font-size: 11px; font-weight: 400; padding: 10px 12px 10px 24px; border-right: 1px solid rgb(153, 153, 153);"
+              >
+                <div
+                  style="display: flex; justify-content: space-between; align-items: flex-end;"
+                >
+                  <span>
+                    di cui zuccheri
+                  </span>
+                  <span
+                    style="margin-left: 20px; font-weight: 600;"
+                  >
+                    2,1 g
+                  </span>
+                </div>
+              </td>
+              <td
+                style="padding: 10px 12px; font-size: 12px; font-weight: 400; text-align: center; width: 100px;"
+              >
+                2%
+              </td>
+            </tr>
+            <tr
+              style="border-bottom: 1px solid rgb(153, 153, 153);"
+            >
+              <td
+                style="font-size: 11px; font-weight: 400; padding: 10px 12px 10px 24px; border-right: 1px solid rgb(153, 153, 153);"
+              >
+                <div
+                  style="display: flex; justify-content: space-between; align-items: flex-end;"
+                >
+                  <span>
+                    di cui polioli
+                  </span>
+                  <span
+                    style="margin-left: 20px; font-weight: 600;"
+                  >
+                    0 g
+                  </span>
+                </div>
+              </td>
+              <td
+                style="padding: 10px 12px; font-size: 12px; font-weight: 400; text-align: center; width: 100px;"
+              >
+                —
+              </td>
+            </tr>
+            <tr
+              style="border-bottom: 1px solid rgb(153, 153, 153);"
+            >
+              <td
+                style="font-size: 11px; font-weight: 400; padding: 10px 12px 10px 24px; border-right: 1px solid rgb(153, 153, 153);"
+              >
+                <div
+                  style="display: flex; justify-content: space-between; align-items: flex-end;"
+                >
+                  <span>
+                    di cui amido
+                  </span>
+                  <span
+                    style="margin-left: 20px; font-weight: 600;"
+                  >
+                    0 g
+                  </span>
+                </div>
+              </td>
+              <td
+                style="padding: 10px 12px; font-size: 12px; font-weight: 400; text-align: center; width: 100px;"
+              >
+                —
+              </td>
+            </tr>
+            <tr
+              style="border-bottom: 1px solid rgb(153, 153, 153);"
+            >
+              <td
+                style="font-size: 13px; font-weight: 700; padding: 10px 12px; border-right: 1px solid rgb(153, 153, 153);"
+              >
+                <div
+                  style="display: flex; justify-content: space-between; align-items: flex-end;"
+                >
+                  <span>
+                    Fibre
+                  </span>
+                  <span
+                    style="margin-left: 20px; font-weight: 600;"
+                  >
+                    0 g
+                  </span>
+                </div>
+              </td>
+              <td
+                style="padding: 10px 12px; font-size: 12px; font-weight: 700; text-align: center; width: 100px;"
+              >
+                —
+              </td>
+            </tr>
+            <tr
+              style="border-bottom: 1px solid rgb(153, 153, 153);"
+            >
+              <td
+                style="font-size: 13px; font-weight: 700; padding: 10px 12px; border-right: 1px solid rgb(153, 153, 153);"
+              >
+                <div
+                  style="display: flex; justify-content: space-between; align-items: flex-end;"
+                >
+                  <span>
+                    Proteine
+                  </span>
+                  <span
+                    style="margin-left: 20px; font-weight: 600;"
+                  >
+                    18 g
+                  </span>
+                </div>
+              </td>
+              <td
+                style="padding: 10px 12px; font-size: 12px; font-weight: 700; text-align: center; width: 100px;"
+              >
+                37%
+              </td>
+            </tr>
+            <tr
+              style="border-bottom: 1px solid rgb(153, 153, 153);"
+            >
+              <td
+                style="font-size: 13px; font-weight: 700; padding: 10px 12px; border-right: 1px solid rgb(153, 153, 153);"
+              >
+                <div
+                  style="display: flex; justify-content: space-between; align-items: flex-end;"
+                >
+                  <span>
+                    Sale
+                  </span>
+                  <span
+                    style="margin-left: 20px; font-weight: 600;"
+                  >
+                    0,84 g
+                  </span>
+                </div>
+              </td>
+              <td
+                style="padding: 10px 12px; font-size: 12px; font-weight: 700; text-align: center; width: 100px;"
+              >
+                14%
+              </td>
+            </tr>
+            <tr
+              style="border-bottom: 1px solid rgb(153, 153, 153);"
+            >
+              <td
+                style="padding: 10px 12px; font-size: 12px; border-right: 1px solid rgb(153, 153, 153);"
+              >
+                <div
+                  style="display: flex; justify-content: space-between; align-items: flex-end;"
+                >
+                  <span>
+                    Vitamina A
+                  </span>
+                  <span
+                    style="margin-left: 20px; font-weight: 600;"
+                  >
+                    135
+                     
+                    µg
+                  </span>
+                </div>
+              </td>
+              <td
+                style="padding: 10px 12px; font-size: 12px; text-align: center; width: 100px;"
+              >
+                17%
+              </td>
+            </tr>
+            <tr
+              style="border-bottom: 1px solid rgb(153, 153, 153);"
+            >
+              <td
+                style="padding: 10px 12px; font-size: 12px; border-right: 1px solid rgb(153, 153, 153);"
+              >
+                <div
+                  style="display: flex; justify-content: space-between; align-items: flex-end;"
+                >
+                  <span>
+                    Vitamina D
+                  </span>
+                  <span
+                    style="margin-left: 20px; font-weight: 600;"
+                  >
+                    0,2
+                     
+                    µg
+                  </span>
+                </div>
+              </td>
+              <td
+                style="padding: 10px 12px; font-size: 12px; text-align: center; width: 100px;"
+              >
+                4%
+              </td>
+            </tr>
+            <tr
+              style="border-bottom: 1px solid rgb(153, 153, 153);"
+            >
+              <td
+                style="padding: 10px 12px; font-size: 12px; border-right: 1px solid rgb(153, 153, 153);"
+              >
+                <div
+                  style="display: flex; justify-content: space-between; align-items: flex-end;"
+                >
+                  <span>
+                    Vitamina E
+                  </span>
+                  <span
+                    style="margin-left: 20px; font-weight: 600;"
+                  >
+                    0,4
+                     
+                    mg
+                  </span>
+                </div>
+              </td>
+              <td
+                style="padding: 10px 12px; font-size: 12px; text-align: center; width: 100px;"
+              >
+                3%
+              </td>
+            </tr>
+            <tr
+              style="border-bottom: 1px solid rgb(153, 153, 153);"
+            >
+              <td
+                style="padding: 10px 12px; font-size: 12px; border-right: 1px solid rgb(153, 153, 153);"
+              >
+                <div
+                  style="display: flex; justify-content: space-between; align-items: flex-end;"
+                >
+                  <span>
+                    Vitamina K
+                  </span>
+                  <span
+                    style="margin-left: 20px; font-weight: 600;"
+                  >
+                    2,0
+                     
+                    µg
+                  </span>
+                </div>
+              </td>
+              <td
+                style="padding: 10px 12px; font-size: 12px; text-align: center; width: 100px;"
+              >
+                3%
+              </td>
+            </tr>
+            <tr
+              style="border-bottom: 1px solid rgb(153, 153, 153);"
+            >
+              <td
+                style="padding: 10px 12px; font-size: 12px; border-right: 1px solid rgb(153, 153, 153);"
+              >
+                <div
+                  style="display: flex; justify-content: space-between; align-items: flex-end;"
+                >
+                  <span>
+                    Vitamina B1 (Tiamina)
+                  </span>
+                  <span
+                    style="margin-left: 20px; font-weight: 600;"
+                  >
+                    0
+                     
+                    mg
+                  </span>
+                </div>
+              </td>
+              <td
+                style="padding: 10px 12px; font-size: 12px; text-align: center; width: 100px;"
+              >
+                3%
+              </td>
+            </tr>
+            <tr
+              style="border-bottom: 1px solid rgb(153, 153, 153);"
+            >
+              <td
+                style="padding: 10px 12px; font-size: 12px; border-right: 1px solid rgb(153, 153, 153);"
+              >
+                <div
+                  style="display: flex; justify-content: space-between; align-items: flex-end;"
+                >
+                  <span>
+                    Vitamina B2 (Riboflavina)
+                  </span>
+                  <span
+                    style="margin-left: 20px; font-weight: 600;"
+                  >
+                    0,2
+                     
+                    mg
+                  </span>
+                </div>
+              </td>
+              <td
+                style="padding: 10px 12px; font-size: 12px; text-align: center; width: 100px;"
+              >
+                13%
+              </td>
+            </tr>
+            <tr
+              style="border-bottom: 1px solid rgb(153, 153, 153);"
+            >
+              <td
+                style="padding: 10px 12px; font-size: 12px; border-right: 1px solid rgb(153, 153, 153);"
+              >
+                <div
+                  style="display: flex; justify-content: space-between; align-items: flex-end;"
+                >
+                  <span>
+                    Vitamina B3 (Niacina/PP)
+                  </span>
+                  <span
+                    style="margin-left: 20px; font-weight: 600;"
+                  >
+                    0,1
+                     
+                    mg
+                  </span>
+                </div>
+              </td>
+              <td
+                style="padding: 10px 12px; font-size: 12px; text-align: center; width: 100px;"
+              >
+                1%
+              </td>
+            </tr>
+            <tr
+              style="border-bottom: 1px solid rgb(153, 153, 153);"
+            >
+              <td
+                style="padding: 10px 12px; font-size: 12px; border-right: 1px solid rgb(153, 153, 153);"
+              >
+                <div
+                  style="display: flex; justify-content: space-between; align-items: flex-end;"
+                >
+                  <span>
+                    Vitamina B6
+                  </span>
+                  <span
+                    style="margin-left: 20px; font-weight: 600;"
+                  >
+                    0
+                     
+                    mg
+                  </span>
+                </div>
+              </td>
+              <td
+                style="padding: 10px 12px; font-size: 12px; text-align: center; width: 100px;"
+              >
+                4%
+              </td>
+            </tr>
+            <tr
+              style="border-bottom: 1px solid rgb(153, 153, 153);"
+            >
+              <td
+                style="padding: 10px 12px; font-size: 12px; border-right: 1px solid rgb(153, 153, 153);"
+              >
+                <div
+                  style="display: flex; justify-content: space-between; align-items: flex-end;"
+                >
+                  <span>
+                    Acido folico (B9)
+                  </span>
+                  <span
+                    style="margin-left: 20px; font-weight: 600;"
+                  >
+                    10
+                     
+                    µg
+                  </span>
+                </div>
+              </td>
+              <td
+                style="padding: 10px 12px; font-size: 12px; text-align: center; width: 100px;"
+              >
+                5%
+              </td>
+            </tr>
+            <tr
+              style="border-bottom: 1px solid rgb(153, 153, 153);"
+            >
+              <td
+                style="padding: 10px 12px; font-size: 12px; border-right: 1px solid rgb(153, 153, 153);"
+              >
+                <div
+                  style="display: flex; justify-content: space-between; align-items: flex-end;"
+                >
+                  <span>
+                    Vitamina B12
+                  </span>
+                  <span
+                    style="margin-left: 20px; font-weight: 600;"
+                  >
+                    1,2
+                     
+                    µg
+                  </span>
+                </div>
+              </td>
+              <td
+                style="padding: 10px 12px; font-size: 12px; text-align: center; width: 100px;"
+              >
+                50%
+              </td>
+            </tr>
+            <tr
+              style="border-bottom: 1px solid rgb(153, 153, 153);"
+            >
+              <td
+                style="padding: 10px 12px; font-size: 12px; border-right: 1px solid rgb(153, 153, 153);"
+              >
+                <div
+                  style="display: flex; justify-content: space-between; align-items: flex-end;"
+                >
+                  <span>
+                    Acido pantotenico (B5)
+                  </span>
+                  <span
+                    style="margin-left: 20px; font-weight: 600;"
+                  >
+                    0,4
+                     
+                    mg
+                  </span>
+                </div>
+              </td>
+              <td
+                style="padding: 10px 12px; font-size: 12px; text-align: center; width: 100px;"
+              >
+                7%
+              </td>
+            </tr>
+            <tr
+              style="border-bottom: 1px solid rgb(153, 153, 153);"
+            >
+              <td
+                style="padding: 10px 12px; font-size: 12px; border-right: 1px solid rgb(153, 153, 153);"
+              >
+                <div
+                  style="display: flex; justify-content: space-between; align-items: flex-end;"
+                >
+                  <span>
+                    Potassio
+                  </span>
+                  <span
+                    style="margin-left: 20px; font-weight: 600;"
+                  >
+                    120
+                     
+                    mg
+                  </span>
+                </div>
+              </td>
+              <td
+                style="padding: 10px 12px; font-size: 12px; text-align: center; width: 100px;"
+              >
+                6%
+              </td>
+            </tr>
+            <tr
+              style="border-bottom: 1px solid rgb(153, 153, 153);"
+            >
+              <td
+                style="padding: 10px 12px; font-size: 12px; border-right: 1px solid rgb(153, 153, 153);"
+              >
+                <div
+                  style="display: flex; justify-content: space-between; align-items: flex-end;"
+                >
+                  <span>
+                    Calcio
+                  </span>
+                  <span
+                    style="margin-left: 20px; font-weight: 600;"
+                  >
+                    210
+                     
+                    mg
+                  </span>
+                </div>
+              </td>
+              <td
+                style="padding: 10px 12px; font-size: 12px; text-align: center; width: 100px;"
+              >
+                26%
+              </td>
+            </tr>
+            <tr
+              style="border-bottom: 1px solid rgb(153, 153, 153);"
+            >
+              <td
+                style="padding: 10px 12px; font-size: 12px; border-right: 1px solid rgb(153, 153, 153);"
+              >
+                <div
+                  style="display: flex; justify-content: space-between; align-items: flex-end;"
+                >
+                  <span>
+                    Fosforo
+                  </span>
+                  <span
+                    style="margin-left: 20px; font-weight: 600;"
+                  >
+                    190
+                     
+                    mg
+                  </span>
+                </div>
+              </td>
+              <td
+                style="padding: 10px 12px; font-size: 12px; text-align: center; width: 100px;"
+              >
+                27%
+              </td>
+            </tr>
+            <tr
+              style="border-bottom: 1px solid rgb(153, 153, 153);"
+            >
+              <td
+                style="padding: 10px 12px; font-size: 12px; border-right: 1px solid rgb(153, 153, 153);"
+              >
+                <div
+                  style="display: flex; justify-content: space-between; align-items: flex-end;"
+                >
+                  <span>
+                    Magnesio
+                  </span>
+                  <span
+                    style="margin-left: 20px; font-weight: 600;"
+                  >
+                    18
+                     
+                    mg
+                  </span>
+                </div>
+              </td>
+              <td
+                style="padding: 10px 12px; font-size: 12px; text-align: center; width: 100px;"
+              >
+                5%
+              </td>
+            </tr>
+            <tr
+              style="border-bottom: 1px solid rgb(153, 153, 153);"
+            >
+              <td
+                style="padding: 10px 12px; font-size: 12px; border-right: 1px solid rgb(153, 153, 153);"
+              >
+                <div
+                  style="display: flex; justify-content: space-between; align-items: flex-end;"
+                >
+                  <span>
+                    Ferro
+                  </span>
+                  <span
+                    style="margin-left: 20px; font-weight: 600;"
+                  >
+                    0,2
+                     
+                    mg
+                  </span>
+                </div>
+              </td>
+              <td
+                style="padding: 10px 12px; font-size: 12px; text-align: center; width: 100px;"
+              >
+                1%
+              </td>
+            </tr>
+            <tr
+              style="border-bottom: 1px solid rgb(153, 153, 153);"
+            >
+              <td
+                style="padding: 10px 12px; font-size: 12px; border-right: 1px solid rgb(153, 153, 153);"
+              >
+                <div
+                  style="display: flex; justify-content: space-between; align-items: flex-end;"
+                >
+                  <span>
+                    Zinco
+                  </span>
+                  <span
+                    style="margin-left: 20px; font-weight: 600;"
+                  >
+                    1,4
+                     
+                    mg
+                  </span>
+                </div>
+              </td>
+              <td
+                style="padding: 10px 12px; font-size: 12px; text-align: center; width: 100px;"
+              >
+                14%
+              </td>
+            </tr>
+            <tr
+              style="border-bottom: 1px solid rgb(153, 153, 153);"
+            >
+              <td
+                style="padding: 10px 12px; font-size: 12px; border-right: 1px solid rgb(153, 153, 153);"
+              >
+                <div
+                  style="display: flex; justify-content: space-between; align-items: flex-end;"
+                >
+                  <span>
+                    Rame
+                  </span>
+                  <span
+                    style="margin-left: 20px; font-weight: 600;"
+                  >
+                    0
+                     
+                    mg
+                  </span>
+                </div>
+              </td>
+              <td
+                style="padding: 10px 12px; font-size: 12px; text-align: center; width: 100px;"
+              >
+                2%
+              </td>
+            </tr>
+            <tr
+              style="border-bottom: 1px solid rgb(153, 153, 153);"
+            >
+              <td
+                style="padding: 10px 12px; font-size: 12px; border-right: 1px solid rgb(153, 153, 153);"
+              >
+                <div
+                  style="display: flex; justify-content: space-between; align-items: flex-end;"
+                >
+                  <span>
+                    Manganese
+                  </span>
+                  <span
+                    style="margin-left: 20px; font-weight: 600;"
+                  >
+                    0
+                     
+                    mg
+                  </span>
+                </div>
+              </td>
+              <td
+                style="padding: 10px 12px; font-size: 12px; text-align: center; width: 100px;"
+              >
+                1%
+              </td>
+            </tr>
+            <tr
+              style="border-bottom: 1px solid rgb(153, 153, 153);"
+            >
+              <td
+                style="padding: 10px 12px; font-size: 12px; border-right: 1px solid rgb(153, 153, 153);"
+              >
+                <div
+                  style="display: flex; justify-content: space-between; align-items: flex-end;"
+                >
+                  <span>
+                    Selenio
+                  </span>
+                  <span
+                    style="margin-left: 20px; font-weight: 600;"
+                  >
+                    4,0
+                     
+                    µg
+                  </span>
+                </div>
+              </td>
+              <td
+                style="padding: 10px 12px; font-size: 12px; text-align: center; width: 100px;"
+              >
+                7%
+              </td>
+            </tr>
+            <tr
+              style="border-bottom: 1px solid rgb(153, 153, 153);"
+            >
+              <td
+                style="padding: 10px 12px; font-size: 12px; border-right: 1px solid rgb(153, 153, 153);"
+              >
+                <div
+                  style="display: flex; justify-content: space-between; align-items: flex-end;"
+                >
+                  <span>
+                    Iodio
+                  </span>
+                  <span
+                    style="margin-left: 20px; font-weight: 600;"
+                  >
+                    8,0
+                     
+                    µg
+                  </span>
+                </div>
+              </td>
+              <td
+                style="padding: 10px 12px; font-size: 12px; text-align: center; width: 100px;"
+              >
+                5%
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p
+        style="font-size: 10px; color: rgb(102, 102, 102); margin-top: 8px; line-height: 1.4; font-weight: 500;"
+      >
+        *Assunzioni di riferimento di un adulto medio (8400 kJ / 2000 kcal).
+      </p>
+    </div>
+  </div>
+</div>
+`;
+
+exports[`TabUE — snapshot rendering > per porzione (125g) 1`] = `
+<div>
+  <div
+    data-table-export="true"
+    style="background: white; padding: 12px; border-radius: 0px; display: inline-block; min-width: 300px; width: 100%; box-sizing: border-box;"
+  >
+    <div>
+      <table
+        style="width: 100%; border-collapse: collapse; border: 2px solid rgb(153, 153, 153);"
+      >
+        <thead>
+          <tr>
+            <th
+              style="background: rgb(245, 245, 245); border: 1px solid rgb(153, 153, 153); padding: 8px 10px; text-align: left; font-weight: 700; font-size: 14px;"
+            >
+              DICHIARAZIONE NUTRIZIONALE
+            </th>
+            <th
+              style="background: rgb(245, 245, 245); border: 1px solid rgb(153, 153, 153); padding: 8px 10px; text-align: center; font-weight: 700; font-size: 13px; width: 100px;"
+            >
+              % AR *
+            </th>
+          </tr>
+          <tr>
+            <td
+              style="background: rgb(245, 245, 245); border: 1px solid rgb(153, 153, 153); padding: 5px 10px; font-size: 11px; font-weight: 600;"
+            >
+              Valori nutrizionali medi per 
+              125 g
+               di prodotto
+            </td>
+            <td
+              style="background: rgb(245, 245, 245); border: 1px solid rgb(153, 153, 153); padding: 5px 10px;"
+            />
+          </tr>
+        </thead>
+      </table>
+      <div
+        style="overflow-x: auto;"
+      >
+        <table
+          style="border-collapse: collapse; width: 100%; font-size: 12px; border-width: 1px 2px 2px; border-style: solid; border-color: rgb(153, 153, 153); border-image: none;"
+        >
+          <tbody>
+            <tr
+              style="border-bottom: 1px solid rgb(153, 153, 153);"
+            >
+              <td
+                style="font-size: 13px; font-weight: 700; padding: 10px 12px; border-right: 1px solid rgb(153, 153, 153);"
+              >
+                <div
+                  style="display: flex; justify-content: space-between; align-items: flex-end;"
+                >
+                  <span>
+                    Energia
+                  </span>
+                  <span
+                    style="margin-left: 20px; font-weight: 600;"
+                  >
+                    1329 kJ / 318 kcal
+                  </span>
+                </div>
+              </td>
+              <td
+                style="padding: 10px 12px; font-size: 12px; font-weight: 700; text-align: center; width: 100px;"
+              >
+                16%
+              </td>
+            </tr>
+            <tr
+              style="border-bottom: 1px solid rgb(153, 153, 153);"
+            >
+              <td
+                style="font-size: 13px; font-weight: 700; padding: 10px 12px; border-right: 1px solid rgb(153, 153, 153);"
+              >
+                <div
+                  style="display: flex; justify-content: space-between; align-items: flex-end;"
+                >
+                  <span>
+                    Grassi
+                  </span>
+                  <span
+                    style="margin-left: 20px; font-weight: 600;"
+                  >
+                    24 g
+                  </span>
+                </div>
+              </td>
+              <td
+                style="padding: 10px 12px; font-size: 12px; font-weight: 700; text-align: center; width: 100px;"
+              >
+                35%
+              </td>
+            </tr>
+            <tr
+              style="border-bottom: 1px solid rgb(153, 153, 153);"
+            >
+              <td
+                style="font-size: 11px; font-weight: 400; padding: 10px 12px 10px 24px; border-right: 1px solid rgb(153, 153, 153);"
+              >
+                <div
+                  style="display: flex; justify-content: space-between; align-items: flex-end;"
+                >
+                  <span>
+                    di cui acidi grassi saturi
+                  </span>
+                  <span
+                    style="margin-left: 20px; font-weight: 600;"
+                  >
+                    17 g
+                  </span>
+                </div>
+              </td>
+              <td
+                style="padding: 10px 12px; font-size: 12px; font-weight: 400; text-align: center; width: 100px;"
+              >
+                83%
+              </td>
+            </tr>
+            <tr
+              style="border-bottom: 1px solid rgb(153, 153, 153);"
+            >
+              <td
+                style="font-size: 13px; font-weight: 700; padding: 10px 12px; border-right: 1px solid rgb(153, 153, 153);"
+              >
+                <div
+                  style="display: flex; justify-content: space-between; align-items: flex-end;"
+                >
+                  <span>
+                    Carboidrati
+                  </span>
+                  <span
+                    style="margin-left: 20px; font-weight: 600;"
+                  >
+                    2,6 g
+                  </span>
+                </div>
+              </td>
+              <td
+                style="padding: 10px 12px; font-size: 12px; font-weight: 700; text-align: center; width: 100px;"
+              >
+                1%
+              </td>
+            </tr>
+            <tr
+              style="border-bottom: 1px solid rgb(153, 153, 153);"
+            >
+              <td
+                style="font-size: 11px; font-weight: 400; padding: 10px 12px 10px 24px; border-right: 1px solid rgb(153, 153, 153);"
+              >
+                <div
+                  style="display: flex; justify-content: space-between; align-items: flex-end;"
+                >
+                  <span>
+                    di cui zuccheri
+                  </span>
+                  <span
+                    style="margin-left: 20px; font-weight: 600;"
+                  >
+                    2,6 g
+                  </span>
+                </div>
+              </td>
+              <td
+                style="padding: 10px 12px; font-size: 12px; font-weight: 400; text-align: center; width: 100px;"
+              >
+                3%
+              </td>
+            </tr>
+            <tr
+              style="border-bottom: 1px solid rgb(153, 153, 153);"
+            >
+              <td
+                style="font-size: 13px; font-weight: 700; padding: 10px 12px; border-right: 1px solid rgb(153, 153, 153);"
+              >
+                <div
+                  style="display: flex; justify-content: space-between; align-items: flex-end;"
+                >
+                  <span>
+                    Fibre
+                  </span>
+                  <span
+                    style="margin-left: 20px; font-weight: 600;"
+                  >
+                    0 g
+                  </span>
+                </div>
+              </td>
+              <td
+                style="padding: 10px 12px; font-size: 12px; font-weight: 700; text-align: center; width: 100px;"
+              >
+                —
+              </td>
+            </tr>
+            <tr
+              style="border-bottom: 1px solid rgb(153, 153, 153);"
+            >
+              <td
+                style="font-size: 13px; font-weight: 700; padding: 10px 12px; border-right: 1px solid rgb(153, 153, 153);"
+              >
+                <div
+                  style="display: flex; justify-content: space-between; align-items: flex-end;"
+                >
+                  <span>
+                    Proteine
+                  </span>
+                  <span
+                    style="margin-left: 20px; font-weight: 600;"
+                  >
+                    23 g
+                  </span>
+                </div>
+              </td>
+              <td
+                style="padding: 10px 12px; font-size: 12px; font-weight: 700; text-align: center; width: 100px;"
+              >
+                46%
+              </td>
+            </tr>
+            <tr
+              style="border-bottom: 1px solid rgb(153, 153, 153);"
+            >
+              <td
+                style="font-size: 13px; font-weight: 700; padding: 10px 12px; border-right: 1px solid rgb(153, 153, 153);"
+              >
+                <div
+                  style="display: flex; justify-content: space-between; align-items: flex-end;"
+                >
+                  <span>
+                    Sale
+                  </span>
+                  <span
+                    style="margin-left: 20px; font-weight: 600;"
+                  >
+                    1,1 g
+                  </span>
+                </div>
+              </td>
+              <td
+                style="padding: 10px 12px; font-size: 12px; font-weight: 700; text-align: center; width: 100px;"
+              >
+                18%
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p
+        style="font-size: 10px; color: rgb(102, 102, 102); margin-top: 8px; line-height: 1.4; font-weight: 500;"
+      >
+        *Assunzioni di riferimento di un adulto medio (8400 kJ / 2000 kcal).
+      </p>
+    </div>
+  </div>
+</div>
+`;
+
+exports[`TabUE — snapshot rendering > per unità di vendita (250g) 1`] = `
+<div>
+  <div
+    data-table-export="true"
+    style="background: white; padding: 12px; border-radius: 0px; display: inline-block; min-width: 300px; width: 100%; box-sizing: border-box;"
+  >
+    <div>
+      <table
+        style="width: 100%; border-collapse: collapse; border: 2px solid rgb(153, 153, 153);"
+      >
+        <thead>
+          <tr>
+            <th
+              style="background: rgb(245, 245, 245); border: 1px solid rgb(153, 153, 153); padding: 8px 10px; text-align: left; font-weight: 700; font-size: 14px;"
+            >
+              DICHIARAZIONE NUTRIZIONALE
+            </th>
+            <th
+              style="background: rgb(245, 245, 245); border: 1px solid rgb(153, 153, 153); padding: 8px 10px; text-align: center; font-weight: 700; font-size: 13px; width: 100px;"
+            >
+              % AR *
+            </th>
+          </tr>
+          <tr>
+            <td
+              style="background: rgb(245, 245, 245); border: 1px solid rgb(153, 153, 153); padding: 5px 10px; font-size: 11px; font-weight: 600;"
+            >
+              Valori nutrizionali medi per 
+              250 g
+               di prodotto
+            </td>
+            <td
+              style="background: rgb(245, 245, 245); border: 1px solid rgb(153, 153, 153); padding: 5px 10px;"
+            />
+          </tr>
+        </thead>
+      </table>
+      <div
+        style="overflow-x: auto;"
+      >
+        <table
+          style="border-collapse: collapse; width: 100%; font-size: 12px; border-width: 1px 2px 2px; border-style: solid; border-color: rgb(153, 153, 153); border-image: none;"
+        >
+          <tbody>
+            <tr
+              style="border-bottom: 1px solid rgb(153, 153, 153);"
+            >
+              <td
+                style="font-size: 13px; font-weight: 700; padding: 10px 12px; border-right: 1px solid rgb(153, 153, 153);"
+              >
+                <div
+                  style="display: flex; justify-content: space-between; align-items: flex-end;"
+                >
+                  <span>
+                    Energia
+                  </span>
+                  <span
+                    style="margin-left: 20px; font-weight: 600;"
+                  >
+                    2658 kJ / 635 kcal
+                  </span>
+                </div>
+              </td>
+              <td
+                style="padding: 10px 12px; font-size: 12px; font-weight: 700; text-align: center; width: 100px;"
+              >
+                32%
+              </td>
+            </tr>
+            <tr
+              style="border-bottom: 1px solid rgb(153, 153, 153);"
+            >
+              <td
+                style="font-size: 13px; font-weight: 700; padding: 10px 12px; border-right: 1px solid rgb(153, 153, 153);"
+              >
+                <div
+                  style="display: flex; justify-content: space-between; align-items: flex-end;"
+                >
+                  <span>
+                    Grassi
+                  </span>
+                  <span
+                    style="margin-left: 20px; font-weight: 600;"
+                  >
+                    49 g
+                  </span>
+                </div>
+              </td>
+              <td
+                style="padding: 10px 12px; font-size: 12px; font-weight: 700; text-align: center; width: 100px;"
+              >
+                70%
+              </td>
+            </tr>
+            <tr
+              style="border-bottom: 1px solid rgb(153, 153, 153);"
+            >
+              <td
+                style="font-size: 11px; font-weight: 400; padding: 10px 12px 10px 24px; border-right: 1px solid rgb(153, 153, 153);"
+              >
+                <div
+                  style="display: flex; justify-content: space-between; align-items: flex-end;"
+                >
+                  <span>
+                    di cui acidi grassi saturi
+                  </span>
+                  <span
+                    style="margin-left: 20px; font-weight: 600;"
+                  >
+                    33 g
+                  </span>
+                </div>
+              </td>
+              <td
+                style="padding: 10px 12px; font-size: 12px; font-weight: 400; text-align: center; width: 100px;"
+              >
+                165%
+              </td>
+            </tr>
+            <tr
+              style="border-bottom: 1px solid rgb(153, 153, 153);"
+            >
+              <td
+                style="font-size: 13px; font-weight: 700; padding: 10px 12px; border-right: 1px solid rgb(153, 153, 153);"
+              >
+                <div
+                  style="display: flex; justify-content: space-between; align-items: flex-end;"
+                >
+                  <span>
+                    Carboidrati
+                  </span>
+                  <span
+                    style="margin-left: 20px; font-weight: 600;"
+                  >
+                    5,3 g
+                  </span>
+                </div>
+              </td>
+              <td
+                style="padding: 10px 12px; font-size: 12px; font-weight: 700; text-align: center; width: 100px;"
+              >
+                2%
+              </td>
+            </tr>
+            <tr
+              style="border-bottom: 1px solid rgb(153, 153, 153);"
+            >
+              <td
+                style="font-size: 11px; font-weight: 400; padding: 10px 12px 10px 24px; border-right: 1px solid rgb(153, 153, 153);"
+              >
+                <div
+                  style="display: flex; justify-content: space-between; align-items: flex-end;"
+                >
+                  <span>
+                    di cui zuccheri
+                  </span>
+                  <span
+                    style="margin-left: 20px; font-weight: 600;"
+                  >
+                    5,3 g
+                  </span>
+                </div>
+              </td>
+              <td
+                style="padding: 10px 12px; font-size: 12px; font-weight: 400; text-align: center; width: 100px;"
+              >
+                6%
+              </td>
+            </tr>
+            <tr
+              style="border-bottom: 1px solid rgb(153, 153, 153);"
+            >
+              <td
+                style="font-size: 13px; font-weight: 700; padding: 10px 12px; border-right: 1px solid rgb(153, 153, 153);"
+              >
+                <div
+                  style="display: flex; justify-content: space-between; align-items: flex-end;"
+                >
+                  <span>
+                    Fibre
+                  </span>
+                  <span
+                    style="margin-left: 20px; font-weight: 600;"
+                  >
+                    0 g
+                  </span>
+                </div>
+              </td>
+              <td
+                style="padding: 10px 12px; font-size: 12px; font-weight: 700; text-align: center; width: 100px;"
+              >
+                —
+              </td>
+            </tr>
+            <tr
+              style="border-bottom: 1px solid rgb(153, 153, 153);"
+            >
+              <td
+                style="font-size: 13px; font-weight: 700; padding: 10px 12px; border-right: 1px solid rgb(153, 153, 153);"
+              >
+                <div
+                  style="display: flex; justify-content: space-between; align-items: flex-end;"
+                >
+                  <span>
+                    Proteine
+                  </span>
+                  <span
+                    style="margin-left: 20px; font-weight: 600;"
+                  >
+                    46 g
+                  </span>
+                </div>
+              </td>
+              <td
+                style="padding: 10px 12px; font-size: 12px; font-weight: 700; text-align: center; width: 100px;"
+              >
+                92%
+              </td>
+            </tr>
+            <tr
+              style="border-bottom: 1px solid rgb(153, 153, 153);"
+            >
+              <td
+                style="font-size: 13px; font-weight: 700; padding: 10px 12px; border-right: 1px solid rgb(153, 153, 153);"
+              >
+                <div
+                  style="display: flex; justify-content: space-between; align-items: flex-end;"
+                >
+                  <span>
+                    Sale
+                  </span>
+                  <span
+                    style="margin-left: 20px; font-weight: 600;"
+                  >
+                    2,1 g
+                  </span>
+                </div>
+              </td>
+              <td
+                style="padding: 10px 12px; font-size: 12px; font-weight: 700; text-align: center; width: 100px;"
+              >
+                35%
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p
+        style="font-size: 10px; color: rgb(102, 102, 102); margin-top: 8px; line-height: 1.4; font-weight: 500;"
+      >
+        *Assunzioni di riferimento di un adulto medio (8400 kJ / 2000 kcal).
+      </p>
+    </div>
+  </div>
+</div>
+`;
+
+exports[`TabUE — snapshot rendering > prodotto liquido (peso specifico 1.02) 1`] = `
+<div>
+  <div
+    data-table-export="true"
+    style="background: white; padding: 12px; border-radius: 0px; display: inline-block; min-width: 300px; width: 100%; box-sizing: border-box;"
+  >
+    <div>
+      <table
+        style="width: 100%; border-collapse: collapse; border: 2px solid rgb(153, 153, 153);"
+      >
+        <thead>
+          <tr>
+            <th
+              style="background: rgb(245, 245, 245); border: 1px solid rgb(153, 153, 153); padding: 8px 10px; text-align: left; font-weight: 700; font-size: 14px;"
+            >
+              DICHIARAZIONE NUTRIZIONALE
+            </th>
+            <th
+              style="background: rgb(245, 245, 245); border: 1px solid rgb(153, 153, 153); padding: 8px 10px; text-align: center; font-weight: 700; font-size: 13px; width: 100px;"
+            >
+              % AR *
+            </th>
+          </tr>
+          <tr>
+            <td
+              style="background: rgb(245, 245, 245); border: 1px solid rgb(153, 153, 153); padding: 5px 10px; font-size: 11px; font-weight: 600;"
+            >
+              Valori nutrizionali medi per 
+              100 ml
+               di prodotto
+            </td>
+            <td
+              style="background: rgb(245, 245, 245); border: 1px solid rgb(153, 153, 153); padding: 5px 10px;"
+            />
+          </tr>
+        </thead>
+      </table>
+      <div
+        style="overflow-x: auto;"
+      >
+        <table
+          style="border-collapse: collapse; width: 100%; font-size: 12px; border-width: 1px 2px 2px; border-style: solid; border-color: rgb(153, 153, 153); border-image: none;"
+        >
+          <tbody>
+            <tr
+              style="border-bottom: 1px solid rgb(153, 153, 153);"
+            >
+              <td
+                style="font-size: 13px; font-weight: 700; padding: 10px 12px; border-right: 1px solid rgb(153, 153, 153);"
+              >
+                <div
+                  style="display: flex; justify-content: space-between; align-items: flex-end;"
+                >
+                  <span>
+                    Energia
+                  </span>
+                  <span
+                    style="margin-left: 20px; font-weight: 600;"
+                  >
+                    1063 kJ / 254 kcal
+                  </span>
+                </div>
+              </td>
+              <td
+                style="padding: 10px 12px; font-size: 12px; font-weight: 700; text-align: center; width: 100px;"
+              >
+                13%
+              </td>
+            </tr>
+            <tr
+              style="border-bottom: 1px solid rgb(153, 153, 153);"
+            >
+              <td
+                style="font-size: 13px; font-weight: 700; padding: 10px 12px; border-right: 1px solid rgb(153, 153, 153);"
+              >
+                <div
+                  style="display: flex; justify-content: space-between; align-items: flex-end;"
+                >
+                  <span>
+                    Grassi
+                  </span>
+                  <span
+                    style="margin-left: 20px; font-weight: 600;"
+                  >
+                    20 g
+                  </span>
+                </div>
+              </td>
+              <td
+                style="padding: 10px 12px; font-size: 12px; font-weight: 700; text-align: center; width: 100px;"
+              >
+                28%
+              </td>
+            </tr>
+            <tr
+              style="border-bottom: 1px solid rgb(153, 153, 153);"
+            >
+              <td
+                style="font-size: 11px; font-weight: 400; padding: 10px 12px 10px 24px; border-right: 1px solid rgb(153, 153, 153);"
+              >
+                <div
+                  style="display: flex; justify-content: space-between; align-items: flex-end;"
+                >
+                  <span>
+                    di cui acidi grassi saturi
+                  </span>
+                  <span
+                    style="margin-left: 20px; font-weight: 600;"
+                  >
+                    13 g
+                  </span>
+                </div>
+              </td>
+              <td
+                style="padding: 10px 12px; font-size: 12px; font-weight: 400; text-align: center; width: 100px;"
+              >
+                66%
+              </td>
+            </tr>
+            <tr
+              style="border-bottom: 1px solid rgb(153, 153, 153);"
+            >
+              <td
+                style="font-size: 13px; font-weight: 700; padding: 10px 12px; border-right: 1px solid rgb(153, 153, 153);"
+              >
+                <div
+                  style="display: flex; justify-content: space-between; align-items: flex-end;"
+                >
+                  <span>
+                    Carboidrati
+                  </span>
+                  <span
+                    style="margin-left: 20px; font-weight: 600;"
+                  >
+                    2,1 g
+                  </span>
+                </div>
+              </td>
+              <td
+                style="padding: 10px 12px; font-size: 12px; font-weight: 700; text-align: center; width: 100px;"
+              >
+                1%
+              </td>
+            </tr>
+            <tr
+              style="border-bottom: 1px solid rgb(153, 153, 153);"
+            >
+              <td
+                style="font-size: 11px; font-weight: 400; padding: 10px 12px 10px 24px; border-right: 1px solid rgb(153, 153, 153);"
+              >
+                <div
+                  style="display: flex; justify-content: space-between; align-items: flex-end;"
+                >
+                  <span>
+                    di cui zuccheri
+                  </span>
+                  <span
+                    style="margin-left: 20px; font-weight: 600;"
+                  >
+                    2,1 g
+                  </span>
+                </div>
+              </td>
+              <td
+                style="padding: 10px 12px; font-size: 12px; font-weight: 400; text-align: center; width: 100px;"
+              >
+                2%
+              </td>
+            </tr>
+            <tr
+              style="border-bottom: 1px solid rgb(153, 153, 153);"
+            >
+              <td
+                style="font-size: 13px; font-weight: 700; padding: 10px 12px; border-right: 1px solid rgb(153, 153, 153);"
+              >
+                <div
+                  style="display: flex; justify-content: space-between; align-items: flex-end;"
+                >
+                  <span>
+                    Fibre
+                  </span>
+                  <span
+                    style="margin-left: 20px; font-weight: 600;"
+                  >
+                    0 g
+                  </span>
+                </div>
+              </td>
+              <td
+                style="padding: 10px 12px; font-size: 12px; font-weight: 700; text-align: center; width: 100px;"
+              >
+                —
+              </td>
+            </tr>
+            <tr
+              style="border-bottom: 1px solid rgb(153, 153, 153);"
+            >
+              <td
+                style="font-size: 13px; font-weight: 700; padding: 10px 12px; border-right: 1px solid rgb(153, 153, 153);"
+              >
+                <div
+                  style="display: flex; justify-content: space-between; align-items: flex-end;"
+                >
+                  <span>
+                    Proteine
+                  </span>
+                  <span
+                    style="margin-left: 20px; font-weight: 600;"
+                  >
+                    18 g
+                  </span>
+                </div>
+              </td>
+              <td
+                style="padding: 10px 12px; font-size: 12px; font-weight: 700; text-align: center; width: 100px;"
+              >
+                37%
+              </td>
+            </tr>
+            <tr
+              style="border-bottom: 1px solid rgb(153, 153, 153);"
+            >
+              <td
+                style="font-size: 13px; font-weight: 700; padding: 10px 12px; border-right: 1px solid rgb(153, 153, 153);"
+              >
+                <div
+                  style="display: flex; justify-content: space-between; align-items: flex-end;"
+                >
+                  <span>
+                    Sale
+                  </span>
+                  <span
+                    style="margin-left: 20px; font-weight: 600;"
+                  >
+                    0,84 g
+                  </span>
+                </div>
+              </td>
+              <td
+                style="padding: 10px 12px; font-size: 12px; font-weight: 700; text-align: center; width: 100px;"
+              >
+                14%
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p
+        style="font-size: 10px; color: rgb(102, 102, 102); margin-top: 8px; line-height: 1.4; font-weight: 500;"
+      >
+        *Assunzioni di riferimento di un adulto medio (8400 kJ / 2000 kcal).
+      </p>
+    </div>
+  </div>
+</div>
+`;
+
+exports[`TabUE — snapshot rendering > valori a zero — nessun crash 1`] = `
+<div>
+  <div
+    data-table-export="true"
+    style="background: white; padding: 12px; border-radius: 0px; display: inline-block; min-width: 300px; width: 100%; box-sizing: border-box;"
+  >
+    <div>
+      <table
+        style="width: 100%; border-collapse: collapse; border: 2px solid rgb(153, 153, 153);"
+      >
+        <thead>
+          <tr>
+            <th
+              style="background: rgb(245, 245, 245); border: 1px solid rgb(153, 153, 153); padding: 8px 10px; text-align: left; font-weight: 700; font-size: 14px;"
+            >
+              DICHIARAZIONE NUTRIZIONALE
+            </th>
+            <th
+              style="background: rgb(245, 245, 245); border: 1px solid rgb(153, 153, 153); padding: 8px 10px; text-align: center; font-weight: 700; font-size: 13px; width: 100px;"
+            >
+              % AR *
+            </th>
+          </tr>
+          <tr>
+            <td
+              style="background: rgb(245, 245, 245); border: 1px solid rgb(153, 153, 153); padding: 5px 10px; font-size: 11px; font-weight: 600;"
+            >
+              Valori nutrizionali medi per 
+              100 g
+               di prodotto
+            </td>
+            <td
+              style="background: rgb(245, 245, 245); border: 1px solid rgb(153, 153, 153); padding: 5px 10px;"
+            />
+          </tr>
+        </thead>
+      </table>
+      <div
+        style="overflow-x: auto;"
+      >
+        <table
+          style="border-collapse: collapse; width: 100%; font-size: 12px; border-width: 1px 2px 2px; border-style: solid; border-color: rgb(153, 153, 153); border-image: none;"
+        >
+          <tbody>
+            <tr
+              style="border-bottom: 1px solid rgb(153, 153, 153);"
+            >
+              <td
+                style="font-size: 13px; font-weight: 700; padding: 10px 12px; border-right: 1px solid rgb(153, 153, 153);"
+              >
+                <div
+                  style="display: flex; justify-content: space-between; align-items: flex-end;"
+                >
+                  <span>
+                    Energia
+                  </span>
+                  <span
+                    style="margin-left: 20px; font-weight: 600;"
+                  >
+                    0 kJ / 0 kcal
+                  </span>
+                </div>
+              </td>
+              <td
+                style="padding: 10px 12px; font-size: 12px; font-weight: 700; text-align: center; width: 100px;"
+              >
+                0%
+              </td>
+            </tr>
+            <tr
+              style="border-bottom: 1px solid rgb(153, 153, 153);"
+            >
+              <td
+                style="font-size: 13px; font-weight: 700; padding: 10px 12px; border-right: 1px solid rgb(153, 153, 153);"
+              >
+                <div
+                  style="display: flex; justify-content: space-between; align-items: flex-end;"
+                >
+                  <span>
+                    Grassi
+                  </span>
+                  <span
+                    style="margin-left: 20px; font-weight: 600;"
+                  >
+                    0 g
+                  </span>
+                </div>
+              </td>
+              <td
+                style="padding: 10px 12px; font-size: 12px; font-weight: 700; text-align: center; width: 100px;"
+              >
+                0%
+              </td>
+            </tr>
+            <tr
+              style="border-bottom: 1px solid rgb(153, 153, 153);"
+            >
+              <td
+                style="font-size: 11px; font-weight: 400; padding: 10px 12px 10px 24px; border-right: 1px solid rgb(153, 153, 153);"
+              >
+                <div
+                  style="display: flex; justify-content: space-between; align-items: flex-end;"
+                >
+                  <span>
+                    di cui acidi grassi saturi
+                  </span>
+                  <span
+                    style="margin-left: 20px; font-weight: 600;"
+                  >
+                    0 g
+                  </span>
+                </div>
+              </td>
+              <td
+                style="padding: 10px 12px; font-size: 12px; font-weight: 400; text-align: center; width: 100px;"
+              >
+                0%
+              </td>
+            </tr>
+            <tr
+              style="border-bottom: 1px solid rgb(153, 153, 153);"
+            >
+              <td
+                style="font-size: 13px; font-weight: 700; padding: 10px 12px; border-right: 1px solid rgb(153, 153, 153);"
+              >
+                <div
+                  style="display: flex; justify-content: space-between; align-items: flex-end;"
+                >
+                  <span>
+                    Carboidrati
+                  </span>
+                  <span
+                    style="margin-left: 20px; font-weight: 600;"
+                  >
+                    0 g
+                  </span>
+                </div>
+              </td>
+              <td
+                style="padding: 10px 12px; font-size: 12px; font-weight: 700; text-align: center; width: 100px;"
+              >
+                0%
+              </td>
+            </tr>
+            <tr
+              style="border-bottom: 1px solid rgb(153, 153, 153);"
+            >
+              <td
+                style="font-size: 11px; font-weight: 400; padding: 10px 12px 10px 24px; border-right: 1px solid rgb(153, 153, 153);"
+              >
+                <div
+                  style="display: flex; justify-content: space-between; align-items: flex-end;"
+                >
+                  <span>
+                    di cui zuccheri
+                  </span>
+                  <span
+                    style="margin-left: 20px; font-weight: 600;"
+                  >
+                    0 g
+                  </span>
+                </div>
+              </td>
+              <td
+                style="padding: 10px 12px; font-size: 12px; font-weight: 400; text-align: center; width: 100px;"
+              >
+                0%
+              </td>
+            </tr>
+            <tr
+              style="border-bottom: 1px solid rgb(153, 153, 153);"
+            >
+              <td
+                style="font-size: 13px; font-weight: 700; padding: 10px 12px; border-right: 1px solid rgb(153, 153, 153);"
+              >
+                <div
+                  style="display: flex; justify-content: space-between; align-items: flex-end;"
+                >
+                  <span>
+                    Fibre
+                  </span>
+                  <span
+                    style="margin-left: 20px; font-weight: 600;"
+                  >
+                    0 g
+                  </span>
+                </div>
+              </td>
+              <td
+                style="padding: 10px 12px; font-size: 12px; font-weight: 700; text-align: center; width: 100px;"
+              >
+                —
+              </td>
+            </tr>
+            <tr
+              style="border-bottom: 1px solid rgb(153, 153, 153);"
+            >
+              <td
+                style="font-size: 13px; font-weight: 700; padding: 10px 12px; border-right: 1px solid rgb(153, 153, 153);"
+              >
+                <div
+                  style="display: flex; justify-content: space-between; align-items: flex-end;"
+                >
+                  <span>
+                    Proteine
+                  </span>
+                  <span
+                    style="margin-left: 20px; font-weight: 600;"
+                  >
+                    0 g
+                  </span>
+                </div>
+              </td>
+              <td
+                style="padding: 10px 12px; font-size: 12px; font-weight: 700; text-align: center; width: 100px;"
+              >
+                0%
+              </td>
+            </tr>
+            <tr
+              style="border-bottom: 1px solid rgb(153, 153, 153);"
+            >
+              <td
+                style="font-size: 13px; font-weight: 700; padding: 10px 12px; border-right: 1px solid rgb(153, 153, 153);"
+              >
+                <div
+                  style="display: flex; justify-content: space-between; align-items: flex-end;"
+                >
+                  <span>
+                    Sale
+                  </span>
+                  <span
+                    style="margin-left: 20px; font-weight: 600;"
+                  >
+                    0 g
+                  </span>
+                </div>
+              </td>
+              <td
+                style="padding: 10px 12px; font-size: 12px; font-weight: 700; text-align: center; width: 100px;"
+              >
+                0%
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p
+        style="font-size: 10px; color: rgb(102, 102, 102); margin-top: 8px; line-height: 1.4; font-weight: 500;"
+      >
+        *Assunzioni di riferimento di un adulto medio (8400 kJ / 2000 kcal).
+      </p>
+    </div>
+  </div>
+</div>
+`;
