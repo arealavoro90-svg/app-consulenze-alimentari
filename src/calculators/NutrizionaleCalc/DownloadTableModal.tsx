@@ -1,28 +1,24 @@
-import React, { useState, useRef, useEffect } from 'react';
-import type { ComponentProps } from 'react';
+import React, { useState, useRef, type ReactNode } from 'react';
 import html2canvas from 'html2canvas';
 import { useToast } from '../../components/ui/Toast';
-import { TabUE } from './TabUE';
-import type { EUSubTab, SelectedOptionals } from './TabUE';
-import { TabUSA } from './TabUSA';
+import type { EUSubTab } from './TabUE';
 import type { USAServingRef, USAMeasure } from './TabUSA';
-import { TabCanada } from './TabCanada';
-import { TabAustralia } from './TabAustralia';
-import { TabArabi } from './TabArabi';
 import type { NationTab, SubTab, ServingSizesNation, UEServing } from './NutrizionaleCalc';
+
+export interface DownloadFormatState {
+    subTab: SubTab;
+    euSubTab: EUSubTab;
+    servingRef: USAServingRef;
+    measure: USAMeasure;
+}
 
 interface Props {
     region: NationTab;
-    p: ComponentProps<typeof TabUE>['p'];
+    // solo per calcolare i disabled state delle opzioni:
     ue: UEServing;
-    usa: ServingSizesNation;
-    ca: ServingSizesNation;
-    au: ServingSizesNation;
-    arabi: ServingSizesNation;
-    specificGravity: number;
-    selectedOptionals: SelectedOptionals;
-    showOptionals: boolean;
+    nation: ServingSizesNation; // dati della regione attiva ({} per UE)
     productName: string;
+    renderPreview: (state: DownloadFormatState) => ReactNode;
     onClose: () => void;
 }
 
@@ -52,9 +48,7 @@ function SectionLabel({ text }: { text: string }) {
 }
 
 export function DownloadTableModal({
-    region, p, ue, usa, ca, au, arabi,
-    specificGravity, selectedOptionals, showOptionals,
-    productName, onClose,
+    region, ue, nation, productName, renderPreview, onClose,
 }: Props) {
     const toast = useToast();
     const previewRef = useRef<HTMLDivElement>(null);
@@ -65,30 +59,30 @@ export function DownloadTableModal({
     const [servingRef, setServingRef] = useState<USAServingRef>('serving');
     const [measure, setMeasure] = useState<USAMeasure>('g');
 
-    // ─── Nation data by region ────────────────────────────────────────────────
-    const nationData: ServingSizesNation =
-        region === 'USA' ? usa :
-        region === 'Canada' ? ca :
-        region === 'Australia' ? au :
-        region === 'Arabi' ? arabi : {};
+    // ─── Effective values derivati durante il render (no useEffect) ───────────
+    // ponytail: derive instead of setState-in-effect (lint set-state-in-effect)
+    const effEuSubTab: EUSubTab =
+        (euSubTab === 'uv' && ue.confezione == null) ||
+        (euSubTab === 'porzione' && ue.porzione == null) ||
+        (euSubTab === 'pezzo' && ue.pezzo == null)
+            ? '100g' : euSubTab;
 
-    // ─── Fallback effects (replicate NutrizionaleCalc logic) ─────────────────
-    useEffect(() => {
-        if (region === 'UE') {
-            if (euSubTab === 'uv' && ue.confezione == null) setEuSubTab('100g');
-            if (euSubTab === 'porzione' && ue.porzione == null) setEuSubTab('100g');
-            if (euSubTab === 'pezzo' && ue.pezzo == null) setEuSubTab('100g');
-        }
-    }, [region, euSubTab, ue.confezione, ue.porzione, ue.pezzo]);
+    const effServingRef: USAServingRef =
+        servingRef === 'confezione' && !(nation.confezione != null && nation.confezione > 0)
+            ? 'serving' : servingRef;
 
-    useEffect(() => {
-        if (region !== 'UE' && region !== 'Australia') {
-            if (servingRef === 'confezione' && (nationData.confezione == null || nationData.confezione === 0)) setServingRef('serving');
-            if (measure === 'tazze' && nationData.cup == null) setMeasure('g');
-            if (measure === 'cucchiai' && nationData.cucchiaio == null) setMeasure('g');
-            if (measure === 'pezzi' && nationData.pezzo == null) setMeasure('g');
-        }
-    }, [region, servingRef, measure, nationData.confezione, nationData.cup, nationData.cucchiaio, nationData.pezzo]);
+    const effMeasure: USAMeasure =
+        (measure === 'tazze' && nation.cup == null) ||
+        (measure === 'cucchiai' && nation.cucchiaio == null) ||
+        (measure === 'pezzi' && nation.pezzo == null)
+            ? 'g' : measure;
+
+    const formatState: DownloadFormatState = {
+        subTab,
+        euSubTab: effEuSubTab,
+        servingRef: effServingRef,
+        measure: effMeasure,
+    };
 
     // ─── Download ─────────────────────────────────────────────────────────────
     async function handleDownload() {
@@ -111,68 +105,16 @@ export function DownloadTableModal({
     }
 
     // ─── Option groups visibility ─────────────────────────────────────────────
-    // Layout (verticale/orizzontale/lineare): USA only (Canada handles it internally)
+    // Layout (verticale/orizzontale/lineare): USA only (Canada lo gestisce internamente)
     const showLayout = region === 'USA';
-    // Colonne UE (euSubTab): UE only
-    const showColonne = region === 'UE';
-    // Riferimento serving/confezione: USA, Canada, Arabi — only when confezione set
+    // Colonne UE (euSubTab): UE only, solo quando almeno un campo UE è valorizzato
+    const showColonne = region === 'UE' &&
+        (ue.confezione != null || ue.porzione != null || ue.pezzo != null);
+    // Riferimento serving/confezione: USA, Canada, Arabi — solo quando confezione impostata
     const showRiferimento = (region === 'USA' || region === 'Canada' || region === 'Arabi')
-        && (nationData.confezione ?? 0) > 0;
+        && (nation.confezione ?? 0) > 0;
     // Unità: USA, Canada, Arabi
     const showUnita = region === 'USA' || region === 'Canada' || region === 'Arabi';
-
-    // ─── Preview ──────────────────────────────────────────────────────────────
-    function renderPreview() {
-        switch (region) {
-            case 'UE':
-                return (
-                    <TabUE
-                        p={p}
-                        ue={ue}
-                        specificGravity={specificGravity}
-                        selectedOptionals={selectedOptionals}
-                        showOptionals={showOptionals}
-                        activeSubTab={euSubTab}
-                    />
-                );
-            case 'USA':
-                return (
-                    <TabUSA
-                        p={p}
-                        usa={usa}
-                        specificGravity={specificGravity}
-                        servingRef={servingRef}
-                        measure={measure}
-                        subTab={subTab}
-                    />
-                );
-            case 'Canada':
-                return (
-                    <TabCanada
-                        p={p}
-                        ca={ca}
-                        servingRef={servingRef}
-                        measure={measure}
-                        subTab={subTab}
-                        setSubTab={setSubTab}
-                        full={false}
-                    />
-                );
-            case 'Australia':
-                return <TabAustralia p={p} au={au} full={false} />;
-            case 'Arabi':
-                return (
-                    <TabArabi
-                        p={p}
-                        arabi={arabi}
-                        servingRef={servingRef}
-                        measure={measure}
-                        specificGravity={specificGravity}
-                        full={false}
-                    />
-                );
-        }
-    }
 
     return (
         <div
@@ -221,22 +163,22 @@ export function DownloadTableModal({
                             <>
                                 <SectionLabel text="Colonne" />
                                 <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                                    <OptBtn label="Per 100g" active={euSubTab === '100g'} onClick={() => setEuSubTab('100g')} />
+                                    <OptBtn label="Per 100g" active={effEuSubTab === '100g'} onClick={() => setEuSubTab('100g')} />
                                     <OptBtn
                                         label="Per U.V."
-                                        active={euSubTab === 'uv'}
+                                        active={effEuSubTab === 'uv'}
                                         disabled={ue.confezione == null}
                                         onClick={() => setEuSubTab('uv')}
                                     />
                                     <OptBtn
                                         label="Per porzione"
-                                        active={euSubTab === 'porzione'}
+                                        active={effEuSubTab === 'porzione'}
                                         disabled={ue.porzione == null}
                                         onClick={() => setEuSubTab('porzione')}
                                     />
                                     <OptBtn
                                         label="Per pezzo"
-                                        active={euSubTab === 'pezzo'}
+                                        active={effEuSubTab === 'pezzo'}
                                         disabled={ue.pezzo == null}
                                         onClick={() => setEuSubTab('pezzo')}
                                     />
@@ -248,8 +190,8 @@ export function DownloadTableModal({
                             <>
                                 <SectionLabel text="Riferimento" />
                                 <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                                    <OptBtn label="Per Serving" active={servingRef === 'serving'} onClick={() => setServingRef('serving')} />
-                                    <OptBtn label="Per Confezione" active={servingRef === 'confezione'} onClick={() => setServingRef('confezione')} />
+                                    <OptBtn label="Per Serving" active={effServingRef === 'serving'} onClick={() => setServingRef('serving')} />
+                                    <OptBtn label="Per Confezione" active={effServingRef === 'confezione'} onClick={() => setServingRef('confezione')} />
                                 </div>
                             </>
                         )}
@@ -258,23 +200,23 @@ export function DownloadTableModal({
                             <>
                                 <SectionLabel text="Unità" />
                                 <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                                    <OptBtn label="g / ml" active={measure === 'g'} onClick={() => setMeasure('g')} />
+                                    <OptBtn label="g / ml" active={effMeasure === 'g'} onClick={() => setMeasure('g')} />
                                     <OptBtn
                                         label="Tazze"
-                                        active={measure === 'tazze'}
-                                        disabled={nationData.cup == null}
+                                        active={effMeasure === 'tazze'}
+                                        disabled={nation.cup == null}
                                         onClick={() => setMeasure('tazze')}
                                     />
                                     <OptBtn
                                         label="Cucchiai"
-                                        active={measure === 'cucchiai'}
-                                        disabled={nationData.cucchiaio == null}
+                                        active={effMeasure === 'cucchiai'}
+                                        disabled={nation.cucchiaio == null}
                                         onClick={() => setMeasure('cucchiai')}
                                     />
                                     <OptBtn
                                         label="Pezzi"
-                                        active={measure === 'pezzi'}
-                                        disabled={nationData.pezzo == null}
+                                        active={effMeasure === 'pezzi'}
+                                        disabled={nation.pezzo == null}
                                         onClick={() => setMeasure('pezzi')}
                                     />
                                 </div>
@@ -291,7 +233,7 @@ export function DownloadTableModal({
                             borderRadius: 8, padding: 12,
                         }}
                     >
-                        {renderPreview()}
+                        {renderPreview(formatState)}
                     </div>
                 </div>
 
