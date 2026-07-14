@@ -1036,12 +1036,11 @@ export function NutrizionaleCalc() {
     const [auShowDI, setAuShowDI] = useState(true);
     const [showOptionals, setShowOptionals] = useState(false);
     const [isLiquid, setIsLiquid] = useState(false);
-    const [euSubTab, setEuSubTab] = useState<EUSubTab>('100g');
+    // ponytail: euSubTab rimosso — UI formato vive in DownloadTableModal
     const [selectedOptionals, setSelectedOptionals] = useState<SelectedOptionals>({ ...DEFAULT_OPTIONALS });
     const [nutrModalOpen, setNutrModalOpen] = useState(false);
     const [downloadModalOpen, setDownloadModalOpen] = useState(false);
-    const [usaServingRef, setUsaServingRef] = useState<USAServingRef>('serving');
-    const [usaMeasure, setUsaMeasure] = useState<USAMeasure>('g');
+    // ponytail: usaServingRef/usaMeasure rimossi — UI formato vive in DownloadTableModal
     useState(true); // pesoCardOpen — dead state, hook order preserved
     const [compOpen, setCompOpen] = useState<Record<string, boolean>>({});
     const [pzUVRaw, setPzUVRaw] = useState<Record<string, string>>({});
@@ -1145,37 +1144,13 @@ export function NutrizionaleCalc() {
 
 
     const [usa, setUSA] = useState<ServingSizesNation>({});
-    useEffect(() => {
-        if (usaServingRef === 'confezione' && (usa.confezione == null || usa.confezione === 0)) setUsaServingRef('serving');
-        if (usaMeasure === 'tazze' && usa.cup == null) setUsaMeasure('g');
-        if (usaMeasure === 'cucchiai' && usa.cucchiaio == null) setUsaMeasure('g');
-        if (usaMeasure === 'pezzi' && usa.pezzo == null) setUsaMeasure('g');
-    }, [usaServingRef, usaMeasure, usa.confezione, usa.cup, usa.cucchiaio, usa.pezzo]);
     const [ca, setCA] = useState<ServingSizesNation>({});
-    const [caServingRef, setCaServingRef] = useState<USAServingRef>('serving');
-    const [caMeasure, setCaMeasure] = useState<USAMeasure>('g');
-    useEffect(() => {
-        if (caServingRef === 'confezione' && (ca.confezione == null || ca.confezione === 0)) setCaServingRef('serving');
-        if (caMeasure === 'tazze' && ca.cup == null) setCaMeasure('g');
-        if (caMeasure === 'cucchiai' && ca.cucchiaio == null) setCaMeasure('g');
-        if (caMeasure === 'pezzi' && ca.pezzo == null) setCaMeasure('g');
-    }, [caServingRef, caMeasure, ca.confezione, ca.cup, ca.cucchiaio, ca.pezzo]);
+    // ponytail: caServingRef/caMeasure rimossi — UI formato vive in DownloadTableModal
     const [au, setAU] = useState<ServingSizesNation>({});
     const [arabi, setArabi] = useState<ServingSizesNation>({});
-    const [arabiServingRef, setArabiServingRef] = useState<USAServingRef>('serving');
-    const [arabiMeasure, setArabiMeasure] = useState<USAMeasure>('g');
-    useEffect(() => {
-        if (arabiServingRef === 'confezione' && (arabi.confezione == null || arabi.confezione === 0)) setArabiServingRef('serving');
-        if (arabiMeasure === 'tazze' && arabi.cup == null) setArabiMeasure('g');
-        if (arabiMeasure === 'cucchiai' && arabi.cucchiaio == null) setArabiMeasure('g');
-        if (arabiMeasure === 'pezzi' && arabi.pezzo == null) setArabiMeasure('g');
-    }, [arabiServingRef, arabiMeasure, arabi.confezione, arabi.cup, arabi.cucchiaio, arabi.pezzo]);
+    // ponytail: arabiServingRef/arabiMeasure rimossi — UI formato vive in DownloadTableModal
     const [ue, setUE] = useState<UEServing>({});
-    useEffect(() => {
-      if (euSubTab === 'uv' && ue.confezione == null) setEuSubTab('100g');
-      if (euSubTab === 'porzione' && ue.porzione == null) setEuSubTab('100g');
-      if (euSubTab === 'pezzo' && ue.pezzo == null) setEuSubTab('100g');
-    }, [euSubTab, ue.confezione, ue.porzione, ue.pezzo]);
+    // ponytail: fallback euSubTab rimosso — vista fissa 100g, scelte formato in DownloadTableModal
     const tableRef = useRef<HTMLDivElement>(null);
 
     // ─── Griglia porzioni collassabile (D1): auto-chiusa se la regione attiva ha già valori ───
@@ -1862,34 +1837,13 @@ export function NutrizionaleCalc() {
                     {activeTab === 'UE' && (
                         <>
                             <div style={{ border: '1px solid #eaecf0', borderRadius: 8, overflow: 'hidden', marginTop: 8 }}>
-                                {(ue.porzione != null || ue.confezione != null || ue.pezzo != null) ? (
-                                    <div style={{ display: 'flex', gap: 4, padding: '8px 8px 0', flexWrap: 'wrap' }}>
-                                        {([
-                                            { key: '100g' as EUSubTab, label: 'Per 100g', disabled: false },
-                                            { key: 'uv' as EUSubTab, label: 'Per U.V.', disabled: ue.confezione == null },
-                                            { key: 'porzione' as EUSubTab, label: 'Per porzione', disabled: ue.porzione == null },
-                                            { key: 'pezzo' as EUSubTab, label: 'Per pezzo', disabled: ue.pezzo == null },
-                                        ] as { key: EUSubTab; label: string; disabled: boolean }[]).map(tab => (
-                                            <button
-                                                key={tab.key}
-                                                type="button"
-                                                disabled={tab.disabled}
-                                                onClick={() => setEuSubTab(tab.key)}
-                                                className={`btn ${euSubTab === tab.key ? 'btn-accent' : 'btn-outline'}`}
-                                                style={{ fontSize: 11, padding: '3px 8px', opacity: tab.disabled ? 0.4 : 1 }}
-                                            >
-                                                {tab.label}
-                                            </button>
-                                        ))}
-                                    </div>
-                                ) : null}
                                 <TabUE
                                     p={per100display}
                                     ue={ue}
                                     specificGravity={parseFloat(specificGravity) || 0}
                                     selectedOptionals={selectedOptionals}
                                     showOptionals={showOptionals}
-                                    activeSubTab={euSubTab}
+                                    activeSubTab="100g"
                                 />
                             </div>
                             <div style={{ marginTop: 8, display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -1958,81 +1912,15 @@ export function NutrizionaleCalc() {
                         </>
                     )}
                     {activeTab === 'USA' && (
-                        <>
-                            {/* Toolbar unica: layout | riferimento | unità (D1) */}
-                            <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
-                                {(['verticale', 'orizzontale', 'lineare'] as SubTab[]).map(t => (
-                                    <button key={t} type="button" onClick={() => setSubTab(t)}
-                                        className={`btn ${subTab === t ? 'btn-accent' : 'btn-outline'}`}
-                                        style={{ fontSize: 11, padding: '3px 8px' }}>
-                                        {t.charAt(0).toUpperCase() + t.slice(1)}
-                                    </button>
-                                ))}
-                                {(usa.confezione != null && usa.confezione > 0) && (
-                                    <>
-                                        <span style={{ width: 1, background: '#e2e8f0', alignSelf: 'stretch', margin: '0 4px' }} />
-                                        {(['serving', 'confezione'] as USAServingRef[]).map(ref => (
-                                            <button key={ref} type="button" onClick={() => setUsaServingRef(ref)}
-                                                className={`btn ${usaServingRef === ref ? 'btn-accent' : 'btn-outline'}`}
-                                                style={{ fontSize: 11, padding: '3px 8px' }}>
-                                                {ref === 'serving' ? 'Per Serving' : 'Per Confezione'}
-                                            </button>
-                                        ))}
-                                    </>
-                                )}
-                                <span style={{ width: 1, background: '#e2e8f0', alignSelf: 'stretch', margin: '0 4px' }} />
-                                {([
-                                    { key: 'g' as USAMeasure, label: 'g / ml', disabled: false },
-                                    { key: 'tazze' as USAMeasure, label: 'Tazze', disabled: usa.cup == null },
-                                    { key: 'cucchiai' as USAMeasure, label: 'Cucchiai', disabled: usa.cucchiaio == null },
-                                    { key: 'pezzi' as USAMeasure, label: 'Pezzi', disabled: usa.pezzo == null },
-                                ] as { key: USAMeasure; label: string; disabled: boolean }[]).map(tab => (
-                                    <button key={tab.key} type="button" disabled={tab.disabled} onClick={() => setUsaMeasure(tab.key)}
-                                        className={`btn ${usaMeasure === tab.key ? 'btn-accent' : 'btn-outline'}`}
-                                        style={{ fontSize: 11, padding: '3px 8px', opacity: tab.disabled ? 0.4 : 1 }}>
-                                        {tab.label}
-                                    </button>
-                                ))}
-                            </div>
-                            <div style={{ border: '1px solid #eaecf0', borderRadius: 8, overflow: 'hidden', marginTop: 8 }}>
-                                <TabUSA p={per100display} usa={usa} specificGravity={parseFloat(specificGravity) || 0}
-                                    servingRef={usaServingRef} measure={usaMeasure} subTab={subTab} />
-                            </div>
-                        </>
+                        <div style={{ border: '1px solid #eaecf0', borderRadius: 8, overflow: 'hidden', marginTop: 8 }}>
+                            <TabUSA p={per100display} usa={usa} specificGravity={parseFloat(specificGravity) || 0}
+                                servingRef="serving" measure="g" subTab="verticale" />
+                        </div>
                     )}
                     {activeTab === 'Canada' && (
-                        <>
-                            {/* Toolbar unica: riferimento | unità (D1) */}
-                            <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
-                                {(ca.confezione != null && ca.confezione > 0) && (
-                                    <>
-                                        {(['serving', 'confezione'] as USAServingRef[]).map(ref => (
-                                            <button key={ref} type="button" onClick={() => setCaServingRef(ref)}
-                                                className={`btn ${caServingRef === ref ? 'btn-accent' : 'btn-outline'}`}
-                                                style={{ fontSize: 11, padding: '3px 8px' }}>
-                                                {ref === 'serving' ? 'Per Serving' : 'Per Confezione'}
-                                            </button>
-                                        ))}
-                                        <span style={{ width: 1, background: '#e2e8f0', alignSelf: 'stretch', margin: '0 4px' }} />
-                                    </>
-                                )}
-                                {([
-                                    { key: 'g' as USAMeasure, label: 'g / ml', disabled: false },
-                                    { key: 'tazze' as USAMeasure, label: 'Tazze (250ml)', disabled: ca.cup == null },
-                                    { key: 'cucchiai' as USAMeasure, label: 'Cucchiai', disabled: ca.cucchiaio == null },
-                                    { key: 'pezzi' as USAMeasure, label: 'Pezzi', disabled: ca.pezzo == null },
-                                ] as { key: USAMeasure; label: string; disabled: boolean }[]).map(tab => (
-                                    <button key={tab.key} type="button" disabled={tab.disabled} onClick={() => setCaMeasure(tab.key)}
-                                        className={`btn ${caMeasure === tab.key ? 'btn-accent' : 'btn-outline'}`}
-                                        style={{ fontSize: 11, padding: '3px 8px', opacity: tab.disabled ? 0.4 : 1 }}>
-                                        {tab.label}
-                                    </button>
-                                ))}
-                            </div>
-                            <div style={{ border: '1px solid #eaecf0', borderRadius: 8, overflow: 'hidden', marginTop: 8 }}>
-                                <TabCanada p={per100display} ca={ca} servingRef={caServingRef} measure={caMeasure} subTab={subTab} setSubTab={setSubTab} full={false} />
-                            </div>
-                        </>
+                        <div style={{ border: '1px solid #eaecf0', borderRadius: 8, overflow: 'hidden', marginTop: 8 }}>
+                            <TabCanada p={per100display} ca={ca} servingRef="serving" measure="g" subTab={subTab} setSubTab={setSubTab} full={false} />
+                        </div>
                     )}
                     {activeTab === 'Australia' && (
                         <div style={{ border: '1px solid #eaecf0', borderRadius: 8, overflow: 'hidden', marginTop: 8 }}>
@@ -2040,38 +1928,9 @@ export function NutrizionaleCalc() {
                         </div>
                     )}
                     {activeTab === 'Arabi' && (
-                        <>
-                            {/* Toolbar unica: riferimento | unità (D1) */}
-                            <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
-                                {(arabi.confezione != null && arabi.confezione > 0) && (
-                                    <>
-                                        {(['serving', 'confezione'] as USAServingRef[]).map(ref => (
-                                            <button key={ref} type="button" onClick={() => setArabiServingRef(ref)}
-                                                className={`btn ${arabiServingRef === ref ? 'btn-accent' : 'btn-outline'}`}
-                                                style={{ fontSize: 11, padding: '3px 8px' }}>
-                                                {ref === 'serving' ? 'Per Serving' : 'Per Confezione'}
-                                            </button>
-                                        ))}
-                                        <span style={{ width: 1, background: '#e2e8f0', alignSelf: 'stretch', margin: '0 4px' }} />
-                                    </>
-                                )}
-                                {([
-                                    { key: 'g' as USAMeasure, label: 'g / ml', disabled: false },
-                                    { key: 'tazze' as USAMeasure, label: 'Tazze', disabled: arabi.cup == null },
-                                    { key: 'cucchiai' as USAMeasure, label: 'Cucchiai', disabled: arabi.cucchiaio == null },
-                                    { key: 'pezzi' as USAMeasure, label: 'Pezzi', disabled: arabi.pezzo == null },
-                                ] as { key: USAMeasure; label: string; disabled: boolean }[]).map(tab => (
-                                    <button key={tab.key} type="button" disabled={tab.disabled} onClick={() => setArabiMeasure(tab.key)}
-                                        className={`btn ${arabiMeasure === tab.key ? 'btn-accent' : 'btn-outline'}`}
-                                        style={{ fontSize: 11, padding: '3px 8px', opacity: tab.disabled ? 0.4 : 1 }}>
-                                        {tab.label}
-                                    </button>
-                                ))}
-                            </div>
-                            <div style={{ border: '1px solid #eaecf0', borderRadius: 8, overflow: 'hidden', marginTop: 8 }}>
-                                <TabArabi p={per100display} arabi={arabi} servingRef={arabiServingRef} measure={arabiMeasure} specificGravity={parseFloat(specificGravity) || 0} full={false} />
-                            </div>
-                        </>
+                        <div style={{ border: '1px solid #eaecf0', borderRadius: 8, overflow: 'hidden', marginTop: 8 }}>
+                            <TabArabi p={per100display} arabi={arabi} servingRef="serving" measure="g" specificGravity={parseFloat(specificGravity) || 0} full={false} />
+                        </div>
                     )}
                 </div>
 
