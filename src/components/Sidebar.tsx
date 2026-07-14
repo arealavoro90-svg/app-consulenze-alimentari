@@ -16,6 +16,7 @@ const TOOL_ICONS: Record<ToolId, React.ReactNode> = {
     'trattamento-termico': <Thermometer size={16} />,
     'schede-complete':     <FileText size={16} />,
     'scheda-processo':     <Settings2 size={16} />,
+    'excel-import':        <FileText size={16} />,
 };
 
 interface SidebarProps {

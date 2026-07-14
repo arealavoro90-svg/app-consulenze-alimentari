@@ -16,6 +16,7 @@ const TOOL_ICONS: Record<ToolId, React.ReactNode> = {
     'trattamento-termico': <Thermometer size={28} />,
     'schede-complete':     <FileText size={28} />,
     'scheda-processo':     <Settings2 size={28} />,
+    'excel-import':        <FileText size={28} />,
 };
 
 export function Dashboard() {
@@ -44,16 +45,16 @@ export function Dashboard() {
                 <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
                     <div style={{
                         width: 52, height: 52,
-                        background: 'linear-gradient(135deg, rgba(0,163,108,0.2), rgba(30,58,92,0.3))',
+                        background: 'var(--color-accent-bg)',
                         borderRadius: 12,
                         display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        color: 'var(--color-accent-light)', border: '1px solid rgba(0,163,108,0.2)'
+                        color: 'var(--color-orange)', border: '1px solid rgba(255,126,46,0.25)'
                     }}>
                         <BarChart2 size={26} />
                     </div>
                     <div>
                         <div style={{ fontSize: 13, color: 'var(--color-text-muted)', marginBottom: 2 }}>Strumenti acquistati</div>
-                        <div style={{ fontSize: 28, fontWeight: 800, color: 'var(--color-accent-light)' }}>
+                        <div style={{ fontSize: 28, fontWeight: 800, color: 'var(--color-orange)' }}>
                             {visibleTools.length}
                             <span style={{ fontSize: 14, color: 'var(--color-text-muted)', fontWeight: 400, marginLeft: 8 }}>
                                 / {Object.keys(TOOLS_CATALOG).length} disponibili

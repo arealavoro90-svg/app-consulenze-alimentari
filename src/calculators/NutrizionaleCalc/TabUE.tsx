@@ -198,22 +198,22 @@ export function TabUE({ p, ue, specificGravity, selectedOptionals, showOptionals
 
     return (
         <div data-table-export style={{ background: 'white', padding: 12, borderRadius: 0, display: 'inline-block' }}>
-            <div style={{ width: 560 }}>
+            <div style={{ width: 328 }}>
                 <table style={{ width: '100%', borderCollapse: 'collapse', border: '2px solid #999' }}>
                     <thead>
                         <tr>
-                            <th style={{ background: '#f5f5f5', border: '1px solid #999', padding: '8px 10px', textAlign: 'left', fontWeight: 700, fontSize: 14 }}>
+                            <th style={{ background: '#f5f5f5', border: '1px solid #999', padding: '6px 8px', textAlign: 'left', fontWeight: 700, fontSize: 14 }}>
                                 DICHIARAZIONE NUTRIZIONALE
                             </th>
-                            <th style={{ background: '#f5f5f5', border: '1px solid #999', padding: '8px 10px', textAlign: 'center', fontWeight: 700, fontSize: 13, width: '100px' }}>
+                            <th style={{ background: '#f5f5f5', border: '1px solid #999', padding: '6px 4px', textAlign: 'center', fontWeight: 700, fontSize: 11, width: '64px' }}>
                                 % AR *
                             </th>
                         </tr>
                         <tr>
-                            <td style={{ background: '#f5f5f5', border: '1px solid #999', padding: '5px 10px', fontSize: 11, fontWeight: 600 }}>
+                            <td style={{ background: '#f5f5f5', border: '1px solid #999', padding: '4px 8px', fontSize: 11, fontWeight: 600 }}>
                                 Valori nutrizionali medi per {unitLabel} di prodotto
                             </td>
-                            <td style={{ background: '#f5f5f5', border: '1px solid #999', padding: '5px 10px' }} />
+                            <td style={{ background: '#f5f5f5', border: '1px solid #999', padding: '4px 4px' }} />
                         </tr>
                     </thead>
                 </table>
@@ -224,18 +224,18 @@ export function TabUE({ p, ue, specificGravity, selectedOptionals, showOptionals
                             {rows.map((r, i) => (
                                 <tr key={i} style={{ borderBottom: '1px solid #999' }}>
                                     <td style={{
-                                        padding: '10px 12px',
+                                        padding: '7px 8px',
                                         fontSize: r.bold ? 13 : r.indent ? 11 : 12,
                                         fontWeight: r.bold ? 700 : 400,
-                                        paddingLeft: r.indent ? 24 : 12,
+                                        paddingLeft: r.indent ? 18 : 8,
                                         borderRight: '1px solid #999',
                                     }}>
                                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
                                             <span>{r.label}</span>
-                                            <span style={{ marginLeft: 20, fontWeight: 600 }}>{r.value}</span>
+                                            <span style={{ marginLeft: 10, fontWeight: 600 }}>{r.value}</span>
                                         </div>
                                     </td>
-                                    <td style={{ padding: '10px 12px', fontSize: 12, fontWeight: r.bold ? 700 : 400, textAlign: 'center', width: '100px' }}>
+                                    <td style={{ padding: '7px 4px', fontSize: 12, fontWeight: r.bold ? 700 : 400, textAlign: 'center', width: '64px' }}>
                                         {r.arPct}
                                     </td>
                                 </tr>
@@ -244,13 +244,13 @@ export function TabUE({ p, ue, specificGravity, selectedOptionals, showOptionals
                                 const pct = rUE_pct(m.val, m.ref);
                                 return (
                                     <tr key={`micro-${i}`} style={{ borderBottom: '1px solid #999' }}>
-                                        <td style={{ padding: '10px 12px', fontSize: 12, borderRight: '1px solid #999' }}>
+                                        <td style={{ padding: '7px 8px', fontSize: 12, borderRight: '1px solid #999' }}>
                                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
                                                 <span>{m.label}</span>
-                                                <span style={{ marginLeft: 20, fontWeight: 600 }}>{m.fmt(m.val)} {m.unit}</span>
+                                                <span style={{ marginLeft: 10, fontWeight: 600 }}>{m.fmt(m.val)} {m.unit}</span>
                                             </div>
                                         </td>
-                                        <td style={{ padding: '10px 12px', fontSize: 12, textAlign: 'center', width: '100px' }}>
+                                        <td style={{ padding: '7px 4px', fontSize: 12, textAlign: 'center', width: '64px' }}>
                                             {pct !== null ? `${pct}%` : '—'}
                                         </td>
                                     </tr>

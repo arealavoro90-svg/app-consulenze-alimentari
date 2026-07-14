@@ -3126,7 +3126,7 @@ function TabAustralia({ p, au, showDI: _showDI, setShowDI: _setShowDI, full }: {
             {!full && (
                 <h3 style={{ marginTop: 0, fontSize: 16, color: 'var(--color-navy)', borderBottom: '2px solid var(--color-orange)', paddingBottom: 8, marginBottom: 16 }}>Etichetta Nutrizionale (Australia)</h3>
             )}
-            <div data-table-export style={{ background: 'white', padding: 12, borderRadius: 0, display: 'inline-block', minWidth: 440 }}>
+            <div data-table-export style={{ background: 'white', padding: 12, borderRadius: 0, display: 'inline-block', width: 500, boxSizing: 'border-box' }}>
                 <div style={{ border: bOut, fontFamily: 'Arial, sans-serif', fontSize: 12 }}>
                     {/* Titolo */}
                     <div style={{ textAlign: 'center', padding: '8px 12px 6px', borderBottom: bHdr }}>

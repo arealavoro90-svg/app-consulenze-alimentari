@@ -32,15 +32,19 @@ export async function apiFetch<T>(
     path: string,
     options: RequestInit = {},
 ): Promise<T> {
-    const token = getAccessToken();
-
+    // S5: autenticazione via httpOnly cookie — nessun token in header.
+    // In dev mock il cookie non esiste, Django restituisce 401 → il chiamante
+    // gestisce il fallback (vedi auth.ts).
     const headers: Record<string, string> = {
         'Content-Type': 'application/json',
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
         ...(options.headers as Record<string, string> | undefined ?? {}),
     };
 
-    const res = await fetch(`${BASE_URL}${path}`, { ...options, headers });
+    const res = await fetch(`${BASE_URL}${path}`, {
+        ...options,
+        headers,
+        credentials: 'include',   // invia il cookie httpOnly ad ogni richiesta
+    });
 
     if (!res.ok) {
         const body = await res.json().catch(() => ({})) as { detail?: string };

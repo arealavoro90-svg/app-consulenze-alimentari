@@ -1,0 +1,1372 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AEA — Proposte UI</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap');
+
+  :root {
+    --navy: #0c1326;
+    --orange: #ff7e2e;
+    --orange-light: #ff9f4f;
+    --green: #43821c;
+    --bg: #f4f6f9;
+    --card: #ffffff;
+    --border: #dde2ea;
+    --text: #1a1f2e;
+    --muted: #5e6b80;
+    --dim: #9ba8bb;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'DM Sans', sans-serif; background: #0a0e1a; color: #e8ecf2; }
+
+  /* ── Nav header ── */
+  .site-nav {
+    position: sticky; top: 0; z-index: 100;
+    background: rgba(12, 19, 38, 0.95);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+    padding: 0 40px;
+    display: flex; align-items: center; gap: 32px; height: 56px;
+  }
+  .site-nav .logo { font-weight: 700; font-size: 16px; color: #ff7e2e; }
+  .site-nav a {
+    color: rgba(255,255,255,0.55); text-decoration: none;
+    font-size: 14px; font-weight: 500;
+    padding: 6px 14px; border-radius: 8px;
+    transition: all 0.15s;
+    cursor: pointer;
+  }
+  .site-nav a:hover, .site-nav a.active { color: #fff; background: rgba(255,255,255,0.07); }
+
+  /* ── Hero ── */
+  .hero {
+    padding: 80px 40px 60px;
+    text-align: center;
+    max-width: 860px; margin: 0 auto;
+  }
+  .hero-badge {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: rgba(255,126,46,0.12); border: 1px solid rgba(255,126,46,0.3);
+    color: #ff9f4f; font-size: 12px; font-weight: 600;
+    padding: 6px 14px; border-radius: 100px; margin-bottom: 28px;
+    letter-spacing: 0.06em; text-transform: uppercase;
+  }
+  .hero h1 {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: clamp(32px, 5vw, 52px);
+    font-weight: 700; line-height: 1.1;
+    background: linear-gradient(135deg, #fff 0%, rgba(255,255,255,0.65) 100%);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    margin-bottom: 16px;
+  }
+  .hero p { font-size: 17px; color: rgba(255,255,255,0.5); line-height: 1.7; }
+
+  /* ── Section ── */
+  .section { padding: 60px 40px; max-width: 1360px; margin: 0 auto; }
+  .section-label {
+    display: flex; align-items: center; gap: 12px; margin-bottom: 40px;
+  }
+  .section-num {
+    width: 32px; height: 32px; border-radius: 50%;
+    background: linear-gradient(135deg, #ff7e2e, #dd5c0c);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; font-weight: 700; color: #fff; flex-shrink: 0;
+  }
+  .section-title { font-family: 'Space Grotesk', sans-serif; font-size: 24px; font-weight: 700; }
+  .section-desc { color: rgba(255,255,255,0.45); font-size: 14px; margin-top: 4px; }
+  .divider { height: 1px; background: rgba(255,255,255,0.06); margin: 0 40px; }
+
+  /* ── Problem cards ── */
+  .problems { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 48px; }
+  .problem-card {
+    background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 14px; padding: 24px;
+  }
+  .problem-icon { font-size: 24px; margin-bottom: 12px; }
+  .problem-title { font-size: 14px; font-weight: 600; margin-bottom: 6px; color: #ff9f4f; }
+  .problem-text { font-size: 13px; color: rgba(255,255,255,0.45); line-height: 1.6; }
+
+  /* ── Proposal frame ── */
+  .proposal-frame {
+    background: rgba(255,255,255,0.02);
+    border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 20px; overflow: hidden;
+    margin-bottom: 48px;
+    box-shadow: 0 24px 64px rgba(0,0,0,0.4);
+  }
+  .proposal-header {
+    padding: 20px 28px;
+    background: rgba(255,255,255,0.03);
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .proposal-name {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 16px; font-weight: 700;
+  }
+  .proposal-tag {
+    font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em;
+    padding: 4px 12px; border-radius: 100px;
+  }
+  .tag-recommended { background: rgba(67,130,28,0.2); color: #7ec85a; border: 1px solid rgba(67,130,28,0.3); }
+  .tag-alternative { background: rgba(255,126,46,0.15); color: #ff9f4f; border: 1px solid rgba(255,126,46,0.3); }
+  .tag-mobile { background: rgba(88,130,255,0.15); color: #8ba8ff; border: 1px solid rgba(88,130,255,0.3); }
+
+  /* ─────────────────────────────────────────────────────
+     MOCKUP A: SPLIT-PANE
+  ───────────────────────────────────────────────────── */
+  .split-app {
+    display: flex;
+    height: 680px;
+    font-family: 'DM Sans', sans-serif;
+    background: #f4f6f9;
+  }
+  /* Sidebar */
+  .split-sidebar {
+    width: 52px; flex-shrink: 0;
+    background: #0c1326;
+    display: flex; flex-direction: column; align-items: center;
+    padding: 16px 0; gap: 6px;
+  }
+  .split-sidebar .s-logo {
+    width: 32px; height: 32px; border-radius: 8px;
+    background: #ff7e2e;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px; font-weight: 800; color: #fff;
+    margin-bottom: 16px;
+  }
+  .s-icon {
+    width: 36px; height: 36px; border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    color: rgba(255,255,255,0.4); font-size: 18px; cursor: pointer;
+    transition: all 0.15s;
+  }
+  .s-icon.active { background: rgba(255,126,46,0.2); color: #ff9f4f; }
+  .s-icon:hover { background: rgba(255,255,255,0.07); color: rgba(255,255,255,0.8); }
+
+  /* Left panel: form */
+  .split-form {
+    width: 380px; flex-shrink: 0;
+    background: #fff;
+    border-right: 1px solid #dde2ea;
+    display: flex; flex-direction: column;
+    overflow: hidden;
+  }
+  .form-topbar {
+    height: 48px; border-bottom: 1px solid #dde2ea;
+    display: flex; align-items: center;
+    padding: 0 16px; gap: 10px;
+    background: #fff;
+  }
+  .form-topbar-title { font-size: 14px; font-weight: 600; color: #1a1f2e; flex: 1; }
+  .form-scroll { flex: 1; overflow-y: auto; padding: 16px; }
+
+  /* Ingredient list */
+  .ingr-list { margin-bottom: 16px; }
+  .ingr-row {
+    display: flex; align-items: center;
+    padding: 10px 12px; border-radius: 10px;
+    background: #f8f9fb; border: 1px solid #eef0f4;
+    margin-bottom: 6px; gap: 8px;
+    cursor: default;
+  }
+  .ingr-row:first-child { border-color: #ff7e2e; background: rgba(255,126,46,0.04); }
+  .ingr-dot { width: 8px; height: 8px; border-radius: 50%; background: #ccd3de; flex-shrink: 0; }
+  .ingr-row:first-child .ingr-dot { background: #ff7e2e; }
+  .ingr-name { font-size: 13px; font-weight: 500; color: #1a1f2e; flex: 1; }
+  .ingr-qty { font-size: 12px; color: #5e6b80; font-variant-numeric: tabular-nums; }
+  .ingr-unit { font-size: 11px; color: #9ba8bb; }
+  .ingr-del { color: #ccd3de; font-size: 14px; cursor: pointer; }
+  .ingr-del:hover { color: #e53e3e; }
+
+  .add-btn {
+    display: flex; align-items: center; gap: 6px;
+    width: 100%; padding: 10px 12px; border-radius: 10px;
+    border: 1px dashed #dde2ea; background: none;
+    color: #9ba8bb; font-size: 13px; cursor: pointer;
+    font-family: 'DM Sans', sans-serif;
+    transition: all 0.15s;
+  }
+  .add-btn:hover { border-color: #ff7e2e; color: #ff7e2e; background: rgba(255,126,46,0.04); }
+
+  /* Serving sizes */
+  .form-section-title {
+    font-size: 10px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.08em; color: #9ba8bb; margin: 16px 0 8px;
+  }
+  .serving-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .serving-field { display: flex; flex-direction: column; gap: 4px; }
+  .serving-field label { font-size: 11px; color: #5e6b80; font-weight: 500; }
+  .serving-field input {
+    height: 36px; border: 1px solid #dde2ea; border-radius: 8px;
+    padding: 0 10px; font-size: 14px; color: #1a1f2e;
+    font-family: 'DM Sans', sans-serif;
+    font-variant-numeric: tabular-nums;
+    outline: none; transition: border 0.15s;
+  }
+  .serving-field input:focus { border-color: #ff7e2e; box-shadow: 0 0 0 3px rgba(255,126,46,0.12); }
+
+  /* Right panel: preview */
+  .split-preview {
+    flex: 1; background: #f4f6f9;
+    display: flex; flex-direction: column;
+  }
+  .preview-topbar {
+    height: 48px; background: #fff; border-bottom: 1px solid #dde2ea;
+    display: flex; align-items: center; padding: 0 20px; gap: 12px;
+  }
+  .preview-topbar-title { font-size: 14px; font-weight: 600; color: #1a1f2e; flex: 1; }
+
+  /* Region tabs */
+  .region-tabs {
+    display: flex; gap: 4px; padding: 0; background: none;
+  }
+  .rtab {
+    display: flex; align-items: center; gap: 6px;
+    padding: 6px 12px; border-radius: 8px;
+    border: 1px solid transparent;
+    font-size: 12px; font-weight: 600; cursor: pointer;
+    transition: all 0.15s; color: #9ba8bb;
+    background: none;
+  }
+  .rtab .flag { font-size: 14px; }
+  .rtab.active {
+    background: #fff; color: #1a1f2e;
+    border-color: #dde2ea;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+  }
+  .rtab:hover:not(.active) { color: #5e6b80; background: rgba(255,255,255,0.5); }
+
+  .preview-canvas {
+    flex: 1; overflow-y: auto;
+    display: flex; align-items: flex-start; justify-content: center;
+    padding: 32px;
+  }
+
+  /* ── THE LABEL ── */
+  .label-wrapper {
+    background: #fff;
+    border-radius: 16px;
+    box-shadow: 0 4px 24px rgba(12,19,38,0.1), 0 1px 4px rgba(12,19,38,0.06);
+    overflow: hidden;
+    width: 280px;
+  }
+  .label-header-bar {
+    background: #0c1326; color: #fff;
+    padding: 8px 12px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .label-header-bar span { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; opacity: 0.6; }
+  .label-header-bar strong { font-size: 11px; font-weight: 700; }
+
+  /* EU nutritional label style */
+  .eu-label { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; }
+  .eu-label-title {
+    background: #000; color: #fff;
+    padding: 6px 10px;
+    font-size: 11px; font-weight: 700; text-transform: uppercase;
+  }
+  .eu-label-subtitle {
+    padding: 4px 10px; border-bottom: 2px solid #000;
+    font-size: 10px; color: #333; background: #fff;
+  }
+  .eu-row {
+    display: flex; align-items: stretch;
+    border-bottom: 1px solid #ccc;
+  }
+  .eu-row:last-child { border-bottom: none; }
+  .eu-cell-main { flex: 1; padding: 3px 10px; font-size: 11px; }
+  .eu-cell-val { width: 70px; padding: 3px 6px; text-align: right; font-size: 11px; font-variant-numeric: tabular-nums; border-left: 1px solid #ccc; }
+  .eu-cell-ar { width: 50px; padding: 3px 6px; text-align: center; font-size: 10px; color: #555; border-left: 1px solid #ccc; font-variant-numeric: tabular-nums; }
+  .eu-row.header .eu-cell-main, .eu-row.header .eu-cell-val, .eu-row.header .eu-cell-ar {
+    font-size: 9px; font-weight: 700; text-transform: uppercase;
+    color: #555; background: #f8f8f8;
+  }
+  .eu-row.bold .eu-cell-main, .eu-row.bold .eu-cell-val { font-weight: 700; }
+  .eu-row.sub .eu-cell-main { padding-left: 22px; color: #555; }
+  .eu-label-footnote {
+    padding: 6px 10px;
+    font-size: 9px; color: #888; line-height: 1.5;
+    border-top: 1px solid #ccc;
+  }
+
+  /* sub-format tabs */
+  .sub-tabs {
+    display: flex; gap: 0;
+    padding: 12px 20px 0;
+  }
+  .stab {
+    padding: 7px 16px; font-size: 12px; font-weight: 500;
+    border: 1px solid #dde2ea; background: #fff; cursor: pointer;
+    color: #5e6b80; transition: all 0.15s;
+    border-right: none;
+  }
+  .stab:first-child { border-radius: 8px 0 0 8px; }
+  .stab:last-child { border-radius: 0 8px 8px 0; border-right: 1px solid #dde2ea; }
+  .stab.active {
+    background: #ff7e2e; color: #fff; border-color: #ff7e2e;
+    z-index: 1;
+  }
+  .stab + .stab.active { border-left: none; margin-left: -1px; }
+
+  /* Actions bar */
+  .preview-actions {
+    padding: 12px 20px;
+    display: flex; align-items: center; gap: 8px;
+    border-top: 1px solid #dde2ea; background: #fff;
+  }
+  .pact-btn {
+    display: flex; align-items: center; gap: 6px;
+    padding: 8px 14px; border-radius: 8px;
+    border: 1px solid #dde2ea; background: #fff;
+    font-size: 13px; font-weight: 500; color: #1a1f2e;
+    cursor: pointer; font-family: 'DM Sans', sans-serif;
+    transition: all 0.15s;
+  }
+  .pact-btn:hover { border-color: #ff7e2e; color: #ff7e2e; }
+  .pact-btn.primary {
+    background: #ff7e2e; color: #fff; border-color: #ff7e2e;
+  }
+  .pact-btn.primary:hover { background: #dd5c0c; }
+  .spacer { flex: 1; }
+
+  /* ─────────────────────────────────────────────────────
+     MOCKUP B: MIGLIORATO (layout corrente + upgrade)
+  ───────────────────────────────────────────────────── */
+  .improved-app {
+    font-family: 'DM Sans', sans-serif;
+    background: #f4f6f9;
+    min-height: 680px;
+    display: flex; flex-direction: column;
+  }
+  .imp-topbar {
+    height: 52px; background: #fff; border-bottom: 1px solid #dde2ea;
+    display: flex; align-items: center; padding: 0 20px; gap: 12px;
+    position: sticky; top: 0; z-index: 10;
+  }
+  .imp-breadcrumb { font-size: 13px; color: #9ba8bb; }
+  .imp-breadcrumb strong { color: #1a1f2e; }
+  .imp-topbar-actions { margin-left: auto; display: flex; gap: 8px; }
+
+  .imp-body { display: flex; flex: 1; }
+  .imp-sidebar-mini {
+    width: 48px; background: #0c1326;
+    display: flex; flex-direction: column; align-items: center;
+    padding: 16px 0; gap: 4px;
+  }
+  .imp-content { flex: 1; padding: 24px; overflow-y: auto; }
+
+  /* region selector — new style */
+  .region-selector {
+    display: flex; align-items: center; gap: 8px;
+    padding: 16px 20px;
+    background: #fff; border-radius: 16px;
+    border: 1px solid #dde2ea;
+    margin-bottom: 16px;
+    box-shadow: 0 1px 4px rgba(12,19,38,0.04);
+    flex-wrap: wrap;
+  }
+  .region-label { font-size: 11px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.07em; color: #9ba8bb; margin-right: 4px; }
+  .region-chip {
+    display: flex; align-items: center; gap: 6px;
+    padding: 7px 14px; border-radius: 100px;
+    border: 1.5px solid #dde2ea;
+    font-size: 13px; font-weight: 500; color: #5e6b80;
+    cursor: pointer; background: #fff; transition: all 0.15s;
+    font-family: 'DM Sans', sans-serif;
+  }
+  .region-chip .flag { font-size: 16px; }
+  .region-chip.active {
+    border-color: #0c1326; background: #0c1326; color: #fff;
+    box-shadow: 0 2px 8px rgba(12,19,38,0.2);
+  }
+  .region-chip:hover:not(.active) { border-color: #9ba8bb; color: #1a1f2e; }
+
+  /* content grid */
+  .calc-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .calc-card {
+    background: #fff; border-radius: 16px; border: 1px solid #dde2ea;
+    overflow: hidden;
+    box-shadow: 0 1px 4px rgba(12,19,38,0.04);
+  }
+  .calc-card-header {
+    padding: 14px 18px; border-bottom: 1px solid #f0f2f6;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .calc-card-title { font-size: 13px; font-weight: 600; color: #1a1f2e; }
+  .calc-card-body { padding: 16px 18px; }
+
+  /* mini table in card */
+  .mini-table { width: 100%; border-collapse: collapse; }
+  .mini-table th {
+    text-align: left; font-size: 10px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.06em;
+    color: #9ba8bb; padding: 4px 0; border-bottom: 1px solid #f0f2f6;
+  }
+  .mini-table th:last-child { text-align: right; }
+  .mini-table td { padding: 6px 0; border-bottom: 1px solid #f0f2f6; font-size: 13px; color: #1a1f2e; }
+  .mini-table td:last-child { text-align: right; font-variant-numeric: tabular-nums; font-weight: 500; }
+  .mini-table tr.sub td { color: #5e6b80; font-size: 12px; padding-left: 12px; }
+  .mini-table tr:last-child td { border-bottom: none; }
+
+  /* progress bar nutrient */
+  .nutrient-bar { height: 3px; background: #f0f2f6; border-radius: 2px; margin-top: 3px; }
+  .nutrient-fill { height: 100%; border-radius: 2px; background: #ff7e2e; }
+
+  /* Preview card */
+  .preview-card {
+    background: #fff; border-radius: 16px; border: 1px solid #dde2ea;
+    overflow: hidden; grid-column: span 1;
+    box-shadow: 0 1px 4px rgba(12,19,38,0.04);
+  }
+  .preview-card-header {
+    padding: 14px 18px; border-bottom: 1px solid #f0f2f6;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .pcard-badge {
+    background: rgba(255,126,46,0.1); color: #ff7e2e;
+    font-size: 10px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.06em; padding: 3px 8px; border-radius: 6px;
+    margin-left: auto;
+  }
+  .preview-card-body {
+    padding: 20px; display: flex; justify-content: center;
+    background: #fafbfc;
+  }
+  .label-scale { transform: scale(0.85); transform-origin: top center; }
+
+  /* ─────────────────────────────────────────────────────
+     MOCKUP C: REGION REDESIGN + FORMATO COMPARISON
+  ───────────────────────────────────────────────────── */
+  .format-grid {
+    display: grid; grid-template-columns: repeat(3, 1fr);
+    gap: 12px; padding: 20px;
+    background: #f4f6f9;
+  }
+  .fmt-card {
+    background: #fff; border-radius: 14px;
+    border: 1.5px solid #dde2ea;
+    overflow: hidden; cursor: pointer; transition: all 0.2s;
+  }
+  .fmt-card.active { border-color: #ff7e2e; box-shadow: 0 0 0 3px rgba(255,126,46,0.12); }
+  .fmt-card:hover:not(.active) { border-color: #aab5c6; transform: translateY(-2px);
+    box-shadow: 0 4px 16px rgba(12,19,38,0.08); }
+  .fmt-card-header {
+    padding: 12px 14px;
+    display: flex; align-items: center; gap: 8px;
+    border-bottom: 1px solid #f0f2f6;
+  }
+  .fmt-flag { font-size: 22px; }
+  .fmt-name { font-size: 13px; font-weight: 700; color: #1a1f2e; }
+  .fmt-reg { font-size: 10px; color: #9ba8bb; font-weight: 500; }
+  .fmt-preview-mini { padding: 10px 14px; }
+  .fmt-row-mini {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 3px 0; border-bottom: 1px solid #f5f5f5; font-size: 10px;
+  }
+  .fmt-row-mini:last-child { border: none; }
+  .fmt-row-mini span:first-child { color: #5e6b80; }
+  .fmt-row-mini span:last-child { font-weight: 600; color: #1a1f2e; font-variant-numeric: tabular-nums; }
+  .fmt-row-mini.bold span { color: #1a1f2e; font-weight: 700; }
+
+  /* ─────────────────────────────────────────────────────
+     ANNOTATION OVERLAYS
+  ───────────────────────────────────────────────────── */
+  .annotation {
+    position: relative;
+  }
+  .ann-badge {
+    position: absolute;
+    background: #ff7e2e; color: #fff;
+    font-size: 10px; font-weight: 700;
+    padding: 3px 8px; border-radius: 6px;
+    white-space: nowrap; z-index: 20;
+    box-shadow: 0 2px 8px rgba(255,126,46,0.4);
+  }
+  .ann-line {
+    position: absolute;
+    border: 1.5px solid rgba(255,126,46,0.6);
+    border-radius: 6px;
+    pointer-events: none; z-index: 15;
+  }
+
+  /* ── Insight cards ── */
+  .insights { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-top: 40px; }
+  .insight-card {
+    background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 16px; padding: 24px;
+  }
+  .insight-icon { font-size: 28px; margin-bottom: 12px; }
+  .insight-title { font-size: 15px; font-weight: 700; margin-bottom: 8px; }
+  .insight-text { font-size: 13px; color: rgba(255,255,255,0.45); line-height: 1.6; }
+  .insight-tag {
+    display: inline-block; margin-top: 14px;
+    font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em;
+    padding: 4px 10px; border-radius: 6px;
+  }
+  .tag-hi { background: rgba(255,126,46,0.15); color: #ff9f4f; }
+  .tag-med { background: rgba(67,130,28,0.15); color: #7ec85a; }
+  .tag-lo { background: rgba(88,130,255,0.15); color: #8ba8ff; }
+
+  /* ── USA Label ── */
+  .usa-label {
+    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    border: 2px solid #000; width: 220px;
+  }
+  .usa-title { font-size: 26px; font-weight: 900; padding: 4px 8px 0; line-height: 1; }
+  .usa-servings { font-size: 9px; padding: 2px 8px; border-bottom: 8px solid #000; }
+  .usa-calories-row { display: flex; align-items: baseline; padding: 0 8px 4px; border-bottom: 3px solid #000; }
+  .usa-cal-label { font-size: 11px; font-weight: 700; flex: 1; }
+  .usa-cal-num { font-size: 36px; font-weight: 900; line-height: 1; }
+  .usa-dv-line { font-size: 8px; padding: 3px 8px; text-align: right; border-bottom: 1px solid #000; }
+  .usa-row { display: flex; align-items: center; padding: 2px 8px; border-bottom: 1px solid #000; font-size: 10px; }
+  .usa-row.thick { border-bottom: 4px solid #000; }
+  .usa-row span:first-child { flex: 1; }
+  .usa-row span:last-child { font-weight: 700; }
+  .usa-row.sub span:first-child { padding-left: 14px; font-weight: 400; }
+  .usa-row.bold span:first-child { font-weight: 700; }
+  .usa-footnote { font-size: 7px; padding: 4px 8px; line-height: 1.4; }
+
+  /* ── Competitor comparison ── */
+  .comp-table { width: 100%; border-collapse: collapse; margin-top: 24px; }
+  .comp-table th {
+    padding: 10px 16px; text-align: left;
+    font-size: 11px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.07em; color: rgba(255,255,255,0.4);
+    border-bottom: 1px solid rgba(255,255,255,0.07);
+  }
+  .comp-table td {
+    padding: 12px 16px; font-size: 13px; color: rgba(255,255,255,0.75);
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+    vertical-align: middle;
+  }
+  .comp-table tr:last-child td { border-bottom: none; }
+  .comp-name { font-weight: 600; color: #fff; }
+  .tick { color: #7ec85a; }
+  .cross { color: rgba(255,255,255,0.2); }
+  .aea-row td { background: rgba(255,126,46,0.06); }
+  .aea-row .comp-name { color: #ff9f4f; }
+
+  /* ── Implementation steps ── */
+  .steps { display: flex; flex-direction: column; gap: 12px; margin-top: 32px; }
+  .step {
+    display: flex; gap: 16px;
+    background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 14px; padding: 20px; align-items: flex-start;
+  }
+  .step-num {
+    width: 28px; height: 28px; border-radius: 50%;
+    background: rgba(255,126,46,0.2); color: #ff9f4f;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 700; flex-shrink: 0; margin-top: 2px;
+  }
+  .step-content {}
+  .step-title { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+  .step-desc { font-size: 13px; color: rgba(255,255,255,0.45); line-height: 1.6; }
+  .step-effort { display: inline-flex; align-items: center; gap: 4px; margin-top: 8px; }
+  .effort-dot { width: 6px; height: 6px; border-radius: 50%; }
+  .effort-text { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
+  .e-low .effort-dot { background: #7ec85a; }
+  .e-low .effort-text { color: #7ec85a; }
+  .e-med .effort-dot { background: #ff9f4f; }
+  .e-med .effort-text { color: #ff9f4f; }
+  .e-hi .effort-dot { background: #ff6b6b; }
+  .e-hi .effort-text { color: #ff6b6b; }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav class="site-nav">
+  <div class="logo">AEA</div>
+  <a href="#problemi">Problemi</a>
+  <a href="#proposta-a">Split-Pane</a>
+  <a href="#proposta-b">Upgrade Corrente</a>
+  <a href="#proposta-c">Multi-formato</a>
+  <a href="#competitor">Competitor</a>
+  <a href="#roadmap">Roadmap</a>
+</nav>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-badge">Analisi UI — AEA Consulenze Alimentari</div>
+  <h1>Proposte di redesign<br>per il calcolatore nutrizionale</h1>
+  <p>Tre direzioni progettuali, dall'upgrade minimale al redesign split-pane.<br>Analisi competitor + roadmap implementativa.</p>
+</div>
+
+<!-- PROBLEMI -->
+<div id="problemi" class="section">
+  <div class="section-label">
+    <div class="section-num">!</div>
+    <div>
+      <div class="section-title">Problemi attuali identificati</div>
+      <div class="section-desc">Audit UI con redesign-skill sul codebase corrente</div>
+    </div>
+  </div>
+  <div class="problems">
+    <div class="problem-card">
+      <div class="problem-icon">📋</div>
+      <div class="problem-title">Tab regionali — navigazione debole</div>
+      <div class="problem-text">5 regioni (UE/USA/Canada/Australia/Arabi) più sub-format per ognuna. Nessuna gerarchia visiva chiara. Chi guarda non capisce subito dove si trova e cosa cambierà cliccando.</div>
+    </div>
+    <div class="problem-card">
+      <div class="problem-icon">🔍</div>
+      <div class="problem-title">No "preview fedele" in-app</div>
+      <div class="problem-text">La tabella in-app è funzionale ma stilizzata diversamente dal PDF esportato. L'utente non sa come sarà il documento finale finché non scarica. Il loop modifica → esporta → verifica è lento.</div>
+    </div>
+    <div class="problem-card">
+      <div class="problem-icon">📱</div>
+      <div class="problem-title">Mobile: scale() sulle tabelle</div>
+      <div class="problem-text">Le tabelle regolatorie su mobile usano <code>transform: scale(0.72–0.92)</code>. Crea tabelle sfocate su schermi Retina e padding inconsistenti. Touch target troppo piccoli per interagire.</div>
+    </div>
+    <div class="problem-card">
+      <div class="problem-icon">🔤</div>
+      <div class="problem-title">Font: Helvetica Neue generico</div>
+      <div class="problem-text">Helvetica Neue è il font di sistema macOS, non un choice intenzionale. Su Windows e Android il fallback è Arial. Per un tool professionale B2B, il font è parte del brand.</div>
+    </div>
+    <div class="problem-card">
+      <div class="problem-icon">📊</div>
+      <div class="problem-title">NutrizionaleCalc.tsx: 3176 righe</div>
+      <div class="problem-text">Un solo file contiene tutta la logica desktop. Impossibile da navigare e mantenere. Aggiungere un nuovo formato o modificare un rounding rule richiede di orientarsi in 3000+ righe.</div>
+    </div>
+    <div class="problem-card">
+      <div class="problem-icon">⚡</div>
+      <div class="problem-title">Nessun feedback visivo "live"</div>
+      <div class="problem-text">I dati nutrizionali si aggiornano ma non c'è un indicatore visivo del cambiamento. Non si capisce quali nutrienti sono critici (vicino a soglie di arrotondamento) vs stabili.</div>
+    </div>
+  </div>
+</div>
+
+<div class="divider"></div>
+
+<!-- PROPOSTA A: SPLIT-PANE -->
+<div id="proposta-a" class="section">
+  <div class="section-label">
+    <div class="section-num">A</div>
+    <div>
+      <div class="section-title">Split-pane — Formula + Preview in tempo reale</div>
+      <div class="section-desc">Panello sx: ingredienti + porzioni. Panello dx: etichetta regolamentare live, esattamente come nel PDF.</div>
+    </div>
+  </div>
+
+  <div class="proposal-frame">
+    <div class="proposal-header">
+      <div>
+        <div class="proposal-name">Proposta A — Split-Pane Live Preview</div>
+        <div style="font-size: 13px; color: rgba(255,255,255,0.4); margin-top: 4px;">Ispirato a Genesis R&D + Nutritics</div>
+      </div>
+      <div class="proposal-tag tag-recommended">Raccomandata</div>
+    </div>
+
+    <!-- THE MOCKUP -->
+    <div class="split-app">
+      <!-- Sidebar icons -->
+      <div class="split-sidebar">
+        <div class="s-logo">A</div>
+        <div class="s-icon active">🧮</div>
+        <div class="s-icon">📦</div>
+        <div class="s-icon">📊</div>
+        <div class="s-icon">📂</div>
+        <div style="margin-top: auto;">
+          <div class="s-icon">⚙️</div>
+        </div>
+      </div>
+
+      <!-- Left: form -->
+      <div class="split-form">
+        <div class="form-topbar">
+          <span class="form-topbar-title">🧮 Calcolatore nutrizionale</span>
+          <button class="pact-btn" style="font-size: 12px; padding: 5px 10px;">+ Nuovo</button>
+        </div>
+
+        <div class="form-scroll">
+          <div class="form-section-title">Ingredienti</div>
+          <div class="ingr-list">
+            <div class="ingr-row">
+              <div class="ingr-dot"></div>
+              <span class="ingr-name">Farina di grano tenero 00</span>
+              <span class="ingr-qty">350</span>
+              <span class="ingr-unit">g</span>
+              <span class="ingr-del">×</span>
+            </div>
+            <div class="ingr-row">
+              <div class="ingr-dot"></div>
+              <span class="ingr-name">Uova intere</span>
+              <span class="ingr-qty">200</span>
+              <span class="ingr-unit">g</span>
+              <span class="ingr-del">×</span>
+            </div>
+            <div class="ingr-row">
+              <div class="ingr-dot"></div>
+              <span class="ingr-name">Olio extra vergine d'oliva</span>
+              <span class="ingr-qty">80</span>
+              <span class="ingr-unit">g</span>
+              <span class="ingr-del">×</span>
+            </div>
+            <div class="ingr-row">
+              <div class="ingr-dot"></div>
+              <span class="ingr-name">Sale</span>
+              <span class="ingr-qty">5</span>
+              <span class="ingr-unit">g</span>
+              <span class="ingr-del">×</span>
+            </div>
+          </div>
+          <button class="add-btn">＋ Aggiungi ingrediente</button>
+
+          <div class="form-section-title">Porzione di riferimento</div>
+          <div class="serving-grid">
+            <div class="serving-field">
+              <label>Porzione (g)</label>
+              <input value="100" type="number">
+            </div>
+            <div class="serving-field">
+              <label>Unità di vendita (g)</label>
+              <input value="500" type="number">
+            </div>
+            <div class="serving-field">
+              <label>Pezzo tipico (g)</label>
+              <input value="75" type="number">
+            </div>
+            <div class="serving-field">
+              <label>Nome porzione</label>
+              <input value="1 porzione" type="text">
+            </div>
+          </div>
+
+          <div class="form-section-title" style="margin-top: 20px;">Prodotto</div>
+          <div class="serving-field" style="margin-bottom: 8px;">
+            <label>Nome prodotto</label>
+            <input value="Pasta fresca all'uovo" type="text">
+          </div>
+
+          <div class="form-section-title">Micronutrienti opzionali</div>
+          <div style="display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 16px;">
+            <div style="padding: 4px 10px; border-radius: 20px; border: 1px solid #dde2ea; font-size: 11px; color: #5e6b80; cursor: pointer; background: #fff;">Vitamina C</div>
+            <div style="padding: 4px 10px; border-radius: 20px; border: 1px solid #dde2ea; font-size: 11px; color: #5e6b80; cursor: pointer; background: #fff;">Calcio</div>
+            <div style="padding: 4px 10px; border-radius: 20px; border: 1px solid #ff7e2e; font-size: 11px; color: #ff7e2e; cursor: pointer; background: rgba(255,126,46,0.05);">Ferro ✓</div>
+            <div style="padding: 4px 10px; border-radius: 20px; border: 1px solid #dde2ea; font-size: 11px; color: #5e6b80; cursor: pointer; background: #fff;">Vitamina D</div>
+            <div style="padding: 4px 10px; border-radius: 20px; border: 1px solid #dde2ea; font-size: 11px; color: #5e6b80; cursor: pointer;">+ altri</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right: preview -->
+      <div class="split-preview">
+        <div class="preview-topbar">
+          <span class="preview-topbar-title">Anteprima etichetta</span>
+          <div class="region-tabs">
+            <button class="rtab active"><span class="flag">🇪🇺</span>UE</button>
+            <button class="rtab"><span class="flag">🇺🇸</span>USA</button>
+            <button class="rtab"><span class="flag">🇨🇦</span>CA</button>
+            <button class="rtab"><span class="flag">🇦🇺</span>AU</button>
+            <button class="rtab"><span class="flag">🇸🇦</span>Arabi</button>
+          </div>
+        </div>
+
+        <div class="sub-tabs">
+          <button class="stab active">Per 100g</button>
+          <button class="stab">Unità di vendita</button>
+          <button class="stab">Porzione</button>
+          <button class="stab">Pezzo</button>
+        </div>
+
+        <div class="preview-canvas">
+          <div>
+            <!-- Authentic EU label -->
+            <div class="label-wrapper eu-label">
+              <div class="label-header-bar">
+                <span>Anteprima fedele</span>
+                <strong>EU Reg. 1169/2011</strong>
+              </div>
+              <div class="eu-label-title">Dichiarazione nutrizionale</div>
+              <div class="eu-label-subtitle">Valori per 100 g</div>
+              <div class="eu-row header">
+                <div class="eu-cell-main">Nutriente</div>
+                <div class="eu-cell-val">Quantità</div>
+                <div class="eu-cell-ar">% AR*</div>
+              </div>
+              <div class="eu-row bold">
+                <div class="eu-cell-main">Energia</div>
+                <div class="eu-cell-val">1 354 kJ / 323 kcal</div>
+                <div class="eu-cell-ar">16%</div>
+              </div>
+              <div class="eu-row bold">
+                <div class="eu-cell-main">Grassi</div>
+                <div class="eu-cell-val">9,8 g</div>
+                <div class="eu-cell-ar">14%</div>
+              </div>
+              <div class="eu-row sub">
+                <div class="eu-cell-main">di cui acidi grassi saturi</div>
+                <div class="eu-cell-val">1,7 g</div>
+                <div class="eu-cell-ar">9%</div>
+              </div>
+              <div class="eu-row bold">
+                <div class="eu-cell-main">Carboidrati</div>
+                <div class="eu-cell-val">48 g</div>
+                <div class="eu-cell-ar">18%</div>
+              </div>
+              <div class="eu-row sub">
+                <div class="eu-cell-main">di cui zuccheri</div>
+                <div class="eu-cell-val">0,9 g</div>
+                <div class="eu-cell-ar">1%</div>
+              </div>
+              <div class="eu-row bold">
+                <div class="eu-cell-main">Proteine</div>
+                <div class="eu-cell-val">11 g</div>
+                <div class="eu-cell-ar">22%</div>
+              </div>
+              <div class="eu-row bold">
+                <div class="eu-cell-main">Sale</div>
+                <div class="eu-cell-val">0,79 g</div>
+                <div class="eu-cell-ar">13%</div>
+              </div>
+              <div class="eu-row sub">
+                <div class="eu-cell-main">di cui Ferro</div>
+                <div class="eu-cell-val">2,3 mg</div>
+                <div class="eu-cell-ar">16%</div>
+              </div>
+              <div class="eu-label-footnote">
+                *Assunzioni di riferimento per un adulto medio (8 400 kJ / 2 000 kcal)
+              </div>
+            </div>
+
+            <div style="margin-top: 16px; padding: 12px 14px; background: rgba(67,130,28,0.08); border: 1px solid rgba(67,130,28,0.2); border-radius: 10px;">
+              <div style="font-size: 11px; font-weight: 600; color: #43821c; margin-bottom: 4px;">✓ Conforme EU Reg. 1169/2011</div>
+              <div style="font-size: 11px; color: #5e6b80;">Rounding rules applicati. Pronto per export.</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="preview-actions">
+          <button class="pact-btn">📋 Copia</button>
+          <button class="pact-btn">💾 Salva</button>
+          <div class="spacer"></div>
+          <button class="pact-btn primary">⬇ Esporta PDF</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Insight for proposal A -->
+  <div class="insights">
+    <div class="insight-card">
+      <div class="insight-icon">👁️</div>
+      <div class="insight-title">WYSIWYG nativo</div>
+      <div class="insight-text">Il pannello destro renderizza l'etichetta con gli stessi stili del PDF esportato. Zero surprise tra anteprima e output finale.</div>
+      <div class="insight-tag tag-hi">Alto impatto</div>
+    </div>
+    <div class="insight-card">
+      <div class="insight-icon">🚀</div>
+      <div class="insight-title">Loop modifica ridotto</div>
+      <div class="insight-text">Ogni modifica a ingredienti o porzioni aggiorna l'etichetta in tempo reale. Nessun click "calcola", nessun export di test.</div>
+      <div class="insight-tag tag-hi">Alto impatto</div>
+    </div>
+    <div class="insight-card">
+      <div class="insight-icon">🌍</div>
+      <div class="insight-title">Switch regione immediato</div>
+      <div class="insight-text">I tab regionali in topbar cambiano solo il pannello destro. La formula a sinistra non si tocca. Confronto istantaneo tra standard.</div>
+      <div class="insight-tag tag-med">Medio impatto</div>
+    </div>
+  </div>
+</div>
+
+<div class="divider"></div>
+
+<!-- PROPOSTA B: UPGRADE LAYOUT CORRENTE -->
+<div id="proposta-b" class="section">
+  <div class="section-label">
+    <div class="section-num">B</div>
+    <div>
+      <div class="section-title">Upgrade dell'interfaccia corrente — senza restructuring</div>
+      <div class="section-desc">Migliora region selector, tipografia, gerarchia visiva. Zero rischio regressioni. Massimo impatto per minimo lavoro.</div>
+    </div>
+  </div>
+
+  <div class="proposal-frame">
+    <div class="proposal-header">
+      <div>
+        <div class="proposal-name">Proposta B — Upgrade incrementale (basso rischio)</div>
+        <div style="font-size: 13px; color: rgba(255,255,255,0.4); margin-top: 4px;">Mantiene la struttura corrente, migliora solo la UI</div>
+      </div>
+      <div class="proposal-tag tag-alternative">Sicura</div>
+    </div>
+
+    <div class="improved-app">
+      <div class="imp-topbar">
+        <div style="width: 36px; height: 36px; border-radius: 8px; background: #0c1326; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 800; color: #ff7e2e; flex-shrink: 0;">A</div>
+        <div class="imp-breadcrumb"><strong>Calcolatore nutrizionale</strong> / Pasta fresca all'uovo</div>
+        <div class="imp-topbar-actions">
+          <button class="pact-btn" style="font-size: 12px; padding: 6px 12px;">💾 Salva</button>
+          <button class="pact-btn primary" style="font-size: 12px; padding: 6px 12px;">⬇ PDF</button>
+        </div>
+      </div>
+
+      <div class="imp-body">
+        <div class="imp-sidebar-mini">
+          <div style="width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; font-size: 16px; margin-bottom: 12px; opacity: 0.9;">🧮</div>
+          <div style="width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; font-size: 16px; opacity: 0.4; cursor: pointer;">📦</div>
+          <div style="width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; font-size: 16px; opacity: 0.4; cursor: pointer;">📊</div>
+        </div>
+
+        <div class="imp-content">
+          <!-- NEW: Region selector chip style -->
+          <div class="region-selector">
+            <span class="region-label">Formato</span>
+            <button class="region-chip active"><span class="flag">🇪🇺</span>Unione Europea</button>
+            <button class="region-chip"><span class="flag">🇺🇸</span>USA (FDA)</button>
+            <button class="region-chip"><span class="flag">🇨🇦</span>Canada</button>
+            <button class="region-chip"><span class="flag">🇦🇺</span>Australia</button>
+            <button class="region-chip"><span class="flag">🇸🇦</span>Paesi Arabi</button>
+          </div>
+
+          <div class="calc-grid">
+            <!-- Card: Macro values -->
+            <div class="calc-card">
+              <div class="calc-card-header">
+                <span style="font-size: 16px;">⚡</span>
+                <div class="calc-card-title">Valori nutrizionali</div>
+                <div style="margin-left: auto; font-size: 12px; color: #9ba8bb; background: #f0f2f6; padding: 3px 8px; border-radius: 6px;">Per 100 g</div>
+              </div>
+              <div class="calc-card-body">
+                <table class="mini-table">
+                  <thead>
+                    <tr>
+                      <th>Nutriente</th>
+                      <th>Valore</th>
+                      <th>% AR</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td>Energia</td>
+                      <td>323 kcal / 1 354 kJ</td>
+                      <td>16%</td>
+                    </tr>
+                    <tr>
+                      <td><strong>Grassi</strong></td>
+                      <td><strong>9,8 g</strong></td>
+                      <td><strong>14%</strong></td>
+                    </tr>
+                    <tr class="sub">
+                      <td>di cui saturi</td>
+                      <td>1,7 g</td>
+                      <td>9%</td>
+                    </tr>
+                    <tr>
+                      <td><strong>Carboidrati</strong></td>
+                      <td><strong>48 g</strong></td>
+                      <td><strong>18%</strong></td>
+                    </tr>
+                    <tr class="sub">
+                      <td>di cui zuccheri</td>
+                      <td>0,9 g</td>
+                      <td>1%</td>
+                    </tr>
+                    <tr>
+                      <td><strong>Fibre</strong></td>
+                      <td><strong>1,8 g</strong></td>
+                      <td>—</td>
+                    </tr>
+                    <tr>
+                      <td><strong>Proteine</strong></td>
+                      <td><strong>11 g</strong></td>
+                      <td><strong>22%</strong></td>
+                    </tr>
+                    <tr>
+                      <td><strong>Sale</strong></td>
+                      <td><strong>0,79 g</strong></td>
+                      <td><strong>13%</strong></td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- Card: Sub-format + Label preview -->
+            <div class="calc-card">
+              <div class="calc-card-header">
+                <span style="font-size: 16px;">👁️</span>
+                <div class="calc-card-title">Anteprima etichetta</div>
+                <div class="pcard-badge">EU 1169/2011</div>
+              </div>
+              <div style="padding: 0 18px 12px; border-bottom: 1px solid #f0f2f6; display: flex; gap: 0;">
+                <button class="stab active" style="flex: 1; text-align: center; font-size: 11px;">100g</button>
+                <button class="stab" style="flex: 1; text-align: center; font-size: 11px;">UV</button>
+                <button class="stab" style="flex: 1; text-align: center; font-size: 11px;">Porzione</button>
+                <button class="stab" style="flex: 1; text-align: center; font-size: 11px; border-radius: 0 8px 8px 0; border-right: 1px solid #dde2ea;">Pezzo</button>
+              </div>
+              <div class="preview-card-body">
+                <div class="label-scale">
+                  <div class="eu-label" style="width: 240px; border: 2px solid #ccc;">
+                    <div style="background: #000; color: #fff; padding: 5px 10px; font-size: 10px; font-weight: 700; text-transform: uppercase;">Dichiarazione nutrizionale</div>
+                    <div style="padding: 3px 10px; border-bottom: 1px solid #ccc; font-size: 9px; color: #555;">Valori per 100 g</div>
+                    <div class="eu-row bold" style="border-bottom: 1px solid #ccc;">
+                      <div class="eu-cell-main" style="font-size: 10px;">Energia</div>
+                      <div class="eu-cell-val" style="font-size: 10px;">1 354 kJ / 323 kcal</div>
+                      <div class="eu-cell-ar" style="font-size: 9px;">16%</div>
+                    </div>
+                    <div class="eu-row bold" style="border-bottom: 1px solid #ccc;">
+                      <div class="eu-cell-main" style="font-size: 10px;">Grassi</div>
+                      <div class="eu-cell-val" style="font-size: 10px;">9,8 g</div>
+                      <div class="eu-cell-ar" style="font-size: 9px;">14%</div>
+                    </div>
+                    <div class="eu-row sub" style="border-bottom: 1px solid #ccc;">
+                      <div class="eu-cell-main" style="font-size: 10px;">di cui saturi</div>
+                      <div class="eu-cell-val" style="font-size: 10px;">1,7 g</div>
+                      <div class="eu-cell-ar" style="font-size: 9px;">9%</div>
+                    </div>
+                    <div class="eu-row bold" style="border-bottom: 1px solid #ccc;">
+                      <div class="eu-cell-main" style="font-size: 10px;">Carboidrati</div>
+                      <div class="eu-cell-val" style="font-size: 10px;">48 g</div>
+                      <div class="eu-cell-ar" style="font-size: 9px;">18%</div>
+                    </div>
+                    <div class="eu-row sub" style="border-bottom: 1px solid #ccc;">
+                      <div class="eu-cell-main" style="font-size: 10px;">di cui zuccheri</div>
+                      <div class="eu-cell-val" style="font-size: 10px;">0,9 g</div>
+                      <div class="eu-cell-ar" style="font-size: 9px;">1%</div>
+                    </div>
+                    <div class="eu-row bold" style="border-bottom: 1px solid #ccc;">
+                      <div class="eu-cell-main" style="font-size: 10px;">Proteine</div>
+                      <div class="eu-cell-val" style="font-size: 10px;">11 g</div>
+                      <div class="eu-cell-ar" style="font-size: 9px;">22%</div>
+                    </div>
+                    <div class="eu-row bold">
+                      <div class="eu-cell-main" style="font-size: 10px;">Sale</div>
+                      <div class="eu-cell-val" style="font-size: 10px;">0,79 g</div>
+                      <div class="eu-cell-ar" style="font-size: 9px;">13%</div>
+                    </div>
+                    <div style="font-size: 8px; color: #888; padding: 4px 10px; border-top: 1px solid #ccc;">*AR adulto medio (8 400 kJ / 2 000 kcal)</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="divider"></div>
+
+<!-- PROPOSTA C: MULTI-FORMATO CONFRONTO -->
+<div id="proposta-c" class="section">
+  <div class="section-label">
+    <div class="section-num">C</div>
+    <div>
+      <div class="section-title">Vista multi-formato — confronto side-by-side</div>
+      <div class="section-desc">Seleziona regione, esplora i sub-format come card. Utile per clienti multi-mercato (EU + USA).</div>
+    </div>
+  </div>
+
+  <div class="proposal-frame">
+    <div class="proposal-header">
+      <div>
+        <div class="proposal-name">Proposta C — Selezione formato con card preview</div>
+        <div style="font-size: 13px; color: rgba(255,255,255,0.4); margin-top: 4px;">Confronto visivo immediato tra sub-formati della stessa regione</div>
+      </div>
+      <div class="proposal-tag tag-alternative">Alternativa</div>
+    </div>
+
+    <!-- Region selector full-width -->
+    <div style="background: #fff; border-bottom: 1px solid #dde2ea; padding: 16px 24px;">
+      <div style="font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: #9ba8bb; margin-bottom: 10px;">Standard di riferimento selezionato</div>
+      <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+        <button class="region-chip" style="border-color: #ff7e2e; background: rgba(255,126,46,0.06); color: #ff7e2e;"><span class="flag">🇪🇺</span>Unione Europea</button>
+        <button class="region-chip"><span class="flag">🇺🇸</span>USA (FDA)</button>
+        <button class="region-chip"><span class="flag">🇨🇦</span>Canada</button>
+        <button class="region-chip"><span class="flag">🇦🇺</span>Australia</button>
+        <button class="region-chip"><span class="flag">🇸🇦</span>Paesi Arabi</button>
+        <button class="region-chip" style="margin-left: auto; border-style: dashed; color: #9ba8bb;">＋ Dual column</button>
+      </div>
+    </div>
+
+    <!-- Format cards grid -->
+    <div class="format-grid">
+      <!-- Per 100g -->
+      <div class="fmt-card active">
+        <div class="fmt-card-header">
+          <div>
+            <div class="fmt-name">Per 100 g</div>
+            <div class="fmt-reg">Standard + comparabilità</div>
+          </div>
+          <div style="margin-left: auto; width: 20px; height: 20px; border-radius: 50%; background: #ff7e2e; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 10px;">✓</div>
+        </div>
+        <div class="fmt-preview-mini">
+          <div class="fmt-row-mini bold"><span>Energia</span><span>323 kcal</span></div>
+          <div class="fmt-row-mini bold"><span>Grassi</span><span>9,8 g</span></div>
+          <div class="fmt-row-mini"><span style="padding-left: 10px;">di cui saturi</span><span>1,7 g</span></div>
+          <div class="fmt-row-mini bold"><span>Carboidrati</span><span>48 g</span></div>
+          <div class="fmt-row-mini bold"><span>Proteine</span><span>11 g</span></div>
+          <div class="fmt-row-mini bold"><span>Sale</span><span>0,79 g</span></div>
+        </div>
+      </div>
+
+      <!-- Unità di vendita -->
+      <div class="fmt-card">
+        <div class="fmt-card-header">
+          <div>
+            <div class="fmt-name">Unità di vendita</div>
+            <div class="fmt-reg">500 g — valori intera confezione</div>
+          </div>
+        </div>
+        <div class="fmt-preview-mini">
+          <div class="fmt-row-mini bold"><span>Energia</span><span>1 615 kcal</span></div>
+          <div class="fmt-row-mini bold"><span>Grassi</span><span>49 g</span></div>
+          <div class="fmt-row-mini"><span style="padding-left: 10px;">di cui saturi</span><span>8,5 g</span></div>
+          <div class="fmt-row-mini bold"><span>Carboidrati</span><span>240 g</span></div>
+          <div class="fmt-row-mini bold"><span>Proteine</span><span>55 g</span></div>
+          <div class="fmt-row-mini bold"><span>Sale</span><span>3,95 g</span></div>
+        </div>
+      </div>
+
+      <!-- Per porzione -->
+      <div class="fmt-card">
+        <div class="fmt-card-header">
+          <div>
+            <div class="fmt-name">Per porzione</div>
+            <div class="fmt-reg">75 g — "1 porzione"</div>
+          </div>
+        </div>
+        <div class="fmt-preview-mini">
+          <div class="fmt-row-mini bold"><span>Energia</span><span>242 kcal</span></div>
+          <div class="fmt-row-mini bold"><span>Grassi</span><span>7,4 g</span></div>
+          <div class="fmt-row-mini"><span style="padding-left: 10px;">di cui saturi</span><span>1,3 g</span></div>
+          <div class="fmt-row-mini bold"><span>Carboidrati</span><span>36 g</span></div>
+          <div class="fmt-row-mini bold"><span>Proteine</span><span>8,3 g</span></div>
+          <div class="fmt-row-mini bold"><span>Sale</span><span>0,59 g</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- USA label comparison -->
+    <div style="padding: 24px; background: #f4f6f9; border-top: 1px solid #dde2ea;">
+      <div style="font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: #9ba8bb; margin-bottom: 16px;">Come cambia per USA FDA — stessa formula</div>
+      <div style="display: flex; gap: 24px; align-items: flex-start;">
+        <div class="usa-label">
+          <div class="usa-title">Nutrition Facts</div>
+          <div class="usa-servings">1 serving per container<br>Serving size <strong>3 oz (75g)</strong></div>
+          <div class="usa-calories-row">
+            <div class="usa-cal-label">Calories</div>
+            <div class="usa-cal-num">240</div>
+          </div>
+          <div class="usa-dv-line">% Daily Value*</div>
+          <div class="usa-row bold"><span>Total Fat</span><span>7g <span style="font-weight:400">10%</span></span></div>
+          <div class="usa-row sub"><span>Saturated Fat</span><span>1g 5%</span></div>
+          <div class="usa-row sub"><span><em>Trans</em> Fat</span><span>0g</span></div>
+          <div class="usa-row"><span>Cholesterol</span><span>95mg 32%</span></div>
+          <div class="usa-row"><span>Sodium</span><span>232mg 10%</span></div>
+          <div class="usa-row bold"><span>Total Carb.</span><span>36g 13%</span></div>
+          <div class="usa-row sub"><span>Dietary Fiber</span><span>1g 4%</span></div>
+          <div class="usa-row sub"><span>Total Sugars</span><span>0g</span></div>
+          <div class="usa-row thick bold"><span>Protein</span><span>8g</span></div>
+          <div class="usa-row"><span>Vitamin D</span><span>2mcg 10%</span></div>
+          <div class="usa-row"><span>Calcium</span><span>49mg 4%</span></div>
+          <div class="usa-row"><span>Iron</span><span>2mg 10%</span></div>
+          <div class="usa-row"><span>Potassium</span><span>112mg 2%</span></div>
+          <div class="usa-footnote">*The % Daily Value tells you how much a nutrient in a serving of food contributes to a daily diet. 2,000 calories a day is used for general nutrition advice.</div>
+        </div>
+
+        <div style="flex: 1; background: #fff; border-radius: 12px; border: 1px solid #dde2ea; padding: 16px; font-size: 13px; color: #5e6b80; line-height: 1.7;">
+          <div style="font-weight: 700; color: #1a1f2e; margin-bottom: 10px; font-size: 14px;">Differenze chiave EU → USA</div>
+          <div style="margin-bottom: 6px;">🔄 <strong>Calorie</strong>: 242 kcal (EU) → 240 kcal (FDA rounding)</div>
+          <div style="margin-bottom: 6px;">🔄 <strong>Grassi</strong>: "9,8 g" (EU) → "7g" (FDA, per 75g porzione)</div>
+          <div style="margin-bottom: 6px;">➕ <strong>Colesterolo</strong>: obbligatorio FDA, non in EU</div>
+          <div style="margin-bottom: 6px;">➕ <strong>Vitamina D, Calcio</strong>: mandatorie FDA 2020</div>
+          <div style="margin-bottom: 6px;">❌ <strong>Fibre</strong>: "Dietary Fiber" non "Fibre alimentari"</div>
+          <div>📏 <strong>Formato fisico</strong>: bordi spessi FDA (design specifico §101.9)</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="divider"></div>
+
+<!-- COMPETITOR -->
+<div id="competitor" class="section">
+  <div class="section-label">
+    <div class="section-num">📊</div>
+    <div>
+      <div class="section-title">Analisi competitor</div>
+      <div class="section-desc">Dove siamo, dove possono arrivare i competitor, cosa AEA può fare meglio</div>
+    </div>
+  </div>
+
+  <table class="comp-table">
+    <thead>
+      <tr>
+        <th>Tool</th>
+        <th>Preview live</th>
+        <th>Multi-regione</th>
+        <th>Split-pane</th>
+        <th>Mobile</th>
+        <th>Italia / EU</th>
+        <th>Prezzo</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><span class="comp-name">Genesis R&D (ESHA)</span><br><span style="font-size: 11px; color: rgba(255,255,255,0.3);">USA, leader di settore</span></td>
+        <td><span class="tick">✓</span></td>
+        <td><span class="tick">✓</span></td>
+        <td><span class="cross">—</span></td>
+        <td><span class="cross">—</span></td>
+        <td><span class="cross">—</span></td>
+        <td>€800+/anno</td>
+      </tr>
+      <tr>
+        <td><span class="comp-name">Nutritics</span><br><span style="font-size: 11px; color: rgba(255,255,255,0.3);">Irlanda, EU-focus</span></td>
+        <td><span class="tick">✓</span></td>
+        <td><span class="tick">✓</span></td>
+        <td><span class="cross">—</span></td>
+        <td><span class="tick">✓</span></td>
+        <td><span class="tick">✓</span></td>
+        <td>€200+/mese</td>
+      </tr>
+      <tr>
+        <td><span class="comp-name">FoodProcessor (ESHA)</span><br><span style="font-size: 11px; color: rgba(255,255,255,0.3);">USA, db 146k alimenti</span></td>
+        <td><span class="cross">—</span></td>
+        <td><span class="tick">✓</span></td>
+        <td><span class="cross">—</span></td>
+        <td><span class="cross">—</span></td>
+        <td><span class="cross">—</span></td>
+        <td>€500+/anno</td>
+      </tr>
+      <tr>
+        <td><span class="comp-name">MenuCalc / WISK</span><br><span style="font-size: 11px; color: rgba(255,255,255,0.3);">USA, ristorazione</span></td>
+        <td><span class="tick">✓</span></td>
+        <td><span class="cross">—</span></td>
+        <td><span class="cross">—</span></td>
+        <td><span class="tick">✓</span></td>
+        <td><span class="cross">—</span></td>
+        <td>€150+/mese</td>
+      </tr>
+      <tr class="aea-row">
+        <td><span class="comp-name">AEA Consulenze Alimentari</span><br><span style="font-size: 11px; color: rgba(255,165,80,0.6);">In sviluppo — il vostro prodotto</span></td>
+        <td><span class="cross">→ da aggiungere</span></td>
+        <td><span class="tick">✓ (5 regioni)</span></td>
+        <td><span class="cross">→ Proposta A</span></td>
+        <td><span class="tick">✓ (già fatto)</span></td>
+        <td><span class="tick">✓ (prioritario)</span></td>
+        <td>TBD</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="insights" style="margin-top: 32px;">
+    <div class="insight-card">
+      <div class="insight-icon">🎯</div>
+      <div class="insight-title">Vantaggio differenziale</div>
+      <div class="insight-text">Nessun competitor ha un'interfaccia moderna + mobile + EU-focus + italiano nativo. AEA può occupare questo spazio vuoto.</div>
+      <div class="insight-tag tag-hi">Opportunità</div>
+    </div>
+    <div class="insight-card">
+      <div class="insight-icon">⚠️</div>
+      <div class="insight-title">Gap principale: preview live</div>
+      <div class="insight-text">Genesis e Nutritics (i top 2) hanno entrambi preview live. È diventato lo standard atteso. Senza, AEA sembra "strumento Excel migliore".</div>
+      <div class="insight-tag tag-hi">Critico</div>
+    </div>
+    <div class="insight-card">
+      <div class="insight-icon">💰</div>
+      <div class="insight-title">Prezzo vs funzionalità</div>
+      <div class="insight-text">I competitor costano €150-800/mese. Una UI migliore + preview live giustifica facilmente un posizionamento premium sul mercato italiano.</div>
+      <div class="insight-tag tag-med">Business</div>
+    </div>
+  </div>
+</div>
+
+<div class="divider"></div>
+
+<!-- ROADMAP -->
+<div id="roadmap" class="section">
+  <div class="section-label">
+    <div class="section-num">🗺</div>
+    <div>
+      <div class="section-title">Roadmap implementativa</div>
+      <div class="section-desc">In ordine di impatto / rischio. Ogni passo è autonomo.</div>
+    </div>
+  </div>
+
+  <div class="steps">
+    <div class="step">
+      <div class="step-num">1</div>
+      <div class="step-content">
+        <div class="step-title">Region selector → chip con bandiere (Proposta B)</div>
+        <div class="step-desc">Sostituire i tab piatti regionali attuali con pill-chip che mostrano bandiera + nome. CSS puro, zero JS. Applicabile a TabUE/TabUSA/etc senza toccare la logica. Distingue immediatamente "dove sono" e "cosa cambierà".</div>
+        <div class="step-effort e-low"><div class="effort-dot"></div><span class="effort-text">Basso sforzo — 2-3 ore</span></div>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num">2</div>
+      <div class="step-content">
+        <div class="step-title">Font swap: DM Sans o Space Grotesk</div>
+        <div class="step-desc">Aggiungere DM Sans (già usata in questo mockup) o Space Grotesk via Google Fonts. Una riga in index.css, un token in unified-tokens.css. Impatto visivo immediato, zero rischio funzionale. Le tabelle regolatorie rimangono in Helvetica (è corretto per il formato ufficiale).</div>
+        <div class="step-effort e-low"><div class="effort-dot"></div><span class="effort-text">Basso sforzo — 1 ora</span></div>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num">3</div>
+      <div class="step-content">
+        <div class="step-title">Preview card nell'interfaccia attuale (Proposta B)</div>
+        <div class="step-desc">Aggiungere un pannello "Anteprima etichetta" nella tab Tabella che renderizza la stessa markup dei TabUE/TabUSA con gli stessi stili del PDF. Non split-pane, ma una card che mostra sempre l'output finale. Il loop modifica→verifica scende da minuti a secondi.</div>
+        <div class="step-effort e-med"><div class="effort-dot"></div><span class="effort-text">Medio sforzo — 1-2 giorni</span></div>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num">4</div>
+      <div class="step-content">
+        <div class="step-title">Sub-format tabs → segmented control unificato</div>
+        <div class="step-desc">I sub-tab (100g/UV/Porzione/Pezzo per UE; Verticale/Orizzontale/Lineare per USA) sono attualmente diversi per ogni Tab. Creare un componente SegmentedControl riutilizzabile che si adatta ai format della regione attiva. Riduce il codice e unifica l'esperienza.</div>
+        <div class="step-effort e-med"><div class="effort-dot"></div><span class="effort-text">Medio sforzo — 1 giorno</span></div>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num">5</div>
+      <div class="step-content">
+        <div class="step-title">Split-pane completo (Proposta A)</div>
+        <div class="step-desc">Refactor di NutrizionaleCalc.tsx (3176 righe) separando il form dal preview. Il preview ascolta lo state del form in tempo reale. È il passo più impattante ma anche il più rischioso: richiede di non rompere i rounding rules esistenti. Fare DOPO aver aggiunto test golden sulle funzioni di calcolo.</div>
+        <div class="step-effort e-hi"><div class="effort-dot"></div><span class="effort-text">Alto sforzo — 3-5 giorni</span></div>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num">6</div>
+      <div class="step-content">
+        <div class="step-title">Mobile: rimuovere scale() sulle tabelle</div>
+        <div class="step-desc">Attualmente TabellaTab usa transform:scale(0.72-0.92) per fare entrare le tabelle regolatorie. Su Retina risultano sfocate. Soluzione: re-implementare le tabelle con font-size scalabile via viewport units o con una versione "compact" nativa per mobile (non un clone scalato).</div>
+        <div class="step-effort e-hi"><div class="effort-dot"></div><span class="effort-text">Alto sforzo — 2-3 giorni</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Decision matrix -->
+  <div style="margin-top: 48px; padding: 28px; background: rgba(255,126,46,0.06); border: 1px solid rgba(255,126,46,0.2); border-radius: 18px;">
+    <div style="font-size: 16px; font-weight: 700; margin-bottom: 8px;">💡 Consiglio: inizia da qui</div>
+    <div style="font-size: 14px; color: rgba(255,255,255,0.6); line-height: 1.7;">
+      <strong style="color: #ff9f4f;">Step 1 + 2 + 3</strong> danno il 70% dell'impatto visivo con il 10% del rischio. Il passo 3 (preview card) risolve il tuo problema principale — "vedere la tabella come nel PDF" — senza restructuring. Approvalo e lo implemento prima del resto.
+    </div>
+    <div style="margin-top: 16px; display: flex; gap: 12px;">
+      <div style="padding: 10px 18px; background: #ff7e2e; color: #fff; border-radius: 10px; font-size: 14px; font-weight: 600; cursor: pointer;">
+        → Procedi con Step 1-3
+      </div>
+      <div style="padding: 10px 18px; background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.7); border-radius: 10px; font-size: 14px; cursor: pointer; border: 1px solid rgba(255,255,255,0.12);">
+        → Voglio prima il split-pane
+      </div>
+    </div>
+  </div>
+</div>
+
+<div style="height: 80px;"></div>
+
+</body>
+</html>

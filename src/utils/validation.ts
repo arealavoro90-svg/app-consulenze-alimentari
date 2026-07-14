@@ -3,6 +3,30 @@
  * Ensures data integrity before calculations
  */
 
+/** Parses a decimal string accepting both '.' and ',' as separator (Italian locale). */
+export const parseDecimalIT = (v: string): number => parseFloat(v.replace(',', '.'));
+
+/**
+ * Runtime guard for DBIngredient records read from localStorage or imported JSON.
+ * Checks only required fields (non-optional in the type).
+ */
+export function isValidDBIngredient(v: unknown): boolean {
+    if (!v || typeof v !== 'object') return false;
+    const o = v as Record<string, unknown>;
+    return (
+        typeof o.nome === 'string' && o.nome.trim().length > 0 &&
+        typeof o.etichetta === 'string' &&
+        typeof o.kcal === 'number' &&
+        typeof o.kj === 'number' &&
+        typeof o.grassi === 'number' &&
+        typeof o.saturi === 'number' &&
+        typeof o.carboidrati === 'number' &&
+        typeof o.zuccheri === 'number' &&
+        typeof o.proteine === 'number' &&
+        typeof o.sodio_mg === 'number'
+    );
+}
+
 export interface ValidationResult {
     isValid: boolean;
     error?: string;

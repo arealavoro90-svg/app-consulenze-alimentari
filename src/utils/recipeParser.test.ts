@@ -2,12 +2,12 @@ import { describe, it, expect } from 'vitest';
 import { parseRecipe } from './recipeParser';
 import type { DBIngredient } from '../engines/nutrizionaleCalcEngine';
 
-const MOCK_DB: Partial<DBIngredient>[] = [
+const MOCK_DB = [
   { nome: 'farina 00', etichetta: 'Farina di grano tenero tipo 00', kcal: 350, kj: 1465, grassi: 1, saturi: 0.2, carboidrati: 73, zuccheri: 1, proteine: 11, sodio_mg: 2 },
   { nome: 'latte intero', etichetta: 'Latte vaccino intero', kcal: 64, kj: 268, grassi: 3.6, saturi: 2.3, carboidrati: 4.9, zuccheri: 4.9, proteine: 3.2, sodio_mg: 44 },
   { nome: 'olio extravergine oliva', etichetta: 'Olio EVO', kcal: 884, kj: 3699, grassi: 99.9, saturi: 14, carboidrati: 0, zuccheri: 0, proteine: 0, sodio_mg: 0 },
   { nome: 'uova intere', etichetta: 'Uovo di gallina intero', kcal: 143, kj: 598, grassi: 10, saturi: 3, carboidrati: 0.7, zuccheri: 0.7, proteine: 13, sodio_mg: 140 },
-] as DBIngredient[];
+] as unknown as DBIngredient[];
 
 // ─── 5 ricette "scritte male" — test di robustezza ───────────────────────────
 describe('robustezza parsing ricette reali', () => {
@@ -77,7 +77,7 @@ describe('robustezza parsing ricette reali', () => {
   // Ricetta 4: linee miste con commenti, righe vuote e caratteri speciali
   it('ricetta 4 — commenti inline, righe vuote, caratteri speciali', () => {
     const text = [
-      '// Per la pasta:',              // riga commento → non skippata ma quantità 0
+      '// Per la pasta:',              // intestazione componente (ends with ':') → skippata da parseRecipe flat
       '500g farina 00',
       '',                              // riga vuota → skippata
       '   ',                           // spazi → skippata
@@ -87,18 +87,18 @@ describe('robustezza parsing ricette reali', () => {
     ].join('\n');
 
     const rows = parseRecipe(text, MOCK_DB);
-    // Righe vuote/spazi skippate (2), resto parsato
-    expect(rows).toHaveLength(5);
-    expect(rows[1].parsed_quantity).toBe(500);
-    expect(rows[1].matched_ingredient_id).toBe('farina 00');
+    // "// Per la pasta:" è intestazione componente → non nel flat output (4 righe, non 5)
+    expect(rows).toHaveLength(4);
+    expect(rows[0].parsed_quantity).toBe(500);
+    expect(rows[0].matched_ingredient_id).toBe('farina 00');
 
     // 0,250 kg → 250g
-    expect(rows[2].parsed_quantity).toBe(0.25);
-    expect(rows[2].parsed_unit).toBe('kg');
-    expect(rows[2].standardized_weight_g).toBe(250);
+    expect(rows[1].parsed_quantity).toBe(0.25);
+    expect(rows[1].parsed_unit).toBe('kg');
+    expect(rows[1].standardized_weight_g).toBe(250);
 
     // uova: 3
-    expect(rows[3].parsed_quantity).toBe(3);
+    expect(rows[2].parsed_quantity).toBe(3);
   });
 
   // Ricetta 5: formato lista numerata stile "ricettario vecchio"

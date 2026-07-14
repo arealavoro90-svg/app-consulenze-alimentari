@@ -15,11 +15,16 @@ export function SavedTablesModal({ tables, currentTableId, onClose, onLoad, onDe
     const filtered = tables.filter(t => (t.name || 'Senza Nome').toLowerCase().includes(search.toLowerCase()));
 
     return (
-        <div style={{
-            position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
-            backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 1000,
-            display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20
-        }}>
+        <div
+            role="dialog"
+            aria-modal="true"
+            aria-label="Archivio Tabelle"
+            style={{
+                position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+                backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 1000,
+                display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20
+            }}
+        >
             <div className="card" style={{ width: '100%', maxWidth: 600, maxHeight: '80vh', display: 'flex', flexDirection: 'column' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
                     <h2 style={{ margin: 0 }}>📂 Archivio Tabelle</h2>
@@ -30,6 +35,7 @@ export function SavedTablesModal({ tables, currentTableId, onClose, onLoad, onDe
                     <input
                         type="text"
                         placeholder="🔍 Cerca per nome prodotto..."
+                        aria-label="Cerca tabella per nome prodotto"
                         value={search}
                         onChange={(e) => setSearch(e.target.value)}
                     />

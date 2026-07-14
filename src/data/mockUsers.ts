@@ -5,7 +5,8 @@ export type ToolId =
   | 'rintracciabilita'
   | 'trattamento-termico'
   | 'schede-complete'
-  | 'scheda-processo';
+  | 'scheda-processo'
+  | 'excel-import';
 
 export interface User {
   id: string;
@@ -53,6 +54,11 @@ export const TOOLS_CATALOG: Record<ToolId, { label: string; icon: string; descri
     icon: '⚙️',
     description: 'Scheda processo produttivo con fabbisogni, fasi HACCP e rintracciabilità lotti',
   },
+  'excel-import': {
+    label: 'Import da Programma Excel AEA',
+    icon: '📊',
+    description: 'Importa ricette direttamente dal Programma Tabelle Nutrizionali Excel AEA',
+  },
 };
 
 export const MOCK_USERS: User[] = [
@@ -62,7 +68,7 @@ export const MOCK_USERS: User[] = [
     password: 'admin2024',
     name: 'Gelsomino Panico',
     company: 'AEA Consulenze Alimentari',
-    purchasedTools: ['nutrizionale', 'etichette', 'etichette-vini', 'rintracciabilita', 'trattamento-termico', 'schede-complete', 'scheda-processo'],
+    purchasedTools: ['nutrizionale', 'etichette', 'etichette-vini', 'rintracciabilita', 'trattamento-termico', 'schede-complete', 'scheda-processo', 'excel-import'],
     role: 'admin',
   },
   {

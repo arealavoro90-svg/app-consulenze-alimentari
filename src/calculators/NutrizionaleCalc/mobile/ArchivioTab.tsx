@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Search, Archive, Trash2 } from 'lucide-react';
+import { Search, Archive } from 'lucide-react';
 import type { ArchiveItem } from '../../../hooks/useArchive';
 import type { MobileArchiveEntry } from '../NutrizionaleCalcMobile';
 
@@ -148,16 +148,6 @@ export function ArchivioTab({ items, onLoad, onDelete }: Props) {
                                 <svg className="m-archive-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                                     <path d="M9 18l6-6-6-6" />
                                 </svg>
-                                <button
-                                    type="button"
-                                    aria-label={`Elimina ${item.name}`}
-                                    onClick={e => { e.stopPropagation(); onDelete(item.id); }}
-                                    onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.color = '#d32f2f'; }}
-                                    onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.color = 'var(--m-text-muted)'; }}
-                                    style={{ background: 'none', border: 'none', padding: '8px', cursor: 'pointer', color: 'var(--m-text-muted)', flexShrink: 0 }}
-                                >
-                                    <Trash2 size={16} />
-                                </button>
                             </div>
                         );
                     })}

@@ -1,4 +1,17 @@
-import type { IngredientDB } from '../data/ingredientsDB';
+// B5: questo engine NON è chiamato da nessun calculator a runtime.
+// Il tool Valori Nutrizionali usa nutrizionaleCalcEngine.ts (schema italiano).
+// Q4 completato: DBIngredient (italiano) è ora il tipo canonico in ingredientsDB.ts.
+// NON usare in nuovi feature — schema inglese qui è reference-only.
+// ponytail: IngredientDB locale evita dipendenza circolare con nutrizionaleCalcEngine
+type IngredientDB = {
+    id: number; nameIT: string; nameEN: string; category: string;
+    detail: string; allergens: string; kcal: number; kj: number; water: number;
+    fat: number; saturatedFat: number; monoFat: number; polyFat: number;
+    transFat: number; cholesterol: number; carbs: number; sugars: number;
+    fibre: number; polyols: number; erythritol: number; organicAcids: number;
+    protein: number; salt: number; sodium: number; potassium: number;
+    calcium: number; alcohol: number;
+};
 import { getRules, type Region } from '../logic/localizationModule';
 
 export interface NutritionalValues {
@@ -209,7 +222,8 @@ export function calculateFromRecipe(
  * Based on Regulation (EU) 2006/1924 on nutrition and health claims
  */
 export function generateNutritionalClaims(
-    valuePer100g: NutritionalValues
+    valuePer100g: NutritionalValues,
+    isLiquid = false
 ): string[] {
     const claims: string[] = [];
 
@@ -227,7 +241,7 @@ export function generateNutritionalClaims(
         sodium: 2400,
         calcium: 800,
         iron: 14,
-        potassium: 3500,
+        potassium: 2000, // EU NRV — Reg. 1169/2011 Allegato XIII (era 3500 = US DV, errato)
         magnesium: 375
     };
 
@@ -240,6 +254,7 @@ export function generateNutritionalClaims(
         fibre: 'FIBRE',
         protein: 'PROTEINE',
         salt: 'SALE',
+        sodium: 'SODIO',
         calcium: 'CALCIO',
         iron: 'FERRO',
         potassium: 'POTASSIO'
@@ -262,15 +277,26 @@ export function generateNutritionalClaims(
         const name = nutrientNames[nutrient] || nutrient;
 
         if (nutrient === 'fibre') {
-            // Fibre: "FONTE" if ≥3g, "RICCO" if ≥6g
+            // Fibre: "FONTE" if ≥3g, "RICCO" if ≥6g — EU Reg 2006/1924 Allegato
             if (value >= 6) {
                 claims.push(`RICCO DI ${name}`);
             } else if (value >= 3) {
                 claims.push(`FONTE DI ${name}`);
             }
+        } else if (nutrient === 'protein') {
+            // Proteine: claim basato su % di energia — EU Reg 2006/1924 Allegato
+            // FONTE DI PROTEINE: proteine ≥12% dell'energia totale
+            // AD ALTO CONTENUTO DI PROTEINE: proteine ≥20% dell'energia totale
+            const kcal = valuePer100g.energyKcal || 0;
+            const proteinPct = kcal > 0 ? ((value * 4) / kcal) * 100 : 0;
+            if (proteinPct >= 20) {
+                claims.push(`AD ALTO CONTENUTO DI ${name}`);
+            } else if (proteinPct >= 12) {
+                claims.push(`FONTE DI ${name}`);
+            }
         } else if (nutrient === 'sodium') {
             // Sodium: "A BASSO CONTENUTO" if <120mg (0.12g)
-            if (value < 0.12) {
+            if (value <= 0.12) {
                 claims.push(`A BASSO CONTENUTO DI ${name}`);
             }
         } else {
@@ -284,13 +310,13 @@ export function generateNutritionalClaims(
         }
     }
 
-    // Low sugar claim: "A BASSO CONTENUTO DI ZUCCHERI" if sugars ≤5g per 100g
-    if ((valuePer100g.sugars || 0) <= 5) {
+    // Low sugar claim: ≤5g/100g (solidi) o ≤2,5g/100ml (liquidi) — EU Reg 2006/1924
+    if ((valuePer100g.sugars || 0) <= (isLiquid ? 2.5 : 5)) {
         claims.push('A BASSO CONTENUTO DI ZUCCHERI');
     }
 
-    // Low fat claim: "A BASSO CONTENUTO DI GRASSI" if fat ≤3g per 100g
-    if ((valuePer100g.fat || 0) <= 3) {
+    // Low fat claim: ≤3g/100g (solidi) o ≤1,5g/100ml (liquidi) — EU Reg 2006/1924
+    if ((valuePer100g.fat || 0) <= (isLiquid ? 1.5 : 3)) {
         claims.push('A BASSO CONTENUTO DI GRASSI');
     }
 

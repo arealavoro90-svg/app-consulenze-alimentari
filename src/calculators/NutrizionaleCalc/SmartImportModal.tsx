@@ -1,10 +1,12 @@
 import React, { useState, useRef, useCallback, useEffect } from 'react';
-import { X, Sparkles, Plus, Search } from 'lucide-react';
-import { parseRecipe, type ParsedLine } from '../../utils/recipeParser';
+import { X, Sparkles, Plus, Search, FileSpreadsheet } from 'lucide-react';
+import { parseRecipeGroups } from '../../utils/recipeParser';
+import { importFromExcel } from '../../utils/excelImporter';
 import type { DBIngredient } from '../../engines/nutrizionaleCalcEngine';
 
 export interface SmartImportResult {
-  rows: Array<{ ing: DBIngredient; grams: number }>;
+  productName?: string;
+  components: Array<{ name: string; rows: Array<{ ing: DBIngredient; grams: number }> }>;
 }
 
 interface Props {
@@ -23,6 +25,11 @@ interface RowState {
   searchQuery: string;
   searchOpen: boolean;
   searchResults: DBIngredient[];
+}
+
+interface GroupState {
+  name: string;
+  rows: RowState[];
 }
 
 const UNITS = ['g', 'kg', 'ml', 'l', 'cucchiaio', 'cucchiaino', 'tazza', 'pizzico', 'pz'];
@@ -260,20 +267,77 @@ function PhaseInput({
   rawText,
   onTextChange,
   onAnalyze,
+  onExcelFile,
+  excelLoading,
 }: {
   rawText: string;
   onTextChange: (t: string) => void;
   onAnalyze: () => void;
+  onExcelFile: (file: File) => void;
+  excelLoading: boolean;
 }) {
   const [focused, setFocused] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const isEmpty = rawText.trim().length === 0;
 
   return (
     <div style={{ padding: '20px 24px', display: 'flex', flexDirection: 'column', gap: 16 }}>
+      {/* Importa da Excel */}
+      <div style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: 12,
+        padding: '14px 16px',
+        borderRadius: 10,
+        border: '1.5px dashed #d1d5db',
+        background: '#f9fafb',
+      }}>
+        <FileSpreadsheet size={22} color="#22c55e" style={{ flexShrink: 0 }} />
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ fontSize: 13, fontWeight: 600, color: '#111827' }}>Carica file Excel AEA</div>
+          <div style={{ fontSize: 12, color: '#6b7280', marginTop: 2 }}>Importa direttamente dal programma tabelle nutrizionali (.xlsx)</div>
+        </div>
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept=".xlsx,.xls"
+          style={{ display: 'none' }}
+          onChange={e => {
+            const file = e.target.files?.[0];
+            if (file) onExcelFile(file);
+            e.target.value = '';
+          }}
+        />
+        <button
+          type="button"
+          onClick={() => fileInputRef.current?.click()}
+          disabled={excelLoading}
+          style={{
+            flexShrink: 0,
+            padding: '7px 14px',
+            borderRadius: 8,
+            border: '1.5px solid #22c55e',
+            background: '#fff',
+            color: '#16a34a',
+            fontWeight: 600,
+            fontSize: 13,
+            cursor: excelLoading ? 'wait' : 'pointer',
+            opacity: excelLoading ? 0.6 : 1,
+          }}
+        >
+          {excelLoading ? 'Caricamento…' : 'Scegli file'}
+        </button>
+      </div>
+
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, color: '#9ca3af', fontSize: 12 }}>
+        <div style={{ flex: 1, height: 1, background: '#e5e7eb' }} />
+        oppure incolla il testo
+        <div style={{ flex: 1, height: 1, background: '#e5e7eb' }} />
+      </div>
+
       <textarea
-        autoFocus
-        rows={10}
-        placeholder={'Incolla la ricetta qui, una riga per ingrediente.\nEsempio:\n200g farina 00\n3 uova\n100 ml latte intero\n50g burro\nun pizzico di sale'}
+        rows={8}
+        placeholder={'Incolla la ricetta qui — una riga per ingrediente.\nPer più componenti usa le intestazioni (riga che termina con ":"):\n\nPer la pasta:\n200g farina 00\n3 uova\n\nPer il ripieno:\n300g ricotta\n100g zucchero'}
         value={rawText}
         onChange={e => onTextChange(e.target.value)}
         onFocus={() => setFocused(true)}
@@ -321,39 +385,25 @@ function PhaseInput({
 
 // ─── PhaseValidation ─────────────────────────────────────────────────────────
 
-function PhaseValidation({
-  rows,
-  db,
-  onRowChange,
-  onRowRemove,
-  onRowAdd,
+function IngredientTable({
+  rows, db, groupIdx,
+  onRowChange, onRowRemove, onRowAdd,
 }: {
-  rows: RowState[];
-  db: DBIngredient[];
-  onRowChange: (idx: number, patch: Partial<RowState>) => void;
-  onRowRemove: (idx: number) => void;
-  onRowAdd: () => void;
+  rows: RowState[]; db: DBIngredient[]; groupIdx: number;
+  onRowChange: (gIdx: number, rIdx: number, patch: Partial<RowState>) => void;
+  onRowRemove: (gIdx: number, rIdx: number) => void;
+  onRowAdd: (gIdx: number) => void;
 }) {
   const thStyle: React.CSSProperties = {
-    padding: '8px 10px',
-    textAlign: 'left',
-    fontSize: 12,
-    fontWeight: 600,
-    color: '#6b7280',
-    textTransform: 'uppercase',
-    letterSpacing: '0.04em',
-    borderBottom: '1px solid #e5e7eb',
-    background: '#f9fafb',
+    padding: '8px 10px', textAlign: 'left', fontSize: 12, fontWeight: 600,
+    color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.04em',
+    borderBottom: '1px solid #e5e7eb', background: '#f9fafb',
   };
-
   const tdStyle: React.CSSProperties = {
-    padding: '6px 8px',
-    verticalAlign: 'middle',
-    borderBottom: '1px solid #f3f4f6',
+    padding: '6px 8px', verticalAlign: 'middle', borderBottom: '1px solid #f3f4f6',
   };
-
   return (
-    <div style={{ padding: '0 24px 20px' }}>
+    <>
       <div style={{ overflowX: 'auto' }}>
         <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
           <thead>
@@ -366,76 +416,32 @@ function PhaseValidation({
             </tr>
           </thead>
           <tbody>
-            {rows.map((row, idx) => (
-              <tr key={idx}>
+            {rows.map((row, rIdx) => (
+              <tr key={rIdx}>
                 <td style={tdStyle}>
-                  <span style={{
-                    fontStyle: 'italic',
-                    color: '#6b7280',
-                    display: 'block',
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    whiteSpace: 'nowrap',
-                    maxWidth: 200,
-                    fontSize: 12,
-                  }} title={row.raw_text}>
+                  <span style={{ fontStyle: 'italic', color: '#6b7280', display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 200, fontSize: 12 }} title={row.raw_text}>
                     {row.raw_text}
                   </span>
                 </td>
                 <td style={tdStyle}>
-                  <input
-                    type="number"
-                    min={0}
-                    value={row.qty}
-                    onChange={e => onRowChange(idx, { qty: parseFloat(e.target.value) || 0 })}
-                    style={{
-                      width: 60,
-                      padding: '4px 6px',
-                      border: '1px solid #d1d5db',
-                      borderRadius: 6,
-                      fontSize: 13,
-                      outline: 'none',
-                    }}
+                  <input type="number" min={0} value={row.qty}
+                    onChange={e => onRowChange(groupIdx, rIdx, { qty: parseFloat(e.target.value) || 0 })}
+                    style={{ width: 60, padding: '4px 6px', border: '1px solid #d1d5db', borderRadius: 6, fontSize: 13, outline: 'none' }}
                   />
                 </td>
                 <td style={tdStyle}>
-                  <select
-                    value={row.unit}
-                    onChange={e => onRowChange(idx, { unit: e.target.value })}
-                    style={{
-                      padding: '4px 6px',
-                      border: '1px solid #d1d5db',
-                      borderRadius: 6,
-                      fontSize: 13,
-                      background: '#fff',
-                      outline: 'none',
-                    }}
-                  >
+                  <select value={row.unit} onChange={e => onRowChange(groupIdx, rIdx, { unit: e.target.value })}
+                    style={{ padding: '4px 6px', border: '1px solid #d1d5db', borderRadius: 6, fontSize: 13, background: '#fff', outline: 'none' }}>
                     {UNITS.map(u => <option key={u} value={u}>{u}</option>)}
                   </select>
                 </td>
                 <td style={tdStyle}>
-                  <IngredientCell
-                    row={row}
-                    db={db}
-                    onChange={patch => onRowChange(idx, patch)}
-                  />
+                  <IngredientCell row={row} db={db} onChange={patch => onRowChange(groupIdx, rIdx, patch)} />
                 </td>
                 <td style={tdStyle}>
-                  <button
-                    type="button"
-                    onClick={() => onRowRemove(idx)}
-                    style={{
-                      background: 'none',
-                      border: 'none',
-                      cursor: 'pointer',
-                      color: '#9ca3af',
-                      padding: 4,
-                      display: 'flex',
-                      alignItems: 'center',
-                    }}
-                    title="Rimuovi riga"
-                  >
+                  <button type="button" onClick={() => onRowRemove(groupIdx, rIdx)}
+                    style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#9ca3af', padding: 4, display: 'flex', alignItems: 'center' }}
+                    title="Rimuovi riga">
                     <X size={14} />
                   </button>
                 </td>
@@ -444,26 +450,54 @@ function PhaseValidation({
           </tbody>
         </table>
       </div>
+      <button type="button" onClick={() => onRowAdd(groupIdx)}
+        style={{ marginTop: 8, marginLeft: 2, display: 'flex', alignItems: 'center', gap: 6, padding: '5px 12px', border: '1.5px dashed #d1d5db', borderRadius: 8, background: 'none', color: '#6b7280', fontSize: 12, cursor: 'pointer' }}>
+        <Plus size={13} /> Aggiungi ingrediente
+      </button>
+    </>
+  );
+}
 
-      <button
-        type="button"
-        onClick={onRowAdd}
-        style={{
-          marginTop: 10,
-          display: 'flex',
-          alignItems: 'center',
-          gap: 6,
-          padding: '6px 14px',
-          border: '1.5px dashed #d1d5db',
-          borderRadius: 8,
-          background: 'none',
-          color: '#6b7280',
-          fontSize: 13,
-          cursor: 'pointer',
-        }}
-      >
-        <Plus size={14} />
-        Aggiungi riga
+function PhaseValidation({
+  groups, db, onRowChange, onRowRemove, onRowAdd, onGroupAdd, onGroupRename,
+}: {
+  groups: GroupState[];
+  db: DBIngredient[];
+  onRowChange: (gIdx: number, rIdx: number, patch: Partial<RowState>) => void;
+  onRowRemove: (gIdx: number, rIdx: number) => void;
+  onRowAdd: (gIdx: number) => void;
+  onGroupAdd: () => void;
+  onGroupRename: (gIdx: number, name: string) => void;
+}) {
+  const multiComp = groups.length > 1;
+  return (
+    <div style={{ padding: '0 24px 20px' }}>
+      {groups.map((group, gIdx) => (
+        <div key={gIdx} style={{ marginBottom: multiComp ? 24 : 0 }}>
+          {/* Intestazione componente (solo se multi-componente) */}
+          {multiComp && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, margin: '16px 0 8px', borderBottom: '2px solid #e5e7eb', paddingBottom: 6 }}>
+              <span style={{ fontSize: 11, fontWeight: 700, color: '#ff7e2e', textTransform: 'uppercase', letterSpacing: '0.06em', flexShrink: 0 }}>
+                Componente {gIdx + 1}
+              </span>
+              <input
+                value={group.name}
+                onChange={e => onGroupRename(gIdx, e.target.value)}
+                style={{ flex: 1, border: 'none', borderBottom: '1px dashed #d1d5db', outline: 'none', fontSize: 14, fontWeight: 600, color: '#111827', background: 'transparent', padding: '2px 4px' }}
+                placeholder="Nome componente"
+              />
+            </div>
+          )}
+          <IngredientTable
+            rows={group.rows} db={db} groupIdx={gIdx}
+            onRowChange={onRowChange} onRowRemove={onRowRemove} onRowAdd={onRowAdd}
+          />
+        </div>
+      ))}
+      {/* Aggiungi componente */}
+      <button type="button" onClick={onGroupAdd}
+        style={{ marginTop: 16, display: 'flex', alignItems: 'center', gap: 6, padding: '7px 16px', border: '1.5px dashed #ff7e2e', borderRadius: 8, background: 'none', color: '#ff7e2e', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
+        <Plus size={14} /> Aggiungi componente
       </button>
     </div>
   );
@@ -471,66 +505,104 @@ function PhaseValidation({
 
 // ─── SmartImportModal (main) ──────────────────────────────────────────────────
 
-export function SmartImportModal({ db, onClose, onImport }: Props) {
-  const [phase, setPhase] = useState<'input' | 'validation'>('input');
-  const [rawText, setRawText] = useState('');
-  const [rows, setRows] = useState<RowState[]>([]);
+const EMPTY_ROW = (): RowState => ({
+  raw_text: '', qty: 0, unit: 'g', selectedIngredient: null,
+  confidence_score: 0, suggestions: [], searchQuery: '', searchOpen: false, searchResults: [],
+});
 
-  const handleAnalyze = useCallback(() => {
-    const parsed: ParsedLine[] = parseRecipe(rawText, db);
-    const newRows: RowState[] = parsed.map(line => ({
+function parsedGroupsToGroupState(parsed: ReturnType<typeof parseRecipeGroups>): GroupState[] {
+  return parsed.map(g => ({
+    name: g.name,
+    rows: g.lines.map(line => ({
       raw_text: line.raw_text,
       qty: line.parsed_quantity || 0,
       unit: line.parsed_unit || 'g',
       selectedIngredient: line.matched_ingredient,
       confidence_score: line.confidence_score,
       suggestions: line.suggestions,
-      searchQuery: '',
-      searchOpen: false,
-      searchResults: [],
-    }));
-    setRows(newRows);
+      searchQuery: '', searchOpen: false, searchResults: [],
+    })),
+  }));
+}
+
+export function SmartImportModal({ db, onClose, onImport }: Props) {
+  const [phase, setPhase] = useState<'input' | 'validation'>('input');
+  const [rawText, setRawText] = useState('');
+  const [groups, setGroups] = useState<GroupState[]>([]);
+  const [productName, setProductName] = useState<string | undefined>();
+  const [excelLoading, setExcelLoading] = useState(false);
+  const [excelError, setExcelError] = useState<string | null>(null);
+
+  const handleAnalyze = useCallback(() => {
+    const parsed = parseRecipeGroups(rawText, db);
+    setGroups(parsedGroupsToGroupState(parsed));
+    setProductName(undefined);
     setPhase('validation');
   }, [rawText, db]);
 
-  const handleRowChange = useCallback((idx: number, patch: Partial<RowState>) => {
-    setRows(prev => prev.map((r, i) => i === idx ? { ...r, ...patch } : r));
+  const handleExcelFile = useCallback(async (file: File) => {
+    setExcelLoading(true);
+    setExcelError(null);
+    try {
+      const data = await importFromExcel(file, db);
+      setGroups(parsedGroupsToGroupState(data.groups));
+      setProductName(data.productName);
+      setPhase('validation');
+    } catch (err) {
+      setExcelError(err instanceof Error ? err.message : 'Errore durante la lettura del file.');
+    } finally {
+      setExcelLoading(false);
+    }
+  }, [db]);
+
+  const handleRowChange = useCallback((gIdx: number, rIdx: number, patch: Partial<RowState>) => {
+    setGroups(prev => prev.map((g, gi) => gi !== gIdx ? g : {
+      ...g, rows: g.rows.map((r, ri) => ri !== rIdx ? r : { ...r, ...patch }),
+    }));
   }, []);
 
-  const handleRowRemove = useCallback((idx: number) => {
-    setRows(prev => prev.filter((_, i) => i !== idx));
+  const handleRowRemove = useCallback((gIdx: number, rIdx: number) => {
+    setGroups(prev => prev.map((g, gi) => gi !== gIdx ? g : {
+      ...g, rows: g.rows.filter((_, ri) => ri !== rIdx),
+    }));
   }, []);
 
-  const handleRowAdd = useCallback(() => {
-    setRows(prev => [...prev, {
-      raw_text: '',
-      qty: 0,
-      unit: 'g',
-      selectedIngredient: null,
-      confidence_score: 0,
-      suggestions: [],
-      searchQuery: '',
-      searchOpen: false,
-      searchResults: [],
-    }]);
+  const handleRowAdd = useCallback((gIdx: number) => {
+    setGroups(prev => prev.map((g, gi) => gi !== gIdx ? g : {
+      ...g, rows: [...g.rows, EMPTY_ROW()],
+    }));
+  }, []);
+
+  const handleGroupAdd = useCallback(() => {
+    setGroups(prev => [...prev, { name: `Componente ${prev.length + 1}`, rows: [EMPTY_ROW()] }]);
+  }, []);
+
+  const handleGroupRename = useCallback((gIdx: number, name: string) => {
+    setGroups(prev => prev.map((g, gi) => gi !== gIdx ? g : { ...g, name }));
   }, []);
 
   const handleImport = useCallback(() => {
-    const validRows = rows
-      .filter(r => r.selectedIngredient !== null && r.qty > 0)
-      .map(r => ({ ing: r.selectedIngredient!, grams: toGrams(r.qty, r.unit) }));
-    onImport({ rows: validRows });
+    const components = groups.map(g => ({
+      name: g.name,
+      rows: g.rows
+        .filter(r => r.selectedIngredient !== null && r.qty > 0)
+        .map(r => ({ ing: r.selectedIngredient!, grams: toGrams(r.qty, r.unit) })),
+    })).filter(c => c.rows.length > 0);
+    onImport({ productName, components });
     onClose();
-  }, [rows, onImport, onClose]);
+  }, [groups, productName, onImport, onClose]);
 
-  const matchedCount = rows.filter(r => r.selectedIngredient !== null).length;
-  const totalCount = rows.length;
+  const allRows = groups.flatMap(g => g.rows);
+  const matchedCount = allRows.filter(r => r.selectedIngredient !== null).length;
+  const totalCount = allRows.length;
 
   const maxWidth = phase === 'input' ? 560 : 860;
 
   const subtitle = phase === 'input'
     ? 'Incolla gli ingredienti della tua ricetta e li abbino automaticamente al database.'
-    : 'Verifica e correggi i risultati prima di importare.';
+    : productName
+      ? `Prodotto: "${productName}" — verifica e correggi prima di importare.`
+      : 'Verifica e correggi i risultati prima di importare.';
 
   return (
     <div
@@ -545,6 +617,9 @@ export function SmartImportModal({ db, onClose, onImport }: Props) {
         justifyContent: 'center',
         padding: 16,
       }}
+      role="dialog"
+      aria-modal="true"
+      aria-label="Importa ricetta"
       onClick={onClose}
     >
       <div
@@ -612,18 +687,29 @@ export function SmartImportModal({ db, onClose, onImport }: Props) {
         {/* Body (scrollable) */}
         <div style={{ flex: 1, overflowY: 'auto', minHeight: 0 }}>
           {phase === 'input' ? (
-            <PhaseInput
-              rawText={rawText}
-              onTextChange={setRawText}
-              onAnalyze={handleAnalyze}
-            />
+            <>
+              <PhaseInput
+                rawText={rawText}
+                onTextChange={setRawText}
+                onAnalyze={handleAnalyze}
+                onExcelFile={handleExcelFile}
+                excelLoading={excelLoading}
+              />
+              {excelError && (
+                <div style={{ margin: '0 24px 16px', padding: '10px 14px', borderRadius: 8, background: '#fef2f2', border: '1px solid #fecaca', color: '#dc2626', fontSize: 13 }}>
+                  {excelError}
+                </div>
+              )}
+            </>
           ) : (
             <PhaseValidation
-              rows={rows}
+              groups={groups}
               db={db}
               onRowChange={handleRowChange}
               onRowRemove={handleRowRemove}
               onRowAdd={handleRowAdd}
+              onGroupAdd={handleGroupAdd}
+              onGroupRename={handleGroupRename}
             />
           )}
         </div>

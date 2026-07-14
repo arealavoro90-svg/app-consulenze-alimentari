@@ -49,7 +49,7 @@ export function MobileShell({ pageLabel = 'Dashboard', insideTool = false }: Mob
     }));
 
     return (
-        <div className="m-shell">
+        <div className={`m-shell${insideTool ? ' m-shell--tool' : ''}`}>
             <header className={`m-topbar${insideTool ? ' m-topbar--tool' : ''}`}>
                 {insideTool ? (
                     <>

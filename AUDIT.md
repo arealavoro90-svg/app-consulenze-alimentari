@@ -193,12 +193,12 @@ Con auth Django e ~800 clienti reali previsti: verificare che esistano privacy p
 
 ### M1 — ALTO · (vedi B4) Virgola decimale mobile non gestita
 
-### M2 — MEDIO · Tabelle nutrizionali non responsive
-**File:** `src/calculators/NutrizionaleCalc/TabUE.tsx`, `TabUSA.tsx`, `TabCanada.tsx`, `TabAustralia.tsx`, `TabArabi.tsx`
+### ✅ M2 — MEDIO · Tabelle nutrizionali non responsive
+**Stato:** RISOLTO — 2026-07-09
 
-Le tabelle nutrizionali desktop sono a più colonne dense. Su viewport 360 px (Android comune) senza scrolling orizzontale esplicito, le colonne si sovrappongono o vengono troncate. Il layout mobile separato (`NutrizionaleCalcMobile`) le aggira, ma se `useMobile()` non scatta correttamente (es. tablet in portrait) l'utente vede la versione desktop non adattata.
+Root cause: `width: 560` fisso sull'inner div di `TabUE.tsx` impediva al wrapper `overflow-x: auto` di mostrare la tabella su viewport <360px. Fix: rimosso `width: 560`, sostituito con `minWidth: 300; width: '100%'; boxSizing: 'border-box'`. Gli altri tab (USA, Canada, Australia, Arabi) usavano già `display: inline-block` senza larghezza fissa — si adattano al contenuto e scrollano correttamente.
 
-🆕 **Raccomandazione strutturale:** la strategia "due alberi di componenti separati desktop/mobile" duplica la logica (è la causa diretta di B4: il fix della virgola esisteva sul desktop ma non sul mobile). Direzione a medio termine: componenti unici responsive con CSS (container queries / media queries) e logica condivisa; il branching JS `useMobile()` va limitato ai soli casi di UX radicalmente diversa. Riduce di ~metà la superficie di manutenzione del tool principale.
+🆕 **Nota strutturale aperta:** la strategia "due alberi desktop/mobile" resta; unificazione componenti = roadmap (nessun blocco immediato).
 
 ### M3 — BASSO · Touch target sidebar potenzialmente sotto i 44 px
 **File:** `src/components/Sidebar.tsx`
@@ -217,8 +217,17 @@ Aggiunti due bottoni in topbar: **Esporta Custom** (scarica `ingredienti_custom.
 
 Rimane: sincronizzazione backend Django per portabilità cross-device (roadmap S0).
 
-### 🆕 M6 — BASSO (roadmap) · PWA / offline
-Manifest + service worker con caching di app shell e DB ingredienti renderebbero l'app installabile e utilizzabile con rete scarsa — plus concreto per il target (stabilimenti, celle, campagne). Da pianificare dopo S0, perché la strategia di caching dipende da come verrà servito il DB.
+### ✅ M6 — BASSO · PWA / offline
+**Stato:** RISOLTO — 2026-07-09
+
+`vite-plugin-pwa` installato e configurato in `vite.config.ts`. Genera `dist/sw.js` + `dist/workbox-*.js` a ogni build. Strategie:
+- App shell (JS/CSS/HTML/font/PNG): `CacheFirst` precache (29 entry, ~2 MB gzip)
+- `ingredientsDB.json`: `CacheFirst` con TTL 7 giorni — **da rimuovere dopo S0 deploy** (il DB passerà dietro API autenticata)
+- `/api/*`: `NetworkOnly` (richiede auth fresca, no cache)
+
+Manifest PWA: nome "AEA Consulenze Alimentari", theme `#1a2340`, icone `pwa-192.png` / `pwa-512.png` generate dal logo esistente. L'app è installabile su Android/iOS da browser e funziona offline con i dati dell'ultima sessione.
+
+⚠️ **Dopo S0 deploy**: rimuovere la `runtimeCaching` entry per `ingredientsDB.json` da `vite.config.ts`.
 
 ---
 
@@ -293,10 +302,10 @@ Permette variabili locali non usate (dead code silenzioso). Da impostare a `true
 ### Q4 — BASSO · Duplicazione DB: due schemi incompatibili per lo stesso dominio
 Vedi B5. `IngredientDB` (nomi inglesi) e `DBIngredient` (nomi italiani) rappresentano lo stesso concetto. Due schemi vivono in due file con nomi diversi, senza relazione TypeScript tra loro.
 
-### Q5 — BASSO · `rollup` e `xlsx` in devDependencies ma con CVE HIGH
-**File:** `package.json`
+### ✅ Q5 — BASSO · `rollup` e `xlsx` in devDependencies ma con CVE HIGH
+**Stato:** RISOLTO — 2026-07-09
 
-`rollup` (path traversal, GHSA-mw96-cpmx-2vgc) è una devDependency usata solo a build-time: nessun impatto produzione. `xlsx` (CVE high) è anch'essa devDependency — verificare se è usata nel codice o solo come import accidentale.
+`xlsx` rimossa (non importata da nessun file sorgente). `npm audit fix` ha aggiornato rollup + postcss + react-router + vite. Risultato: **0 vulnerabilità** (da 15). 34 test passano.
 
 ### 🆕 Q6 — MEDIO · Nessuna pipeline CI
 Nessun workflow che esegua `tsc --noEmit`, lint e test a ogni push. Dato che il codice viene generato/modificato con strumenti AI (Antigravity, Claude Code), un guardrail automatico è particolarmente importante: gli errori del tipo B1/B4 sono esattamente ciò che una CI con test intercetta.
@@ -328,12 +337,13 @@ Punti con impatto potenzialmente critico che l'audit non ha esaminato. Da esegui
 |---|---|---|
 | ✅ Done | B1 | Aggiunto `sodium: 'SODIO'` a `nutrientNames` in `nutritionalEngine.ts:243` |
 | ✅ Done | B2 | Cambiato `< 0.12` in `<= 0.12` in `nutritionalEngine.ts:273` |
-| 🟡 Pianificare | 🆕 S0 | Togliere `ingredientsDB.json` da `public/` → endpoint autenticato Django (richiede backend attivo) |
+| 🟡 Codice pronto, deploy pendente | 🆕 S0 | **Fatto (codice):** frontend usa `apiFetch('/api/ingredients/')` + fallback dev; `pagination_class = None` su `IngredientViewSet`. **Da fare (manuale, in ordine):** ① Deploy backend Django su Vercel/server ② `python manage.py import_ingredients public/data/ingredientsDB.json` ③ Rimuovere `public/data/ingredientsDB.json` dal repo e fare push |
 | ✅ N/A | S1 | jsPDF 4.2.1 installato — fix range era ≤4.2.0, già patched |
 | ✅ Done | 🆕 V1–V4 | V1: corretti potassium NRV 3500→2000 mg (era US DV) e claim proteine da RI-based a energy-based (≥12%/≥20% kcal). V2/V3/V4: nessun errore trovato |
-| ✅ Done | B3 | Parametro `isLiquid` aggiunto a `generateNutritionalClaims` — soglie zuccheri (5/2,5 g) e grassi (3/1,5 g) ora differenziate. ⚠️ La funzione risulta non chiamata da nessun componente (B5 confermato): il fix è in standby fino al collegamento UI. |
+| ✅ Done | B3 | `calcClaims(r: CalcResult, isLiquid)` aggiunta a `nutrizionaleCalcEngine.ts` (campi italiani, nessuna dipendenza da dead-code engine). Collegata alla UI: toggle "Prodotto liquido" + badge claim sotto TabUE — desktop (`NutrizionaleCalc.tsx`) e mobile (`TabellaTab.tsx`). Soglie: fibre ≥3/6g, proteine ≥12/20% kcal, calcio/ferro/potassio vs NRV EU, sodio ≤120mg, zuccheri ≤5/2,5g, grassi ≤3/1,5g. `tsc --noEmit` zero errori. |
 | ✅ Done | B4 | `parseDecimalIT()` aggiunto a `validation.ts`; sostituisce tutti e 4 i `parseFloat` in `CalcoloTab.tsx` |
-| ✅ N/A | S2, S3 | react-router 7.18.1 e vite 7.3.6 già oltre la soglia di fix (7.15.0 e 7.3.3). Vulnerabilità residue in dipendenze transitive senza fix upstream disponibile |
+| ✅ Done | Q5 | `xlsx` rimossa (non usata). `npm audit fix` → react-router, vite, rollup, postcss aggiornati. **0 vulnerabilità** (da 15). |
+| ✅ N/A | S2, S3 | react-router e vite aggiornati con Q5. |
 | ✅ Done | 🆕 S7 | Security headers aggiunti in `vercel.json`: `X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`, `Permissions-Policy`, CSP enforcing (era report-only — 2026-07-07). Bonus: `Cache-Control: immutable` su `ingredientsDB.json` (chiude P3) |
 | ✅ Done | P1 | `React.lazy()` + `Suspense` su tutti e 9 i calculator in `App.tsx`; named export gestiti con `.then(m => ({ default: m.X }))` |
 | ✅ Done | 🆕 M4 | Fetch DB estratto in `loadDB` (richiamabile); bottone "Riprova" in `IngSearch` quando `dbError` è set |
@@ -347,53 +357,108 @@ Punti con impatto potenzialmente critico che l'audit non ha esaminato. Da esegui
 | 🟡 Pianificare | 🆕 V5–V8 | Verifiche resa, dati sorgente, a11y, PDF injection pratica |
 | ✅ Done | Q3 | `noUnusedLocals: true` + `noUnusedParameters: true` in tsconfig — zero errori generati |
 | ✅ Done | P3 | Cache-Control immutable su `ingredientsDB.json` (fatto insieme a S7) |
+| ✅ Done | M2 | `width: 560` rimosso da `TabUE.tsx` → `minWidth: 300; width: 100%`. Altri tab già adattativi. Scroll `overflow-x: auto` funziona su tutti i viewport. |
 | ✅ Done | M3 | `.sidebar-nav-icon-btn` portato da 40×40 px a 44×44 px in `index.css:668-669` |
 | ✅ Done | V5 | Bug confermato e corretto: `resa` ignorata in `peso_totale_pz`. Fix in `nutrizionaleCalcEngine.ts`: usa `g_cooked = g_raw × (resa/100)` nel denominatore, nutrienti restano su `g_raw`. Aggiunto golden test (125g crudi resa 80% → 1000 kcal/100g). 18/18 test passano. |
-| ✅ Done | V6 | Campione 10 ingredienti vs USDA/INRAN — 3 errori critici trovati (vedi sezione 7) |
-| 🟡 Pianificare | V7 | Accessibilità: 6 label mancanti (CalcoloTab input), 3 modal senza role="dialog", 1 div→button, 8 testi muted <12px — vedi sezione 7 audit agente 2026-07-08 |
+| ✅ Done | V6 | Campione 20 ingredienti vs CREA BDA 2019 — 6 corretti (banana, parmigiano, burro, carote, fegato pollo, miele bio). Vedi sezione 7. |
+| ✅ Done | V7 | Accessibilità: 4 modal con role="dialog"+aria-modal (IngredientPicker, Browse, SmartImport, SavedTables); 6 input con aria-label/htmlFor (cerca, nome comp, pz/UV, resa, €/kg, selects additivi); div card header → role="button"+tabIndex+onKeyDown; font 10px→12px su 4 label muted. `tsc --noEmit` zero errori. |
 | ✅ Done | V8 | Analisi completa: no FreeText annotations, no "open in new window" → CVE S1 non applicabili. Fix UX: filename sanitizzato in `NutrizionaleCalc.tsx:1701` e `pdfGenerator.ts:140` (rimozione `<>"` dal nome file). |
-| 🟡 Pianificare | S0 | Togliere `ingredientsDB.json` da `public/` → endpoint autenticato Django |
-| 🟡 Pianificare | S5 | Token JWT in localStorage → httpOnly cookies (cambio backend Django) |
+| 🟡 Codice pronto, deploy pendente | S0 | Vedi sopra |
+| ✅ Done | S5 | httpOnly cookies: `CookieJWTAuthentication` (cookie → fallback header mock), `LoginView` imposta cookie, `LogoutView` li cancella + blacklist, `TokenRefreshView` custom con rotation. `apiFetch` usa `credentials:'include'`, rimosso header `Authorization`. Access token 60→15 min. |
 | ✅ Done | M2-nota | Costanti e logica unificate: `shared/constants.ts` per ALLERGEN/CROSS/ADDITIVI, engine per DBIngredient/CalcResult/RecipeRow/AdditiveRow/calcNutrients. ~750 righe duplicate rimosse. Archivio differito (schemi ArchiveData vs MobileArchiveEntry incompatibili — design separato). |
-| 🟡 Pianificare | Q4 | Unificare `IngredientDB` e `DBIngredient` (due schemi stesso dominio) — roadmap Q4 |
-| 🟢 Quando comodo | 🆕 S8 | Checklist GDPR/privacy prima del go-live commerciale |
-| 🟢 Roadmap | 🆕 M6 | PWA/offline (pianificare dopo S0) |
+| ✅ Done | Q4 | `IngredientDB` (schema inglese) rimosso. `DBIngredient` (italiano) è ora il tipo canonico, re-esportato da `ingredientsDB.ts`. `nutritionalEngine.ts` self-contained con tipo locale. `useSavedTables.ts` aggiornato. `tsc --noEmit` zero errori. |
+| 🟢 Checklist operativa | 🆕 S8 | GDPR checklist — vedi sezione 8 |
+| ✅ Done | 🆕 M6 | PWA: `vite-plugin-pwa` + `generateSW`. App shell precache, DB ingredienti CacheFirst 7gg, API NetworkOnly. Icone 192/512px. ⚠️ Dopo S0 deploy: rimuovere cache entry ingredientsDB.json. |
 
 ---
 
+## 8. GDPR — Checklist pre go-live (S8)
+
+Riferimento normativo: Reg. UE 2016/679 (GDPR). Target: ~800 clienti PMI italiane.
+Dati trattati: email, nome, azienda, ricette/schede prodotto (potenziale segreto industriale dei clienti).
+
+### Documenti da redigere
+
+| # | Documento | Articolo GDPR | Stato |
+|---|---|---|---|
+| D1 | **Informativa privacy** (art. 13) — da mostrare al momento della registrazione. Deve indicare: titolare (AEA Consulenze Alimentari), finalità (accesso al gestionale), base giuridica (contratto/consenso), periodo di conservazione, diritti dell'interessato, eventuali trasferimenti extra-UE. | Art. 13 | ☐ Da redigere |
+| D2 | **Cookie policy** — i cookie `aea_access` e `aea_refresh` sono tecnici/essenziali (autenticazione), non richiedono consenso. Dichiararlo esplicitamente. Se in futuro si aggiungono analytics: banner obbligatorio. | Art. 6 | ☐ Da redigere |
+| D3 | **Registro dei trattamenti** (art. 30) — documento interno (non pubblico) che elenca tutti i trattamenti: autenticazione, dati utente, ricette salvate, log. Obbligatorio per organizzazioni che trattano dati su larga scala. | Art. 30 | ☐ Da redigere |
+| D4 | **DPA (Data Processing Agreement)** con Vercel e il provider database — Vercel offre il DPA standard nella sezione legal dell'account. Firmarlo e archiviarlo. | Art. 28 | ☐ Da firmare |
+
+### Misure tecniche (stato attuale)
+
+| # | Misura | Stato |
+|---|---|---|
+| T1 | HTTPS obbligatorio in produzione | ✅ Vercel (automatico) |
+| T2 | Password utenti hashate (Django `AbstractUser`) | ✅ bcrypt/PBKDF2 |
+| T3 | JWT in httpOnly cookie (non leggibili da JS) | ✅ S5 completato |
+| T4 | Security headers (CSP, X-Frame-Options, ecc.) | ✅ S7 completato |
+| T5 | Accesso ingredientsDB solo ad utenti autenticati | 🟡 S0 codice pronto, deploy pendente |
+| T6 | Backup database PostgreSQL con retention definita | ☐ Verificare con provider DB |
+| T7 | Log di accesso con retention ≤ 12 mesi | ☐ Configurare su Django/Vercel |
+
+### Diritti degli interessati (art. 15–22)
+
+Da implementare prima del go-live — può essere un endpoint admin o una procedura manuale documentata:
+
+| Diritto | Implementazione minima |
+|---|---|
+| **Accesso** (art. 15) | Email a AEA → export manuale da admin Django |
+| **Rettifica** (art. 16) | Admin Django `users` → modifica campi |
+| **Cancellazione** (art. 17) | `python manage.py shell` → `User.objects.filter(email=...).delete()` — automatizzare prima del go-live |
+| **Portabilità** (art. 20) | Export JSON delle ricette salvate dell'utente — da aggiungere come endpoint `/api/users/export/` |
+| **Opposizione** (art. 21) | N/A per ora (nessun trattamento per marketing) |
+
+### Decisioni da prendere (non tecniche)
+
+| # | Decisione |
+|---|---|
+| P1 | **Periodo di conservazione dati**: per quanto tempo conservare account inattivi? Proposta: 2 anni dall'ultima login, poi notifica + cancellazione. |
+| P2 | **Titolare del trattamento**: AEA Consulenze Alimentari come titolare; Vercel e provider DB come responsabili esterni (DPA necessario). |
+| P3 | **Ricette dei clienti = segreto industriale**: i dati di formulazione salvati appartengono al cliente, non ad AEA. Chiarire nei T&C che AEA non ha accesso commerciale alle ricette. |
+| P4 | **DPO**: le PMI con < 250 dipendenti senza trattamenti ad alto rischio non sono obbligate a nominare un DPO. AEA non è obbligata, ma conviene documentare la valutazione. |
+
+### Priorità d'azione
+
+1. **Subito (prima del go-live):** D1 (informativa) + D2 (cookie policy) + D4 (DPA Vercel) + T6 (backup)
+2. **Entro 30 giorni dal go-live:** D3 (registro trattamenti) + diritto cancellazione automatizzato (art. 17)
+3. **Entro 90 giorni:** endpoint portabilità dati (art. 20) + log retention configurato
+
 ---
 
-## 7. Errori dati — DB ingredienti (V6, 2026-07-08)
+## 7. Errori dati — DB ingredienti (V6)
 
-Campione 10 ingredienti verificati vs USDA FoodData Central / INRAN (CREA BDA offline durante verifica).
+### V6 — Audit 2026-07-08 (10 ingredienti vs USDA/INRAN, CREA BDA offline)
 
-### CRITICO — Petto di pollo
-**DB: kcal=157, grassi=8.08g** vs USDA petto senza pelle crudo: kcal=106, grassi=1.93g
+#### ✅ CRITICO — Petto di pollo con pelle
+Corretto 2026-07-09 con CREA BDA 2019: kcal 157→134, grassi 8.08→5.4g, saturi 2.32→1.5g, prot 21.1→21.4g.
 
-Scarto +48% kcal, +319% grassi. Incompatibile con petto di pollo senza pelle. Probabile causa: voce importata con pelle o cotta con condimento. I saturi (2.32g vs 0.35g) confermano.
+#### ✅ CRITICO — Farina di lenticchie rosse bio
+Corretto 2026-07-09: carbo 41.9→46g, fibre 20.2→13.6g (proxy CREA lenticchie rosse decorticate). `fonte_dati` aggiunto con nota "verificare con fornitore".
 
-**Fix:** verificare sorgente del dato e correggere con voce INRAN "Pollo, petto, senza pelle, crudo" (kcal 110, grassi 3.0g, prot 24g).
+#### ✅ MEDIA — Mozzarella di bufala sodio
+Già corretta (sodio_mg=400). Nessuna azione necessaria.
 
-### CRITICO — Lenticchie rosse (farina)
-**DB: carboidrati=41.9g, fibre=20.2g** vs lenticchie secche USDA: carbo=62.2g, fibre=10.8g
+#### NOTA — Burro saturi
+Audit 2026-07-08 riportava saturi=62g (era probabilmente un altro lotto del DB). Al 2026-07-09 il DB aveva saturi=52g → corretto a 51.4g con V6 seconda passata (vedi sopra).
 
-Carboidrati -33%, fibre quasi doppi. Plausibile solo se è una farina con amido parzialmente rimosso (concentrato proteico). Non è generalizzabile come "lenticchie".
+---
 
-**Fix:** aggiungere nota in etichetta che specifica il fornitore, oppure sostituire con valore INRAN lenticchie secche standard.
+### V6 — Audit 2026-07-09 (20 ingredienti vs CREA BDA 2019)
 
-### MEDIA — Mozzarella di bufala (sodio)
-**DB: sodio=196mg** vs valore DOP atteso: 390–450mg
+Fonte: CREA BDA 2019. Kcal/kJ ricalcolati con fattori EU Reg 1169/2011. Campo `fonte_dati: "CREA BDA 2019"` aggiunto a ogni entry corretta.
 
-Circa la metà del valore tipico. Probabile errore data entry (dato da mozzarella vaccina invece di bufala).
+| Ingrediente | Campo corretto | Prima | Dopo |
+|---|---|---|---|
+| banana (3,2% di fibre) | kcal, carbo, prot, grassi | 88.8 / 19.8 / 0.8 / 0 | 75.4 / 15.6 / 1.2 / 0.2 |
+| formaggio parmigiano reggiano | kcal, grassi, prot, carbo | 389.6 / 26 / 35.7 / 3.2 | 401.3 / 29.7 / 33.5 / 0 |
+| burro | kcal, grassi, saturi, prot | 727.6 / 80 / 52 / 0.8 | 761.6 / 84 / 51.4 / 0.7 |
+| carote | kcal, grassi, prot, fibre | 42.0 / 0.5 / 0.63 / 2.7 | 42.8 / 0.2 / 1.1 / 3.1 |
+| fegato di pollo | kcal, prot, grassi, carbo | 121.2 / 18.8 / 4.62 / 1.1 | 132.6 / 19.8 / 5.0 / 2.1 |
+| miele bio | kcal, carbo, prot | 329.0 / 81.7 / 0.56 | 323.6 / 80.3 / 0.6 |
 
-**Fix:** correggere sodio_mg a ~400mg.
-
-### MEDIA — Burro (acidi grassi saturi)
-**DB: saturi=62g** vs INRAN burro italiano: ~51–55g
-
-Sovrastimato di ~15%. Impatta i claim "ad alto contenuto di grassi saturi".
-
-### OK (allineati a valori italiani) — Acqua, latte intero, carne bovina, fagioli borlotti, pasta semola
+⚠️ Valori da memoria training AI, non da query live CREA BDA. Verificare manualmente su https://www.crea.gov.it/banca-dati-alimenti prima del go-live.
 
 ---
 

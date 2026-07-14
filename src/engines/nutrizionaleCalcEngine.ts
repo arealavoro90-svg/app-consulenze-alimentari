@@ -198,3 +198,47 @@ export function scaleResult(r: CalcResult, grams: number): CalcResult {
     }
     return s;
 }
+
+/**
+ * Genera i claim nutrizionali EU (Reg. 2006/1924) a partire da CalcResult per 100g.
+ * Usa direttamente i campi italiani di CalcResult — non dipende da nutritionalEngine.ts (dead code).
+ * @param r   - CalcResult per 100g prodotto finito
+ * @param isLiquid - true per liquidi (soglie zuccheri/grassi dimezzate)
+ */
+export function calcClaims(r: CalcResult, isLiquid = false): string[] {
+    const claims: string[] = [];
+
+    // ─── Fibre: FONTE ≥3g, RICCO ≥6g ────────────────────────────────────────
+    if (r.fibre >= 6)       claims.push('RICCO DI FIBRE');
+    else if (r.fibre >= 3)  claims.push('FONTE DI FIBRE');
+
+    // ─── Proteine: % energia — FONTE ≥12%, AD ALTO CONTENUTO ≥20% ───────────
+    if (r.energyKcal > 0) {
+        const protPct = (r.proteine * 4 / r.energyKcal) * 100;
+        if (protPct >= 20)      claims.push('AD ALTO CONTENUTO DI PROTEINE');
+        else if (protPct >= 12) claims.push('FONTE DI PROTEINE');
+    }
+
+    // ─── Calcio: RI 800mg — FONTE ≥15% (120mg), RICCO ≥30% (240mg) ─────────
+    if (r.calcio >= 240)       claims.push('RICCO DI CALCIO');
+    else if (r.calcio >= 120)  claims.push('FONTE DI CALCIO');
+
+    // ─── Ferro: RI 14mg — FONTE ≥15% (2.1mg), RICCO ≥30% (4.2mg) ───────────
+    if (r.ferro >= 4.2)        claims.push('RICCO DI FERRO');
+    else if (r.ferro >= 2.1)   claims.push('FONTE DI FERRO');
+
+    // ─── Potassio: RI 2000mg (EU NRV) — FONTE ≥15% (300mg), RICCO ≥30% (600mg)
+    if (r.potassio >= 600)     claims.push('RICCO DI POTASSIO');
+    else if (r.potassio >= 300) claims.push('FONTE DI POTASSIO');
+
+    // ─── Sodio basso: ≤120mg/100g = ≤0.12g ──────────────────────────────────
+    if (r.sodio_mg <= 120)  claims.push('A BASSO CONTENUTO DI SODIO');
+
+    // ─── Zuccheri bassi: ≤5g (solidi) o ≤2,5g (liquidi) ────────────────────
+    if (r.zuccheri <= (isLiquid ? 2.5 : 5))  claims.push('A BASSO CONTENUTO DI ZUCCHERI');
+
+    // ─── Grassi bassi: ≤3g (solidi) o ≤1,5g (liquidi) ──────────────────────
+    if (r.grassi <= (isLiquid ? 1.5 : 3))    claims.push('A BASSO CONTENUTO DI GRASSI');
+
+    return claims;
+}

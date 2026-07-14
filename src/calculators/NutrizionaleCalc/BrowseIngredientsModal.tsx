@@ -281,7 +281,7 @@ export function BrowseIngredientsModal({ onClose, db, onEditIngredient }: Props)
     };
 
     return (
-        <div style={overlayStyle} onClick={onClose}>
+        <div style={overlayStyle} onClick={onClose} role="dialog" aria-modal="true" aria-label="Sfoglia ingredienti">
             <div style={cardStyle} onClick={e => e.stopPropagation()}>
                 {/* Header */}
                 <div style={headerStyle}>

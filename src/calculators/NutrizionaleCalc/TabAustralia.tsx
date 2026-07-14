@@ -92,7 +92,7 @@ export function TabAustralia({ p, au, full }: TabAustraliaProps) {
                     Etichetta Nutrizionale (Australia)
                 </h3>
             )}
-            <div data-table-export style={{ background: 'white', padding: 12, borderRadius: 0, display: 'inline-block', minWidth: 440 }}>
+            <div data-table-export style={{ background: 'white', padding: 12, borderRadius: 0, display: 'inline-block', width: 500, boxSizing: 'border-box' }}>
                 <div style={{ border: bOut, fontFamily: 'Arial, sans-serif', fontSize: 12 }}>
                     <div style={{ textAlign: 'center', padding: '8px 12px 6px', borderBottom: bHdr }}>
                         <span style={{ fontSize: 24, fontWeight: 900 }}>NUTRITION INFORMATION</span>

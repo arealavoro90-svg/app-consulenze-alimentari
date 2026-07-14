@@ -1,12 +1,4 @@
 {
-  "hooks": {
-    "SessionStart": [
-      {
-        "type": "command",
-        "command": "node /Users/novanta/.claude/plugins/marketplaces/caveman/src/hooks/caveman-activate.js"
-      }
-    ]
-  },
   "permissions": {
     "allow": [
       "mcp__filesystem__read_text_file",
@@ -39,7 +31,63 @@
       "Bash(node -e \"const {readFileSync}=require\\('fs'\\); const p=require\\('path'\\); const d=p.join\\(require\\('os'\\).homedir\\(\\), '.vercel', 'auth.json'\\); console.log\\(readFileSync\\(d,'utf8'\\)\\)\")",
       "Bash(git push *)",
       "Bash(curl -s -X POST https://backend-snowy-seven-98.vercel.app/api/auth/login/ -H 'Content-Type: application/json' -d '{\"email\":\"admin@aea.it\",\"password\":\"Admin1234!\"}' -w '\\\\nHTTP:%{http_code}')",
-      "Bash(find ~/.claude/plugins/cache/claude-plugins-official -maxdepth 3 -type d 2>/dev/null | grep -iE \"setup|config|init\" )"
+      "Bash(find ~/.claude/plugins/cache/claude-plugins-official -maxdepth 3 -type d 2>/dev/null | grep -iE \"setup|config|init\" )",
+      "Bash(npm audit:*)",
+      "Bash(python3 -c ':*)",
+      "Bash(npm ls:*)",
+      "Bash(python3 -c \"import json,sys; d=json.load\\(sys.stdin\\); print\\(json.dumps\\(d.get\\('scripts',{}\\), indent=2\\)\\)\")",
+      "Bash(git -C /Users/novanta/Desktop/APP/App_prova remote -v)",
+      "Bash(npm test:*)",
+      "Bash(grep:*)",
+      "Bash(git -C /Users/novanta/Desktop/APP/App_prova status --porcelain)",
+      "Bash(node:*)",
+      "WebFetch(domain:bdaiep.crea.gov.it)",
+      "WebFetch(domain:fdc.nal.usda.gov)",
+      "WebFetch(domain:www.crea.gov.it)",
+      "WebFetch(domain:www.alimentinutrizione.it)",
+      "WebFetch(domain:www.myfooddata.com)",
+      "WebFetch(domain:www.nutritionvalue.org)",
+      "WebFetch(domain:api.nal.usda.gov)",
+      "WebFetch(domain:www.nutritionix.com)",
+      "WebFetch(domain:www.eatthismuch.com)",
+      "WebFetch(domain:www.verywellfit.com)",
+      "WebFetch(domain:cronometer.com)",
+      "WebSearch",
+      "Bash(open:*)",
+      "Bash(python3 -c \"import json,sys; d=json.load\\(sys.stdin\\); deps={**d.get\\('dependencies',{}\\), **d.get\\('devDependencies',{}\\)}; [print\\(k,v\\) for k,v in sorted\\(deps.items\\(\\)\\)]\")",
+      "Bash(npx vitest:*)",
+      "Bash(vercel:*)",
+      "Bash(identify /Users/novanta/Desktop/APP/App_prova/public/aea-logo.png)",
+      "Bash(sips -g pixelWidth -g pixelHeight /Users/novanta/Desktop/APP/App_prova/public/aea-logo.png)",
+      "Bash(sips -z 512 512 /Users/novanta/Desktop/APP/App_prova/public/aea-logo.png --out /Users/novanta/Desktop/APP/App_prova/public/pwa-512.png)",
+      "Bash(sips -z 192 192 /Users/novanta/Desktop/APP/App_prova/public/aea-logo.png --out /Users/novanta/Desktop/APP/App_prova/public/pwa-192.png)",
+      "Bash(python3:*)",
+      "Skill(impeccable)",
+      "Bash(pandoc --version)",
+      "Bash(npx md-to-pdf:*)",
+      "Bash(npm list:*)",
+      "Bash(npx --yes md-to-pdf /Users/novanta/Desktop/APP/App_prova/docs/audit-ingredientiDB-v6-2026-07-09.md)",
+      "Bash(ls /Users/novanta/Desktop/APP/App_prova/docs/*.pdf)",
+      "Bash(brew list:*)",
+      "Bash(echo \"---TSC EXIT: $?---\")",
+      "Bash(npx eslint *)",
+      "Bash(git stash *)",
+      "Bash(echo \"TSC:$?\")",
+      "Bash(wc:*)",
+      "Bash(/Users/novanta/.claude/plugins/cache/claude-plugins-official/superpowers/5.0.7/skills/brainstorming/scripts/stop-server.sh /tmp/brainstorm-3955-1784019422)"
+    ]
+  },
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node /Users/novanta/.claude/plugins/marketplaces/caveman/src/hooks/caveman-activate.js"
+          }
+        ]
+      }
     ]
   }
 }

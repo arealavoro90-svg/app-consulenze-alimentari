@@ -66,8 +66,8 @@ const sectionTitleStyle: React.CSSProperties = {
     fontWeight: 700,
     textTransform: 'uppercase',
     letterSpacing: 0.8,
-    color: '#b7791f',
-    borderBottom: '2px solid #f6e05e',
+    color: 'var(--color-orange-hover, #dd5c0c)',
+    borderBottom: '2px solid rgba(255, 126, 46, 0.35)',
     paddingBottom: 6,
     marginBottom: 14,
 };
@@ -204,19 +204,19 @@ export function RisorseLinks() {
             </div>
 
             {/* Contatti */}
-            <div style={{ ...cardStyle, borderLeft: '4px solid #e07b22' }}>
+            <div style={{ ...cardStyle, borderLeft: '4px solid var(--color-orange-hover, #dd5c0c)' }}>
                 <div style={{ fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.5, color: '#4a5568', marginBottom: 10 }}>
                     Contatti — per qualsiasi chiarimento riguardante questo prodotto digitale
                 </div>
-                <p style={{ margin: 0, fontSize: 14, color: '#e07b22', fontWeight: 600 }}>
+                <p style={{ margin: 0, fontSize: 14, color: 'var(--color-orange-hover, #dd5c0c)', fontWeight: 600 }}>
                     Gelsomino Panico
                     &nbsp;&ndash;&nbsp; Cell. 347-8323703
                     &nbsp;&ndash;&nbsp;{' '}
-                    <a href="mailto:gelsomino.panico@gmail.com" style={{ color: '#e07b22' }}>
+                    <a href="mailto:gelsomino.panico@gmail.com" style={{ color: 'var(--color-orange-hover, #dd5c0c)' }}>
                         gelsomino.panico@gmail.com
                     </a>
                     &nbsp;&ndash;&nbsp;{' '}
-                    <a href="https://aeaconsulenzealimentari.it" target="_blank" rel="noopener noreferrer" style={{ color: '#e07b22' }}>
+                    <a href="https://aeaconsulenzealimentari.it" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--color-orange-hover, #dd5c0c)' }}>
                         aeaconsulenzealimentari.it
                     </a>
                 </p>

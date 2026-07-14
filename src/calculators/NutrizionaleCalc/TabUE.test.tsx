@@ -24,7 +24,7 @@ const BASE_RESULT = {
 const UE_SERVING = { porzione: 125, confezione: 250, pezzo: 125 };
 const ALL_OPTIONALS = Object.fromEntries(
     Object.keys(DEFAULT_OPTIONALS).map(k => [k, true])
-) as typeof DEFAULT_OPTIONALS;
+) as unknown as typeof DEFAULT_OPTIONALS;
 
 describe('TabUE — snapshot rendering', () => {
     it('100g — solo obbligatori', () => {

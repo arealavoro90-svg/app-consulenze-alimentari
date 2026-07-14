@@ -500,7 +500,7 @@ function LinearLayout({ d, si, addedSugarsG, addedSugarsPct, vitamins }:
         <div style={{
             border: '2px solid #000', padding: '5px 8px',
             fontFamily: F, fontSize: 12,
-            display: 'inline-block',
+            display: 'block', width: 580,
             lineHeight: 1.25,
             letterSpacing: '0.3px', wordSpacing: '3px',
             boxSizing: 'border-box' as const,

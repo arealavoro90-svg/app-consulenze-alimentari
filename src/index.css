@@ -924,6 +924,7 @@ body:has(.calc-outer-shell) {
   font-size: 30px;
   margin-bottom: 16px;
   display: block;
+  color: var(--color-orange); /* icone lucide ereditano currentColor: senza questo prendono il blu link */
 }
 
 .tool-card h3 {
@@ -1036,6 +1037,21 @@ body:has(.calc-outer-shell) {
 .result-table {
   width: 100%;
   border-collapse: collapse;
+}
+
+/* Cifre tabellari: colonne numeriche allineate in tutte le tabelle dati */
+.result-table,
+.riepilogo-table,
+.nutri-results-wrapper table {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Focus ring visibile per navigazione da tastiera (solo :focus-visible, non al click) */
+button:focus-visible,
+a:focus-visible,
+[role="button"]:focus-visible {
+  outline: 2px solid var(--color-orange);
+  outline-offset: 2px;
 }
 
 .result-table th {

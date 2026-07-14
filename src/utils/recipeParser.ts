@@ -95,10 +95,66 @@ function cleanIngredientName(text: string): string {
 
 const CONFIDENCE_THRESHOLD = 50;
 
-export function parseRecipe(
-  text: string,
-  db: DBIngredient[]
-): ParsedLine[] {
+/** Raggruppa ingredienti per componente */
+export interface ParsedGroup {
+  name: string;
+  lines: ParsedLine[];
+}
+
+/**
+ * Una riga è un'intestazione componente se:
+ * - finisce con ':'
+ * - non contiene una quantità numerica (altrimenti è un ingrediente tipo "olio: 50g")
+ */
+function isHeaderLine(raw: string): boolean {
+  if (!raw.trimEnd().endsWith(':')) return false;
+  return parseQuantity(raw) === 0;
+}
+
+function parseLine(raw_text: string, fuse: Fuse<DBIngredient>): ParsedLine {
+  const qty = parseQuantity(raw_text);
+  const unit = parseUnit(raw_text);
+  const weight = toGrams(qty, unit);
+  const cleanName = cleanIngredientName(raw_text);
+
+  const results = fuse.search(cleanName, { limit: 3 });
+  const suggestions = results.map(r => ({
+    ingredient: r.item,
+    score: Math.round((1 - (r.score ?? 1)) * 100),
+  }));
+
+  const best = suggestions[0] ?? null;
+  const confidence_score = best?.score ?? 0;
+
+  return {
+    raw_text,
+    parsed_quantity: qty,
+    parsed_unit: unit,
+    standardized_weight_g: weight,
+    matched_ingredient_id: confidence_score >= CONFIDENCE_THRESHOLD
+      ? (best?.ingredient.nome ?? null)
+      : null,
+    matched_ingredient: confidence_score >= CONFIDENCE_THRESHOLD
+      ? (best?.ingredient ?? null)
+      : null,
+    confidence_score,
+    suggestions,
+  };
+}
+
+/**
+ * Parsa la ricetta rilevando le intestazioni componente (righe che finiscono con ':').
+ * Ritorna sempre almeno un gruppo.
+ *
+ * Formato supportato:
+ *   Per la pasta:          ← intestazione → nuovo componente "Per la pasta"
+ *   200g farina 00
+ *   3 uova
+ *
+ *   Per il sugo:           ← intestazione → nuovo componente "Per il sugo"
+ *   400g pomodori pelati
+ */
+export function parseRecipeGroups(text: string, db: DBIngredient[]): ParsedGroup[] {
   const fuse = new Fuse(db, {
     keys: ['nome', 'etichetta'],
     threshold: 0.5,
@@ -106,38 +162,25 @@ export function parseRecipe(
     minMatchCharLength: 2,
   });
 
-  return text
-    .split('\n')
-    .map(line => line.trim())
-    .filter(line => line.length > 0)
-    .map((raw_text): ParsedLine => {
-      const qty = parseQuantity(raw_text);
-      const unit = parseUnit(raw_text);
-      const weight = toGrams(qty, unit);
-      const cleanName = cleanIngredientName(raw_text);
+  const rawLines = text.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+  const groups: ParsedGroup[] = [];
+  let current: ParsedGroup = { name: 'Ingredienti', lines: [] };
 
-      const results = fuse.search(cleanName, { limit: 3 });
-      const suggestions = results.map(r => ({
-        ingredient: r.item,
-        score: Math.round((1 - (r.score ?? 1)) * 100),
-      }));
+  for (const raw of rawLines) {
+    if (isHeaderLine(raw)) {
+      if (current.lines.length > 0) groups.push(current);
+      current = { name: raw.slice(0, -1).trim() || 'Componente', lines: [] };
+    } else {
+      current.lines.push(parseLine(raw, fuse));
+    }
+  }
+  if (current.lines.length > 0) groups.push(current);
 
-      const best = suggestions[0] ?? null;
-      const confidence_score = best?.score ?? 0;
+  return groups.length > 0 ? groups : [{ name: 'Ingredienti', lines: [] }];
+}
 
-      return {
-        raw_text,
-        parsed_quantity: qty,
-        parsed_unit: unit,
-        standardized_weight_g: weight,
-        matched_ingredient_id: confidence_score >= CONFIDENCE_THRESHOLD
-          ? (best?.ingredient.nome ?? null)
-          : null,
-        matched_ingredient: confidence_score >= CONFIDENCE_THRESHOLD
-          ? (best?.ingredient ?? null)
-          : null,
-        confidence_score,
-        suggestions,
-      };
-    });
+/** @deprecated usa parseRecipeGroups — mantenuta per compatibilità test */
+export function parseRecipe(text: string, db: DBIngredient[]): ParsedLine[] {
+  const groups = parseRecipeGroups(text, db);
+  return groups.flatMap(g => g.lines);
 }

@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react';
-import type { IngredientDB } from '../data/ingredientsDB';
+import type { DBIngredient } from '../data/ingredientsDB';
 import type { Region } from '../logic/localizationModule';
 
 export interface SavedRecipeRow {
     id: string;
-    ingredient: IngredientDB;
+    ingredient: DBIngredient;
     grams: number;
 }
 

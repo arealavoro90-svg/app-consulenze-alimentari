@@ -134,12 +134,15 @@ export function RiepilogoTab({ components, pesoFinito, presentAllergens, crossAl
             }}>
                 <span>{merged.length} ingredienti</span>
                 {rTab === 'q' ? (
-                    <span>{fmt3(totGrammiXpzuv)} g · 100,000% · QUID {fmt3(totQuid)}%</span>
+                    <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+                        <span>{fmt3(totGrammiXpzuv)} g</span>
+                        <span>QUID {fmt3(totQuid)}%</span>
+                    </div>
                 ) : (
-                    <span>
-                        UV: {totCostoUV > 0 ? fmt3(totCostoUV) + ' €' : '—'}
-                        {totCostoKg > 0 ? ` · /kg: ${fmt3(totCostoKg)} €` : ''}
-                    </span>
+                    <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+                        <span>UV: {totCostoUV > 0 ? fmt3(totCostoUV) + ' €' : '—'}</span>
+                        {totCostoKg > 0 && <span>/kg: {fmt3(totCostoKg)} €</span>}
+                    </div>
                 )}
             </div>
 

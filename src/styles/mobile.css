@@ -14,7 +14,7 @@
   --m-text-faint:   rgba(12, 19, 38, 0.25);
   --m-topbar-h:     52px;
   --m-tabbar-h:     64px;
-  --m-inner-tabs-h: 36px;
+  --m-section-tabbar-h: 60px;
   --m-radius-sm:    6px;
   --m-radius-md:    10px;
   --m-radius-lg:    14px;
@@ -27,6 +27,13 @@
   min-height: 100dvh;
   background: var(--m-bg);
   font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+}
+/* Dentro un tool: frame bloccato all'altezza viewport, scroll interno al pannello.
+   Serve perché la section-tabbar in basso resti sempre ancorata. */
+.m-shell--tool {
+  height: 100dvh;
+  min-height: 0;
+  overflow: hidden;
 }
 
 /* ── Mobile topbar ──────────────────────────────────────────────────────── */
@@ -84,6 +91,7 @@
   border: none; background: none; padding: 8px 0;
   -webkit-tap-highlight-color: transparent;
   transition: opacity 0.1s;
+  text-decoration: none; /* NavLink: niente underline/blu da anchor default */
 }
 .m-tabbar__item:active { opacity: 0.7; }
 .m-tabbar__dot {
@@ -127,6 +135,10 @@
 }
 .m-input:focus  { border-color: var(--m-orange); }
 .m-input--num   { font-family: 'Courier New', monospace; font-size: 17px; font-weight: 700; }
+/* Niente frecce spinner sugli input numerici: rubano spazio e schiacciano il valore */
+.m-input--num::-webkit-outer-spin-button,
+.m-input--num::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+.m-input--num { appearance: textfield; -moz-appearance: textfield; }
 .m-input-group  {
   display: grid; grid-template-columns: 1fr 1fr; gap: 8px;
 }
@@ -386,32 +398,38 @@
 }
 .m-region-tab--active span { color: #fff !important; opacity: 1 !important; }
 
-/* ── Segmented control ───────────────────────────────────────────────────── */
+/* ── Segmented control — pill separate, coerenti con .btn-accent/.btn-outline desktop ── */
 .m-segmented {
   display: flex;
-  border: 1.5px solid var(--m-border);
-  border-radius: var(--m-radius-md);
-  overflow: hidden;
-  background: var(--m-surface);
+  flex-wrap: wrap;
+  gap: 6px;
 }
 .m-segmented__btn {
-  flex: 1;
+  flex: 0 0 auto;
   min-height: 44px;
-  border: none;
-  background: transparent;
-  font-size: 12px;
-  font-weight: 700;
+  min-width: 48px;
+  padding: 0 16px;
+  border: 1.5px solid var(--m-border);
+  border-radius: 22px;
+  background: var(--m-surface);
+  font-size: 13px;
+  font-weight: 600;
   font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
   color: var(--m-text-muted);
+  white-space: nowrap;
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
-  transition: background 0.15s, color 0.15s;
-  border-right: 1px solid var(--m-border);
+  transition: background 0.15s, color 0.15s, border-color 0.15s, box-shadow 0.15s;
 }
-.m-segmented__btn:last-child { border-right: none; }
 .m-segmented__btn--active {
-  background: var(--m-navy);
-  color: var(--m-orange);
+  background: linear-gradient(135deg, var(--m-orange), var(--color-orange-hover, #dd5c0c));
+  border-color: var(--m-orange);
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(255, 126, 46, 0.30);
+}
+.m-segmented__btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
 }
 .m-segmented__label {
   display: block;
@@ -524,15 +542,17 @@
 .m-expand-btn:active { opacity: 0.7; }
 
 /* ── Sticky CTA bar ──────────────────────────────────────────────────────── */
+/* sticky (non fixed): resta nel proprio pannello scrollabile e non viene
+   agganciata all'ancestor con transform (.m-slide-track). Si ancora sopra la
+   section-tabbar in basso. */
 .m-cta-bar {
-  position: fixed;
-  left: 0;
-  right: 0;
-  bottom: calc(var(--m-tabbar-h) + env(safe-area-inset-bottom, 0px));
+  position: sticky;
+  bottom: 0;
   z-index: 15;
   background: var(--m-surface);
   border-top: 1px solid var(--m-border);
   padding: 10px 16px;
+  margin-top: auto; /* spinge la barra in fondo al pannello flex */
   display: flex;
   gap: 8px;
 }
@@ -609,7 +629,9 @@
 }
 
 /* ── m-page variante tool (no overflow, no padding-bottom fisso) ─────────── */
-.m-page--tool {
+/* Doppia classe: batte il .m-page legacy duplicato in index.css (che è caricato
+   dopo e imporrebbe overflow-y:auto + padding-bottom 72px). */
+.m-page.m-page--tool {
   overflow: hidden;
   padding-bottom: 0;
   display: flex;
@@ -645,49 +667,11 @@
   margin-top: 1px;
 }
 
-/* ── Inner tabs (sezioni del tool, sotto topbar) ─────────────────────────── */
-.m-inner-tabs {
-  display: flex;
-  background: var(--m-navy);
-  height: var(--m-inner-tabs-h);
-  flex-shrink: 0;
-}
-.m-inner-tab {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 8px;
-  font-weight: 700;
-  color: rgba(255, 255, 255, 0.3);
-  letter-spacing: 0.5px;
-  text-transform: uppercase;
-  cursor: pointer;
-  position: relative;
-  border: none;
-  background: none;
-  -webkit-tap-highlight-color: transparent;
-  transition: color 0.15s;
-}
-.m-inner-tab--active {
-  color: var(--m-orange);
-}
-.m-inner-tab--active::after {
-  content: '';
-  position: absolute;
-  bottom: 0;
-  left: 20%;
-  right: 20%;
-  height: 2px;
-  background: var(--m-orange);
-  border-radius: 2px 2px 0 0;
-}
-
 /* ── Slide container ─────────────────────────────────────────────────────── */
 .m-slide-wrapper {
   display: flex;
   flex-direction: column;
-  height: 100%;
+  flex: 1;
   min-height: 0;
 }
 .m-slide-container {
@@ -709,27 +693,65 @@
   -webkit-overflow-scrolling: touch;
   flex-shrink: 0;
   padding-bottom: env(safe-area-inset-bottom, 0px);
+  /* flex column: permette alla CTA (.m-cta-bar margin-top:auto) di ancorarsi
+     in fondo anche quando il contenuto è corto */
+  display: flex;
+  flex-direction: column;
 }
 
-/* ── Dot indicator (posizione slide) ─────────────────────────────────────── */
-.m-dot-indicator {
+/* ── Section tab bar (icone in basso — navigazione sezioni tool) ─────────── */
+.m-section-tabbar {
   display: flex;
-  justify-content: center;
-  gap: 5px;
-  padding: 7px 0;
-  background: var(--m-bg);
   flex-shrink: 0;
+  height: calc(var(--m-section-tabbar-h) + env(safe-area-inset-bottom, 0px));
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  background: var(--m-surface);
+  border-top: 1.5px solid var(--m-border);
+  z-index: 16;
 }
-.m-dot-indicator__pip {
-  width: 18px;
+.m-section-tabbar__item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  border: none;
+  background: none;
+  padding: 6px 0;
+  cursor: pointer;
+  color: var(--m-text-muted);
+  -webkit-tap-highlight-color: transparent;
+  transition: color 0.15s, background 0.15s;
+  position: relative;
+}
+.m-section-tabbar__item:active { background: rgba(12, 19, 38, 0.03); }
+.m-section-tabbar__icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.15s;
+}
+.m-section-tabbar__label {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.2px;
+  font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+}
+.m-section-tabbar__item--active {
+  color: var(--m-orange);
+}
+.m-section-tabbar__item--active .m-section-tabbar__label { font-weight: 800; }
+.m-section-tabbar__item--active .m-section-tabbar__icon { transform: translateY(-1px); }
+.m-section-tabbar__item--active::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 22%;
+  right: 22%;
   height: 3px;
-  border-radius: 2px;
-  background: rgba(12, 19, 38, 0.1);
-  transition: width 0.2s, background 0.2s;
-}
-.m-dot-indicator__pip--active {
   background: var(--m-orange);
-  width: 24px;
+  border-radius: 0 0 3px 3px;
 }
 
 /* ── Bold/Branded: product header ────────────────────────────────────────── */
