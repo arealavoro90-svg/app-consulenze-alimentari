@@ -12,18 +12,13 @@ export interface DownloadFormatState {
     measure: USAMeasure;
 }
 
-// fix 1: handlers passati al renderPreview
-export interface DownloadPreviewHandlers {
-    setSubTab: (t: SubTab) => void;
-}
-
 interface Props {
     region: NationTab;
     // solo per calcolare i disabled state delle opzioni:
     ue: UEServing;
     nation: ServingSizesNation; // dati della regione attiva ({} per UE)
     productName: string;
-    renderPreview: (state: DownloadFormatState, handlers: DownloadPreviewHandlers) => ReactNode;
+    renderPreview: (state: DownloadFormatState) => ReactNode;
     onClose: () => void;
 }
 
@@ -90,7 +85,6 @@ export function DownloadTableModal({
         measure: effMeasure,
     };
 
-    const handlers: DownloadPreviewHandlers = { setSubTab };
 
     // ─── Download ─────────────────────────────────────────────────────────────
     async function handleDownload() {
@@ -243,7 +237,7 @@ export function DownloadTableModal({
                             borderRadius: 8, padding: 12,
                         }}
                     >
-                        {renderPreview(formatState, handlers)}
+                        {renderPreview(formatState)}
                     </div>
                 </div>
 

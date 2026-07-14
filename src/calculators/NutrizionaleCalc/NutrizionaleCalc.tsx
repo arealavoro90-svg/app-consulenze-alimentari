@@ -37,7 +37,7 @@ import type { USAServingRef, USAMeasure } from './TabUSA';
 import { SplitShell } from './SplitShell';
 import { BrowseIngredientsModal } from './BrowseIngredientsModal';
 import { DownloadTableModal } from './DownloadTableModal';
-import type { DownloadFormatState, DownloadPreviewHandlers } from './DownloadTableModal';
+import type { DownloadFormatState } from './DownloadTableModal';
 import {
     type DBIngredient, type CalcResult, type RecipeRow, type AdditiveRow, type Component,
     ZERO_CALC, calcNutrients, scaleResult, calcClaims,
@@ -1693,7 +1693,7 @@ export function NutrizionaleCalc() {
     // ─── (wizard renderer removed) ────────────────────────────────────────────
 
     // ponytail: renderDownloadPreview mirrors renderTablePanel tab components with modal-local format state
-    const renderDownloadPreview = (state: DownloadFormatState, handlers: DownloadPreviewHandlers): React.ReactNode => {
+    const renderDownloadPreview = (state: DownloadFormatState): React.ReactNode => {
         switch (activeTab) {
             case 'UE':
                 return (
