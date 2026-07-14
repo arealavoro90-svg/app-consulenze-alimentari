@@ -12,13 +12,18 @@ export interface DownloadFormatState {
     measure: USAMeasure;
 }
 
+// fix 1: Canada layout contract — handlers passati al renderPreview
+export interface DownloadPreviewHandlers {
+    setSubTab: (t: SubTab) => void;
+}
+
 interface Props {
     region: NationTab;
     // solo per calcolare i disabled state delle opzioni:
     ue: UEServing;
     nation: ServingSizesNation; // dati della regione attiva ({} per UE)
     productName: string;
-    renderPreview: (state: DownloadFormatState) => ReactNode;
+    renderPreview: (state: DownloadFormatState, handlers: DownloadPreviewHandlers) => ReactNode;
     onClose: () => void;
 }
 
@@ -28,6 +33,7 @@ function OptBtn({ label, active, disabled, onClick }: {
 }) {
     return (
         <button
+            type="button"  // fix 3: type=button esplicito
             className={active ? 'btn btn-accent' : 'btn btn-outline'}
             disabled={disabled}
             onClick={onClick}
@@ -84,6 +90,9 @@ export function DownloadTableModal({
         measure: effMeasure,
     };
 
+    // fix 1: handlers esposti al renderPreview per TabCanada
+    const handlers: DownloadPreviewHandlers = { setSubTab };
+
     // ─── Download ─────────────────────────────────────────────────────────────
     async function handleDownload() {
         const container = previewRef.current;
@@ -99,7 +108,7 @@ export function DownloadTableModal({
             link.href = canvas.toDataURL('image/png');
             link.click();
         } catch (e) {
-            console.error(e);
+            console.error('PNG Export error:', e);  // fix 4: prefisso log ripristinato
             toast.error("Errore durante l'esportazione della tabella in PNG.");
         }
     }
@@ -233,7 +242,7 @@ export function DownloadTableModal({
                             borderRadius: 8, padding: 12,
                         }}
                     >
-                        {renderPreview(formatState)}
+                        {renderPreview(formatState, handlers)}
                     </div>
                 </div>
 
