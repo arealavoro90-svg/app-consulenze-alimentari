@@ -40,3 +40,4 @@ PROMPTS/
 
 # Env
 .env.local
+.worktrees/
