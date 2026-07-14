@@ -100,19 +100,16 @@ describe('DownloadTableModal', () => {
     });
 
     // fix 1: handlers passati come secondo argomento a renderPreview
-    it('renderPreview riceve handlers con setSubTab, showDI, setShowDI', () => {
+    it('renderPreview riceve handlers con setSubTab', () => {
         const mockRender = vi.fn().mockReturnValue(<div data-table-export />);
         wrap(<DownloadTableModal {...baseProps} renderPreview={mockRender} />);
         const lastCall = mockRender.mock.calls[mockRender.mock.calls.length - 1];
         expect(typeof lastCall[1]?.setSubTab).toBe('function');
-        expect(typeof lastCall[1]?.showDI).toBe('boolean');
-        expect(typeof lastCall[1]?.setShowDI).toBe('function');
     });
 
-    it('Australia: showDI nel modal è isolato dallo stato della vista (default true)', () => {
-        const mockRender = vi.fn().mockReturnValue(<div data-table-export />);
-        wrap(<DownloadTableModal {...baseProps} region="Australia" nation={{ serving: 30 }} renderPreview={mockRender} />);
-        const lastCall = mockRender.mock.calls[mockRender.mock.calls.length - 1];
-        expect(lastCall[1]?.showDI).toBe(true);
+    it('Canada: mostra gruppo Layout', () => {
+        wrap(<DownloadTableModal {...baseProps} region="Canada" nation={{ serving: 30 }} />);
+        const opts = screen.getByTestId('options-col');
+        expect(Array.from(opts.querySelectorAll('button')).find(b => b.textContent === 'Verticale')).toBeTruthy();
     });
 });

@@ -1032,8 +1032,7 @@ export function NutrizionaleCalc() {
         '🇪🇺 UE': false, '🇺🇸 USA (CUP=240ml)': false, '🇨🇦 Canada (CUP=250ml)': false, '🇦🇺 Australia': false, '🌍 Paesi Arabi (CUP=240ml)': false
     });
     const [activeTab, setActiveTab] = useState<NationTab>('UE');
-    const [subTab, setSubTab] = useState<SubTab>('verticale');
-    const [auShowDI, setAuShowDI] = useState(true);
+    // ponytail: subTab/auShowDI rimossi — gestiti internamente dai componenti o dal DownloadTableModal
     const [showOptionals, setShowOptionals] = useState(false);
     const [isLiquid, setIsLiquid] = useState(false);
     // ponytail: euSubTab rimosso — UI formato vive in DownloadTableModal
@@ -1715,16 +1714,16 @@ export function NutrizionaleCalc() {
             case 'Canada':
                 return (
                     <TabCanada p={per100display} ca={ca} servingRef={state.servingRef} measure={state.measure}
-                        subTab={state.subTab} setSubTab={handlers.setSubTab} full={false} />
+                        subTab={state.subTab} />
                 );
             case 'Australia':
                 return (
-                    <TabAustralia p={per100display} au={au} showDI={handlers.showDI} setShowDI={handlers.setShowDI} full={false} />
+                    <TabAustralia p={per100display} au={au} />
                 );
             case 'Arabi':
                 return (
                     <TabArabi p={per100display} arabi={arabi} servingRef={state.servingRef} measure={state.measure}
-                        specificGravity={parseFloat(specificGravity) || 0} full={false} />
+                        specificGravity={parseFloat(specificGravity) || 0} />
                 );
         }
     };
@@ -1746,10 +1745,6 @@ export function NutrizionaleCalc() {
                         );
                     })}
                 </div>
-                <button type="button" onClick={() => setDownloadModalOpen(true)}
-                    className="btn btn-accent" style={{ fontSize: 12, padding: '5px 12px', marginLeft: 'auto' }}>
-                    <ImageDown size={13} aria-hidden="true" /> Scarica ufficiale…
-                </button>
 
             </div>{/* /table-panel-header */}
 
@@ -1841,17 +1836,17 @@ export function NutrizionaleCalc() {
                     )}
                     {activeTab === 'Canada' && (
                         <div style={{ border: '1px solid #eaecf0', borderRadius: 8, overflow: 'hidden', marginTop: 8 }}>
-                            <TabCanada p={per100display} ca={ca} servingRef="serving" measure="g" subTab={subTab} setSubTab={setSubTab} full={false} />
+                            <TabCanada p={per100display} ca={ca} servingRef="serving" measure="g" subTab="verticale" />
                         </div>
                     )}
                     {activeTab === 'Australia' && (
                         <div style={{ border: '1px solid #eaecf0', borderRadius: 8, overflow: 'hidden', marginTop: 8 }}>
-                            <TabAustralia p={per100display} au={au} showDI={auShowDI} setShowDI={setAuShowDI} full={false} />
+                            <TabAustralia p={per100display} au={au} />
                         </div>
                     )}
                     {activeTab === 'Arabi' && (
                         <div style={{ border: '1px solid #eaecf0', borderRadius: 8, overflow: 'hidden', marginTop: 8 }}>
-                            <TabArabi p={per100display} arabi={arabi} servingRef="serving" measure="g" specificGravity={parseFloat(specificGravity) || 0} full={false} />
+                            <TabArabi p={per100display} arabi={arabi} servingRef="serving" measure="g" specificGravity={parseFloat(specificGravity) || 0} />
                         </div>
                     )}
                 </div>
@@ -1917,9 +1912,13 @@ export function NutrizionaleCalc() {
                 </aside>
                 </div>{/* /table-panel-body */}
 
-                <div className="table-panel-footer">
+                <div className="table-panel-footer" style={{ display: 'flex', gap: 8 }}>
+                    <button type="button" className="btn btn-accent" onClick={() => setDownloadModalOpen(true)}
+                        style={{ flex: 1, padding: '7px', fontSize: '12px', fontWeight: 600, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
+                        <ImageDown size={13} aria-hidden="true" /> Scarica ufficiale…
+                    </button>
                     <button type="button" onClick={handleSave}
-                        style={{ width: '100%', padding: '7px', borderRadius: '7px', background: 'var(--color-navy)', color: 'white', border: 'none', fontSize: '12px', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
+                        style={{ flex: 1, padding: '7px', borderRadius: '7px', background: 'var(--color-navy)', color: 'white', border: 'none', fontSize: '12px', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
                         <Save size={13} /> Salva in archivio
                     </button>
                 </div>
@@ -2704,10 +2703,10 @@ export function NutrizionaleCalc() {
 // ─── Shared table styling ───────────────────────────────────────────────────
 
 // ─── TabCanada ──────────────────────────────────────────────────────────────
-function TabCanada({ p, ca, servingRef, measure, subTab, setSubTab, full }: {
+function TabCanada({ p, ca, servingRef, measure, subTab }: {
     p: CalcResult; ca: ServingSizesNation;
     servingRef: USAServingRef; measure: USAMeasure;
-    subTab: SubTab; setSubTab: (t: SubTab) => void; full?: boolean
+    subTab: SubTab;
 }) {
     const refGrams = servingRef === 'confezione' ? (ca.confezione ?? 0) : (ca.serving ?? 0);
     const svG = refGrams;
@@ -2750,16 +2749,6 @@ function TabCanada({ p, ca, servingRef, measure, subTab, setSubTab, full }: {
 
     return (
         <div style={{ background: 'white' }}>
-            {!full && (
-                <>
-                    <h3 style={{ marginTop: 0, fontSize: 16, color: 'var(--color-navy)', borderBottom: '2px solid var(--color-orange)', paddingBottom: 8, marginBottom: 16 }}>Etichetta Nutrizionale (Canada)</h3>
-                    <div className="subtab-bar" style={{ display: 'flex', gap: 6, marginBottom: 16 }}>
-                        {(['verticale', 'orizzontale', 'lineare'] as SubTab[]).map(t => (
-                            <button key={t} onClick={() => setSubTab(t)} className={`btn ${subTab === t ? 'btn-accent' : 'btn-outline'}`} style={{ fontSize: 11, padding: '5px 10px' }}>{t.charAt(0).toUpperCase() + t.slice(1)}</button>
-                        ))}
-                    </div>
-                </>
-            )}
             <div data-table-export style={{ background: 'white', padding: 12, borderRadius: 0, display: 'inline-block' }}>
             {subTab === 'verticale' && (() => {
                 const F = 'Arial, Helvetica, sans-serif';          // normal width
@@ -2958,7 +2947,7 @@ function TabCanada({ p, ca, servingRef, measure, subTab, setSubTab, full }: {
 }
 
 // ─── TabAustralia ─────────────────────────────────────────────────────────────
-function TabAustralia({ p, au, showDI: _showDI, setShowDI: _setShowDI, full }: { p: CalcResult; au: ServingSizesNation; showDI: boolean; setShowDI: (v: boolean) => void; full?: boolean }) {
+function TabAustralia({ p, au }: { p: CalcResult; au: ServingSizesNation }) {
     const svG = au.serving || 0;
     const sv = svG > 0 ? scaleResult(p, svG) : null;
     const pkgG = au.confezione || 0;
@@ -2997,9 +2986,6 @@ function TabAustralia({ p, au, showDI: _showDI, setShowDI: _setShowDI, full }: {
 
     return (
         <div style={{ background: 'white' }}>
-            {!full && (
-                <h3 style={{ marginTop: 0, fontSize: 16, color: 'var(--color-navy)', borderBottom: '2px solid var(--color-orange)', paddingBottom: 8, marginBottom: 16 }}>Etichetta Nutrizionale (Australia)</h3>
-            )}
             <div data-table-export style={{ background: 'white', padding: 12, borderRadius: 0, display: 'inline-block', width: 500, boxSizing: 'border-box' }}>
                 <div style={{ border: bOut, fontFamily: 'Arial, sans-serif', fontSize: 12 }}>
                     {/* Titolo */}
@@ -3097,10 +3083,10 @@ function buildArabiSI(arabi: ServingSizesNation, servingRef: USAServingRef, meas
     return { refGrams, servingsPerContainer, sizeLabel, sizeValue, amountLabel };
 }
 
-function TabArabi({ p, arabi, servingRef, measure, specificGravity, full }: {
+function TabArabi({ p, arabi, servingRef, measure, specificGravity }: {
     p: CalcResult; arabi: ServingSizesNation;
     servingRef: USAServingRef; measure: USAMeasure;
-    specificGravity?: number; full?: boolean;
+    specificGravity?: number;
 }) {
     const unit = (specificGravity ?? 0) > 0 ? 'ml' : 'g';
     const si = buildArabiSI(arabi, servingRef, measure, unit);
@@ -3125,11 +3111,6 @@ function TabArabi({ p, arabi, servingRef, measure, specificGravity, full }: {
 
     return (
         <div style={{ background: 'white' }}>
-            {!full && (
-                <h3 style={{ marginTop: 0, fontSize: 16, color: 'var(--color-navy)', borderBottom: '2px solid var(--color-orange)', paddingBottom: 8, marginBottom: 16 }}>
-                    Etichetta Nutrizionale (Gulf/Arabi)
-                </h3>
-            )}
             <div data-table-export style={{ background: 'white', padding: 12, display: 'inline-block' }}>
                 <div style={{ width: 310, border: '2.5px solid #000', padding: '8px 8px 6px 8px', fontFamily: F, color: '#000', boxSizing: 'border-box' as const }}>
 

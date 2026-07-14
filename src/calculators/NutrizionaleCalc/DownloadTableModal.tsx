@@ -12,11 +12,9 @@ export interface DownloadFormatState {
     measure: USAMeasure;
 }
 
-// fix 1: Canada layout contract — handlers passati al renderPreview
+// fix 1: handlers passati al renderPreview
 export interface DownloadPreviewHandlers {
     setSubTab: (t: SubTab) => void;
-    showDI: boolean;
-    setShowDI: (v: boolean) => void;
 }
 
 interface Props {
@@ -63,7 +61,6 @@ export function DownloadTableModal({
 
     // ─── Format state (all local) ─────────────────────────────────────────────
     const [subTab, setSubTab] = useState<SubTab>('verticale');
-    const [showDI, setShowDI] = useState(true);
     const [euSubTab, setEuSubTab] = useState<EUSubTab>('100g');
     const [servingRef, setServingRef] = useState<USAServingRef>('serving');
     const [measure, setMeasure] = useState<USAMeasure>('g');
@@ -93,8 +90,7 @@ export function DownloadTableModal({
         measure: effMeasure,
     };
 
-    // fix 1: handlers esposti al renderPreview per TabCanada + Australia DI toggle isolato
-    const handlers: DownloadPreviewHandlers = { setSubTab, showDI, setShowDI };
+    const handlers: DownloadPreviewHandlers = { setSubTab };
 
     // ─── Download ─────────────────────────────────────────────────────────────
     async function handleDownload() {
@@ -117,8 +113,8 @@ export function DownloadTableModal({
     }
 
     // ─── Option groups visibility ─────────────────────────────────────────────
-    // Layout (verticale/orizzontale/lineare): USA only (Canada lo gestisce internamente)
-    const showLayout = region === 'USA';
+    // Layout (verticale/orizzontale/lineare): USA + Canada
+    const showLayout = region === 'USA' || region === 'Canada';
     // Colonne UE (euSubTab): UE only, solo quando almeno un campo UE è valorizzato
     const showColonne = region === 'UE' &&
         (ue.confezione != null || ue.porzione != null || ue.pezzo != null);
@@ -127,6 +123,8 @@ export function DownloadTableModal({
         && (nation.confezione ?? 0) > 0;
     // Unità: USA, Canada, Arabi
     const showUnita = region === 'USA' || region === 'Canada' || region === 'Arabi';
+    // Nascondi colonna opzioni se nessun gruppo visibile (es. Australia)
+    const showOptionsCol = showLayout || showColonne || showRiferimento || showUnita;
 
     return (
         <div
@@ -159,7 +157,7 @@ export function DownloadTableModal({
                 {/* Body */}
                 <div style={{ display: 'flex', gap: 16, flex: 1, overflow: 'hidden' }}>
                     {/* Options column */}
-                    <div data-testid="options-col" style={{ width: 180, flexShrink: 0, overflowY: 'auto' }}>
+                    <div data-testid="options-col" style={{ width: showOptionsCol ? 180 : 0, flexShrink: 0, overflowY: 'auto', display: showOptionsCol ? undefined : 'none' }}>
                         {showLayout && (
                             <>
                                 <SectionLabel text="Layout" />
