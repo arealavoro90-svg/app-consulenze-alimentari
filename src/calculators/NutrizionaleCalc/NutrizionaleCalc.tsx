@@ -67,10 +67,10 @@ const AR_ARABI = {
 };
 
 // ─── State types ──────────────────────────────────────────────────────────────
-interface ServingSizesNation {
+export interface ServingSizesNation {
     cup?: number; cucchiaio?: number; serving?: number; confezione?: number; pezzo?: number;
 }
-interface UEServing { porzione?: number; confezione?: number; pezzo?: number; }
+export interface UEServing { porzione?: number; confezione?: number; pezzo?: number; }
 interface ArchiveData {
     nome_prodotto: string;
     componenti: { nome: string; pz_uv: number; ingredienti: { nome: string; grammi: number }[] }[];
@@ -85,8 +85,8 @@ interface ArchiveData {
     };
 }
 
-type NationTab = 'UE' | 'USA' | 'Canada' | 'Australia' | 'Arabi';
-type SubTab = 'verticale' | 'orizzontale' | 'lineare';
+export type NationTab = 'UE' | 'USA' | 'Canada' | 'Australia' | 'Arabi';
+export type SubTab = 'verticale' | 'orizzontale' | 'lineare';
 
 
 // ─── Local display helper (n() used by rCA_*/rAU_* formatters below) ─────────
