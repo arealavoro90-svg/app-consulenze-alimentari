@@ -3016,10 +3016,11 @@ function TabAustralia({ p, au }: { p: CalcResult; au: ServingSizesNation }) {
                         <tbody>
                             {svG > 0 && sv ? rows.map((r, i) => (
                                 <tr key={i}>
-                                    <td style={{ ...tdStyle, paddingTop: i === 0 ? 8 : 2, paddingLeft: r.isSub ? 22 : 10, whiteSpace: i === 0 ? 'nowrap' : undefined }}>{r.label}</td>
-                                    <td style={{ ...tdStyle, paddingTop: i === 0 ? 8 : 2, whiteSpace: i === 0 ? 'nowrap' : undefined }}>{r.svVal}</td>
-                                    <td style={{ ...tdStyle, paddingTop: i === 0 ? 8 : 2, whiteSpace: i === 0 ? 'nowrap' : undefined }}>{r.di}</td>
-                                    <td style={{ ...tdStyle, paddingTop: i === 0 ? 8 : 2, whiteSpace: i === 0 ? 'nowrap' : undefined }}>{r.p100}</td>
+                                    {/* fix approvato 2026-07-14: niente nowrap — le diciture lunghe ("less than …") devono andare a capo dentro i 500px */}
+                                    <td style={{ ...tdStyle, paddingTop: i === 0 ? 8 : 2, paddingLeft: r.isSub ? 22 : 10 }}>{r.label}</td>
+                                    <td style={{ ...tdStyle, paddingTop: i === 0 ? 8 : 2 }}>{r.svVal}</td>
+                                    <td style={{ ...tdStyle, paddingTop: i === 0 ? 8 : 2 }}>{r.di}</td>
+                                    <td style={{ ...tdStyle, paddingTop: i === 0 ? 8 : 2 }}>{r.p100}</td>
                                 </tr>
                             )) : (
                                 <tr><td colSpan={4} style={{ ...tdStyle, color: '#888' }}>Inserire il valore serving size sopra per calcolare le quantità per porzione.</td></tr>
