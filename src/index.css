@@ -2034,6 +2034,27 @@ a:focus-visible,
   overflow-y: auto;
   padding: 14px;
 }
+
+/* Colonna porzioni fissa — redesign pannello destro 2026-07 */
+.table-panel-body { display: flex; gap: 12px; align-items: flex-start; min-height: 0; flex: 1; overflow: hidden; }
+.table-panel-body .table-scroll-area { flex: 1; min-width: 0; }
+.portions-col {
+  width: 170px; flex-shrink: 0;
+  background: var(--color-surface); border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm); padding: 12px;
+  display: flex; flex-direction: column; gap: 10px;
+  position: sticky; top: 8px;
+  max-height: calc(100vh - 200px); overflow-y: auto;
+}
+.portions-col-title { font-size: 12px; font-weight: 700; color: var(--color-text); }
+.portions-col .field-label { font-size: 11px; text-transform: none; letter-spacing: 0; }
+@media (max-width: 1279px) {
+  .table-panel-body { flex-direction: column; }
+  .portions-col { width: 100%; position: static; flex-direction: row; flex-wrap: wrap; align-items: flex-end; max-height: none; }
+  .portions-col .field { flex: 1 1 140px; }
+  .portions-col-title { width: 100%; }
+}
+
 .table-panel-footer {
   flex-shrink: 0;
   border-top: 1px solid var(--color-border);

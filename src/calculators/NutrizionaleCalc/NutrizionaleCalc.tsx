@@ -1154,14 +1154,8 @@ export function NutrizionaleCalc() {
     const tableRef = useRef<HTMLDivElement>(null);
 
     // ─── Griglia porzioni collassabile (D1): auto-chiusa se la regione attiva ha già valori ───
-    const [servingsGridOpen, setServingsGridOpen] = useState(true);
-    const servingValsRef = useRef({ ue, usa, ca, au, arabi });
-    servingValsRef.current = { ue, usa, ca, au, arabi };
-    useEffect(() => {
-        const v = servingValsRef.current;
-        const map: Record<NationTab, object> = { UE: v.ue, USA: v.usa, Canada: v.ca, Australia: v.au, Arabi: v.arabi };
-        setServingsGridOpen(!Object.values(map[activeTab]).some(x => x != null));
-    }, [activeTab]);
+    // ponytail: servingsGridOpen rimosso — porzioni ora sempre visibili in colonna fissa
+    // ponytail: servingValsRef / auto-open effect rimossi — porzioni sempre visibili
 
     const { items: archiveItems, saveItem, deleteItem } = useArchive<ArchiveData>('nutrizionale-v3');
     const [, setCurrentId] = useState<string | undefined>(undefined);
@@ -1757,82 +1751,10 @@ export function NutrizionaleCalc() {
                     <ImageDown size={13} aria-hidden="true" /> Scarica ufficiale…
                 </button>
 
-                {/* Serving inputs — contestuali per nazione, collassabili (D1) */}
-                <button
-                    type="button"
-                    onClick={() => setServingsGridOpen(o => !o)}
-                    style={{
-                        display: 'flex', alignItems: 'center', gap: 5,
-                        background: 'none', border: 'none', cursor: 'pointer',
-                        padding: '4px 0', fontSize: 10, fontWeight: 700,
-                        color: 'var(--color-text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em',
-                    }}
-                >
-                    Porzioni {activeTab}
-                    <span style={{ transform: servingsGridOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s', fontSize: 11 }}>▾</span>
-                </button>
-                {servingsGridOpen && (
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(110px, 1fr))', gap: 6, padding: '4px 0 8px' }}>
-                    {activeTab === 'UE' && (['porzione', 'confezione', 'pezzo'] as const).map((k, i) => {
-                        const labels = ['Porzione (g/ml)', 'U.V. / Confezione (g/ml)', 'Pezzo (g/ml)'];
-                        return (
-                            <div key={k} className="field">
-                                <label className="field-label" style={{ fontSize: 10 }}>{labels[i]}</label>
-                                <input type="number" min={0} placeholder="—" value={ue[k] || ''}
-                                    onChange={e => setUE(prev => ({ ...prev, [k]: parseFloat(e.target.value) || undefined }))}
-                                    className="field-input" style={{ padding: '5px 8px', fontSize: 12 }} />
-                            </div>
-                        );
-                    })}
-                    {activeTab === 'USA' && (['cup', 'cucchiaio', 'serving', 'confezione', 'pezzo'] as const).map((k, i) => {
-                        const labels = ['CUP 240ml (g)', 'Cucchiaio 15ml (g)', 'Serving Size (g/ml)', 'Confezione/UV (g/ml)', 'Pezzo (g/ml)'];
-                        return (
-                            <div key={k} className="field">
-                                <label className="field-label" style={{ fontSize: 10 }}>{labels[i]}</label>
-                                <input type="number" min={0} placeholder="—" value={usa[k] || ''}
-                                    onChange={e => setUSA(prev => ({ ...prev, [k]: parseFloat(e.target.value) || undefined }))}
-                                    className="field-input" style={{ padding: '5px 8px', fontSize: 12 }} />
-                            </div>
-                        );
-                    })}
-                    {activeTab === 'Canada' && (['cup', 'cucchiaio', 'serving', 'confezione', 'pezzo'] as const).map((k, i) => {
-                        const labels = ['CUP 250ml (g)', 'Cucchiaio 15ml (g)', 'Serving Size (g/ml)', 'Confezione/UV (g/ml)', 'Pezzo (g/ml)'];
-                        return (
-                            <div key={k} className="field">
-                                <label className="field-label" style={{ fontSize: 10 }}>{labels[i]}</label>
-                                <input type="number" min={0} placeholder="—" value={ca[k] || ''}
-                                    onChange={e => setCA(prev => ({ ...prev, [k]: parseFloat(e.target.value) || undefined }))}
-                                    className="field-input" style={{ padding: '5px 8px', fontSize: 12 }} />
-                            </div>
-                        );
-                    })}
-                    {activeTab === 'Australia' && (['serving', 'confezione', 'pezzo'] as const).map((k, i) => {
-                        const labels = ['Serving Size (g/ml)', 'Confezione/UV (g/ml)', 'Pezzo (g/ml)'];
-                        return (
-                            <div key={k} className="field">
-                                <label className="field-label" style={{ fontSize: 10 }}>{labels[i]}</label>
-                                <input type="number" min={0} placeholder="—" value={au[k] || ''}
-                                    onChange={e => setAU(prev => ({ ...prev, [k]: parseFloat(e.target.value) || undefined }))}
-                                    className="field-input" style={{ padding: '5px 8px', fontSize: 12 }} />
-                            </div>
-                        );
-                    })}
-                    {activeTab === 'Arabi' && (['cup', 'cucchiaio', 'serving', 'confezione', 'pezzo'] as const).map((k, i) => {
-                        const labels = ['CUP 240ml (g)', 'Cucchiaio 15ml (g)', 'Serving Size (g/ml)', 'Confezione/UV (g/ml)', 'Pezzo (g/ml)'];
-                        return (
-                            <div key={k} className="field">
-                                <label className="field-label" style={{ fontSize: 10 }}>{labels[i]}</label>
-                                <input type="number" min={0} placeholder="—" value={arabi[k] || ''}
-                                    onChange={e => setArabi(prev => ({ ...prev, [k]: parseFloat(e.target.value) || undefined }))}
-                                    className="field-input" style={{ padding: '5px 8px', fontSize: 12 }} />
-                            </div>
-                        );
-                    })}
-                </div>
-                )}
             </div>{/* /table-panel-header */}
 
-                {/* Active tab */}
+                {/* Body: tabella + colonna porzioni fissa */}
+                <div className="table-panel-body">
                 <div ref={isMobileInline ? undefined : tableRef} className="table-scroll-area" style={{ overflowX: 'auto' }}>
                     {activeTab === 'UE' && (
                         <>
@@ -1933,6 +1855,67 @@ export function NutrizionaleCalc() {
                         </div>
                     )}
                 </div>
+
+                {/* Colonna porzioni fissa — sempre visibile */}
+                <aside className="portions-col" aria-label={`Porzioni ${activeTab}`}>
+                    <div className="portions-col-title">Porzioni {activeTab}</div>
+                    {activeTab === 'UE' && (['porzione', 'confezione', 'pezzo'] as const).map((k, i) => {
+                        const labels = ['Porzione (g/ml)', 'U.V. / Confezione (g/ml)', 'Pezzo (g/ml)'];
+                        return (
+                            <div key={k} className="field">
+                                <label className="field-label">{labels[i]}</label>
+                                <input type="number" min={0} placeholder="—" value={ue[k] || ''}
+                                    onChange={e => setUE(prev => ({ ...prev, [k]: parseFloat(e.target.value) || undefined }))}
+                                    className="field-input" style={{ padding: '5px 8px', fontSize: 12 }} />
+                            </div>
+                        );
+                    })}
+                    {activeTab === 'USA' && (['cup', 'cucchiaio', 'serving', 'confezione', 'pezzo'] as const).map((k, i) => {
+                        const labels = ['CUP 240ml (g)', 'Cucchiaio 15ml (g)', 'Serving Size (g/ml)', 'Confezione/UV (g/ml)', 'Pezzo (g/ml)'];
+                        return (
+                            <div key={k} className="field">
+                                <label className="field-label">{labels[i]}</label>
+                                <input type="number" min={0} placeholder="—" value={usa[k] || ''}
+                                    onChange={e => setUSA(prev => ({ ...prev, [k]: parseFloat(e.target.value) || undefined }))}
+                                    className="field-input" style={{ padding: '5px 8px', fontSize: 12 }} />
+                            </div>
+                        );
+                    })}
+                    {activeTab === 'Canada' && (['cup', 'cucchiaio', 'serving', 'confezione', 'pezzo'] as const).map((k, i) => {
+                        const labels = ['CUP 250ml (g)', 'Cucchiaio 15ml (g)', 'Serving Size (g/ml)', 'Confezione/UV (g/ml)', 'Pezzo (g/ml)'];
+                        return (
+                            <div key={k} className="field">
+                                <label className="field-label">{labels[i]}</label>
+                                <input type="number" min={0} placeholder="—" value={ca[k] || ''}
+                                    onChange={e => setCA(prev => ({ ...prev, [k]: parseFloat(e.target.value) || undefined }))}
+                                    className="field-input" style={{ padding: '5px 8px', fontSize: 12 }} />
+                            </div>
+                        );
+                    })}
+                    {activeTab === 'Australia' && (['serving', 'confezione', 'pezzo'] as const).map((k, i) => {
+                        const labels = ['Serving Size (g/ml)', 'Confezione/UV (g/ml)', 'Pezzo (g/ml)'];
+                        return (
+                            <div key={k} className="field">
+                                <label className="field-label">{labels[i]}</label>
+                                <input type="number" min={0} placeholder="—" value={au[k] || ''}
+                                    onChange={e => setAU(prev => ({ ...prev, [k]: parseFloat(e.target.value) || undefined }))}
+                                    className="field-input" style={{ padding: '5px 8px', fontSize: 12 }} />
+                            </div>
+                        );
+                    })}
+                    {activeTab === 'Arabi' && (['cup', 'cucchiaio', 'serving', 'confezione', 'pezzo'] as const).map((k, i) => {
+                        const labels = ['CUP 240ml (g)', 'Cucchiaio 15ml (g)', 'Serving Size (g/ml)', 'Confezione/UV (g/ml)', 'Pezzo (g/ml)'];
+                        return (
+                            <div key={k} className="field">
+                                <label className="field-label">{labels[i]}</label>
+                                <input type="number" min={0} placeholder="—" value={arabi[k] || ''}
+                                    onChange={e => setArabi(prev => ({ ...prev, [k]: parseFloat(e.target.value) || undefined }))}
+                                    className="field-input" style={{ padding: '5px 8px', fontSize: 12 }} />
+                            </div>
+                        );
+                    })}
+                </aside>
+                </div>{/* /table-panel-body */}
 
             <div className="table-panel-footer">
                 <button type="button" onClick={handleSave}
