@@ -15,6 +15,8 @@ export interface DownloadFormatState {
 // fix 1: Canada layout contract — handlers passati al renderPreview
 export interface DownloadPreviewHandlers {
     setSubTab: (t: SubTab) => void;
+    showDI: boolean;
+    setShowDI: (v: boolean) => void;
 }
 
 interface Props {
@@ -61,6 +63,7 @@ export function DownloadTableModal({
 
     // ─── Format state (all local) ─────────────────────────────────────────────
     const [subTab, setSubTab] = useState<SubTab>('verticale');
+    const [showDI, setShowDI] = useState(true);
     const [euSubTab, setEuSubTab] = useState<EUSubTab>('100g');
     const [servingRef, setServingRef] = useState<USAServingRef>('serving');
     const [measure, setMeasure] = useState<USAMeasure>('g');
@@ -90,8 +93,8 @@ export function DownloadTableModal({
         measure: effMeasure,
     };
 
-    // fix 1: handlers esposti al renderPreview per TabCanada
-    const handlers: DownloadPreviewHandlers = { setSubTab };
+    // fix 1: handlers esposti al renderPreview per TabCanada + Australia DI toggle isolato
+    const handlers: DownloadPreviewHandlers = { setSubTab, showDI, setShowDI };
 
     // ─── Download ─────────────────────────────────────────────────────────────
     async function handleDownload() {

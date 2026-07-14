@@ -1750,7 +1750,7 @@ export function NutrizionaleCalc() {
                 );
             case 'Australia':
                 return (
-                    <TabAustralia p={per100display} au={au} showDI={auShowDI} setShowDI={setAuShowDI} full={false} />
+                    <TabAustralia p={per100display} au={au} showDI={handlers.showDI} setShowDI={handlers.setShowDI} full={false} />
                 );
             case 'Arabi':
                 return (
@@ -1779,7 +1779,7 @@ export function NutrizionaleCalc() {
                 </div>
                 <button type="button" onClick={() => setDownloadModalOpen(true)}
                     className="btn btn-accent" style={{ fontSize: 12, padding: '5px 12px', marginLeft: 'auto' }}>
-                    <ImageDown size={13} /> Scarica ufficiale…
+                    <ImageDown size={13} aria-hidden="true" /> Scarica ufficiale…
                 </button>
 
                 {/* Serving inputs — contestuali per nazione, collassabili (D1) */}
@@ -2189,7 +2189,7 @@ export function NutrizionaleCalc() {
                     nation={activeTab === 'USA' ? usa : activeTab === 'Canada' ? ca : activeTab === 'Australia' ? au : activeTab === 'Arabi' ? arabi : {}}
                     productName={productName}
                     onClose={() => setDownloadModalOpen(false)}
-                    renderPreview={(state, handlers) => renderDownloadPreview(state, handlers)}
+                    renderPreview={renderDownloadPreview}
                 />
             )}
             <NutrientSelectModal
