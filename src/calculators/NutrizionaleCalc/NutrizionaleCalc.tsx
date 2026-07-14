@@ -36,6 +36,8 @@ import { TabUSA } from './TabUSA';
 import type { USAServingRef, USAMeasure } from './TabUSA';
 import { SplitShell } from './SplitShell';
 import { BrowseIngredientsModal } from './BrowseIngredientsModal';
+import { DownloadTableModal } from './DownloadTableModal';
+import type { DownloadFormatState, DownloadPreviewHandlers } from './DownloadTableModal';
 import {
     type DBIngredient, type CalcResult, type RecipeRow, type AdditiveRow, type Component,
     ZERO_CALC, calcNutrients, scaleResult, calcClaims,
@@ -1037,6 +1039,7 @@ export function NutrizionaleCalc() {
     const [euSubTab, setEuSubTab] = useState<EUSubTab>('100g');
     const [selectedOptionals, setSelectedOptionals] = useState<SelectedOptionals>({ ...DEFAULT_OPTIONALS });
     const [nutrModalOpen, setNutrModalOpen] = useState(false);
+    const [downloadModalOpen, setDownloadModalOpen] = useState(false);
     const [usaServingRef, setUsaServingRef] = useState<USAServingRef>('serving');
     const [usaMeasure, setUsaMeasure] = useState<USAMeasure>('g');
     useState(true); // pesoCardOpen — dead state, hook order preserved
@@ -1563,22 +1566,6 @@ export function NutrizionaleCalc() {
         doResetRecipe();
     };
 
-    const handleDownloadPNG = async () => {
-        if (!tableRef.current) { toast.error('Tabella non trovata.'); return; }
-        try {
-            const target = (tableRef.current.querySelector('[data-table-export]') as HTMLElement) ?? tableRef.current;
-            const canvas = await html2canvas(target, { scale: 2, backgroundColor: '#ffffff', useCORS: true });
-            const url = canvas.toDataURL('image/png');
-            const a = document.createElement('a');
-            a.download = `${productName || 'tabella'}_nutrizionale.png`;
-            a.href = url;
-            a.click();
-        } catch (e) {
-            console.error('PNG Export error:', e);
-            toast.error('Errore durante l\'esportazione della tabella in PNG.');
-        }
-    };
-
     const _handlePDF = async () => {
         if (allRows.length === 0 || !productName) { toast.warning('Inserisci il nome del prodotto e almeno un ingrediente prima di scaricare.'); return; }
         try {
@@ -1737,6 +1724,42 @@ export function NutrizionaleCalc() {
 
     // ─── (wizard renderer removed) ────────────────────────────────────────────
 
+    // ponytail: renderDownloadPreview mirrors renderTablePanel tab components with modal-local format state
+    const renderDownloadPreview = (state: DownloadFormatState, handlers: DownloadPreviewHandlers): React.ReactNode => {
+        switch (activeTab) {
+            case 'UE':
+                return (
+                    <TabUE
+                        p={per100display}
+                        ue={ue}
+                        specificGravity={parseFloat(specificGravity) || 0}
+                        selectedOptionals={selectedOptionals}
+                        showOptionals={showOptionals}
+                        activeSubTab={state.euSubTab}
+                    />
+                );
+            case 'USA':
+                return (
+                    <TabUSA p={per100display} usa={usa} specificGravity={parseFloat(specificGravity) || 0}
+                        servingRef={state.servingRef} measure={state.measure} subTab={state.subTab} />
+                );
+            case 'Canada':
+                return (
+                    <TabCanada p={per100display} ca={ca} servingRef={state.servingRef} measure={state.measure}
+                        subTab={state.subTab} setSubTab={handlers.setSubTab} full={false} />
+                );
+            case 'Australia':
+                return (
+                    <TabAustralia p={per100display} au={au} showDI={auShowDI} setShowDI={setAuShowDI} full={false} />
+                );
+            case 'Arabi':
+                return (
+                    <TabArabi p={per100display} arabi={arabi} servingRef={state.servingRef} measure={state.measure}
+                        specificGravity={parseFloat(specificGravity) || 0} full={false} />
+                );
+        }
+    };
+
     const renderTablePanel = (isMobileInline = false): React.ReactNode => {
         return (
             <div id={isMobileInline ? undefined : 'mob-tables-anchor'} className={`table-panel-inner${isFlashing ? ' value-flash' : ''}`}>
@@ -1754,6 +1777,10 @@ export function NutrizionaleCalc() {
                         );
                     })}
                 </div>
+                <button type="button" onClick={() => setDownloadModalOpen(true)}
+                    className="btn btn-accent" style={{ fontSize: 12, padding: '5px 12px', marginLeft: 'auto' }}>
+                    <ImageDown size={13} /> Scarica ufficiale…
+                </button>
 
                 {/* Serving inputs — contestuali per nazione, collassabili (D1) */}
                 <button
@@ -2049,13 +2076,8 @@ export function NutrizionaleCalc() {
                 </div>
 
             <div className="table-panel-footer">
-                <button type="button" onClick={handleDownloadPNG}
-                    className="btn btn-outline"
-                    style={{ flex: 1, justifyContent: 'center', fontSize: 12, padding: '7px' }}>
-                    <ImageDown size={13} /> Scarica PNG
-                </button>
                 <button type="button" onClick={handleSave}
-                    style={{ flex: 1, padding: '7px', borderRadius: '7px', background: 'var(--color-navy)', color: 'white', border: 'none', fontSize: '12px', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
+                    style={{ width: '100%', padding: '7px', borderRadius: '7px', background: 'var(--color-navy)', color: 'white', border: 'none', fontSize: '12px', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
                     <Save size={13} /> Salva in archivio
                 </button>
             </div>
@@ -2158,6 +2180,16 @@ export function NutrizionaleCalc() {
                         setShowBrowseModal(false);
                         setEditIngredient({ ing, isCustom });
                     }}
+                />
+            )}
+            {downloadModalOpen && (
+                <DownloadTableModal
+                    region={activeTab}
+                    ue={ue}
+                    nation={activeTab === 'USA' ? usa : activeTab === 'Canada' ? ca : activeTab === 'Australia' ? au : activeTab === 'Arabi' ? arabi : {}}
+                    productName={productName}
+                    onClose={() => setDownloadModalOpen(false)}
+                    renderPreview={(state, handlers) => renderDownloadPreview(state, handlers)}
                 />
             )}
             <NutrientSelectModal
