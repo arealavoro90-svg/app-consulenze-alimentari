@@ -2036,14 +2036,14 @@ a:focus-visible,
 }
 
 /* Colonna porzioni fissa — redesign pannello destro 2026-07 */
-.table-panel-body { display: flex; gap: 12px; align-items: flex-start; min-height: 0; flex: 1; overflow: hidden; }
+/* ponytail: overflow:visible — .portions-col non ha scroll container antenato (fratello di .table-scroll-area), sticky era dead CSS */
+.table-panel-body { display: flex; gap: 12px; align-items: flex-start; min-height: 0; flex: 1; overflow: visible; }
 .table-panel-body .table-scroll-area { flex: 1; min-width: 0; }
 .portions-col {
   width: 170px; flex-shrink: 0;
   background: var(--color-surface); border: 1px solid var(--color-border);
   border-radius: var(--radius-sm); padding: 12px;
   display: flex; flex-direction: column; gap: 10px;
-  position: sticky; top: 8px;
   max-height: calc(100vh - 200px); overflow-y: auto;
 }
 .portions-col-title { font-size: 12px; font-weight: 700; color: var(--color-text); }

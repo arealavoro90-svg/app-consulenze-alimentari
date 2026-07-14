@@ -1153,7 +1153,7 @@ export function NutrizionaleCalc() {
     // ponytail: fallback euSubTab rimosso — vista fissa 100g, scelte formato in DownloadTableModal
     const tableRef = useRef<HTMLDivElement>(null);
 
-    // ─── Griglia porzioni collassabile (D1): auto-chiusa se la regione attiva ha già valori ───
+    // ─── Porzioni: colonna sempre visibile (redesign 2026-07) ───
     // ponytail: servingsGridOpen rimosso — porzioni ora sempre visibili in colonna fissa
     // ponytail: servingValsRef / auto-open effect rimossi — porzioni sempre visibili
 
@@ -1917,12 +1917,12 @@ export function NutrizionaleCalc() {
                 </aside>
                 </div>{/* /table-panel-body */}
 
-            <div className="table-panel-footer">
-                <button type="button" onClick={handleSave}
-                    style={{ width: '100%', padding: '7px', borderRadius: '7px', background: 'var(--color-navy)', color: 'white', border: 'none', fontSize: '12px', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
-                    <Save size={13} /> Salva in archivio
-                </button>
-            </div>
+                <div className="table-panel-footer">
+                    <button type="button" onClick={handleSave}
+                        style={{ width: '100%', padding: '7px', borderRadius: '7px', background: 'var(--color-navy)', color: 'white', border: 'none', fontSize: '12px', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
+                        <Save size={13} /> Salva in archivio
+                    </button>
+                </div>
             </div>
         );
     };
