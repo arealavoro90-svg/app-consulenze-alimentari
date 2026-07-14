@@ -143,7 +143,7 @@ export function DownloadTableModal({
                     <h2 style={{ margin: 0, fontSize: 16 }}>
                         Scarica tabella ufficiale — {region}
                     </h2>
-                    <button className="btn btn-outline" onClick={onClose} style={{ padding: '6px 12px' }}>
+                    <button type="button" className="btn btn-outline" onClick={onClose} style={{ padding: '6px 12px' }}>
                         ✕ Annulla
                     </button>
                 </div>

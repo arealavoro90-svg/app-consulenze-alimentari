@@ -469,3 +469,7 @@ Fonte: CREA BDA 2019. Kcal/kJ ricalcolati con fattori EU Reg 1169/2011. Campo `f
 4. **Sprint "consolidamento"** — Q6 (CI), P2, Q3, poi roadmap M6/PWA
 
 Razionale: prima che i numeri siano giusti e blindati dai test, ogni lavoro di UI rischia di lucidare risultati sbagliati.
+
+## Debito post-redesign pannello destro (2026-07-14)
+- **D-RP1**: 3 `useState(true)` morti in `NutrizionaleCalc.tsx:1043,1055,1056` (pesoCardOpen/additiveOpen/riepilogoOpen) mantenuti solo per hook order — rimuovere con verifica ordine hook.
+- **D-RP2**: duplicati locali TabCanada/TabAustralia/TabArabi dentro `NutrizionaleCalc.tsx` divergono dai moduli `Tab*.tsx` (usati solo da mobile) — consolidare a una sola fonte quando si tocca il mobile.
