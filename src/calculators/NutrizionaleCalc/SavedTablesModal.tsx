@@ -11,6 +11,7 @@ interface Props {
 
 export function SavedTablesModal({ tables, currentTableId, onClose, onLoad, onDelete }: Props) {
     const [search, setSearch] = useState('');
+    const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
 
     const filtered = tables.filter(t => (t.name || 'Senza Nome').toLowerCase().includes(search.toLowerCase()));
 
@@ -68,11 +69,19 @@ export function SavedTablesModal({ tables, currentTableId, onClose, onLoad, onDe
                                     </div>
                                     <div style={{ display: 'flex', gap: 8 }}>
                                         <button className="btn btn-outline" style={{ padding: '6px 12px', fontSize: 12 }} onClick={() => onLoad(table)}>Carica</button>
-                                        <button className="btn btn-danger" style={{ padding: '6px 12px', fontSize: 12 }}
-                                            onClick={() => {
-                                                if (confirm(`Sei sicuro di voler eliminare la tabella "${table.name || 'Senza Nome'}"?`)) onDelete(table.id);
-                                            }}
-                                        >🗑️</button>
+                                        {pendingDeleteId === table.id ? (
+                                            <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
+                                                <span style={{ fontSize: 11, color: '#c53030', fontWeight: 600 }}>Eliminare?</span>
+                                                <button className="btn btn-danger" style={{ padding: '4px 8px', fontSize: 11 }}
+                                                    onClick={() => { onDelete(table.id); setPendingDeleteId(null); }}>Sì</button>
+                                                <button className="btn btn-outline" style={{ padding: '4px 8px', fontSize: 11 }}
+                                                    onClick={() => setPendingDeleteId(null)}>No</button>
+                                            </div>
+                                        ) : (
+                                            <button className="btn btn-danger" style={{ padding: '6px 12px', fontSize: 12 }}
+                                                onClick={() => setPendingDeleteId(table.id)}
+                                                title="Elimina tabella">🗑️</button>
+                                        )}
                                     </div>
                                 </div>
                             ))}
