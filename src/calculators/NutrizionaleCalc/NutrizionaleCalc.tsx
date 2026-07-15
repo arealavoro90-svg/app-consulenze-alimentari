@@ -1507,6 +1507,7 @@ export function NutrizionaleCalc() {
         setCurrentName(item.name);
         setArchiveOpen(false);
         writeBridge(buildDesktopDraft(d, compsToSet));
+        if (!expertMode) setPhase(2); // auto-advance al caricamento da archivio in modalità guidata
     };
 
     const doResetRecipe = () => {
