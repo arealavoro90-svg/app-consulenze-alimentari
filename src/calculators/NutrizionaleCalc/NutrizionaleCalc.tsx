@@ -2128,9 +2128,35 @@ export function NutrizionaleCalc() {
                                     </button>
                                 </div>
                             )}
+                            {/* Tab bar e contenuto — visibile in expertMode o fase 2 */}
+                            {(expertMode || phase === 2) && (<>
+                            {/* Tab bar — hidden on mobile, replaced by bottom bar */}
+                            <div className="expert-desktop-tabbar" style={{ display: 'flex', borderBottom: '1px solid var(--color-border)', background: 'white', flexShrink: 0, height: 40 }}>
+                                {([
+                                    { key: 'ricetta',   label: 'Ricetta' },
+                                    { key: 'riepilogo', label: 'Riepilogo' },
+                                ] as { key: 'ricetta' | 'riepilogo'; label: string }[]).map(tab => (
+                                    <button
+                                        key={tab.key}
+                                        type="button"
+                                        onClick={() => setExpertTab(tab.key)}
+                                        className={`expert-tab-btn${expertTab === tab.key ? ' active' : ''}`}
+                                        style={{ marginBottom: -1 }}
+                                    >
+                                        {tab.label}
+                                        {tab.key === 'ricetta' && allRows.length > 0 && (
+                                            <span className="count-badge">{allRows.length}</span>
+                                        )}
+                                    </button>
+                                ))}
+                            </div>
+
+                            {/* Tab content */}
+                            <div className="expert-tab-content" style={{ flex: 1, overflowY: 'auto', padding: '14px' }}>
+
                         {/* ── FASE 1: Prodotto ── */}
                         {!expertMode && phase === 1 && (
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: 16, padding: '14px' }}>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
                                 <div>
                                     <label style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--color-text-muted)', display: 'block', marginBottom: 4 }}>
                                         Nome prodotto *
@@ -2181,32 +2207,6 @@ export function NutrizionaleCalc() {
                                 </div>
                             </div>
                         )}
-
-                            {/* Tab bar e contenuto — visibile in expertMode o fase 2 */}
-                            {(expertMode || phase === 2) && (<>
-                            {/* Tab bar — hidden on mobile, replaced by bottom bar */}
-                            <div className="expert-desktop-tabbar" style={{ display: 'flex', borderBottom: '1px solid var(--color-border)', background: 'white', flexShrink: 0, height: 40 }}>
-                                {([
-                                    { key: 'ricetta',   label: 'Ricetta' },
-                                    { key: 'riepilogo', label: 'Riepilogo' },
-                                ] as { key: 'ricetta' | 'riepilogo'; label: string }[]).map(tab => (
-                                    <button
-                                        key={tab.key}
-                                        type="button"
-                                        onClick={() => setExpertTab(tab.key)}
-                                        className={`expert-tab-btn${expertTab === tab.key ? ' active' : ''}`}
-                                        style={{ marginBottom: -1 }}
-                                    >
-                                        {tab.label}
-                                        {tab.key === 'ricetta' && allRows.length > 0 && (
-                                            <span className="count-badge">{allRows.length}</span>
-                                        )}
-                                    </button>
-                                ))}
-                            </div>
-
-                            {/* Tab content */}
-                            <div className="expert-tab-content" style={{ flex: 1, overflowY: 'auto', padding: '14px' }}>
 
                         {expertTab === 'ricetta' && (<>
 
