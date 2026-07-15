@@ -23,14 +23,15 @@ interface Props {
 }
 
 // ─── Option button helper ─────────────────────────────────────────────────────
-function OptBtn({ label, active, disabled, onClick }: {
-    label: string; active: boolean; disabled?: boolean; onClick: () => void;
+function OptBtn({ label, active, disabled, onClick, disabledReason }: {
+    label: string; active: boolean; disabled?: boolean; onClick: () => void; disabledReason?: string;
 }) {
     return (
         <button
             type="button"  // fix 3: type=button esplicito
             className={active ? 'btn btn-accent' : 'btn btn-outline'}
             disabled={disabled}
+            title={disabled && disabledReason ? disabledReason : undefined}
             onClick={onClick}
             style={{ fontSize: 11, padding: '3px 8px', opacity: disabled ? 0.4 : 1, width: '100%' }}
         >
@@ -172,18 +173,21 @@ export function DownloadTableModal({
                                         label="Per U.V."
                                         active={effEuSubTab === 'uv'}
                                         disabled={ue.confezione == null}
+                                        disabledReason="Inserisci il peso confezione nel pannello Porzioni (a destra) per abilitare"
                                         onClick={() => setEuSubTab('uv')}
                                     />
                                     <OptBtn
                                         label="Per porzione"
                                         active={effEuSubTab === 'porzione'}
                                         disabled={ue.porzione == null}
+                                        disabledReason="Inserisci la porzione nel pannello Porzioni (a destra) per abilitare"
                                         onClick={() => setEuSubTab('porzione')}
                                     />
                                     <OptBtn
                                         label="Per pezzo"
                                         active={effEuSubTab === 'pezzo'}
                                         disabled={ue.pezzo == null}
+                                        disabledReason="Inserisci il peso pezzo nel pannello Porzioni (a destra) per abilitare"
                                         onClick={() => setEuSubTab('pezzo')}
                                     />
                                 </div>
@@ -209,18 +213,21 @@ export function DownloadTableModal({
                                         label="Tazze"
                                         active={effMeasure === 'tazze'}
                                         disabled={nation.cup == null}
+                                        disabledReason="Inserisci la misura in tazze nel pannello Porzioni (a destra) per abilitare"
                                         onClick={() => setMeasure('tazze')}
                                     />
                                     <OptBtn
                                         label="Cucchiai"
                                         active={effMeasure === 'cucchiai'}
                                         disabled={nation.cucchiaio == null}
+                                        disabledReason="Inserisci la misura in cucchiai nel pannello Porzioni (a destra) per abilitare"
                                         onClick={() => setMeasure('cucchiai')}
                                     />
                                     <OptBtn
                                         label="Pezzi"
                                         active={effMeasure === 'pezzi'}
                                         disabled={nation.pezzo == null}
+                                        disabledReason="Inserisci il peso pezzo nel pannello Porzioni (a destra) per abilitare"
                                         onClick={() => setMeasure('pezzi')}
                                     />
                                 </div>
