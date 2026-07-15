@@ -2440,7 +2440,7 @@ export function NutrizionaleCalc() {
                                     <button
                                         onClick={() => toggleExpandRow(rowKey)}
                                         style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 2, color: 'var(--color-text-muted)', flexShrink: 0, display: 'flex', alignItems: 'center' }}
-                                        title={isExpanded ? 'Comprimi' : 'Espandi €/kg e Resa %'}
+                                        title={isExpanded ? 'Comprimi' : 'Espandi €/kg e Resa dopo cottura (%)'}
                                     >
                                         <ChevronDown size={12} style={{ transform: isExpanded ? 'rotate(0deg)' : 'rotate(-90deg)', transition: 'transform 0.15s' }} />
                                     </button>
@@ -2507,8 +2507,8 @@ export function NutrizionaleCalc() {
                                         </div>
                                         <div className="ing-field-group">
                                             <div className="ing-field-header">
-                                                <span className="ing-field-label">Resa %</span>
-                                                <InfoTooltip text="Percentuale di prodotto effettivamente utilizzabile dopo pulizia o lavorazione. Es: 70 per verdure con scarti (foglie, bucce). Default: 100" />
+                                                <span className="ing-field-label">Resa dopo cottura (%)</span>
+                                                <InfoTooltip text="Percentuale di peso rimanente dopo cottura o lavorazione. Es: 80% significa che 100g crudi diventano 80g cotti. Lascia 100% se non c'è perdita di peso." />
                                             </div>
                                             <input type="text" inputMode="decimal"
                                                 value={resaRaw[`${comp.id}-${row.id}`] ?? String(row.resa || 100)}
@@ -2607,7 +2607,7 @@ export function NutrizionaleCalc() {
                                                 onBlur={e => { const v = parseFloat(e.target.value.replace(',', '.')); const val = isNaN(v) || v < 0 ? 0 : v; setEurKgRaw(prev => ({ ...prev, [`a-${comp.id}-${arow.id}`]: val === 0 ? '' : String(val) })); updateAdditiveRow(comp.id, arow.id, 'eurKg', val); }} />
                                         </div>
                                         <div className="ing-field-group">
-                                            <div className="ing-field-header"><span className="ing-field-label">Resa %</span></div>
+                                            <div className="ing-field-header"><span className="ing-field-label">Resa dopo cottura (%)</span></div>
                                             <input type="text" inputMode="decimal" className="form-input ing-input"
                                                 value={resaRaw[`a-${comp.id}-${arow.id}`] ?? String(arow.resa || 100)}
                                                 onFocus={e => e.target.select()}
