@@ -205,7 +205,10 @@ export function TabUE({ p, ue, specificGravity, selectedOptionals, showOptionals
                             <th style={{ background: '#f5f5f5', border: '1px solid #999', padding: '6px 8px', textAlign: 'left', fontWeight: 700, fontSize: 14 }}>
                                 DICHIARAZIONE NUTRIZIONALE
                             </th>
-                            <th style={{ background: '#f5f5f5', border: '1px solid #999', padding: '6px 4px', textAlign: 'center', fontWeight: 700, fontSize: 11, width: '64px' }}>
+                            <th
+                                style={{ background: '#f5f5f5', border: '1px solid #999', padding: '6px 4px', textAlign: 'center', fontWeight: 700, fontSize: 11, width: '64px', cursor: 'help' }}
+                                title="% AR = percentuale dell'Assunzione di Riferimento giornaliera per un adulto medio (8400 kJ / 2000 kcal). Fonte: Reg. UE 1169/2011."
+                            >
                                 % AR *
                             </th>
                         </tr>
