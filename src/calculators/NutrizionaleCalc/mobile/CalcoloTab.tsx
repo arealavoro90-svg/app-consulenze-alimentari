@@ -549,21 +549,23 @@ function ComponentCard({
                             autoComplete="off"
                             onClick={e => e.stopPropagation()}
                         />
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 4, flexShrink: 0 }}>
-                            <span style={{ fontSize: 12, color: 'var(--m-text-muted)' }}>pz/UV</span>
-                            <input
-                                className="m-input m-input--num"
-                                type="number"
-                                inputMode="decimal"
-                                min="1"
-                                step="1"
-                                value={pzRaw}
-                                aria-label="Pezzi per unità di vendita"
-                                onChange={e => handlePzUV(e.target.value)}
-                                style={{ width: 46, textAlign: 'right', fontSize: 12 }}
-                                onClick={e => e.stopPropagation()}
-                            />
-                        </div>
+                        {!isOnly && (
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 4, flexShrink: 0 }}>
+                                <span style={{ fontSize: 12, color: 'var(--m-text-muted)' }}>pz/UV</span>
+                                <input
+                                    className="m-input m-input--num"
+                                    type="number"
+                                    inputMode="decimal"
+                                    min="1"
+                                    step="1"
+                                    value={pzRaw}
+                                    aria-label="Pezzi per unità di vendita"
+                                    onChange={e => handlePzUV(e.target.value)}
+                                    style={{ width: 46, textAlign: 'right', fontSize: 12 }}
+                                    onClick={e => e.stopPropagation()}
+                                />
+                            </div>
+                        )}
                     </div>
                     {/* Pulsante apri picker */}
                     <button
@@ -888,20 +890,22 @@ export function CalcoloTab({
                             ))}
                         </div>
 
-                        <button
-                            type="button"
-                            onClick={onAddComponent}
-                            style={{
-                                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
-                                width: '100%', padding: '9px 0',
-                                background: 'none',
-                                border: '1.5px dashed var(--m-orange, #ff7e2e)',
-                                borderRadius: 8, fontSize: 13,
-                                color: 'var(--m-orange, #ff7e2e)', cursor: 'pointer',
-                            }}
-                        >
-                            <Plus size={14} /> Aggiungi componente
-                        </button>
+                        {hasIngredients && (
+                            <button
+                                type="button"
+                                onClick={onAddComponent}
+                                style={{
+                                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+                                    width: '100%', padding: '9px 0',
+                                    background: 'none',
+                                    border: '1.5px dashed var(--m-orange, #ff7e2e)',
+                                    borderRadius: 8, fontSize: 13,
+                                    color: 'var(--m-orange, #ff7e2e)', cursor: 'pointer',
+                                }}
+                            >
+                                <Plus size={14} /> {components.length === 1 ? '+ Secondo componente' : '+ Componente'}
+                            </button>
+                        )}
                     </>
                 )}
             </div>
