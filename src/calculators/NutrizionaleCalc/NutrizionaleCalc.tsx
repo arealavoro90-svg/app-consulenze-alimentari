@@ -1061,6 +1061,8 @@ export function NutrizionaleCalc() {
     useLocalStorage<boolean>('nutri_guide_open', true);
 
     const [expertTab, setExpertTab] = useState<'ricetta' | 'riepilogo'>('ricetta');
+    const [phase, setPhase] = useState<1 | 2 | 3>(1);
+    const [expertMode, setExpertMode] = useLocalStorage<boolean>('nutri_expert_mode', false);
 
     // Toast + ConfirmDialog state (replaces native alert/confirm)
     const toast = useToast();
@@ -1750,7 +1752,7 @@ export function NutrizionaleCalc() {
 
                 {/* Body: tabella + colonna porzioni fissa */}
                 <div className="table-panel-body">
-                <div ref={isMobileInline ? undefined : tableRef} className="table-scroll-area" style={{ overflowX: 'auto' }}>
+                <div ref={isMobileInline ? undefined : tableRef} className="table-scroll-area">
                     {activeTab === 'UE' && (
                         <>
                             <div style={{ border: '1px solid #eaecf0', borderRadius: 8, overflow: 'hidden', marginTop: 8 }}>
@@ -1835,12 +1837,12 @@ export function NutrizionaleCalc() {
                         </div>
                     )}
                     {activeTab === 'Canada' && (
-                        <div style={{ border: '1px solid #eaecf0', borderRadius: 8, overflow: 'hidden', marginTop: 8 }}>
+                        <div className="tab-display-canada" style={{ border: '1px solid #eaecf0', borderRadius: 8, overflow: 'hidden', marginTop: 8 }}>
                             <TabCanada p={per100display} ca={ca} servingRef="serving" measure="g" subTab="verticale" />
                         </div>
                     )}
                     {activeTab === 'Australia' && (
-                        <div style={{ border: '1px solid #eaecf0', borderRadius: 8, overflow: 'hidden', marginTop: 8 }}>
+                        <div className="tab-display-australia" style={{ border: '1px solid #eaecf0', borderRadius: 8, overflow: 'hidden', marginTop: 8 }}>
                             <TabAustralia p={per100display} au={au} />
                         </div>
                     )}
@@ -2075,6 +2077,59 @@ export function NutrizionaleCalc() {
                 left={
                     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', fontSize: 15 }}>
                         <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+                            {/* ── Progress bar fasi (hidden in expertMode) ── */}
+                            {!expertMode && (
+                                <div className="phase-bar">
+                                    {([
+                                        { n: 1 as const, label: 'Prodotto' },
+                                        { n: 2 as const, label: 'Ingredienti' },
+                                        { n: 3 as const, label: 'Dettagli' },
+                                    ] as { n: 1 | 2 | 3; label: string }[]).map(({ n, label }, i) => {
+                                        const isDone = phase > n;
+                                        const isActive = phase === n;
+                                        return (
+                                            <React.Fragment key={n}>
+                                                {i > 0 && <div className="phase-connector" />}
+                                                <div
+                                                    className={`phase-step${isActive ? ' active' : ''}${isDone ? ' done' : ''}`}
+                                                    onClick={() => isDone && setPhase(n)}
+                                                    title={isDone ? `Torna a ${label}` : undefined}
+                                                >
+                                                    <div className="phase-step-dot">
+                                                        {isDone ? '✓' : n}
+                                                    </div>
+                                                    {label}
+                                                </div>
+                                            </React.Fragment>
+                                        );
+                                    })}
+                                    <div style={{ flex: 1 }} />
+                                    <button
+                                        type="button"
+                                        className="expert-toggle-btn"
+                                        onClick={() => setExpertMode(!expertMode)}
+                                        title="Mostra tutti i campi simultaneamente (modalità esperta)"
+                                    >
+                                        <SlidersHorizontal size={12} />
+                                        Esperto
+                                    </button>
+                                </div>
+                            )}
+                            {expertMode && (
+                                <div style={{ display: 'flex', justifyContent: 'flex-end', padding: '6px 14px', borderBottom: '1px solid var(--color-border)', flexShrink: 0 }}>
+                                    <button
+                                        type="button"
+                                        className="expert-toggle-btn active"
+                                        onClick={() => setExpertMode(false)}
+                                        title="Torna alla guida passo-passo"
+                                    >
+                                        <SlidersHorizontal size={12} />
+                                        Guidato
+                                    </button>
+                                </div>
+                            )}
+                            {/* Tab bar e contenuto — visibile in expertMode o fase 2 */}
+                            {(expertMode || phase === 2) && (<>
                             {/* Tab bar — hidden on mobile, replaced by bottom bar */}
                             <div className="expert-desktop-tabbar" style={{ display: 'flex', borderBottom: '1px solid var(--color-border)', background: 'white', flexShrink: 0, height: 40 }}>
                                 {([
@@ -2098,6 +2153,60 @@ export function NutrizionaleCalc() {
 
                             {/* Tab content */}
                             <div className="expert-tab-content" style={{ flex: 1, overflowY: 'auto', padding: '14px' }}>
+
+                        {/* ── FASE 1: Prodotto ── */}
+                        {!expertMode && phase === 1 && (
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                                <div>
+                                    <label style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--color-text-muted)', display: 'block', marginBottom: 4 }}>
+                                        Nome prodotto *
+                                    </label>
+                                    <input
+                                        type="text"
+                                        placeholder="Es. Torta di mele, Ragù bolognese..."
+                                        value={productName}
+                                        onChange={e => setProductName(e.target.value)}
+                                        className="field-input"
+                                        style={{ fontWeight: 600, fontSize: 16, width: '100%', padding: '8px 10px' }}
+                                        autoFocus
+                                    />
+                                </div>
+                                <div>
+                                    <label style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--color-text-muted)', display: 'block', marginBottom: 8 }}>
+                                        Tipo prodotto
+                                    </label>
+                                    <div className="phase1-liquid-radio">
+                                        <label>
+                                            <input type="radio" name="product-type" checked={!isLiquid} onChange={() => setIsLiquid(false)} />
+                                            Solido
+                                        </label>
+                                        <label>
+                                            <input type="radio" name="product-type" checked={isLiquid} onChange={() => setIsLiquid(true)} />
+                                            Liquido
+                                        </label>
+                                    </div>
+                                </div>
+                                <div style={{ display: 'flex', gap: 10, marginTop: 8 }}>
+                                    <button
+                                        type="button"
+                                        className="btn btn-outline"
+                                        style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}
+                                        onClick={() => setArchiveOpen(true)}
+                                    >
+                                        <FolderOpen size={14} /> Carica da archivio
+                                    </button>
+                                    <button
+                                        type="button"
+                                        className="btn btn-primary"
+                                        style={{ flex: 1 }}
+                                        disabled={!productName.trim()}
+                                        onClick={() => setPhase(2)}
+                                    >
+                                        Avanti →
+                                    </button>
+                                </div>
+                            </div>
+                        )}
 
                         {expertTab === 'ricetta' && (<>
 
@@ -2279,9 +2388,10 @@ export function NutrizionaleCalc() {
                             onChange={e => updateCompName(comp.id, e.target.value)}
                             style={{ flex: 1, fontSize: 13, fontWeight: 600, border: '1px solid var(--color-border)', borderRadius: 6, padding: '5px 8px', color: 'var(--color-text)', background: 'white', fontFamily: 'inherit', outline: 'none' }}
                         />
+                        {components.length > 1 && (
                         <div style={{ display: 'flex', alignItems: 'center', gap: 4, flexShrink: 0 }}>
-                            <span style={{ fontSize: 11, color: 'var(--color-text-muted)' }}>pz/UV</span>
-                            <InfoTooltip text="Digitare il numero di PZ o di Unità di Vendita che si possono realizzare con la quantità di componente che scaturisce dalla ricetta." />
+                            <span style={{ fontSize: 11, color: 'var(--color-text-muted)' }}>Pezzi/conf.</span>
+                            <InfoTooltip text="Numero di pezzi o unità di vendita realizzabili con questo componente. Usato per scalare i valori per pezzo nel Riepilogo." />
                             <input
                                 type="text"
                                 inputMode="decimal"
@@ -2309,6 +2419,7 @@ export function NutrizionaleCalc() {
                                 style={{ width: 46, fontSize: 12, border: '1px solid var(--color-border)', borderRadius: 6, padding: '4px 6px', textAlign: 'center', fontFamily: 'inherit', outline: 'none' }}
                             />
                         </div>
+                        )}
                     </div>
                     <ValidationError message={fieldErrors[`${comp.id}-pzuv`]} visible={!!fieldErrors[`${comp.id}-pzuv`]} />
                     <IngSearch onAdd={(ing) => addRowToComp(comp.id, ing)} db={db} loading={loadingDB} error={dbError} onRetry={loadDB} />
@@ -2520,7 +2631,12 @@ export function NutrizionaleCalc() {
                 );
             })}
 
-            <button className="btn btn-outline add-comp-btn" onClick={addComp}><Plus size={14} /> Aggiungi componente</button>
+            {allRows.length > 0 && (
+                <button className="btn btn-outline add-comp-btn" onClick={addComp}>
+                    <Plus size={14} />
+                    {components.length === 1 ? '+ Secondo componente' : '+ Componente'}
+                </button>
+            )}
 
         </>)}
 
@@ -2647,8 +2763,113 @@ export function NutrizionaleCalc() {
 
         </>)}
 
+                        {/* Footer navigazione fase 2 */}
+                        {!expertMode && phase === 2 && (
+                            <div className="phase-nav-footer">
+                                <button type="button" className="btn btn-outline" onClick={() => setPhase(1)}>
+                                    ← Indietro
+                                </button>
+                                <button
+                                    type="button"
+                                    className="btn btn-primary"
+                                    disabled={allRows.length === 0}
+                                    title={allRows.length === 0 ? 'Aggiungi almeno un ingrediente per continuare' : undefined}
+                                    onClick={() => setPhase(3)}
+                                >
+                                    Avanti →
+                                </button>
+                            </div>
+                        )}
 
                             </div>{/* end tab content */}
+                            </>)}{/* end (expertMode || phase === 2) */}
+
+                        {/* ── FASE 3: Dettagli ── */}
+                        {!expertMode && phase === 3 && (
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: 16, padding: '14px' }}>
+                                {/* Peso finito */}
+                                <div>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginBottom: 3 }}>
+                                        <label style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--color-text-muted)' }}>
+                                            Peso prodotto finito (g)
+                                        </label>
+                                        <InfoTooltip text="Peso del prodotto dopo cottura, disidratazione o lavorazione. Lascia vuoto se uguale alla somma degli ingredienti crudi." />
+                                    </div>
+                                    <input
+                                        type="number"
+                                        min={0}
+                                        placeholder={`max ${totalGramsRaw.toFixed(0)}g`}
+                                        value={finishedWeight}
+                                        onChange={e => handleFW(e.target.value)}
+                                        className="field-input"
+                                        style={{ width: '100%', ...(fwWarning ? { borderColor: '#e53e3e', background: 'rgba(229,62,62,.05)' } : {}) }}
+                                    />
+                                    {fwWarning && (
+                                        <div style={{ padding: '5px 8px', background: 'rgba(229,62,62,.10)', border: '2px solid #e53e3e', borderRadius: 6, fontSize: 11, color: '#c53030', fontWeight: 700, display: 'flex', alignItems: 'center', gap: 6, marginTop: 4 }}>
+                                            <AlertTriangle size={12} style={{ flexShrink: 0 }} />
+                                            <span>{fieldErrors['finished-weight'] || `Peso superiore al crudo. Max ${(totalGramsRaw / ((components[0]?.pzUV || 1))).toFixed(0)}g.`}</span>
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* Peso specifico — solo se liquido */}
+                                {isLiquid && (
+                                    <div>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginBottom: 3 }}>
+                                            <label style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--color-text-muted)' }}>
+                                                Peso specifico (g/ml)
+                                            </label>
+                                            <InfoTooltip text="Solo per prodotti liquidi. Quando compilato, i valori nutrizionali vengono espressi su 100 ml invece di 100 g." />
+                                        </div>
+                                        <input
+                                            type="number"
+                                            min={0}
+                                            step={0.01}
+                                            placeholder="es. 1.03"
+                                            value={specificGravity}
+                                            onChange={e => setSpecificGravity(e.target.value)}
+                                            className="field-input"
+                                            style={{ width: '100%' }}
+                                        />
+                                    </div>
+                                )}
+
+                                {/* Additivi — link a modalità esperta */}
+                                <details>
+                                    <summary style={{ fontSize: 12, fontWeight: 600, color: 'var(--color-text-muted)', cursor: 'pointer', userSelect: 'none', padding: '4px 0' }}>
+                                        Additivi (opzionale)
+                                    </summary>
+                                    <div style={{ marginTop: 8, padding: '8px', background: '#f9fafb', borderRadius: 6, fontSize: 12, color: 'var(--color-text-muted)' }}>
+                                        Per gestire gli additivi attiva la{' '}
+                                        <button
+                                            type="button"
+                                            style={{ background: 'none', border: 'none', color: 'var(--color-orange)', fontWeight: 600, cursor: 'pointer', padding: 0, fontSize: 12 }}
+                                            onClick={() => setExpertMode(true)}
+                                        >
+                                            Modalità esperta
+                                        </button>
+                                        .
+                                    </div>
+                                </details>
+
+                                {/* Footer navigazione */}
+                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: 12, borderTop: '1px solid var(--color-border)', marginTop: 4 }}>
+                                    <button type="button" className="btn btn-outline" onClick={() => setPhase(2)}>
+                                        ← Indietro
+                                    </button>
+                                    <button
+                                        type="button"
+                                        className="btn btn-primary"
+                                        style={{ display: 'flex', alignItems: 'center', gap: 7 }}
+                                        disabled={allRows.length === 0}
+                                        onClick={() => setDownloadModalOpen(true)}
+                                    >
+                                        <Download size={14} /> Scarica tabella
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+
                         </div>
                     </div>
                 }
@@ -2983,6 +3204,7 @@ function TabAustralia({ p, au }: { p: CalcResult; au: ServingSizesNation }) {
     const bHdr = '1px solid #000';
     const thStyle: React.CSSProperties = { padding: '5px 10px', fontWeight: 700, fontSize: 12, borderBottom: bHdr, verticalAlign: 'bottom' };
     const tdStyle: React.CSSProperties = { padding: '2px 10px', fontSize: 12, fontWeight: 700, color: '#000' };
+    const tdNowrap: React.CSSProperties = { whiteSpace: 'nowrap' };
 
     return (
         <div style={{ background: 'white' }}>
@@ -3008,19 +3230,18 @@ function TabAustralia({ p, au }: { p: CalcResult; au: ServingSizesNation }) {
                         <thead>
                             <tr>
                                 <th style={{ ...thStyle, textAlign: 'left', width: '34%' }}></th>
-                                <th style={{ ...thStyle, textAlign: 'left' }}>Average Quantity<br/>per Serving</th>
-                                <th style={{ ...thStyle, textAlign: 'left', whiteSpace: 'nowrap' }}>% Daily Intake*<br/>(per Serving)</th>
-                                <th style={{ ...thStyle, textAlign: 'left' }}>Average Quantity<br/>per 100 g</th>
+                                <th style={{ ...thStyle, textAlign: 'left' }}><span style={{ whiteSpace: 'nowrap' }}>Average Quantity</span><br/>per Serving</th>
+                                <th style={{ ...thStyle, textAlign: 'left' }}><span style={{ whiteSpace: 'nowrap' }}>% Daily Intake*</span><br/>(per Serving)</th>
+                                <th style={{ ...thStyle, textAlign: 'left' }}><span style={{ whiteSpace: 'nowrap' }}>Average Quantity</span><br/>per 100 g</th>
                             </tr>
                         </thead>
                         <tbody>
                             {svG > 0 && sv ? rows.map((r, i) => (
                                 <tr key={i}>
-                                    {/* fix approvato 2026-07-14: niente nowrap — le diciture lunghe ("less than …") devono andare a capo dentro i 500px */}
                                     <td style={{ ...tdStyle, paddingTop: i === 0 ? 8 : 2, paddingLeft: r.isSub ? 22 : 10 }}>{r.label}</td>
-                                    <td style={{ ...tdStyle, paddingTop: i === 0 ? 8 : 2 }}>{r.svVal}</td>
+                                    <td style={{ ...tdStyle, paddingTop: i === 0 ? 8 : 2, ...(i === 0 ? tdNowrap : {}) }}>{r.svVal}</td>
                                     <td style={{ ...tdStyle, paddingTop: i === 0 ? 8 : 2 }}>{r.di}</td>
-                                    <td style={{ ...tdStyle, paddingTop: i === 0 ? 8 : 2 }}>{r.p100}</td>
+                                    <td style={{ ...tdStyle, paddingTop: i === 0 ? 8 : 2, ...(i === 0 ? tdNowrap : {}) }}>{r.p100}</td>
                                 </tr>
                             )) : (
                                 <tr><td colSpan={4} style={{ ...tdStyle, color: '#888' }}>Inserire il valore serving size sopra per calcolare le quantità per porzione.</td></tr>
