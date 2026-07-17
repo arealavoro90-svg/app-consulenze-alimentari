@@ -1327,6 +1327,7 @@ export function NutrizionaleCalc() {
     const addComp = () => { setComponents(prev => [...prev, makeComp()]); };
     const handleSmartImport = useCallback((result: SmartImportResult) => {
         if (!result.components.length) return;
+        if (result.productName) setProductName(result.productName);
         const firstId = components[0]?.id;
         setComponents(prev => {
             let updated = prev;
@@ -1340,8 +1341,7 @@ export function NutrizionaleCalc() {
                 }));
                 if (ci === 0 && firstId) {
                     // primo componente → aggiunge al componente esistente
-                    const name = result.productName || comp.name;
-                    updated = updated.map(c => c.id !== firstId ? c : { ...c, rows: [...c.rows, ...newRows], name: c.name || name });
+                    updated = updated.map(c => c.id !== firstId ? c : { ...c, rows: [...c.rows, ...newRows], name: c.name || comp.name });
                 } else {
                     updated = [...updated, { ...makeComp(), name: comp.name, rows: newRows }];
                 }
@@ -1824,87 +1824,16 @@ export function NutrizionaleCalc() {
                 <div className="table-panel-body">
                 <div ref={isMobileInline ? undefined : tableRef} className={`table-scroll-area${isFlashing ? ' value-flash' : ''}`} style={{ overflowX: 'auto' }}>
                     {activeTab === 'UE' && (
-                        <>
-                            <div className="table-wrap-center" style={{ border: '1px solid var(--color-border)', borderRadius: 'var(--radius-md)', overflow: 'hidden', marginTop: 8 }}>
-                                <TabUE
-                                    p={per100display}
-                                    ue={ue}
-                                    specificGravity={parseFloat(specificGravity) || 0}
-                                    selectedOptionals={selectedOptionals}
-                                    showOptionals={showOptionals}
-                                    activeSubTab="100g"
-                                />
-                            </div>
-                            <div style={{ marginTop: 8, display: 'flex', alignItems: 'center', gap: 8 }}>
-                                <label style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 11, cursor: 'pointer', color: 'var(--color-text-muted)' }}>
-                                    <input
-                                        type="checkbox"
-                                        checked={showOptionals}
-                                        onChange={e => setShowOptionals(e.target.checked)}
-                                        style={{ width: 13, height: 13, cursor: 'pointer', accentColor: 'var(--color-orange)' }}
-                                    />
-                                    Mostra valori facoltativi
-                                </label>
-                                {showOptionals && (
-                                    <button
-                                        type="button"
-                                        onClick={() => setNutrModalOpen(true)}
-                                        className="btn btn-outline"
-                                        style={{ fontSize: 11, padding: '3px 8px', display: 'flex', alignItems: 'center', gap: 5 }}
-                                    >
-                                        <SlidersHorizontal size={12} /> Configura nutrienti
-                                    </button>
-                                )}
-                            </div>
-                            {/* ── Claim nutrizionali EU (Reg. 2006/1924) ──────── */}
-                            {(() => {
-                                const claims = calcClaims(per100display, isLiquid);
-                                return (
-                                    <div style={{
-                                        marginTop: 10,
-                                        background: 'color-mix(in srgb, var(--color-navy) 6%, var(--color-bg-card))',
-                                        border: '1px solid color-mix(in srgb, var(--color-navy) 18%, var(--color-border))',
-                                        borderRadius: 'var(--radius-md)',
-                                        padding: '10px 12px',
-                                    }}>
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: claims.length > 0 ? 8 : 0 }}>
-                                            <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--color-navy)', letterSpacing: '0.02em', textTransform: 'uppercase' }}>
-                                                Claim applicabili
-                                            </span>
-                                            <label style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 11, cursor: 'pointer', color: 'var(--color-text-muted)', marginLeft: 'auto' }}>
-                                                <input
-                                                    type="checkbox"
-                                                    checked={isLiquid}
-                                                    onChange={e => setIsLiquid(e.target.checked)}
-                                                    style={{ width: 12, height: 12, cursor: 'pointer', accentColor: 'var(--color-orange)' }}
-                                                />
-                                                Liquido
-                                            </label>
-                                        </div>
-                                        {claims.length === 0 ? (
-                                            <span style={{ fontSize: 11, color: 'var(--color-text-muted)', fontStyle: 'italic' }}>
-                                                Nessun claim applicabile con i valori attuali.
-                                            </span>
-                                        ) : (
-                                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}>
-                                                {claims.map(c => (
-                                                    <span key={c} style={{
-                                                        fontSize: 10, fontWeight: 700, letterSpacing: '0.03em',
-                                                        background: 'var(--color-navy)', color: '#fff',
-                                                        borderRadius: 'var(--radius-sm)', padding: '3px 7px',
-                                                    }}>
-                                                        {c}
-                                                    </span>
-                                                ))}
-                                            </div>
-                                        )}
-                                        <p style={{ fontSize: 10, color: 'var(--color-text-muted)', margin: '6px 0 0', lineHeight: 1.4 }}>
-                                            Reg. 2006/1924 — verificare sempre con il consulente prima di apporli in etichetta.
-                                        </p>
-                                    </div>
-                                );
-                            })()}
-                        </>
+                        <div className="table-wrap-center" style={{ border: '1px solid var(--color-border)', borderRadius: 'var(--radius-md)', overflow: 'hidden', marginTop: 8 }}>
+                            <TabUE
+                                p={per100display}
+                                ue={ue}
+                                specificGravity={parseFloat(specificGravity) || 0}
+                                selectedOptionals={selectedOptionals}
+                                showOptionals={showOptionals}
+                                activeSubTab="100g"
+                            />
+                        </div>
                     )}
                     {activeTab === 'USA' && (
                         <div className="table-wrap-center" style={{ border: '1px solid var(--color-border)', borderRadius: 'var(--radius-md)', overflow: 'hidden', marginTop: 8 }}>
@@ -1913,7 +1842,9 @@ export function NutrizionaleCalc() {
                         </div>
                     )}
                     {activeTab === 'Canada' && (
-                        <div className="table-wrap-center" style={{ border: '1px solid var(--color-border)', borderRadius: 'var(--radius-md)', overflow: 'hidden', marginTop: 8 }}>
+                        // Canada (280px) è più stretta delle altre tabelle (~300-328px): l'intero box
+                        // (bordo + tabella) scala come unità, così l'overflow:hidden non taglia nulla.
+                        <div className="table-wrap-center" style={{ border: '1px solid var(--color-border)', borderRadius: 'var(--radius-md)', overflow: 'hidden', marginTop: 8, transform: 'scale(1.12)', transformOrigin: 'center' }}>
                             <TabCanada p={per100display} ca={ca} servingRef="serving" measure="g" subTab="verticale" />
                         </div>
                     )}
@@ -1928,6 +1859,82 @@ export function NutrizionaleCalc() {
                         </div>
                     )}
                 </div>
+
+                {/* Valori facoltativi + Claim EU — fuori da table-scroll-area: non deve muoversi
+                    quando la tabella cresce coi facoltativi attivi (a pari con la colonna porzioni) */}
+                {activeTab === 'UE' && (
+                    <div style={{ flexShrink: 0 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                            <label style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 11, cursor: 'pointer', color: 'var(--color-text-muted)' }}>
+                                <input
+                                    type="checkbox"
+                                    checked={showOptionals}
+                                    onChange={e => setShowOptionals(e.target.checked)}
+                                    style={{ width: 13, height: 13, cursor: 'pointer', accentColor: 'var(--color-orange)' }}
+                                />
+                                Mostra valori facoltativi
+                            </label>
+                            {showOptionals && (
+                                <button
+                                    type="button"
+                                    onClick={() => setNutrModalOpen(true)}
+                                    className="btn btn-outline"
+                                    style={{ fontSize: 11, padding: '3px 8px', display: 'flex', alignItems: 'center', gap: 5 }}
+                                >
+                                    <SlidersHorizontal size={12} /> Configura nutrienti
+                                </button>
+                            )}
+                        </div>
+                        {/* ── Claim nutrizionali EU (Reg. 2006/1924) ──────── */}
+                        {(() => {
+                            const claims = calcClaims(per100display, isLiquid);
+                            return (
+                                <div style={{
+                                    marginTop: 10,
+                                    background: 'color-mix(in srgb, var(--color-navy) 6%, var(--color-bg-card))',
+                                    border: '1px solid color-mix(in srgb, var(--color-navy) 18%, var(--color-border))',
+                                    borderRadius: 'var(--radius-md)',
+                                    padding: '10px 12px',
+                                }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: claims.length > 0 ? 8 : 0 }}>
+                                        <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--color-navy)', letterSpacing: '0.02em', textTransform: 'uppercase' }}>
+                                            Claim applicabili
+                                        </span>
+                                        <label style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 11, cursor: 'pointer', color: 'var(--color-text-muted)', marginLeft: 'auto' }}>
+                                            <input
+                                                type="checkbox"
+                                                checked={isLiquid}
+                                                onChange={e => setIsLiquid(e.target.checked)}
+                                                style={{ width: 12, height: 12, cursor: 'pointer', accentColor: 'var(--color-orange)' }}
+                                            />
+                                            Liquido
+                                        </label>
+                                    </div>
+                                    {claims.length === 0 ? (
+                                        <span style={{ fontSize: 11, color: 'var(--color-text-muted)', fontStyle: 'italic' }}>
+                                            Nessun claim applicabile con i valori attuali.
+                                        </span>
+                                    ) : (
+                                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}>
+                                            {claims.map(c => (
+                                                <span key={c} style={{
+                                                    fontSize: 10, fontWeight: 700, letterSpacing: '0.03em',
+                                                    background: 'var(--color-navy)', color: '#fff',
+                                                    borderRadius: 'var(--radius-sm)', padding: '3px 7px',
+                                                }}>
+                                                    {c}
+                                                </span>
+                                            ))}
+                                        </div>
+                                    )}
+                                    <p style={{ fontSize: 10, color: 'var(--color-text-muted)', margin: '6px 0 0', lineHeight: 1.4 }}>
+                                        Reg. 2006/1924 — verificare sempre con il consulente prima di apporli in etichetta.
+                                    </p>
+                                </div>
+                            );
+                        })()}
+                    </div>
+                )}
 
                 {/* Colonna porzioni — struttura speculare al DownloadTableModal */}
                 <aside className="portions-col" aria-label={`Porzioni ${activeTab}`}>

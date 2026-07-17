@@ -226,13 +226,14 @@ function VertLayout({ d, si, addedSugarsG, addedSugarsPct, rows, vitamins }:
             </div>
 
             {/* Serving size */}
-            <div style={{ fontSize: 14, fontWeight: 900, WebkitTextStroke: '0.5px black', paddingTop: 2, paddingBottom: 2, textAlign: 'justify', textAlignLast: 'justify' as any, letterSpacing: '0px' }}>
-                {si.sizeLabel} {si.sizeValue}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', paddingTop: 2, paddingBottom: 2 }}>
+                <span style={{ fontSize: 14, fontWeight: 900, WebkitTextStroke: '0.5px black' }}>{si.sizeLabel}</span>
+                <span style={{ fontSize: 14, fontWeight: 900, WebkitTextStroke: '0.5px black' }}>{si.sizeValue}</span>
             </div>
 
             {/* Amount + Calories */}
             <div style={{ borderTop: '8px solid #000', paddingTop: 0 }}>
-                <div style={{ fontSize: 10, fontWeight: 700 }}>{si.amountLabel}</div>
+                <div style={{ fontSize: 12, fontWeight: 700 }}>{si.amountLabel}</div>
                 <div style={{
                     display: 'flex', justifyContent: 'space-between', alignItems: 'baseline',
                     borderBottom: '4px solid #000', paddingBottom: 0,
@@ -519,8 +520,8 @@ function LinearLayout({ d, si, addedSugarsG, addedSugarsPct, vitamins }:
                 {'\u2002'}{'Amount per Serving'}:{' '}
                 <b style={{ fontSize: 17, fontWeight: 900, WebkitTextStroke: '0.3px black' }}>Calories</b>{' '}
                 <b style={{ fontSize: 17, fontWeight: 900, WebkitTextStroke: '0.3px black' }}>{kcal},</b>{'  '}
-                <b style={{ fontWeight: 900, WebkitTextStroke: '0.3px black' }}>Total Fat</b>{'  '}{rG(d.grassi)}g{' '}{pdv(rG(d.grassi), DV_USA.grassi)},{'  '}
-                Sat.Fat{'  '}{rG(d.saturi)}g{' '}{pdv(rG(d.saturi), DV_USA.saturi)},
+                <b style={{ fontWeight: 900, WebkitTextStroke: '0.3px black' }}>Total Fat</b>{'  '}<span style={{ whiteSpace: 'nowrap' }}>{rG(d.grassi)}g{' '}{pdv(rG(d.grassi), DV_USA.grassi)},</span>{'  '}
+                Sat.Fat{'  '}<span style={{ whiteSpace: 'nowrap' }}>{rG(d.saturi)}g{' '}{pdv(rG(d.saturi), DV_USA.saturi)},</span>
             </div>
             {/* Line 3: Trans Fat + Cholest. + Sodium + Total Carb. */}
             <div>

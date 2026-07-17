@@ -13,7 +13,7 @@ exports[`TabArabi — snapshot rendering > confezione in tazze, liquido (ml) 1`]
         style="width: 310px; border: 2.5px solid rgb(0, 0, 0); padding: 8px 8px 6px; font-family: Arial, Helvetica, sans-serif; color: rgb(0, 0, 0); box-sizing: border-box;"
       >
         <div
-          style="font-size: 38px; font-weight: 900; line-height: 1; white-space: nowrap; text-align: justify; text-align-last: justify; -webkit-text-stroke: 0.6px #000; border-bottom: 1px solid rgb(0, 0, 0); padding-bottom: 3px; margin-bottom: 2px;"
+          style="font-size: 38px; font-weight: 900; line-height: 1; white-space: nowrap; -webkit-text-stroke: 0.6px #000; border-bottom: 1px solid rgb(0, 0, 0); padding-bottom: 3px; margin-bottom: 2px;"
         >
           Nutrition Facts
         </div>
@@ -288,7 +288,7 @@ exports[`TabArabi — snapshot rendering > serving in grammi 1`] = `
         style="width: 310px; border: 2.5px solid rgb(0, 0, 0); padding: 8px 8px 6px; font-family: Arial, Helvetica, sans-serif; color: rgb(0, 0, 0); box-sizing: border-box;"
       >
         <div
-          style="font-size: 38px; font-weight: 900; line-height: 1; white-space: nowrap; text-align: justify; text-align-last: justify; -webkit-text-stroke: 0.6px #000; border-bottom: 1px solid rgb(0, 0, 0); padding-bottom: 3px; margin-bottom: 2px;"
+          style="font-size: 38px; font-weight: 900; line-height: 1; white-space: nowrap; -webkit-text-stroke: 0.6px #000; border-bottom: 1px solid rgb(0, 0, 0); padding-bottom: 3px; margin-bottom: 2px;"
         >
           Nutrition Facts
         </div>

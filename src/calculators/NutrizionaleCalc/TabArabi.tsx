@@ -113,7 +113,7 @@ export function TabArabi({ p, arabi, servingRef, measure, specificGravity }: {
                 <div style={{ width: 310, border: '2.5px solid #000', padding: '8px 8px 6px 8px', fontFamily: F, color: '#000', boxSizing: 'border-box' as const }}>
 
                     {/* Title */}
-                    <div style={{ fontSize: 38, fontWeight: 900, lineHeight: 1, whiteSpace: 'nowrap', textAlign: 'justify', textAlignLast: 'justify', WebkitTextStroke: '0.6px #000', borderBottom: '1px solid #000', paddingBottom: 3, marginBottom: 2 }}>Nutrition Facts</div>
+                    <div style={{ fontSize: 38, fontWeight: 900, lineHeight: 1, whiteSpace: 'nowrap', WebkitTextStroke: '0.6px #000', borderBottom: '1px solid #000', paddingBottom: 3, marginBottom: 2 }}>Nutrition Facts</div>
 
                     {/* Servings per container */}
                     <div style={{ fontSize: 18, fontWeight: 400 }}>
