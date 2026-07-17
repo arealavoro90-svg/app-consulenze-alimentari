@@ -61,6 +61,18 @@ Obiettivo: NutrizionaleCalcMobile = NutrizionaleCalc al 100%.
 
 - [ ] **AUTH-1** — Pianificare backend reale (JWT/OAuth2) prima di uso commerciale.
       Auth attuale è mock frontend-only, password in chiaro in localStorage.
+- [ ] **AUTH-2** — Go-live Django: rimuovere fallback mock in `src/api/auth.ts`
+      (apiLogin catch→MOCK_USERS, apiMe catch→aea_user cache). aea_user è manipolabile
+      da console → role admin lato client. Marcato con TODO go-live (audit 2026-07-17).
+- [ ] **TAB-UNIFY** — Unificare tabelle Canada/Australia/Arabi: versioni inline in
+      NutrizionaleCalc.tsx (righe ~2886/3130/3266) duplicano i file condivisi
+      Tab{Canada,Australia,Arabi}.tsx usati dal mobile e GIÀ divergono (prop `full`).
+      Una correzione normativa su un solo lato = etichetta non conforme sull'altro.
+      Task dedicato — NON toccare markup normativo, solo consolidare la sorgente.
+- [ ] **DOC-1** — CLAUDE.md e skill nutritional-calc descrivono `nutritionalEngine.ts`
+      e `localizationModule.ts` come canonici ma sono CODICE MORTO (nessun import runtime).
+      Engine vivo: `nutrizionaleCalcEngine.calcNutrients`; arrotondamenti dentro i Tab.
+      Decidere: aggiornare doc + eliminare i file morti, o riattivarli.
 
 ---
 
