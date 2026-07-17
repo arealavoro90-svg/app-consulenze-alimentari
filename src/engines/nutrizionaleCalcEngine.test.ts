@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { calcNutrients, scaleResult, ZERO_CALC, type DBIngredient, type Component } from './nutrizionaleCalcEngine';
+import { calcNutrients, scaleResult, energyFromMacros, ZERO_CALC, type DBIngredient, type Component } from './nutrizionaleCalcEngine';
 import { parseDecimalIT } from '../utils/validation';
 
 // ─── Fixtures ─────────────────────────────────────────────────────────────────
@@ -146,4 +146,29 @@ describe('parseDecimalIT', () => {
     it('parses integer string', () => expect(parseDecimalIT('42')).toBe(42));
     it('returns NaN for non-numeric', () => expect(parseDecimalIT('abc')).toBeNaN());
     it('edge: empty string → NaN', () => expect(parseDecimalIT('')).toBeNaN());
+});
+
+// ─── energyFromMacros ──────────────────────────────────────────────────────────
+
+describe('energyFromMacros', () => {
+    it('applica i fattori EU 1169/2011 (9/4/2.4/2/3/4/7 kcal)', () => {
+        const { kcal, kj } = energyFromMacros({
+            grassi: 10, carboidrati: 20, polioli: 5, fibre: 3,
+            acidiOrganici: 1, proteine: 8, alcolG: 2,
+        });
+        // carbo netti = 20-5 = 15
+        expect(kcal).toBe(10*9 + 15*4 + 5*2.4 + 3*2 + 1*3 + 8*4 + 2*7); // 217
+        expect(kj).toBe(10*37 + 15*17 + 5*10 + 3*8 + 1*13 + 8*17 + 2*29); // 892
+    });
+
+    it('eritritolo puro = 0 kcal/kJ (All. XIV)', () => {
+        const { kcal, kj } = energyFromMacros({ grassi: 0, carboidrati: 100, eritritolo: 100, proteine: 0 });
+        expect(kcal).toBe(0);
+        expect(kj).toBe(0);
+    });
+
+    it('campi opzionali omessi trattati come 0', () => {
+        const { kcal } = energyFromMacros({ grassi: 0, carboidrati: 10, proteine: 5 });
+        expect(kcal).toBe(10*4 + 5*4);
+    });
 });

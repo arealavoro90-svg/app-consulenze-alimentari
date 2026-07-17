@@ -18,6 +18,7 @@ import html2canvas from 'html2canvas';
 import { useArchive } from '../../hooks/useArchive';
 import { useLocalStorage } from '../../hooks/useLocalStorage';
 import { useAutosave } from '../../hooks/useAutosave';
+import { WelcomeModal } from '../../components/WelcomeModal';
 import { ValidationError } from '../../components/ValidationError';
 import { generateEtichettaPDF } from '../../utils/pdfGenerator';
 import {
@@ -40,7 +41,7 @@ import { DownloadTableModal } from './DownloadTableModal';
 import type { DownloadFormatState } from './DownloadTableModal';
 import {
     type DBIngredient, type CalcResult, type RecipeRow, type AdditiveRow, type Component,
-    ZERO_CALC, calcNutrients, scaleResult, calcClaims,
+    ZERO_CALC, calcNutrients, scaleResult, calcClaims, energyFromMacros,
 } from '../../engines/nutrizionaleCalcEngine';
 import { ALLERGEN_FIELDS, CROSS_FIELDS, ADDITIVI_CATEGORIE, ADDITIVI_SPECIFICI } from './shared/constants';
 import { writeBridge, readBridge, buildDesktopDraft } from './sessionBridge';
@@ -128,25 +129,52 @@ function searchAdditiviDB(q: string, db: DBIngredient[]): DBIngredient[] {
 
 
 // ─── Tooltip component ────────────────────────────────────────────────────────
+const TOOLTIP_W = 230;
+const TOOLTIP_MARGIN = 8; // min distanza dal bordo viewport
+
 function InfoTooltip({ text }: { text: string }) {
     const [visible, setVisible] = useState(false);
-    const [pos, setPos] = useState<{ top: number; left: number } | null>(null);
+    const [pinned, setPinned] = useState(false);
+    const [pos, setPos] = useState<{ top: number; left: number; below: boolean } | null>(null);
     const btnRef = useRef<HTMLButtonElement>(null);
 
-    const handleClick = () => {
-        if (!visible && btnRef.current) {
-            const rect = btnRef.current.getBoundingClientRect();
-            setPos({ top: rect.top - 8, left: rect.left + rect.width / 2 });
-        }
-        setVisible(v => !v);
+    const computePos = () => {
+        if (!btnRef.current) return;
+        const rect = btnRef.current.getBoundingClientRect();
+        const vw = window.innerWidth;
+
+        // Posizione orizzontale: centrata sul bottone, clamped nel viewport
+        let left = rect.left + rect.width / 2 - TOOLTIP_W / 2;
+        left = Math.max(TOOLTIP_MARGIN, Math.min(left, vw - TOOLTIP_W - TOOLTIP_MARGIN));
+
+        // Verticale: sopra di default, sotto se non c'è spazio (stima 110px di altezza)
+        const below = rect.top < 120;
+        const top = below ? rect.bottom + 6 : rect.top - 8;
+
+        setPos({ top, left, below });
     };
 
+    const handleMouseEnter = () => { computePos(); setVisible(true); };
+    const handleMouseLeave = () => { if (!pinned) setVisible(false); };
+    const handleClick = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        if (pinned) {
+            setPinned(false);
+            setVisible(false);
+        } else {
+            computePos();
+            setPinned(true);
+            setVisible(true);
+        }
+    };
+
+    // Chiude su click ovunque quando pinnato
     useEffect(() => {
-        if (!visible) return;
-        const close = () => setVisible(false);
-        window.addEventListener('scroll', close, true);
-        return () => window.removeEventListener('scroll', close, true);
-    }, [visible]);
+        if (!pinned) return;
+        const close = () => { setPinned(false); setVisible(false); };
+        document.addEventListener('click', close);
+        return () => document.removeEventListener('click', close);
+    }, [pinned]);
 
     return (
         <span style={{ display: 'inline-flex', alignItems: 'center', marginLeft: 5 }}>
@@ -154,6 +182,8 @@ function InfoTooltip({ text }: { text: string }) {
                 ref={btnRef}
                 type="button"
                 title={text}
+                onMouseEnter={handleMouseEnter}
+                onMouseLeave={handleMouseLeave}
                 onClick={handleClick}
                 style={{
                     background: 'none', border: '2px solid var(--color-orange)', cursor: 'pointer', padding: 0,
@@ -165,11 +195,13 @@ function InfoTooltip({ text }: { text: string }) {
             >i</button>
             {visible && pos && (
                 <span style={{
-                    position: 'fixed', top: pos.top, left: pos.left,
-                    transform: 'translate(-50%, -100%)',
-                    background: '#1a1a2e', color: '#fff', fontSize: 11.5, lineHeight: 1.5,
-                    padding: '7px 11px', borderRadius: 7, whiteSpace: 'normal',
-                    width: 230, zIndex: 99999, boxShadow: '0 4px 16px rgba(0,0,0,0.25)',
+                    position: 'fixed',
+                    top: pos.top,
+                    left: pos.left,
+                    transform: pos.below ? 'none' : 'translateY(-100%)',
+                    background: 'var(--color-navy)', color: '#fff', fontSize: 11.5, lineHeight: 1.5,
+                    padding: '7px 11px', borderRadius: 'var(--radius-sm)', whiteSpace: 'normal',
+                    width: TOOLTIP_W, zIndex: 99999, boxShadow: '0 4px 16px rgba(0,0,0,0.25)',
                     pointerEvents: 'none',
                 }}>
                     {text}
@@ -238,14 +270,9 @@ function IngSearch({ onAdd, db, loading, error, onRetry }: { onAdd: (ing: DBIngr
 
     useEffect(() => {
         if (!dropOpen) return;
-        const updatePos = () => {
-            if (wrapRef.current) {
-                const rect = wrapRef.current.getBoundingClientRect();
-                setDropPos({ top: rect.bottom + 2, left: rect.left, width: rect.width });
-            }
-        };
-        window.addEventListener('scroll', updatePos, true);
-        return () => window.removeEventListener('scroll', updatePos, true);
+        const close = () => setDropOpen(false);
+        window.addEventListener('scroll', close, { passive: true, capture: true });
+        return () => window.removeEventListener('scroll', close, true);
     }, [dropOpen]);
 
     // Scroll selected item into view
@@ -270,6 +297,7 @@ function IngSearch({ onAdd, db, loading, error, onRetry }: { onAdd: (ing: DBIngr
             {/* Pulsante toggle */}
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                 <button type="button" className="btn btn-outline" style={{ fontSize: 12, padding: '5px 14px' }}
+                    data-ing-add-btn
                     onClick={() => searchOpen ? closeSearch() : setSearchOpen(true)}
                     disabled={!!error || loading}
                 >
@@ -288,8 +316,11 @@ function IngSearch({ onAdd, db, loading, error, onRetry }: { onAdd: (ing: DBIngr
                             onKeyDown={handleKeyDown}
                             placeholder="Cerca ingrediente (↑↓ per navigare, Invio per aggiungere)"
                             className="ing-search-input"
+                            role="combobox" aria-expanded={dropOpen} aria-controls="ing-search-listbox"
+                            aria-autocomplete="list" aria-label="Cerca ingrediente"
+                            aria-activedescendant={selectedIdx >= 0 ? `ing-search-opt-${selectedIdx}` : undefined}
                             style={{ width: '100%' }} />
-                        <button type="button" onClick={closeSearch}
+                        <button type="button" onClick={closeSearch} aria-label="Chiudi ricerca"
                             style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '0 8px', color: 'var(--color-text-muted)', display: 'flex', alignItems: 'center' }}>
                             <X size={14} />
                         </button>
@@ -311,9 +342,17 @@ function IngSearch({ onAdd, db, loading, error, onRetry }: { onAdd: (ing: DBIngr
                         </div>
                     )}
 
+                    {/* Nessun risultato */}
+                    {!dropOpen && q.trim().length >= 2 && res.length === 0 && (
+                        <div style={{ marginTop: 6, fontSize: 12, color: 'var(--color-text-muted)', display: 'flex', alignItems: 'center', gap: 5 }}>
+                            <Search size={12} style={{ flexShrink: 0 }} />
+                            Nessun risultato per &ldquo;{q}&rdquo;
+                        </div>
+                    )}
+
                     {/* Dropdown risultati */}
                     {dropOpen && dropPos && (
-                        <div ref={listRef} style={{
+                        <div ref={listRef} id="ing-search-listbox" role="listbox" aria-label="Risultati ricerca ingredienti" style={{
                             position: 'fixed', top: dropPos.top, left: dropPos.left, width: dropPos.width,
                             background: 'var(--color-bg-card)', border: '1.5px solid var(--color-orange)',
                             borderRadius: 'var(--radius-md)', boxShadow: '0 8px 24px rgba(0,0,0,0.18)',
@@ -324,6 +363,7 @@ function IngSearch({ onAdd, db, loading, error, onRetry }: { onAdd: (ing: DBIngr
                             </div>
                             {res.map((ing, i) => (
                                 <button key={i} type="button" data-ing-item
+                                    id={`ing-search-opt-${i}`} role="option" aria-selected={i === selectedIdx}
                                     onClick={() => handleAdd(ing)}
                                     style={{
                                         display: 'block', width: '100%',
@@ -338,7 +378,7 @@ function IngSearch({ onAdd, db, loading, error, onRetry }: { onAdd: (ing: DBIngr
                                     <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--color-text)', display: 'flex', alignItems: 'center', gap: 6 }}>
                                         {(ing.nome || '').trim()}
                                         {ing.categoria === '_custom' && (
-                                            <span style={{ fontSize: 10, background: 'var(--color-orange)', color: 'white', borderRadius: 4, padding: '1px 6px', fontWeight: 700, flexShrink: 0 }}>Personale</span>
+                                            <span style={{ fontSize: 10, background: 'var(--color-orange)', color: 'white', borderRadius: 'var(--radius-sm)', padding: '1px 6px', fontWeight: 700, flexShrink: 0 }}>Personale</span>
                                         )}
                                     </div>
                                     <div style={{ fontSize: 11, color: 'var(--color-text-muted)', marginTop: 2 }}>
@@ -387,7 +427,7 @@ function AdditiveSearch({ chips, onAdd, onRemove, db }: {
                     placeholder="🔍 Cerca additivo dal database (es. acido citrico, pectina...)"
                     className="form-input" style={{ width: '100%' }} />
                 {open && (
-                    <div style={{ position: 'absolute', top: 'calc(100% + 2px)', left: 0, right: 0, background: 'var(--color-bg-card)', border: '1.5px solid var(--color-orange)', borderRadius: 8, boxShadow: '0 8px 24px rgba(0,0,0,0.18)', zIndex: 500, maxHeight: 260, overflowY: 'auto' }}>
+                    <div style={{ position: 'absolute', top: 'calc(100% + 2px)', left: 0, right: 0, background: 'var(--color-bg-card)', border: '1.5px solid var(--color-orange)', borderRadius: 'var(--radius-md)', boxShadow: '0 8px 24px rgba(0,0,0,0.18)', zIndex: 500, maxHeight: 260, overflowY: 'auto' }}>
                         {res.map((ing, i) => (
                             <button key={i} type="button"
                                 onClick={() => { onAdd(ing); setQ(''); setOpen(false); }}
@@ -433,7 +473,7 @@ const CI_CROSS_LABELS: Record<string, string> = {
 };
 
 // Stili e componente NF a livello di modulo (evita ricreazione ad ogni render)
-const _iS: React.CSSProperties = { width: '100%', padding: '5px 8px', border: '1px solid var(--color-border)', borderRadius: 5, fontSize: 13, boxSizing: 'border-box' };
+const _iS: React.CSSProperties = { width: '100%', padding: '5px 8px', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-sm)', fontSize: 13, boxSizing: 'border-box' };
 const _iSRo: React.CSSProperties = { ..._iS, background: 'var(--color-bg-secondary,#f0f4ff)', color: 'var(--color-text-muted)', fontWeight: 600, cursor: 'default' };
 const _iSErr: React.CSSProperties = { ..._iS, border: '1.5px solid #e53e3e' };
 const _lS: React.CSSProperties = { fontSize: 11, fontWeight: 600, display: 'block', marginBottom: 3, color: 'var(--color-text-muted)' };
@@ -612,9 +652,10 @@ function CustomIngredientModal({ onClose, onSave, initialIngredient, originalNom
 
     // Energia (EU Reg 1169/2011): (carboConFibre − fibre − polioli) × 4 + polioli × 2,4 + fibre × 2
     // = (carbN − polioliN) × 4 + polioliN × 2,4 + fibreN × 2
-    const carboNettiKcal = carbN - polioliN; // carbo disponibili (excl. fibre e polioli)
-    const kcalCalc = Math.round((grassiN*9 + carboNettiKcal*4 + polioliN*2.4 + fibreN*2 + acidoOrgN*3 + protN*4 + alcolG*7) * 10) / 10;
-    const kjCalc   = Math.round((grassiN*37 + carboNettiKcal*17 + polioliN*10 + fibreN*8 + acidoOrgN*13 + protN*17 + alcolG*29) * 10) / 10;
+    const { kcal: kcalCalc, kj: kjCalc } = energyFromMacros({
+        grassi: grassiN, carboidrati: carbN, polioli: polioliN, eritritolo: eritritoloN,
+        fibre: fibreN, acidiOrganici: acidoOrgN, proteine: protN, alcolG,
+    });
 
     const waterError = acquaCalc < 0 || residuoSecco < 0;
 
@@ -707,9 +748,9 @@ function CustomIngredientModal({ onClose, onSave, initialIngredient, originalNom
     };
 
     // Stili locali (non ricreano NF — NF è fuori dal componente)
-    const iS: React.CSSProperties = { width: '100%', padding: '5px 8px', border: '1px solid var(--color-border)', borderRadius: 5, fontSize: 13, boxSizing: 'border-box' };
-    const lS: React.CSSProperties = { fontSize: 11, fontWeight: 600, display: 'block', marginBottom: 3, color: 'var(--color-text-muted)' };
-    const secS: React.CSSProperties = { marginBottom: 14, padding: '12px 14px', borderRadius: 8, border: '1px solid var(--color-border)' };
+    const iS: React.CSSProperties = _iS;
+    const lS: React.CSSProperties = _lS;
+    const secS: React.CSSProperties = { marginBottom: 14, padding: '12px 14px', borderRadius: 'var(--radius-md)', border: '1px solid var(--color-border)' };
     const secT = (color: string): React.CSSProperties => ({ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.5, color, marginBottom: 10 });
     const grid3: React.CSSProperties = { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))', gap: 8 };
     const grid2: React.CSSProperties = { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: 8 };
@@ -719,7 +760,7 @@ function CustomIngredientModal({ onClose, onSave, initialIngredient, originalNom
     const toggleSec = (k: keyof typeof openSec) => setOpenSec(prev => ({ ...prev, [k]: !prev[k] }));
     const AccHead = ({ label, sKey, color = '#718096' }: { label: string; sKey: keyof typeof openSec; color?: string }) => (
         <button type="button" onClick={() => toggleSec(sKey)} style={{ display: 'flex', alignItems: 'center', gap: 6, width: '100%', background: 'none', border: 'none', cursor: 'pointer', padding: 0, textAlign: 'left' }}>
-            <span style={{ fontSize: 12, color, lineHeight: 1 }}>{openSec[sKey] ? '▼' : '▶'}</span>
+            {openSec[sKey] ? <ChevronDown size={12} style={{ flexShrink: 0, color }} /> : <ChevronRight size={12} style={{ flexShrink: 0, color }} />}
             <span style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.5, color }}>{label}</span>
         </button>
     );
@@ -747,8 +788,8 @@ function CustomIngredientModal({ onClose, onSave, initialIngredient, originalNom
 
                 {/* Header */}
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-                    <h3 style={{ margin: 0 }}>{initialIngredient ? '✏️ Modifica ingrediente' : '➕ Aggiungi ingrediente nel Data Base'}</h3>
-                    <button className="btn btn-outline" onClick={onClose}>✕</button>
+                    <h3 style={{ margin: 0 }}>{initialIngredient ? 'Modifica ingrediente' : 'Aggiungi ingrediente al Database'}</h3>
+                    <button className="btn btn-outline" onClick={onClose} style={{ display: 'flex', alignItems: 'center' }}><X size={14} /></button>
                 </div>
 
                 {/* Legenda */}
@@ -763,7 +804,7 @@ function CustomIngredientModal({ onClose, onSave, initialIngredient, originalNom
                 {errors.length > 0 && (
                     <div style={{ background: '#fff5f5', border: '1px solid #fc8181', borderRadius: 6, padding: '10px 12px', marginBottom: 12 }}>
                         <div style={{ fontSize: 12, fontWeight: 700, color: '#c53030', marginBottom: 4 }}>Campi mancanti o errori:</div>
-                        {errors.map((e, i) => <div key={i} style={{ fontSize: 12, color: '#c53030' }}>⚠ {e}</div>)}
+                        {errors.map((e, i) => <div key={i} style={{ fontSize: 12, color: '#c53030', display: 'flex', alignItems: 'center', gap: 4 }}><AlertTriangle size={11} style={{ flexShrink: 0 }} />{e}</div>)}
                     </div>
                 )}
 
@@ -771,15 +812,15 @@ function CustomIngredientModal({ onClose, onSave, initialIngredient, originalNom
                 <div style={secS}>
                     <div style={secT('#333')}>Informazioni base</div>
                     <div style={{ marginBottom: 8 }}>
-                        <label style={{ ...lS, color: '#333' }}>Nome ingrediente <span style={{ color: '#c53030' }}>*</span></label>
-                        <input style={!nome.trim() && errors.length > 0 ? _iSErr : _iS} value={nome}
+                        <label style={{ ...lS, color: '#333' }} htmlFor="custom-ing-nome">Nome ingrediente <span style={{ color: '#c53030' }}>*</span></label>
+                        <input id="custom-ing-nome" style={!nome.trim() && errors.length > 0 ? _iSErr : _iS} value={nome}
                             onChange={e => { setNome(e.target.value); clearErrors(); }}
                             placeholder="es. salsa di soia artigianale" />
                     </div>
                     <div style={grid2}>
                         <div>
-                            <label style={lS}>Categoria</label>
-                            <select style={iS} value={categoria} onChange={e => setCategoria(e.target.value)}>
+                            <label style={lS} htmlFor="custom-ing-categoria">Categoria</label>
+                            <select id="custom-ing-categoria" style={iS} value={categoria} onChange={e => setCategoria(e.target.value)}>
                                 {['ingrediente','semilavorato','prodotto','additivo','aroma'].map(c => <option key={c} value={c}>{c}</option>)}
                             </select>
                         </div>
@@ -1060,7 +1101,20 @@ export function NutrizionaleCalc() {
     // Quick-guide state — dead, hook order preserved
     useLocalStorage<boolean>('nutri_guide_open', true);
 
+    const [welcomeSeen, setWelcomeSeen] = useLocalStorage<boolean>('aea_welcome_seen', false);
+    const [showWelcome, setShowWelcome] = useState<boolean>(!welcomeSeen);
+
     const [expertTab, setExpertTab] = useState<'ricetta' | 'riepilogo'>('ricetta');
+    const [dbMenuOpen, setDbMenuOpen] = useState(false);
+    const dbMenuRef = useRef<HTMLDivElement>(null);
+
+    // Chiude dropdown Database al click fuori
+    useEffect(() => {
+        if (!dbMenuOpen) return;
+        const h = (e: MouseEvent) => { if (dbMenuRef.current && !dbMenuRef.current.contains(e.target as Node)) setDbMenuOpen(false); };
+        document.addEventListener('mousedown', h);
+        return () => document.removeEventListener('mousedown', h);
+    }, [dbMenuOpen]);
 
     // Toast + ConfirmDialog state (replaces native alert/confirm)
     const toast = useToast();
@@ -1196,14 +1250,17 @@ export function NutrizionaleCalc() {
                 setFinishedWeight(draft.finishedWeight);
                 setSpecificGravity(draft.specificGravity);
                 // Restore components: re-resolve ingredient references from DB
+                const skippedDraft: string[] = [];
                 const restoredComps: Component[] = draft.components.map(c => ({
                     ...c,
                     id: String(Date.now() + Math.random()),
                     rows: c.rows.flatMap(r => {
                         const found = db.find(d => d.nome === r.ing.nome);
-                        return found ? [{ ...r, id: String(Date.now() + Math.random()), ing: found }] : [];
+                        if (!found) { skippedDraft.push(r.ing.nome); return []; }
+                        return [{ ...r, id: String(Date.now() + Math.random()), ing: found }];
                     }),
                 }));
+                if (skippedDraft.length > 0) toast.warning(`Ingredienti non trovati nel database e rimossi: ${skippedDraft.join(', ')}`);
                 const compsToSet = restoredComps.length ? restoredComps : [makeComp()];
                 setComponents(compsToSet);
                 const restoredPzUVRaw: Record<string, string> = {};
@@ -1378,8 +1435,34 @@ export function NutrizionaleCalc() {
             ...c, rows: c.rows.map(r => r.id === rowId ? { ...r, [flag]: value } : r)
         }));
     };
+    const [lastDeleted, setLastDeleted] = useState<{ compId: string; row: RecipeRow; idx: number } | null>(null);
+    const undoTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
     const removeRow = (compId: string, rowId: string) => {
-        setComponents(prev => prev.map(c => c.id !== compId ? c : { ...c, rows: c.rows.filter(r => r.id !== rowId) }));
+        setComponents(prev => {
+            const comp = prev.find(c => c.id === compId);
+            if (!comp) return prev;
+            const idx = comp.rows.findIndex(r => r.id === rowId);
+            const row = comp.rows[idx];
+            if (row) {
+                if (undoTimerRef.current) clearTimeout(undoTimerRef.current);
+                setLastDeleted({ compId, row, idx });
+                undoTimerRef.current = setTimeout(() => setLastDeleted(null), 5000);
+            }
+            return prev.map(c => c.id !== compId ? c : { ...c, rows: c.rows.filter(r => r.id !== rowId) });
+        });
+    };
+
+    const undoRemoveRow = () => {
+        if (!lastDeleted) return;
+        setComponents(prev => prev.map(c => {
+            if (c.id !== lastDeleted.compId) return c;
+            const rows = [...c.rows];
+            rows.splice(lastDeleted.idx, 0, lastDeleted.row);
+            return { ...c, rows };
+        }));
+        if (undoTimerRef.current) clearTimeout(undoTimerRef.current);
+        setLastDeleted(null);
     };
 
     const addAdditiveRow = (compId: string) => {
@@ -1410,10 +1493,10 @@ export function NutrizionaleCalc() {
             }
         }
 
-        if (parsed > 0 && totGrammiXpzuv > 0 && parsed > totGrammiXpzuv) {
-            setFwWarning(false);
-            setFieldErrors(prev => ({...prev, [errorKey]: ''}));
-            setFinishedWeight(String(Math.round(totGrammiXpzuv)));
+        if (parsed > 0 && totGrammiXpzuv > 0 && Math.round(parsed) > Math.round(totGrammiXpzuv)) {
+            setFwWarning(true);
+            setFieldErrors(prev => ({...prev, [errorKey]: `Il peso finito non può superare il totale ingredienti (${Math.round(totGrammiXpzuv)}g). Controlla le quantità.`}));
+            setFinishedWeight(val);
         } else {
             setFwWarning(false);
             setFieldErrors(prev => ({...prev, [errorKey]: ''}));
@@ -1426,10 +1509,9 @@ export function NutrizionaleCalc() {
         const errorKey = 'finished-weight';
         const parsed = parseFloat(finishedWeight) || 0;
         if (parsed <= 0 || totGrammiXpzuv <= 0) { setFwWarning(false); setFieldErrors(prev => ({...prev, [errorKey]: ''})); return; }
-        if (parsed > totGrammiXpzuv) {
-            setFwWarning(false);
-            setFieldErrors(prev => ({...prev, [errorKey]: ''}));
-            setFinishedWeight(String(Math.round(totGrammiXpzuv)));
+        if (Math.round(parsed) > Math.round(totGrammiXpzuv)) {
+            setFwWarning(true);
+            setFieldErrors(prev => ({...prev, [errorKey]: `Il peso finito non può superare il totale ingredienti (${Math.round(totGrammiXpzuv)}g). Controlla le quantità.`}));
         } else {
             setFwWarning(false);
             setFieldErrors(prev => ({...prev, [errorKey]: ''}));
@@ -1473,6 +1555,7 @@ export function NutrizionaleCalc() {
         setArabi(serv.Arabi || d.arabi || {});
 
         const rawComps = d.componenti || d.components || [];
+        const skippedLoad: string[] = [];
         const loadedComps: Component[] = rawComps.map((sc: any) => {
             const rowData = sc.ingredienti || sc.rows || [];
             return {
@@ -1483,7 +1566,8 @@ export function NutrizionaleCalc() {
                     const ingName = sr.nome || sr.name;
                     const grams = typeof sr.grammi === 'number' ? sr.grammi : (sr.grams || 0);
                     const found = db.find(dbi => dbi.nome === ingName);
-                    return found ? [{ id: String(Date.now() + Math.random()), ing: found, grams, eurKg: 0, resa: 100 }] : [];
+                    if (!found) { skippedLoad.push(ingName); return []; }
+                    return [{ id: String(Date.now() + Math.random()), ing: found, grams, eurKg: 0, resa: 100 }];
                 }),
                 additiveRows: (sc.additiveRows || []).map((ar: any) => ({
                     id: String(Date.now() + Math.random()),
@@ -1495,6 +1579,7 @@ export function NutrizionaleCalc() {
                 })),
             };
         });
+        if (skippedLoad.length > 0) toast.warning(`Ingredienti non trovati nel database e rimossi: ${skippedLoad.join(', ')}`);
         const compsToSet = loadedComps.length ? loadedComps : [makeComp()];
         setComponents(compsToSet);
         // Ripristina pzUVRaw con i valori caricati (i nuovi ID non combacerebbero altrimenti)
@@ -1521,7 +1606,7 @@ export function NutrizionaleCalc() {
     };
 
     const handleNew = () => {
-        if (allRows.length > 0) {
+        if (allRows.length > 0 || productName.trim().length > 0) {
             openConfirm({
                 title: 'Nuova ricetta',
                 message: 'Vuoi davvero creare una nuova ricetta? I dati non salvati andranno persi.',
@@ -1730,10 +1815,15 @@ export function NutrizionaleCalc() {
 
     const renderTablePanel = (isMobileInline = false): React.ReactNode => {
         return (
-            <div id={isMobileInline ? undefined : 'mob-tables-anchor'} className={`table-panel-inner${isFlashing ? ' value-flash' : ''}`}>
+            <div id={isMobileInline ? undefined : 'mob-tables-anchor'} className="table-panel-inner">
             <div className="table-panel-header">
-                {/* TABELLA NUTRIZIONALE heading */}
-                <div className="table-panel-header-title">Tabella nutrizionale</div>
+                {/* Product name as header anchor */}
+                <div className="table-panel-header-title" style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
+                    {productName
+                        ? <span style={{ fontWeight: 700 }}>{productName}</span>
+                        : <span style={{ fontStyle: 'italic', color: 'var(--color-text-muted)', fontWeight: 400 }}>Prodotto senza nome</span>
+                    }
+                </div>
                 {/* Nation segmented control — matches HTML .right-seg */}
                 <div className="right-seg" role="group" aria-label="Mercato di riferimento">
                     {(['UE', 'USA', 'Canada', 'Australia', 'Arabi'] as NationTab[]).map(t => {
@@ -1750,10 +1840,10 @@ export function NutrizionaleCalc() {
 
                 {/* Body: tabella + colonna porzioni fissa */}
                 <div className="table-panel-body">
-                <div ref={isMobileInline ? undefined : tableRef} className="table-scroll-area" style={{ overflowX: 'auto' }}>
+                <div ref={isMobileInline ? undefined : tableRef} className={`table-scroll-area${isFlashing ? ' value-flash' : ''}`} style={{ overflowX: 'auto' }}>
                     {activeTab === 'UE' && (
                         <>
-                            <div style={{ border: '1px solid #eaecf0', borderRadius: 8, overflow: 'hidden', marginTop: 8 }}>
+                            <div style={{ border: '1px solid var(--color-border)', borderRadius: 'var(--radius-md)', overflow: 'hidden', marginTop: 8 }}>
                                 <TabUE
                                     p={per100display}
                                     ue={ue}
@@ -1780,7 +1870,7 @@ export function NutrizionaleCalc() {
                                         className="btn btn-outline"
                                         style={{ fontSize: 11, padding: '3px 8px', display: 'flex', alignItems: 'center', gap: 5 }}
                                     >
-                                        ⚙ Configura nutrienti
+                                        <SlidersHorizontal size={12} /> Configura nutrienti
                                     </button>
                                 )}
                             </div>
@@ -1788,19 +1878,25 @@ export function NutrizionaleCalc() {
                             {(() => {
                                 const claims = calcClaims(per100display, isLiquid);
                                 return (
-                                    <div style={{ marginTop: 12, borderTop: '1px solid #eaecf0', paddingTop: 10 }}>
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
-                                            <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--color-text)' }}>
-                                                Claim nutrizionali EU
+                                    <div style={{
+                                        marginTop: 10,
+                                        background: 'color-mix(in srgb, var(--color-navy) 6%, var(--color-bg-card))',
+                                        border: '1px solid color-mix(in srgb, var(--color-navy) 18%, var(--color-border))',
+                                        borderRadius: 'var(--radius-md)',
+                                        padding: '10px 12px',
+                                    }}>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: claims.length > 0 ? 8 : 0 }}>
+                                            <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--color-navy)', letterSpacing: '0.02em', textTransform: 'uppercase' }}>
+                                                Claim applicabili
                                             </span>
-                                            <label style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 11, cursor: 'pointer', color: 'var(--color-text-muted)' }}>
+                                            <label style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 11, cursor: 'pointer', color: 'var(--color-text-muted)', marginLeft: 'auto' }}>
                                                 <input
                                                     type="checkbox"
                                                     checked={isLiquid}
                                                     onChange={e => setIsLiquid(e.target.checked)}
                                                     style={{ width: 12, height: 12, cursor: 'pointer', accentColor: 'var(--color-orange)' }}
                                                 />
-                                                Prodotto liquido
+                                                Liquido
                                             </label>
                                         </div>
                                         {claims.length === 0 ? (
@@ -1813,7 +1909,7 @@ export function NutrizionaleCalc() {
                                                     <span key={c} style={{
                                                         fontSize: 10, fontWeight: 700, letterSpacing: '0.03em',
                                                         background: 'var(--color-navy)', color: '#fff',
-                                                        borderRadius: 4, padding: '3px 7px',
+                                                        borderRadius: 'var(--radius-sm)', padding: '3px 7px',
                                                     }}>
                                                         {c}
                                                     </span>
@@ -1829,86 +1925,114 @@ export function NutrizionaleCalc() {
                         </>
                     )}
                     {activeTab === 'USA' && (
-                        <div style={{ border: '1px solid #eaecf0', borderRadius: 8, overflow: 'hidden', marginTop: 8 }}>
+                        <div style={{ border: '1px solid var(--color-border)', borderRadius: 'var(--radius-md)', overflow: 'hidden', marginTop: 8 }}>
                             <TabUSA p={per100display} usa={usa} specificGravity={parseFloat(specificGravity) || 0}
                                 servingRef="serving" measure="g" subTab="verticale" />
                         </div>
                     )}
                     {activeTab === 'Canada' && (
-                        <div style={{ border: '1px solid #eaecf0', borderRadius: 8, overflow: 'hidden', marginTop: 8 }}>
+                        <div style={{ border: '1px solid var(--color-border)', borderRadius: 'var(--radius-md)', overflow: 'hidden', marginTop: 8 }}>
                             <TabCanada p={per100display} ca={ca} servingRef="serving" measure="g" subTab="verticale" />
                         </div>
                     )}
                     {activeTab === 'Australia' && (
-                        <div style={{ border: '1px solid #eaecf0', borderRadius: 8, overflow: 'hidden', marginTop: 8 }}>
+                        <div style={{ border: '1px solid var(--color-border)', borderRadius: 'var(--radius-md)', overflow: 'hidden', marginTop: 8 }}>
                             <TabAustralia p={per100display} au={au} />
                         </div>
                     )}
                     {activeTab === 'Arabi' && (
-                        <div style={{ border: '1px solid #eaecf0', borderRadius: 8, overflow: 'hidden', marginTop: 8 }}>
+                        <div style={{ border: '1px solid var(--color-border)', borderRadius: 'var(--radius-md)', overflow: 'hidden', marginTop: 8 }}>
                             <TabArabi p={per100display} arabi={arabi} servingRef="serving" measure="g" specificGravity={parseFloat(specificGravity) || 0} />
                         </div>
                     )}
                 </div>
 
-                {/* Colonna porzioni fissa — sempre visibile */}
+                {/* Colonna porzioni — struttura speculare al DownloadTableModal */}
                 <aside className="portions-col" aria-label={`Porzioni ${activeTab}`}>
-                    <div className="portions-col-title">Porzioni {activeTab}</div>
-                    {activeTab === 'UE' && (['porzione', 'confezione', 'pezzo'] as const).map((k, i) => {
-                        const labels = ['Porzione (g/ml)', 'U.V. / Confezione (g/ml)', 'Pezzo (g/ml)'];
+                    <div className="portions-col-title">{activeTab}</div>
+
+                    {/* ── UE: sezione Colonne (specchia "Colonne" del modal) ── */}
+                    {activeTab === 'UE' && (
+                        <>
+                            <div className="portions-col-section">Colonne</div>
+                            {(['porzione', 'confezione', 'pezzo'] as const).map((k, i) => {
+                                const labels = ['Porzione (g/ml)', 'U.V. / Conf. (g/ml)', 'Pezzo (g/ml)'];
+                                return (
+                                    <div key={k} className="field">
+                                        <label className="field-label" htmlFor={`portion-ue-${k}`}>{labels[i]}</label>
+                                        <input id={`portion-ue-${k}`} type="number" min={0} placeholder="—" value={ue[k] || ''}
+                                            onChange={e => setUE(prev => ({ ...prev, [k]: parseFloat(e.target.value) || undefined }))}
+                                            className="field-input" />
+                                    </div>
+                                );
+                            })}
+                        </>
+                    )}
+
+                    {/* ── Australia: solo riferimenti serving ── */}
+                    {activeTab === 'Australia' && (
+                        <>
+                            <div className="portions-col-section">Riferimento</div>
+                            {(['serving', 'confezione', 'pezzo'] as const).map((k, i) => {
+                                const labels = ['Serving size (g/ml)', 'Confezione (g/ml)', 'Pezzo (g/ml)'];
+                                return (
+                                    <div key={k} className="field">
+                                        <label className="field-label" htmlFor={`portion-au-${k}`}>{labels[i]}</label>
+                                        <input id={`portion-au-${k}`} type="number" min={0} placeholder="—" value={au[k] || ''}
+                                            onChange={e => setAU(prev => ({ ...prev, [k]: parseFloat(e.target.value) || undefined }))}
+                                            className="field-input" />
+                                    </div>
+                                );
+                            })}
+                        </>
+                    )}
+
+                    {/* ── USA / Canada / Arabi: Riferimento + Unità ── */}
+                    {(activeTab === 'USA' || activeTab === 'Canada' || activeTab === 'Arabi') && (() => {
+                        const cupMl = activeTab === 'Canada' ? 250 : 240;
+                        const setFn = activeTab === 'USA' ? setUSA : activeTab === 'Canada' ? setCA : setArabi;
+                        const vals = activeTab === 'USA' ? usa : activeTab === 'Canada' ? ca : arabi;
                         return (
-                            <div key={k} className="field">
-                                <label className="field-label">{labels[i]}</label>
-                                <input type="number" min={0} placeholder="—" value={ue[k] || ''}
-                                    onChange={e => setUE(prev => ({ ...prev, [k]: parseFloat(e.target.value) || undefined }))}
-                                    className="field-input" style={{ padding: '5px 8px', fontSize: 12 }} />
-                            </div>
+                            <>
+                                <div className="portions-col-section">Riferimento</div>
+                                <div className="field">
+                                    <label className="field-label" htmlFor="portion-serving">Serving size (g/ml)</label>
+                                    <input id="portion-serving" type="number" min={0} placeholder="—" value={vals.serving || ''}
+                                        onChange={e => setFn(prev => ({ ...prev, serving: parseFloat(e.target.value) || undefined }))}
+                                        className="field-input" />
+                                </div>
+                                <div className="field">
+                                    <label className="field-label" htmlFor="portion-confezione">Confezione (g/ml)</label>
+                                    <input id="portion-confezione" type="number" min={0} placeholder="—" value={vals.confezione || ''}
+                                        onChange={e => setFn(prev => ({ ...prev, confezione: parseFloat(e.target.value) || undefined }))}
+                                        className="field-input" />
+                                </div>
+
+                                <div className="portions-col-section">Unità</div>
+                                <div className="field">
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                                        <label className="field-label" htmlFor="portion-cup">1 Cup = {cupMl}ml → (g)</label>
+                                        <InfoTooltip text={`Una cup è un contenitore fisico standard da ${cupMl}ml. Inserisci il peso in grammi di una cup piena del tuo prodotto. Es: 1 cup di farina = 120g, 1 cup di riso = 185g, 1 cup di liquido = ~${cupMl}g.`} />
+                                    </div>
+                                    <input id="portion-cup" type="number" min={0} placeholder="—" value={vals.cup || ''}
+                                        onChange={e => setFn(prev => ({ ...prev, cup: parseFloat(e.target.value) || undefined }))}
+                                        className="field-input" />
+                                </div>
+                                <div className="field">
+                                    <label className="field-label" htmlFor="portion-cucchiaio">1 Cucchiaio = 15ml → (g)</label>
+                                    <input id="portion-cucchiaio" type="number" min={0} placeholder="—" value={vals.cucchiaio || ''}
+                                        onChange={e => setFn(prev => ({ ...prev, cucchiaio: parseFloat(e.target.value) || undefined }))}
+                                        className="field-input" />
+                                </div>
+                                <div className="field">
+                                    <label className="field-label" htmlFor="portion-pezzo">Pezzo (g)</label>
+                                    <input id="portion-pezzo" type="number" min={0} placeholder="—" value={vals.pezzo || ''}
+                                        onChange={e => setFn(prev => ({ ...prev, pezzo: parseFloat(e.target.value) || undefined }))}
+                                        className="field-input" />
+                                </div>
+                            </>
                         );
-                    })}
-                    {activeTab === 'USA' && (['cup', 'cucchiaio', 'serving', 'confezione', 'pezzo'] as const).map((k, i) => {
-                        const labels = ['CUP 240ml (g)', 'Cucchiaio 15ml (g)', 'Serving Size (g/ml)', 'Confezione/UV (g/ml)', 'Pezzo (g/ml)'];
-                        return (
-                            <div key={k} className="field">
-                                <label className="field-label">{labels[i]}</label>
-                                <input type="number" min={0} placeholder="—" value={usa[k] || ''}
-                                    onChange={e => setUSA(prev => ({ ...prev, [k]: parseFloat(e.target.value) || undefined }))}
-                                    className="field-input" style={{ padding: '5px 8px', fontSize: 12 }} />
-                            </div>
-                        );
-                    })}
-                    {activeTab === 'Canada' && (['cup', 'cucchiaio', 'serving', 'confezione', 'pezzo'] as const).map((k, i) => {
-                        const labels = ['CUP 250ml (g)', 'Cucchiaio 15ml (g)', 'Serving Size (g/ml)', 'Confezione/UV (g/ml)', 'Pezzo (g/ml)'];
-                        return (
-                            <div key={k} className="field">
-                                <label className="field-label">{labels[i]}</label>
-                                <input type="number" min={0} placeholder="—" value={ca[k] || ''}
-                                    onChange={e => setCA(prev => ({ ...prev, [k]: parseFloat(e.target.value) || undefined }))}
-                                    className="field-input" style={{ padding: '5px 8px', fontSize: 12 }} />
-                            </div>
-                        );
-                    })}
-                    {activeTab === 'Australia' && (['serving', 'confezione', 'pezzo'] as const).map((k, i) => {
-                        const labels = ['Serving Size (g/ml)', 'Confezione/UV (g/ml)', 'Pezzo (g/ml)'];
-                        return (
-                            <div key={k} className="field">
-                                <label className="field-label">{labels[i]}</label>
-                                <input type="number" min={0} placeholder="—" value={au[k] || ''}
-                                    onChange={e => setAU(prev => ({ ...prev, [k]: parseFloat(e.target.value) || undefined }))}
-                                    className="field-input" style={{ padding: '5px 8px', fontSize: 12 }} />
-                            </div>
-                        );
-                    })}
-                    {activeTab === 'Arabi' && (['cup', 'cucchiaio', 'serving', 'confezione', 'pezzo'] as const).map((k, i) => {
-                        const labels = ['CUP 240ml (g)', 'Cucchiaio 15ml (g)', 'Serving Size (g/ml)', 'Confezione/UV (g/ml)', 'Pezzo (g/ml)'];
-                        return (
-                            <div key={k} className="field">
-                                <label className="field-label">{labels[i]}</label>
-                                <input type="number" min={0} placeholder="—" value={arabi[k] || ''}
-                                    onChange={e => setArabi(prev => ({ ...prev, [k]: parseFloat(e.target.value) || undefined }))}
-                                    className="field-input" style={{ padding: '5px 8px', fontSize: 12 }} />
-                            </div>
-                        );
-                    })}
+                    })()}
                 </aside>
                 </div>{/* /table-panel-body */}
 
@@ -1916,10 +2040,6 @@ export function NutrizionaleCalc() {
                     <button type="button" className="btn btn-accent" onClick={() => setDownloadModalOpen(true)}
                         style={{ flex: 1, padding: '7px', fontSize: '12px', fontWeight: 600, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
                         <ImageDown size={13} aria-hidden="true" /> Scarica ufficiale…
-                    </button>
-                    <button type="button" onClick={handleSave}
-                        style={{ flex: 1, padding: '7px', borderRadius: '7px', background: 'var(--color-navy)', color: 'white', border: 'none', fontSize: '12px', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
-                        <Save size={13} /> Salva in archivio
                     </button>
                 </div>
             </div>
@@ -1955,14 +2075,40 @@ export function NutrizionaleCalc() {
                         <Sparkles size={13} />
                         Importa Ricetta
                     </button>
-                    <button type="button" className="topbar-btn-ghost" onClick={() => setShowCustomModal(true)}>
-                        <Database size={13} />
-                        Nuovo Ingrediente
+                    <button type="button" className="topbar-btn-ghost" onClick={() => setShowWelcome(true)} title="Apri guida rapida">
+                        <BookOpen size={13} />
+                        Guida
                     </button>
-                    <button type="button" className="topbar-btn-ghost" onClick={() => setShowBrowseModal(true)}>
-                        <Database size={13} />
-                        Sfoglia DB
-                    </button>
+                    <div ref={dbMenuRef} style={{ position: 'relative' }}>
+                        <button type="button" className="topbar-btn-ghost" onClick={() => setDbMenuOpen(o => !o)}>
+                            <Database size={13} />
+                            Database
+                            <ChevronDown size={11} style={{ marginLeft: 2 }} />
+                        </button>
+                        {dbMenuOpen && (
+                            <div style={{
+                                position: 'absolute', top: 'calc(100% + 4px)', right: 0,
+                                background: 'var(--color-bg-card)', border: '1px solid var(--color-border)',
+                                borderRadius: 'var(--radius-md)', boxShadow: 'var(--shadow-card)',
+                                minWidth: 180, zIndex: 200, overflow: 'hidden',
+                            }}>
+                                <button type="button"
+                                    style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', background: 'none', border: 'none', padding: '9px 14px', fontSize: 12, cursor: 'pointer', color: 'var(--color-text)', textAlign: 'left' }}
+                                    onMouseEnter={e => (e.currentTarget.style.background = 'var(--color-surface)')}
+                                    onMouseLeave={e => (e.currentTarget.style.background = 'none')}
+                                    onClick={() => { setShowCustomModal(true); setDbMenuOpen(false); }}>
+                                    <Plus size={13} /> Nuovo ingrediente
+                                </button>
+                                <button type="button"
+                                    style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', background: 'none', border: 'none', padding: '9px 14px', fontSize: 12, cursor: 'pointer', color: 'var(--color-text)', textAlign: 'left', borderTop: '1px solid var(--color-border)' }}
+                                    onMouseEnter={e => (e.currentTarget.style.background = 'var(--color-surface)')}
+                                    onMouseLeave={e => (e.currentTarget.style.background = 'none')}
+                                    onClick={() => { setShowBrowseModal(true); setDbMenuOpen(false); }}>
+                                    <BookOpen size={13} /> Sfoglia database
+                                </button>
+                            </div>
+                        )}
+                    </div>
                     <button type="button" className="topbar-btn-ghost" onClick={handleSave} style={{ position: 'relative' }}>
                         {isDirty && (
                             <span style={{ position: 'absolute', top: 4, right: 4, width: 6, height: 6, borderRadius: '50%', background: 'var(--color-orange, #f97316)', pointerEvents: 'none' }} />
@@ -2039,6 +2185,12 @@ export function NutrizionaleCalc() {
                 selected={selectedOptionals}
                 onChange={setSelectedOptionals}
             />
+            {showWelcome && (
+                <WelcomeModal
+                    onClose={() => setShowWelcome(false)}
+                    onNeverShow={() => { setWelcomeSeen(true); setShowWelcome(false); }}
+                />
+            )}
             {/* Archive modal */}
             {archiveOpen && (
                 <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -2047,7 +2199,13 @@ export function NutrizionaleCalc() {
                             <h3 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: 7 }}><FolderOpen size={16} /> Archivio Ricette</h3>
                             <button className="btn btn-outline" onClick={() => setArchiveOpen(false)} title="Chiudi" style={{ display: 'flex', alignItems: 'center', padding: '4px 8px' }}><X size={14} /></button>
                         </div>
-                        {archiveItems.length === 0 && <p style={{ color: 'var(--color-text-muted)' }}>Nessuna ricetta salvata. Compila una ricetta e clicca 'Salva in archivio'.</p>}
+                        {archiveItems.length === 0 && (
+                            <div style={{ textAlign: 'center', padding: '32px 20px', color: 'var(--color-text-muted)' }}>
+                                <Archive size={36} style={{ opacity: 0.25, marginBottom: 12 }} />
+                                <div style={{ fontWeight: 600, fontSize: 14, color: 'var(--color-text)', marginBottom: 6 }}>Nessuna ricetta salvata</div>
+                                <div style={{ fontSize: 13, lineHeight: 1.5 }}>Compila una ricetta e usa "Salva in archivio" per trovarla qui.</div>
+                            </div>
+                        )}
                         {archiveItems.map(item => {
                             const d = item.data as any;
                             const title = d.nome_prodotto || d.productName || item.name || 'Ricetta Senza Nome';
@@ -2060,7 +2218,7 @@ export function NutrizionaleCalc() {
                                     </div>
                                     <div style={{ display: 'flex', gap: 8 }}>
                                         <button className="btn btn-primary" style={{ fontSize: 12, padding: '4px 10px' }} onClick={() => handleLoad(item)}>Carica</button>
-                                        <button className="btn btn-outline" style={{ fontSize: 12, padding: '4px 10px', color: '#e53e3e' }} onClick={() => openConfirm({ title: 'Eliminare ricetta', message: `Vuoi eliminare "${title}"? L'azione è irreversibile.`, variant: 'danger', confirmLabel: 'Elimina', onConfirm: () => { closeConfirm(); deleteItem(item.id); } })}>🗑 Elimina</button>
+                                        <button className="btn btn-outline" style={{ fontSize: 12, padding: '4px 10px', color: '#e53e3e', display: 'flex', alignItems: 'center', gap: 5 }} onClick={() => openConfirm({ title: 'Eliminare ricetta', message: `Vuoi eliminare "${title}"? L'azione è irreversibile.`, variant: 'danger', confirmLabel: 'Elimina', onConfirm: () => { closeConfirm(); deleteItem(item.id); } })}><Trash2 size={12} /> Elimina</button>
                                     </div>
                                 </div>
                             );
@@ -2096,6 +2254,24 @@ export function NutrizionaleCalc() {
                                 ))}
                             </div>
 
+                            {/* Banner undo eliminazione ingrediente */}
+                            {lastDeleted && (
+                                <div style={{
+                                    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                                    padding: '8px 14px', background: 'var(--color-navy)', color: '#fff',
+                                    fontSize: 12, gap: 10, flexShrink: 0,
+                                }}>
+                                    <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                                        <Trash2 size={12} style={{ opacity: 0.7 }} />
+                                        <strong>{(lastDeleted.row.ing.nome || '').trim()}</strong> rimosso
+                                    </span>
+                                    <button type="button" onClick={undoRemoveRow}
+                                        style={{ background: 'var(--color-orange)', border: 'none', color: '#fff', borderRadius: 'var(--radius-sm)', padding: '3px 10px', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>
+                                        Annulla
+                                    </button>
+                                </div>
+                            )}
+
                             {/* Tab content */}
                             <div className="expert-tab-content" style={{ flex: 1, overflowY: 'auto', padding: '14px' }}>
 
@@ -2105,15 +2281,15 @@ export function NutrizionaleCalc() {
             {allRows.length === 0 && !productName && (
                 <div style={{
                     marginBottom: 16,
-                    borderRadius: 14,
-                    border: '1.5px solid #e5e7eb',
+                    borderRadius: 'var(--radius-lg)',
+                    border: '1.5px solid var(--color-border)',
                     background: '#fafafa',
                     overflow: 'hidden',
                 }}>
                     {/* Hero: Smart Import */}
                     <div style={{ padding: '24px 24px 20px', textAlign: 'center' }}>
                         <div style={{
-                            width: 48, height: 48, borderRadius: 14,
+                            width: 48, height: 48, borderRadius: 'var(--radius-lg)',
                             background: 'linear-gradient(135deg, #ff7e2e, #dd5c0c)',
                             display: 'flex', alignItems: 'center', justifyContent: 'center',
                             margin: '0 auto 14px',
@@ -2131,7 +2307,7 @@ export function NutrizionaleCalc() {
                             onClick={() => setShowSmartImport(true)}
                             style={{
                                 display: 'inline-flex', alignItems: 'center', gap: 8,
-                                padding: '11px 24px', borderRadius: 10, border: 'none',
+                                padding: '11px 24px', borderRadius: 'var(--radius-md)', border: 'none',
                                 background: 'linear-gradient(135deg, #ff7e2e, #dd5c0c)',
                                 color: '#fff', fontWeight: 700, fontSize: 14, cursor: 'pointer',
                                 boxShadow: '0 4px 12px rgba(255,126,46,0.35)',
@@ -2155,8 +2331,8 @@ export function NutrizionaleCalc() {
                             onClick={() => setArchiveOpen(true)}
                             style={{
                                 flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                gap: 7, padding: '9px 12px', borderRadius: 9,
-                                border: '1.5px solid #e5e7eb', background: '#fff',
+                                gap: 7, padding: '9px 12px', borderRadius: 'var(--radius-sm)',
+                                border: '1.5px solid var(--color-border)', background: '#fff',
                                 color: '#374151', fontSize: 13, fontWeight: 600, cursor: 'pointer',
                             }}
                         >
@@ -2164,11 +2340,11 @@ export function NutrizionaleCalc() {
                         </button>
                         <button
                             type="button"
-                            onClick={() => document.querySelector<HTMLInputElement>('.field-input')?.focus()}
+                            onClick={() => document.querySelector<HTMLButtonElement>('[data-ing-add-btn]')?.click()}
                             style={{
                                 flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                gap: 7, padding: '9px 12px', borderRadius: 9,
-                                border: '1.5px solid #e5e7eb', background: '#fff',
+                                gap: 7, padding: '9px 12px', borderRadius: 'var(--radius-sm)',
+                                border: '1.5px solid var(--color-border)', background: '#fff',
                                 color: '#374151', fontSize: 13, fontWeight: 600, cursor: 'pointer',
                             }}
                         >
@@ -2192,7 +2368,7 @@ export function NutrizionaleCalc() {
                                 type="button"
                                 onClick={() => setShowSmartImport(true)}
                                 style={{
-                                    padding: '5px 12px', borderRadius: 7,
+                                    padding: '5px 12px', borderRadius: 'var(--radius-sm)',
                                     border: '1.5px solid #16a34a', background: '#fff',
                                     color: '#15803d', fontSize: 12, fontWeight: 600, cursor: 'pointer',
                                     display: 'flex', alignItems: 'center', gap: 5,
@@ -2208,39 +2384,40 @@ export function NutrizionaleCalc() {
             {/* ── Prodotto / Pesi ── */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 12 }}>
                 <div>
-                    <label style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--color-text-muted)', display: 'block', marginBottom: 4 }}>Nome prodotto</label>
-                    <input type="text" placeholder="Es. Torta di mele, Ragù bolognese..." value={productName}
+                    <label style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--color-text-muted)', display: 'block', marginBottom: 4 }} htmlFor="nut-product-name">Nome prodotto *</label>
+                    <input id="nut-product-name" type="text" placeholder="Es. Pasta fresca all'uovo (obbligatorio per scaricare)" value={productName}
                         onChange={e => setProductName(e.target.value)} className="field-input"
                         style={{ fontWeight: 600, fontSize: 16, width: '100%', padding: '8px 10px' }} />
                 </div>
-                {/* Peso finito e specifico — compaiono dopo il primo ingrediente */}
-                {allRows.length > 0 && (<>
-                    <div style={{ display: 'flex', gap: 8 }}>
-                        <div style={{ flex: 1 }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginBottom: 3 }}>
-                                <label style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--color-text-muted)' }}>Peso finito (g)</label>
-                                <InfoTooltip text="Peso del prodotto dopo cottura, disidratazione o evaporazione di acqua. Deve essere uguale o inferiore al peso del prodotto processato." />
-                            </div>
-                            <input type="number" min={0} placeholder={`max ${totalGramsRaw.toFixed(0)}g`} value={finishedWeight}
-                                onChange={e => handleFW(e.target.value)}
-                                className="field-input" style={{ width: '100%', ...(fwWarning ? { borderColor: '#e53e3e', background: 'rgba(229,62,62,.05)' } : {}) }} />
+                {/* Peso finito e specifico — sempre visibili, disabled senza ingredienti */}
+                <div style={{ display: 'flex', gap: 8 }}>
+                    <div style={{ flex: 1 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginBottom: 3 }}>
+                            <label style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--color-text-muted)' }} htmlFor="nut-finished-weight">Peso finito (g)</label>
+                            <InfoTooltip text="Peso del prodotto dopo cottura, disidratazione o evaporazione di acqua. Deve essere uguale o inferiore al peso del prodotto processato." />
                         </div>
-                        <div style={{ flex: 1 }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginBottom: 3 }}>
-                                <label style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--color-text-muted)' }}>Peso specifico (g/ml)</label>
-                                <InfoTooltip text="Inserisci il peso specifico SOLO per alimenti liquidi. Quando compilato, i valori verranno espressi su 100 ml." />
-                            </div>
-                            <input type="number" min={0} step={0.01} placeholder="opzionale" value={specificGravity}
-                                onChange={e => setSpecificGravity(e.target.value)} className="field-input" style={{ width: '100%' }} />
-                        </div>
+                        <input id="nut-finished-weight" type="number" min={0}
+                            placeholder={allRows.length === 0 ? 'Aggiungi prima gli ingredienti' : `max ${Math.round(totGrammiXpzuv)}g`}
+                            value={finishedWeight}
+                            disabled={allRows.length === 0}
+                            onChange={e => handleFW(e.target.value)}
+                            className="field-input" style={{ width: '100%', ...(fwWarning ? { borderColor: '#e53e3e', background: 'rgba(229,62,62,.05)' } : {}), ...(allRows.length === 0 ? { opacity: 0.5, cursor: 'not-allowed' } : {}) }} />
                     </div>
-                    {fwWarning && (
-                        <div style={{ padding: '5px 8px', background: 'rgba(229,62,62,.10)', border: '2px solid #e53e3e', borderRadius: 6, fontSize: 11, color: '#c53030', fontWeight: 700, display: 'flex', alignItems: 'center', gap: 6 }}>
-                            <AlertTriangle size={12} style={{ flexShrink: 0 }} />
-                            <span>{fieldErrors['finished-weight'] || `Peso superiore al crudo. Max ${(totalGramsRaw / ((components[0]?.pzUV || 1))).toFixed(0)}g.`}</span>
+                    <div style={{ flex: 1 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginBottom: 3 }}>
+                            <label style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--color-text-muted)' }} htmlFor="nut-specific-gravity">Peso specifico (g/ml)</label>
+                            <InfoTooltip text="Inserisci il peso specifico SOLO per alimenti liquidi. Quando compilato, i valori verranno espressi su 100 ml." />
                         </div>
-                    )}
-                </>)}
+                        <input id="nut-specific-gravity" type="number" min={0} step={0.01} placeholder="opzionale" value={specificGravity}
+                            onChange={e => setSpecificGravity(e.target.value)} className="field-input" style={{ width: '100%' }} />
+                    </div>
+                </div>
+                {fwWarning && (
+                    <div style={{ padding: '5px 8px', background: 'rgba(229,62,62,.10)', border: '2px solid #e53e3e', borderRadius: 6, fontSize: 11, color: '#c53030', fontWeight: 700, display: 'flex', alignItems: 'center', gap: 6 }}>
+                        <AlertTriangle size={12} style={{ flexShrink: 0 }} />
+                        <span>{fieldErrors['finished-weight'] || `Peso superiore al crudo. Max ${(totalGramsRaw / ((components[0]?.pzUV || 1))).toFixed(0)}g.`}</span>
+                    </div>
+                )}
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, margin: '4px 0 12px' }}>
                 <div style={{ flex: 1, height: 1, background: 'var(--color-border)' }} />
@@ -2257,7 +2434,7 @@ export function NutrizionaleCalc() {
                         onClick={() => setCompOpen(prev => ({ ...prev, [comp.id]: !isCompOpen }))}
                         style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'rgba(255,126,46,0.07)', padding: '8px 10px', borderBottom: isCompOpen ? '1px solid var(--color-border)' : 'none', cursor: 'pointer' }}
                     >
-                        <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--color-orange)', flexShrink: 0, minWidth: 20 }}>C{ci + 1}</span>
+                        <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--color-orange)', flexShrink: 0, minWidth: 20, display: 'flex', alignItems: 'center', gap: 2 }}>C{ci + 1}<InfoTooltip text="Un componente è una parte separata della ricetta. Usa un solo componente per ricette semplici (es. pasta fresca, ragù). Aggiungi un secondo componente solo per prodotti strutturati con parti distinte (es. biscotto + farcia, pizza + condimento)." /></span>
                         <div style={{ flex: 1, minWidth: 0, fontSize: 13, fontWeight: 600, color: 'var(--color-text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                             {comp.name || `Componente ${ci + 1}`}
                         </div>
@@ -2280,8 +2457,8 @@ export function NutrizionaleCalc() {
                             style={{ flex: 1, fontSize: 13, fontWeight: 600, border: '1px solid var(--color-border)', borderRadius: 6, padding: '5px 8px', color: 'var(--color-text)', background: 'white', fontFamily: 'inherit', outline: 'none' }}
                         />
                         <div style={{ display: 'flex', alignItems: 'center', gap: 4, flexShrink: 0 }}>
-                            <span style={{ fontSize: 11, color: 'var(--color-text-muted)' }}>pz/UV</span>
-                            <InfoTooltip text="Digitare il numero di PZ o di Unità di Vendita che si possono realizzare con la quantità di componente che scaturisce dalla ricetta." />
+                            <span style={{ fontSize: 11, color: 'var(--color-text-muted)' }}>Pezzi prodotti</span>
+                            <InfoTooltip text="Quante confezioni/pezzi finiti produce questa ricetta. Es: se la ricetta produce 4 pacchetti da 250g, scrivi 4. Se non sai, lascia 1." />
                             <input
                                 type="text"
                                 inputMode="decimal"
@@ -2311,9 +2488,10 @@ export function NutrizionaleCalc() {
                         </div>
                     </div>
                     <ValidationError message={fieldErrors[`${comp.id}-pzuv`]} visible={!!fieldErrors[`${comp.id}-pzuv`]} />
+                    <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--color-text-muted)', marginBottom: 4, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Cerca e aggiungi ingrediente dal database</div>
                     <IngSearch onAdd={(ing) => addRowToComp(comp.id, ing)} db={db} loading={loadingDB} error={dbError} onRetry={loadDB} />
                     {comp.rows.length > 0 && (
-                    <div style={{ border: '1px solid var(--color-border)', borderRadius: 8, overflow: 'hidden', marginBottom: 6 }}>
+                    <div style={{ border: '1px solid var(--color-border)', borderRadius: 'var(--radius-md)', overflow: 'hidden', marginBottom: 6 }}>
                     {comp.rows.map((row, rowIdx) => {
                         const _displayGramsAdv = (() => { const raw = gramsRaw[`${comp.id}-${row.id}`]; if (raw === undefined) return row.grams; const v = parseFloat(raw.replace(',', '.')); return isNaN(v) ? row.grams : v; })();
                         const gramsPerPiece = comp.pzUV > 0 && _displayGramsAdv > 0 ? _displayGramsAdv / comp.pzUV : null;
@@ -2341,7 +2519,7 @@ export function NutrizionaleCalc() {
                                     </div>
                                     <div className="ing-row-grams">
                                         <input type="text" inputMode="decimal"
-                                            style={{ width: 58, fontSize: 12, border: '1px solid var(--color-border)', borderRadius: 5, padding: '3px 6px', textAlign: 'right', fontFamily: 'inherit', color: 'var(--color-text)', background: 'var(--color-bg-input)', outline: 'none' }}
+                                            style={{ width: 58, fontSize: 12, border: '1px solid var(--color-border)', borderRadius: 'var(--radius-sm)', padding: '3px 6px', textAlign: 'right', fontFamily: 'inherit', color: 'var(--color-text)', background: 'var(--color-bg-input)', outline: 'none' }}
                                             value={gramsRaw[rowKey] ?? String(row.grams)}
                                             onChange={e => {
                                                 const raw = e.target.value;
@@ -2456,6 +2634,12 @@ export function NutrizionaleCalc() {
                     {/* Additivi per componente — Vista Avanzata */}
                     {isCompOpen && (
                     <div style={{ marginTop: 12 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8, margin: '4px 0 6px' }}>
+                            <div style={{ flex: 1, height: 1, background: 'var(--color-border)' }} />
+                            <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--color-text-muted)' }}>Additivi tecnologici</span>
+                            <div style={{ flex: 1, height: 1, background: 'var(--color-border)' }} />
+                        </div>
+                        <p style={{ fontSize: 11, color: 'var(--color-text-muted)', margin: '0 0 8px' }}>Conservanti, coloranti, addensanti (E-numbers). Non contribuiscono al calcolo nutrizionale ma compaiono in etichetta.</p>
                         <div style={{ marginBottom: 8 }}>
                             <button type="button" className="btn btn-outline" style={{ fontSize: 12, padding: '5px 14px' }} onClick={() => addAdditiveRow(comp.id)}>
                                 <Plus size={13} /> Aggiungi additivo
@@ -2521,6 +2705,7 @@ export function NutrizionaleCalc() {
             })}
 
             <button className="btn btn-outline add-comp-btn" onClick={addComp}><Plus size={14} /> Aggiungi componente</button>
+            <p style={{ fontSize: 11, color: 'var(--color-text-muted)', textAlign: 'center', margin: '4px 0 0' }}>Usa più componenti solo per prodotti con parti separate (es. biscotto + farcia).</p>
 
         </>)}
 
@@ -2574,7 +2759,7 @@ export function NutrizionaleCalc() {
                                             <th className="ri-q" style={{ padding: '5px 7px', textAlign: 'right', fontWeight: 700, fontSize: 10, whiteSpace: 'nowrap' }}>g tot.</th>
                                             <th className="ri-q" style={{ padding: '5px 7px', textAlign: 'right', fontWeight: 700, fontSize: 10, whiteSpace: 'nowrap' }}>g X PZ</th>
                                             <th className="ri-q" style={{ padding: '5px 7px', textAlign: 'right', fontWeight: 700, fontSize: 10, whiteSpace: 'nowrap' }}>%</th>
-                                            <th className="ri-q" style={{ padding: '5px 7px', textAlign: 'right', fontWeight: 700, fontSize: 10, whiteSpace: 'nowrap', color: 'var(--color-orange)' }}>QUID</th>
+                                            <th className="ri-q" style={{ padding: '5px 7px', textAlign: 'right', fontWeight: 700, fontSize: 10, whiteSpace: 'nowrap', color: 'var(--color-orange)' }}><span style={{ display: 'inline-flex', alignItems: 'center', gap: 2 }}>QUID<InfoTooltip text="Dichiarazione Quantitativa degli Ingredienti (QUID): percentuale di ogni ingrediente presente nel prodotto finito, richiesta dalla normativa UE quando l'ingrediente è citato nella denominazione o nell'immagine del prodotto." /></span></th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -2624,18 +2809,18 @@ export function NutrizionaleCalc() {
                 const costPerKg = pesoTotale > 0 ? (costoTotale / pesoTotale) * 1000 : 0;
                 if (costoTotale === 0) return null;
                 return (
-                    <div style={{ marginBottom: 20, background: 'var(--color-surface)', borderRadius: 8, padding: '14px 20px' }}>
+                    <div style={{ marginBottom: 20, background: 'var(--color-surface)', borderRadius: 'var(--radius-md)', padding: '14px 20px' }}>
                         <div style={{ fontWeight: 800, fontSize: 14, marginBottom: 12, display: 'flex', alignItems: 'center', gap: 7 }}><Euro size={15} /> Riepilogo Costi Ingredienti</div>
                         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(180px,1fr))', gap: 12 }}>
-                            <div style={{ background: 'white', borderRadius: 10, padding: '10px 14px', boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}>
+                            <div style={{ background: 'white', borderRadius: 'var(--radius-md)', padding: '10px 14px', boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}>
                                 <div style={{ fontSize: 11, color: 'var(--color-text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Costo ingredienti per pezzo</div>
                                 <div style={{ fontSize: 22, fontWeight: 800, color: 'var(--color-orange)', marginTop: 4 }}>{costoTotale.toFixed(3)} €</div>
                             </div>
-                            <div style={{ background: 'white', borderRadius: 10, padding: '10px 14px', boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}>
+                            <div style={{ background: 'white', borderRadius: 'var(--radius-md)', padding: '10px 14px', boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}>
                                 <div style={{ fontSize: 11, color: 'var(--color-text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Costo ingredienti per kg</div>
                                 <div style={{ fontSize: 22, fontWeight: 800, color: 'var(--color-navy)', marginTop: 4 }}>{costPerKg.toFixed(3)} €</div>
                             </div>
-                            <div style={{ background: 'white', borderRadius: 10, padding: '10px 14px', boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}>
+                            <div style={{ background: 'white', borderRadius: 'var(--radius-md)', padding: '10px 14px', boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}>
                                 <div style={{ fontSize: 11, color: 'var(--color-text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Fabbisogno reale totale</div>
                                 <div style={{ fontSize: 22, fontWeight: 800, color: '#555', marginTop: 4 }}>{fabbRealeTotale.toFixed(1)} g</div>
                             </div>
@@ -2961,9 +3146,9 @@ function TabAustralia({ p, au }: { p: CalcResult; au: ServingSizesNation }) {
     if (sv) {
         rows.push({
             label: 'Energy',
-            svVal: `${rAU_kj(sv.energyKj)} kJ  ( ${rAU_kcal(sv.energyKcal)} Cal )`,
+            svVal: `${rAU_kj(sv.energyKj)} kJ (${rAU_kcal(sv.energyKcal)} Cal)`,
             di: diPct(sv.energyKj, DV_AU.energyKj),
-            p100: `${rAU_kj(p.energyKj)} kJ  ( ${rAU_kcal(p.energyKcal)} Cal )`,
+            p100: `${rAU_kj(p.energyKj)} kJ (${rAU_kcal(p.energyKcal)} Cal)`,
         });
         [
             { label: 'Protein',       svVal: sv.proteine,  p100: p.proteine,  ref: DV_AU.proteine,     unit: 'g' },
@@ -2986,7 +3171,7 @@ function TabAustralia({ p, au }: { p: CalcResult; au: ServingSizesNation }) {
 
     return (
         <div style={{ background: 'white' }}>
-            <div data-table-export style={{ background: 'white', padding: 12, borderRadius: 0, display: 'inline-block', width: 500, boxSizing: 'border-box' }}>
+            <div data-table-export style={{ background: 'white', padding: 12, borderRadius: 0, display: 'inline-block', width: 560, boxSizing: 'border-box' }}>
                 <div style={{ border: bOut, fontFamily: 'Arial, sans-serif', fontSize: 12 }}>
                     {/* Titolo */}
                     <div style={{ textAlign: 'center', padding: '8px 12px 6px', borderBottom: bHdr }}>
@@ -3007,20 +3192,19 @@ function TabAustralia({ p, au }: { p: CalcResult; au: ServingSizesNation }) {
                     <table style={{ borderCollapse: 'collapse', width: '100%' }}>
                         <thead>
                             <tr>
-                                <th style={{ ...thStyle, textAlign: 'left', width: '34%' }}></th>
-                                <th style={{ ...thStyle, textAlign: 'left' }}>Average Quantity<br/>per Serving</th>
-                                <th style={{ ...thStyle, textAlign: 'left', whiteSpace: 'nowrap' }}>% Daily Intake*<br/>(per Serving)</th>
-                                <th style={{ ...thStyle, textAlign: 'left' }}>Average Quantity<br/>per 100 g</th>
+                                <th style={{ ...thStyle, textAlign: 'left', width: '32%' }}></th>
+                                <th style={{ ...thStyle, textAlign: 'left' }}>Average Quantity per Serving</th>
+                                <th style={{ ...thStyle, textAlign: 'left' }}>% Daily Intake* (per Serving)</th>
+                                <th style={{ ...thStyle, textAlign: 'left' }}>Average Quantity per 100 g</th>
                             </tr>
                         </thead>
                         <tbody>
                             {svG > 0 && sv ? rows.map((r, i) => (
                                 <tr key={i}>
-                                    {/* fix approvato 2026-07-14: niente nowrap — le diciture lunghe ("less than …") devono andare a capo dentro i 500px */}
                                     <td style={{ ...tdStyle, paddingTop: i === 0 ? 8 : 2, paddingLeft: r.isSub ? 22 : 10 }}>{r.label}</td>
-                                    <td style={{ ...tdStyle, paddingTop: i === 0 ? 8 : 2 }}>{r.svVal}</td>
+                                    <td style={{ ...tdStyle, paddingTop: i === 0 ? 8 : 2, ...(i === 0 ? { whiteSpace: 'nowrap' } : {}) }}>{r.svVal}</td>
                                     <td style={{ ...tdStyle, paddingTop: i === 0 ? 8 : 2 }}>{r.di}</td>
-                                    <td style={{ ...tdStyle, paddingTop: i === 0 ? 8 : 2 }}>{r.p100}</td>
+                                    <td style={{ ...tdStyle, paddingTop: i === 0 ? 8 : 2, ...(i === 0 ? { whiteSpace: 'nowrap' } : {}) }}>{r.p100}</td>
                                 </tr>
                             )) : (
                                 <tr><td colSpan={4} style={{ ...tdStyle, color: '#888' }}>Inserire il valore serving size sopra per calcolare le quantità per porzione.</td></tr>
@@ -3122,8 +3306,6 @@ function TabArabi({ p, arabi, servingRef, measure, specificGravity }: {
                     <div style={{ fontSize: 18, fontWeight: 400 }}>
                         {si.servingsPerContainer} servings per container
                     </div>
-
-                    {/* Serving size */}
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
                         <span style={{ fontSize: 16, fontWeight: 900, WebkitTextStroke: '0.4px #000' }}>Serving size</span>
                         <span style={{ fontSize: 16, fontWeight: 900, WebkitTextStroke: '0.4px #000' }}>{si.sizeValue}</span>

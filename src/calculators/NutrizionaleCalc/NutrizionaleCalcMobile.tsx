@@ -10,6 +10,7 @@ import { TabellaTab } from './mobile/TabellaTab';
 import { RiepilogoTab } from './mobile/RiepilogoTab';
 import { ArchivioTab } from './mobile/ArchivioTab';
 import { readBridge } from './sessionBridge';
+import { isValidDBIngredient } from '../../utils/validation';
 import { SmartImportModal } from './SmartImportModal';
 import type { SmartImportResult } from './SmartImportModal';
 import { useToast } from '../../components/ui/Toast';
@@ -153,9 +154,10 @@ export function NutrizionaleCalcMobile() {
             .then((data: DBIngredient[]) => {
                 let base = data;
                 try {
-                    const custom = JSON.parse(
+                    const raw = JSON.parse(
                         localStorage.getItem('custom_ingredients') || '[]'
-                    ) as DBIngredient[];
+                    ) as unknown;
+                    const custom = Array.isArray(raw) ? raw.filter(isValidDBIngredient) as DBIngredient[] : [];
                     if (custom.length) base = [...base, ...custom];
                 } catch {}
                 setDb(base);

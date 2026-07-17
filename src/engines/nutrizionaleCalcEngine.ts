@@ -242,3 +242,21 @@ export function calcClaims(r: CalcResult, isLiquid = false): string[] {
 
     return claims;
 }
+
+/**
+ * Energia kcal/kJ da macro (EU Reg. 1169/2011, All. XIV) per 100g.
+ * `carboidrati` include polioli ed eritritolo (convenzione form ingrediente custom);
+ * eritritolo escluso dal computo (0 kcal/kJ per g).
+ */
+export function energyFromMacros(m: {
+    grassi: number; carboidrati: number; polioli?: number; eritritolo?: number;
+    fibre?: number; acidiOrganici?: number; proteine: number; alcolG?: number;
+}): { kcal: number; kj: number } {
+    const polioli = m.polioli ?? 0, eritritolo = m.eritritolo ?? 0;
+    const fibre = m.fibre ?? 0, acidiOrg = m.acidiOrganici ?? 0, alcolG = m.alcolG ?? 0;
+    const carboNetti = m.carboidrati - polioli - eritritolo;
+    return {
+        kcal: Math.round((m.grassi*9  + carboNetti*4  + polioli*2.4 + fibre*2 + acidiOrg*3  + m.proteine*4  + alcolG*7)  * 10) / 10,
+        kj:   Math.round((m.grassi*37 + carboNetti*17 + polioli*10  + fibre*8 + acidiOrg*13 + m.proteine*17 + alcolG*29) * 10) / 10,
+    };
+}
