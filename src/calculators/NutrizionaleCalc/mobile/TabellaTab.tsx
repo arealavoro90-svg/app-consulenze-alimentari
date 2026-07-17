@@ -652,8 +652,6 @@ export function TabellaTab({ calcResult, form, onChange, onSave, onExportPDF, ha
                                         servingRef={caServingRef}
                                         measure={caMeasure}
                                         subTab={caSubTab}
-                                        setSubTab={setCaSubTab}
-                                        full
                                     />
                                 </div>
                             </TablePreviewWrap>
@@ -680,8 +678,6 @@ export function TabellaTab({ calcResult, form, onChange, onSave, onExportPDF, ha
                                     servingRef={caServingRef}
                                     measure={caMeasure}
                                     subTab={caSubTab}
-                                    setSubTab={setCaSubTab}
-                                    full
                                 />
                             </FullscreenOverlay>
                         </div>
@@ -702,7 +698,7 @@ export function TabellaTab({ calcResult, form, onChange, onSave, onExportPDF, ha
                             />
                             <TablePreviewWrap layout="verticale" onExpand={() => setFullscreenOpen(true)}>
                                 <div key={`tbl-Australia`} className="m-table-appear">
-                                    <TabAustralia p={calcResult} au={au} full />
+                                    <TabAustralia p={calcResult} au={au} />
                                 </div>
                             </TablePreviewWrap>
                             <FullscreenOverlay
@@ -712,7 +708,7 @@ export function TabellaTab({ calcResult, form, onChange, onSave, onExportPDF, ha
                                 layout="default"
                                 onClose={closeFullscreen}
                             >
-                                <TabAustralia p={calcResult} au={au} full />
+                                <TabAustralia p={calcResult} au={au} />
                             </FullscreenOverlay>
                         </div>
                     )}
@@ -764,7 +760,6 @@ export function TabellaTab({ calcResult, form, onChange, onSave, onExportPDF, ha
                                         servingRef={arabiServingRef}
                                         measure={arabiMeasure}
                                         specificGravity={sg > 0 ? sg : undefined}
-                                        full
                                     />
                                 </div>
                             </TablePreviewWrap>
@@ -781,7 +776,6 @@ export function TabellaTab({ calcResult, form, onChange, onSave, onExportPDF, ha
                                     servingRef={arabiServingRef}
                                     measure={arabiMeasure}
                                     specificGravity={sg > 0 ? sg : undefined}
-                                    full
                                 />
                             </FullscreenOverlay>
                         </div>

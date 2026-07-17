@@ -40,15 +40,8 @@ function scaleResult(r: CalcResult, grams: number): CalcResult {
     return s;
 }
 
-// ─── Props ────────────────────────────────────────────────────────────────────
-interface TabAustraliaProps {
-    p: CalcResult;
-    au: ServingSizesNation;
-    full?: boolean;
-}
-
-// ─── Component ────────────────────────────────────────────────────────────────
-export function TabAustralia({ p, au, full }: TabAustraliaProps) {
+// ─── Component — markup UNIFICATO (sorgente: versione desktop, TAB-UNIFY 2026-07-17) ──
+export function TabAustralia({ p, au }: { p: CalcResult; au: ServingSizesNation }) {
     const svG = au.serving || 0;
     const sv = svG > 0 ? scaleResult(p, svG) : null;
     const pkgG = au.confezione || 0;
@@ -62,9 +55,9 @@ export function TabAustralia({ p, au, full }: TabAustraliaProps) {
     if (sv) {
         rows.push({
             label: 'Energy',
-            svVal: `${rAU_kj(sv.energyKj)} kJ  ( ${rAU_kcal(sv.energyKcal)} Cal )`,
+            svVal: `${rAU_kj(sv.energyKj)} kJ (${rAU_kcal(sv.energyKcal)} Cal)`,
             di: diPct(sv.energyKj, DV_AU.energyKj),
-            p100: `${rAU_kj(p.energyKj)} kJ  ( ${rAU_kcal(p.energyKcal)} Cal )`,
+            p100: `${rAU_kj(p.energyKj)} kJ (${rAU_kcal(p.energyKcal)} Cal)`,
         });
         ([
             { label: 'Protein',       svVal: sv.proteine,    p100: p.proteine,    ref: DV_AU.proteine,    unit: 'g' },
@@ -87,16 +80,13 @@ export function TabAustralia({ p, au, full }: TabAustraliaProps) {
 
     return (
         <div style={{ background: 'white' }}>
-            {!full && (
-                <h3 style={{ marginTop: 0, fontSize: 16, color: 'var(--color-navy)', borderBottom: '2px solid var(--color-orange)', paddingBottom: 8, marginBottom: 16 }}>
-                    Etichetta Nutrizionale (Australia)
-                </h3>
-            )}
-            <div data-table-export style={{ background: 'white', padding: 12, borderRadius: 0, display: 'inline-block', width: 500, boxSizing: 'border-box' }}>
+            <div data-table-export style={{ background: 'white', padding: 12, borderRadius: 0, display: 'inline-block', width: 560, boxSizing: 'border-box' }}>
                 <div style={{ border: bOut, fontFamily: 'Arial, sans-serif', fontSize: 12 }}>
+                    {/* Titolo */}
                     <div style={{ textAlign: 'center', padding: '8px 12px 6px', borderBottom: bHdr }}>
                         <span style={{ fontSize: 24, fontWeight: 900 }}>NUTRITION INFORMATION</span>
                     </div>
+                    {/* Serving info */}
                     <div style={{ padding: '10px 12px', borderBottom: bHdr, lineHeight: 1.8, fontWeight: 700 }}>
                         {servingsPerPkg !== null && (
                             <div style={{ fontSize: 12, fontWeight: 700 }}>
@@ -107,36 +97,32 @@ export function TabAustralia({ p, au, full }: TabAustraliaProps) {
                             Serving Size:&nbsp;&nbsp;{svG > 0 ? `${svG} g` : '—'}
                         </div>
                     </div>
+                    {/* Tabella: nessuna linea verticale, solo bordo sotto intestazione */}
                     <table style={{ borderCollapse: 'collapse', width: '100%' }}>
                         <thead>
                             <tr>
-                                <th style={{ ...thStyle, textAlign: 'left', width: '34%' }}></th>
-                                <th style={{ ...thStyle, textAlign: 'left' }}>Average Quantity<br />per Serving</th>
-                                <th style={{ ...thStyle, textAlign: 'left' }}>% Daily Intake*<br />(per Serving)</th>
-                                <th style={{ ...thStyle, textAlign: 'left' }}>Average Quantity<br />per 100 g</th>
+                                <th style={{ ...thStyle, textAlign: 'left', width: '32%' }}></th>
+                                <th style={{ ...thStyle, textAlign: 'left' }}>Average Quantity per Serving</th>
+                                <th style={{ ...thStyle, textAlign: 'left' }}>% Daily Intake* (per Serving)</th>
+                                <th style={{ ...thStyle, textAlign: 'left' }}>Average Quantity per 100 g</th>
                             </tr>
                         </thead>
                         <tbody>
                             {svG > 0 && sv ? rows.map((r, i) => (
                                 <tr key={i}>
                                     <td style={{ ...tdStyle, paddingTop: i === 0 ? 8 : 2, paddingLeft: r.isSub ? 22 : 10 }}>{r.label}</td>
-                                    <td style={{ ...tdStyle, paddingTop: i === 0 ? 8 : 2 }}>{r.svVal}</td>
+                                    <td style={{ ...tdStyle, paddingTop: i === 0 ? 8 : 2, ...(i === 0 ? { whiteSpace: 'nowrap' } : {}) }}>{r.svVal}</td>
                                     <td style={{ ...tdStyle, paddingTop: i === 0 ? 8 : 2 }}>{r.di}</td>
-                                    <td style={{ ...tdStyle, paddingTop: i === 0 ? 8 : 2 }}>{r.p100}</td>
+                                    <td style={{ ...tdStyle, paddingTop: i === 0 ? 8 : 2, ...(i === 0 ? { whiteSpace: 'nowrap' } : {}) }}>{r.p100}</td>
                                 </tr>
                             )) : (
-                                <tr>
-                                    <td colSpan={4} style={{ ...tdStyle, color: '#888', padding: '12px 10px' }}>
-                                        Inserire il valore serving size per calcolare le quantità per porzione.
-                                    </td>
-                                </tr>
+                                <tr><td colSpan={4} style={{ ...tdStyle, color: '#888' }}>Inserire il valore serving size sopra per calcolare le quantità per porzione.</td></tr>
                             )}
                         </tbody>
                     </table>
+                    {/* Footer */}
                     <div style={{ padding: '6px 10px 8px' }}>
-                        <span style={{ fontSize: 10, fontWeight: 700 }}>
-                            * Percentage daily intakes are based on an average adult diet of 8700 kJ
-                        </span>
+                        <span style={{ fontSize: 10, fontWeight: 700 }}>* Percentage daily intakes are based on an average adult diet of 8700 kJ</span>
                     </div>
                 </div>
             </div>

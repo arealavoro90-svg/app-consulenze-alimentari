@@ -1,0 +1,2499 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`TabArabi — snapshot rendering > confezione in tazze, liquido (ml) 1`] = `
+<div>
+  <div
+    style="background: white;"
+  >
+    <div
+      data-table-export="true"
+      style="background: white; padding: 12px; display: inline-block;"
+    >
+      <div
+        style="width: 310px; border: 2.5px solid rgb(0, 0, 0); padding: 8px 8px 6px; font-family: Arial, Helvetica, sans-serif; color: rgb(0, 0, 0); box-sizing: border-box;"
+      >
+        <div
+          style="font-size: 38px; font-weight: 900; line-height: 1; white-space: nowrap; text-align: justify; text-align-last: justify; -webkit-text-stroke: 0.6px #000; border-bottom: 1px solid rgb(0, 0, 0); padding-bottom: 3px; margin-bottom: 2px;"
+        >
+          Nutrition Facts
+        </div>
+        <div
+          style="font-size: 18px; font-weight: 400;"
+        >
+          8,3
+           servings per container
+        </div>
+        <div
+          style="display: flex; justify-content: space-between; align-items: baseline;"
+        >
+          <span
+            style="font-size: 16px; font-weight: 900; -webkit-text-stroke: 0.4px #000;"
+          >
+            Serving size
+          </span>
+          <span
+            style="font-size: 16px; font-weight: 900; -webkit-text-stroke: 0.4px #000;"
+          >
+            1,0 cup (250ml)
+          </span>
+        </div>
+        <div
+          style="border-top: 14px solid rgb(0, 0, 0); margin-top: 3px; padding-top: 2px;"
+        >
+          <div
+            style="font-size: 14px; font-weight: 900; -webkit-text-stroke: 0.4px #000; line-height: 1; margin-bottom: 0px;"
+          >
+            Amount per container
+          </div>
+          <div
+            style="display: flex; justify-content: space-between; align-items: baseline; border-bottom: 8px solid rgb(0, 0, 0); padding-bottom: 2px; margin-top: -10px;"
+          >
+            <span
+              style="font-size: 32px; font-weight: 900; -webkit-text-stroke: 0.8px #000;"
+            >
+              Calories
+            </span>
+            <span
+              style="font-size: 48px; font-weight: 900; line-height: 1; -webkit-text-stroke: 0.8px #000;"
+            >
+              635
+            </span>
+          </div>
+        </div>
+        <div
+          style="text-align: right; font-size: 11px; font-weight: 900; -webkit-text-stroke: 0.4px #000; padding-top: 2px; padding-bottom: 1px; border-bottom: 1px solid rgb(0, 0, 0);"
+        >
+          % Daily Value*
+        </div>
+        <div
+          style="display: flex; justify-content: space-between; align-items: baseline; border-bottom: 1px solid rgb(0, 0, 0); padding-left: 0px; padding-top: 2px; padding-bottom: 2px;"
+        >
+          <span
+            style="font-size: 15px; font-weight: 900;"
+          >
+            <span
+              style="font-weight: 900; -webkit-text-stroke: 0.4px #000;"
+            >
+              Total Fat
+            </span>
+             
+            <span
+              style="font-weight: 400;"
+            >
+              49 g
+            </span>
+          </span>
+          <span
+            style="font-size: 13px; font-weight: 900; -webkit-text-stroke: 0.4px #000;"
+          >
+            70
+            %
+          </span>
+        </div>
+        <div
+          style="display: flex; justify-content: space-between; align-items: baseline; border-bottom: 1px solid rgb(0, 0, 0); padding-left: 18px; padding-top: 2px; padding-bottom: 2px;"
+        >
+          <span
+            style="font-size: 13px; font-weight: 400;"
+          >
+            Saturated Fat
+             
+            33 g
+          </span>
+          <span
+            style="font-size: 13px; font-weight: 900; -webkit-text-stroke: 0.4px #000;"
+          >
+            165
+            %
+          </span>
+        </div>
+        <div
+          style="display: flex; justify-content: space-between; align-items: baseline; border-bottom: 1px solid rgb(0, 0, 0); padding-left: 18px; padding-top: 2px; padding-bottom: 2px;"
+        >
+          <span
+            style="font-size: 13px; font-weight: 400;"
+          >
+            <em>
+              Trans
+            </em>
+             Fat 
+            <span
+              style="font-weight: 400;"
+            >
+              0.0 g
+            </span>
+          </span>
+          <span />
+        </div>
+        <div
+          style="display: flex; justify-content: space-between; align-items: baseline; border-bottom: 1.5px solid rgb(0, 0, 0); padding-left: 0px; padding-top: 2px; padding-bottom: 2px;"
+        >
+          <span
+            style="font-size: 15px; font-weight: 900;"
+          >
+            <span
+              style="font-weight: 900; -webkit-text-stroke: 0.4px #000;"
+            >
+              Cholesterol
+            </span>
+             
+            <span
+              style="font-weight: 400;"
+            >
+              160 mg
+            </span>
+          </span>
+          <span
+            style="font-size: 13px; font-weight: 900; -webkit-text-stroke: 0.4px #000;"
+          >
+            53
+            %
+          </span>
+        </div>
+        <div
+          style="display: flex; justify-content: space-between; align-items: baseline; border-bottom: 1.5px solid rgb(0, 0, 0); padding-left: 0px; padding-top: 2px; padding-bottom: 2px;"
+        >
+          <span
+            style="font-size: 15px; font-weight: 900;"
+          >
+            <span
+              style="font-weight: 900; -webkit-text-stroke: 0.4px #000;"
+            >
+              Sodium
+            </span>
+             
+            <span
+              style="font-weight: 400;"
+            >
+              830 mg
+            </span>
+          </span>
+          <span
+            style="font-size: 13px; font-weight: 900; -webkit-text-stroke: 0.4px #000;"
+          >
+            35
+            %
+          </span>
+        </div>
+        <div
+          style="display: flex; justify-content: space-between; align-items: baseline; border-bottom: 1.5px solid rgb(0, 0, 0); padding-left: 0px; padding-top: 2px; padding-bottom: 2px;"
+        >
+          <span
+            style="font-size: 15px; font-weight: 900;"
+          >
+            <span
+              style="font-weight: 900; -webkit-text-stroke: 0.4px #000;"
+            >
+              Total Carbohydrate
+            </span>
+             
+            <span
+              style="font-weight: 400;"
+            >
+              5.3 g
+            </span>
+          </span>
+          <span
+            style="font-size: 13px; font-weight: 900; -webkit-text-stroke: 0.4px #000;"
+          >
+            2
+            %
+          </span>
+        </div>
+        <div
+          style="display: flex; justify-content: space-between; align-items: baseline; border-bottom: 1px solid rgb(0, 0, 0); padding-left: 18px; padding-top: 2px; padding-bottom: 2px;"
+        >
+          <span
+            style="font-size: 13px; font-weight: 400;"
+          >
+            Dietary Fiber
+             
+            0.0 g
+          </span>
+          <span
+            style="font-size: 13px; font-weight: 900; -webkit-text-stroke: 0.4px #000;"
+          >
+            0
+            %
+          </span>
+        </div>
+        <div
+          style="display: flex; justify-content: space-between; align-items: baseline; border-bottom: 1px solid rgb(0, 0, 0); padding-left: 18px; padding-top: 2px; padding-bottom: 2px;"
+        >
+          <span
+            style="font-size: 13px; font-weight: 400;"
+          >
+            Total Sugars
+             
+            5.3 g
+          </span>
+          <span />
+        </div>
+        <div
+          style="display: flex; justify-content: space-between; align-items: baseline; border-bottom: 1.5px solid rgb(0, 0, 0); padding-left: 36px; padding-top: 2px; padding-bottom: 2px;"
+        >
+          <span
+            style="font-size: 13px; font-weight: 400;"
+          >
+            Includes 0.0g Added Sugars
+          </span>
+          <span
+            style="font-size: 13px; font-weight: 900; -webkit-text-stroke: 0.4px #000;"
+          >
+            0
+            %
+          </span>
+        </div>
+        <div
+          style="display: flex; justify-content: space-between; align-items: baseline; border-bottom: 8px solid rgb(0, 0, 0); padding-left: 0px; padding-top: 2px; padding-bottom: 2px;"
+        >
+          <span
+            style="font-size: 15px; font-weight: 900;"
+          >
+            <span
+              style="font-weight: 900; -webkit-text-stroke: 0.4px #000;"
+            >
+              Protein
+            </span>
+             
+            <span
+              style="font-weight: 400;"
+            >
+              46 g
+            </span>
+          </span>
+          <span />
+        </div>
+        <div
+          style="font-size: 11px; padding-top: 4px; line-height: 1.3;"
+        >
+          *The % Daily Value (DV) tells you how much a nutrient in a serving of food contributes to a daily diet. 2,000 calories a day is used for general nutrition advice.
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+`;
+
+exports[`TabArabi — snapshot rendering > serving in grammi 1`] = `
+<div>
+  <div
+    style="background: white;"
+  >
+    <div
+      data-table-export="true"
+      style="background: white; padding: 12px; display: inline-block;"
+    >
+      <div
+        style="width: 310px; border: 2.5px solid rgb(0, 0, 0); padding: 8px 8px 6px; font-family: Arial, Helvetica, sans-serif; color: rgb(0, 0, 0); box-sizing: border-box;"
+      >
+        <div
+          style="font-size: 38px; font-weight: 900; line-height: 1; white-space: nowrap; text-align: justify; text-align-last: justify; -webkit-text-stroke: 0.6px #000; border-bottom: 1px solid rgb(0, 0, 0); padding-bottom: 3px; margin-bottom: 2px;"
+        >
+          Nutrition Facts
+        </div>
+        <div
+          style="font-size: 18px; font-weight: 400;"
+        >
+          8,3
+           servings per container
+        </div>
+        <div
+          style="display: flex; justify-content: space-between; align-items: baseline;"
+        >
+          <span
+            style="font-size: 16px; font-weight: 900; -webkit-text-stroke: 0.4px #000;"
+          >
+            Serving size
+          </span>
+          <span
+            style="font-size: 16px; font-weight: 900; -webkit-text-stroke: 0.4px #000;"
+          >
+            30g
+          </span>
+        </div>
+        <div
+          style="border-top: 14px solid rgb(0, 0, 0); margin-top: 3px; padding-top: 2px;"
+        >
+          <div
+            style="font-size: 14px; font-weight: 900; -webkit-text-stroke: 0.4px #000; line-height: 1; margin-bottom: 0px;"
+          >
+            Amount per serving
+          </div>
+          <div
+            style="display: flex; justify-content: space-between; align-items: baseline; border-bottom: 8px solid rgb(0, 0, 0); padding-bottom: 2px; margin-top: -10px;"
+          >
+            <span
+              style="font-size: 32px; font-weight: 900; -webkit-text-stroke: 0.8px #000;"
+            >
+              Calories
+            </span>
+            <span
+              style="font-size: 48px; font-weight: 900; line-height: 1; -webkit-text-stroke: 0.8px #000;"
+            >
+              76
+            </span>
+          </div>
+        </div>
+        <div
+          style="text-align: right; font-size: 11px; font-weight: 900; -webkit-text-stroke: 0.4px #000; padding-top: 2px; padding-bottom: 1px; border-bottom: 1px solid rgb(0, 0, 0);"
+        >
+          % Daily Value*
+        </div>
+        <div
+          style="display: flex; justify-content: space-between; align-items: baseline; border-bottom: 1px solid rgb(0, 0, 0); padding-left: 0px; padding-top: 2px; padding-bottom: 2px;"
+        >
+          <span
+            style="font-size: 15px; font-weight: 900;"
+          >
+            <span
+              style="font-weight: 900; -webkit-text-stroke: 0.4px #000;"
+            >
+              Total Fat
+            </span>
+             
+            <span
+              style="font-weight: 400;"
+            >
+              5.9 g
+            </span>
+          </span>
+          <span
+            style="font-size: 13px; font-weight: 900; -webkit-text-stroke: 0.4px #000;"
+          >
+            8
+            %
+          </span>
+        </div>
+        <div
+          style="display: flex; justify-content: space-between; align-items: baseline; border-bottom: 1px solid rgb(0, 0, 0); padding-left: 18px; padding-top: 2px; padding-bottom: 2px;"
+        >
+          <span
+            style="font-size: 13px; font-weight: 400;"
+          >
+            Saturated Fat
+             
+            4.0 g
+          </span>
+          <span
+            style="font-size: 13px; font-weight: 900; -webkit-text-stroke: 0.4px #000;"
+          >
+            20
+            %
+          </span>
+        </div>
+        <div
+          style="display: flex; justify-content: space-between; align-items: baseline; border-bottom: 1px solid rgb(0, 0, 0); padding-left: 18px; padding-top: 2px; padding-bottom: 2px;"
+        >
+          <span
+            style="font-size: 13px; font-weight: 400;"
+          >
+            <em>
+              Trans
+            </em>
+             Fat 
+            <span
+              style="font-weight: 400;"
+            >
+              0.0 g
+            </span>
+          </span>
+          <span />
+        </div>
+        <div
+          style="display: flex; justify-content: space-between; align-items: baseline; border-bottom: 1.5px solid rgb(0, 0, 0); padding-left: 0px; padding-top: 2px; padding-bottom: 2px;"
+        >
+          <span
+            style="font-size: 15px; font-weight: 900;"
+          >
+            <span
+              style="font-weight: 900; -webkit-text-stroke: 0.4px #000;"
+            >
+              Cholesterol
+            </span>
+             
+            <span
+              style="font-weight: 400;"
+            >
+              20 mg
+            </span>
+          </span>
+          <span
+            style="font-size: 13px; font-weight: 900; -webkit-text-stroke: 0.4px #000;"
+          >
+            7
+            %
+          </span>
+        </div>
+        <div
+          style="display: flex; justify-content: space-between; align-items: baseline; border-bottom: 1.5px solid rgb(0, 0, 0); padding-left: 0px; padding-top: 2px; padding-bottom: 2px;"
+        >
+          <span
+            style="font-size: 15px; font-weight: 900;"
+          >
+            <span
+              style="font-weight: 900; -webkit-text-stroke: 0.4px #000;"
+            >
+              Sodium
+            </span>
+             
+            <span
+              style="font-weight: 400;"
+            >
+              100 mg
+            </span>
+          </span>
+          <span
+            style="font-size: 13px; font-weight: 900; -webkit-text-stroke: 0.4px #000;"
+          >
+            4
+            %
+          </span>
+        </div>
+        <div
+          style="display: flex; justify-content: space-between; align-items: baseline; border-bottom: 1.5px solid rgb(0, 0, 0); padding-left: 0px; padding-top: 2px; padding-bottom: 2px;"
+        >
+          <span
+            style="font-size: 15px; font-weight: 900;"
+          >
+            <span
+              style="font-weight: 900; -webkit-text-stroke: 0.4px #000;"
+            >
+              Total Carbohydrate
+            </span>
+             
+            <span
+              style="font-weight: 400;"
+            >
+              0.6 g
+            </span>
+          </span>
+          <span
+            style="font-size: 13px; font-weight: 900; -webkit-text-stroke: 0.4px #000;"
+          >
+            0
+            %
+          </span>
+        </div>
+        <div
+          style="display: flex; justify-content: space-between; align-items: baseline; border-bottom: 1px solid rgb(0, 0, 0); padding-left: 18px; padding-top: 2px; padding-bottom: 2px;"
+        >
+          <span
+            style="font-size: 13px; font-weight: 400;"
+          >
+            Dietary Fiber
+             
+            0.0 g
+          </span>
+          <span
+            style="font-size: 13px; font-weight: 900; -webkit-text-stroke: 0.4px #000;"
+          >
+            0
+            %
+          </span>
+        </div>
+        <div
+          style="display: flex; justify-content: space-between; align-items: baseline; border-bottom: 1px solid rgb(0, 0, 0); padding-left: 18px; padding-top: 2px; padding-bottom: 2px;"
+        >
+          <span
+            style="font-size: 13px; font-weight: 400;"
+          >
+            Total Sugars
+             
+            0.6 g
+          </span>
+          <span />
+        </div>
+        <div
+          style="display: flex; justify-content: space-between; align-items: baseline; border-bottom: 1.5px solid rgb(0, 0, 0); padding-left: 36px; padding-top: 2px; padding-bottom: 2px;"
+        >
+          <span
+            style="font-size: 13px; font-weight: 400;"
+          >
+            Includes 0.0g Added Sugars
+          </span>
+          <span
+            style="font-size: 13px; font-weight: 900; -webkit-text-stroke: 0.4px #000;"
+          >
+            0
+            %
+          </span>
+        </div>
+        <div
+          style="display: flex; justify-content: space-between; align-items: baseline; border-bottom: 8px solid rgb(0, 0, 0); padding-left: 0px; padding-top: 2px; padding-bottom: 2px;"
+        >
+          <span
+            style="font-size: 15px; font-weight: 900;"
+          >
+            <span
+              style="font-weight: 900; -webkit-text-stroke: 0.4px #000;"
+            >
+              Protein
+            </span>
+             
+            <span
+              style="font-weight: 400;"
+            >
+              5.5 g
+            </span>
+          </span>
+          <span />
+        </div>
+        <div
+          style="font-size: 11px; padding-top: 4px; line-height: 1.3;"
+        >
+          *The % Daily Value (DV) tells you how much a nutrient in a serving of food contributes to a daily diet. 2,000 calories a day is used for general nutrition advice.
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+`;
+
+exports[`TabAustralia — snapshot rendering > con serving e confezione 1`] = `
+<div>
+  <div
+    style="background: white;"
+  >
+    <div
+      data-table-export="true"
+      style="background: white; padding: 12px; border-radius: 0px; display: inline-block; width: 560px; box-sizing: border-box;"
+    >
+      <div
+        style="border: 2px solid rgb(0, 0, 0); font-family: Arial, sans-serif; font-size: 12px;"
+      >
+        <div
+          style="text-align: center; padding: 8px 12px 6px; border-bottom: 1px solid rgb(0, 0, 0);"
+        >
+          <span
+            style="font-size: 24px; font-weight: 900;"
+          >
+            NUTRITION INFORMATION
+          </span>
+        </div>
+        <div
+          style="padding: 10px 12px; border-bottom: 1px solid rgb(0, 0, 0); line-height: 1.8; font-weight: 700;"
+        >
+          <div
+            style="font-size: 12px; font-weight: 700;"
+          >
+            Servings per Package: 
+            8,3
+          </div>
+          <div
+            style="font-size: 12px; font-weight: 700;"
+          >
+            Serving Size:  
+            30 g
+          </div>
+        </div>
+        <table
+          style="border-collapse: collapse; width: 100%;"
+        >
+          <thead>
+            <tr>
+              <th
+                style="padding: 5px 10px; font-weight: 700; font-size: 12px; border-bottom: 1px solid rgb(0, 0, 0); vertical-align: bottom; text-align: left; width: 32%;"
+              />
+              <th
+                style="padding: 5px 10px; font-weight: 700; font-size: 12px; border-bottom: 1px solid rgb(0, 0, 0); vertical-align: bottom; text-align: left;"
+              >
+                Average Quantity per Serving
+              </th>
+              <th
+                style="padding: 5px 10px; font-weight: 700; font-size: 12px; border-bottom: 1px solid rgb(0, 0, 0); vertical-align: bottom; text-align: left;"
+              >
+                % Daily Intake* (per Serving)
+              </th>
+              <th
+                style="padding: 5px 10px; font-weight: 700; font-size: 12px; border-bottom: 1px solid rgb(0, 0, 0); vertical-align: bottom; text-align: left;"
+              >
+                Average Quantity per 100 g
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td
+                style="font-size: 12px; font-weight: 700; color: rgb(0, 0, 0); padding: 8px 10px 2px;"
+              >
+                Energy
+              </td>
+              <td
+                style="font-size: 12px; font-weight: 700; color: rgb(0, 0, 0); padding: 8px 10px 2px; white-space: nowrap;"
+              >
+                319 kJ (76 Cal)
+              </td>
+              <td
+                style="font-size: 12px; font-weight: 700; color: rgb(0, 0, 0); padding: 8px 10px 2px;"
+              >
+                4 %
+              </td>
+              <td
+                style="font-size: 12px; font-weight: 700; color: rgb(0, 0, 0); padding: 8px 10px 2px; white-space: nowrap;"
+              >
+                1063 kJ (254 Cal)
+              </td>
+            </tr>
+            <tr>
+              <td
+                style="font-size: 12px; font-weight: 700; color: rgb(0, 0, 0); padding: 2px 10px;"
+              >
+                Protein
+              </td>
+              <td
+                style="font-size: 12px; font-weight: 700; color: rgb(0, 0, 0); padding: 2px 10px;"
+              >
+                5.5 g
+              </td>
+              <td
+                style="font-size: 12px; font-weight: 700; color: rgb(0, 0, 0); padding: 2px 10px;"
+              >
+                11 %
+              </td>
+              <td
+                style="font-size: 12px; font-weight: 700; color: rgb(0, 0, 0); padding: 2px 10px;"
+              >
+                18.3 g
+              </td>
+            </tr>
+            <tr>
+              <td
+                style="font-size: 12px; font-weight: 700; color: rgb(0, 0, 0); padding: 2px 10px;"
+              >
+                Fat, total
+              </td>
+              <td
+                style="font-size: 12px; font-weight: 700; color: rgb(0, 0, 0); padding: 2px 10px;"
+              >
+                5.8 g
+              </td>
+              <td
+                style="font-size: 12px; font-weight: 700; color: rgb(0, 0, 0); padding: 2px 10px;"
+              >
+                8 %
+              </td>
+              <td
+                style="font-size: 12px; font-weight: 700; color: rgb(0, 0, 0); padding: 2px 10px;"
+              >
+                19.5 g
+              </td>
+            </tr>
+            <tr>
+              <td
+                style="font-size: 12px; font-weight: 700; color: rgb(0, 0, 0); padding: 2px 10px 2px 22px;"
+              >
+                - saturated
+              </td>
+              <td
+                style="font-size: 12px; font-weight: 700; color: rgb(0, 0, 0); padding: 2px 10px;"
+              >
+                4.0 g
+              </td>
+              <td
+                style="font-size: 12px; font-weight: 700; color: rgb(0, 0, 0); padding: 2px 10px;"
+              >
+                16 %
+              </td>
+              <td
+                style="font-size: 12px; font-weight: 700; color: rgb(0, 0, 0); padding: 2px 10px;"
+              >
+                13.2 g
+              </td>
+            </tr>
+            <tr>
+              <td
+                style="font-size: 12px; font-weight: 700; color: rgb(0, 0, 0); padding: 2px 10px;"
+              >
+                Carbohydrate
+              </td>
+              <td
+                style="font-size: 12px; font-weight: 700; color: rgb(0, 0, 0); padding: 2px 10px;"
+              >
+                less than 1 g
+              </td>
+              <td
+                style="font-size: 12px; font-weight: 700; color: rgb(0, 0, 0); padding: 2px 10px;"
+              >
+                0 %
+              </td>
+              <td
+                style="font-size: 12px; font-weight: 700; color: rgb(0, 0, 0); padding: 2px 10px;"
+              >
+                2.1 g
+              </td>
+            </tr>
+            <tr>
+              <td
+                style="font-size: 12px; font-weight: 700; color: rgb(0, 0, 0); padding: 2px 10px 2px 22px;"
+              >
+                - sugars
+              </td>
+              <td
+                style="font-size: 12px; font-weight: 700; color: rgb(0, 0, 0); padding: 2px 10px;"
+              >
+                less than 1 g
+              </td>
+              <td
+                style="font-size: 12px; font-weight: 700; color: rgb(0, 0, 0); padding: 2px 10px;"
+              >
+                1 %
+              </td>
+              <td
+                style="font-size: 12px; font-weight: 700; color: rgb(0, 0, 0); padding: 2px 10px;"
+              >
+                2.1 g
+              </td>
+            </tr>
+            <tr>
+              <td
+                style="font-size: 12px; font-weight: 700; color: rgb(0, 0, 0); padding: 2px 10px;"
+              >
+                Dietary fibre
+              </td>
+              <td
+                style="font-size: 12px; font-weight: 700; color: rgb(0, 0, 0); padding: 2px 10px;"
+              >
+                less than 1 g
+              </td>
+              <td
+                style="font-size: 12px; font-weight: 700; color: rgb(0, 0, 0); padding: 2px 10px;"
+              >
+                0 %
+              </td>
+              <td
+                style="font-size: 12px; font-weight: 700; color: rgb(0, 0, 0); padding: 2px 10px;"
+              >
+                less than 1 g
+              </td>
+            </tr>
+            <tr>
+              <td
+                style="font-size: 12px; font-weight: 700; color: rgb(0, 0, 0); padding: 2px 10px;"
+              >
+                Sodium
+              </td>
+              <td
+                style="font-size: 12px; font-weight: 700; color: rgb(0, 0, 0); padding: 2px 10px;"
+              >
+                99 mg
+              </td>
+              <td
+                style="font-size: 12px; font-weight: 700; color: rgb(0, 0, 0); padding: 2px 10px;"
+              >
+                4 %
+              </td>
+              <td
+                style="font-size: 12px; font-weight: 700; color: rgb(0, 0, 0); padding: 2px 10px;"
+              >
+                330 mg
+              </td>
+            </tr>
+          </tbody>
+        </table>
+        <div
+          style="padding: 6px 10px 8px;"
+        >
+          <span
+            style="font-size: 10px; font-weight: 700;"
+          >
+            * Percentage daily intakes are based on an average adult diet of 8700 kJ
+          </span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+`;
+
+exports[`TabAustralia — snapshot rendering > senza serving — messaggio placeholder 1`] = `
+<div>
+  <div
+    style="background: white;"
+  >
+    <div
+      data-table-export="true"
+      style="background: white; padding: 12px; border-radius: 0px; display: inline-block; width: 560px; box-sizing: border-box;"
+    >
+      <div
+        style="border: 2px solid rgb(0, 0, 0); font-family: Arial, sans-serif; font-size: 12px;"
+      >
+        <div
+          style="text-align: center; padding: 8px 12px 6px; border-bottom: 1px solid rgb(0, 0, 0);"
+        >
+          <span
+            style="font-size: 24px; font-weight: 900;"
+          >
+            NUTRITION INFORMATION
+          </span>
+        </div>
+        <div
+          style="padding: 10px 12px; border-bottom: 1px solid rgb(0, 0, 0); line-height: 1.8; font-weight: 700;"
+        >
+          <div
+            style="font-size: 12px; font-weight: 700;"
+          >
+            Serving Size:  
+            —
+          </div>
+        </div>
+        <table
+          style="border-collapse: collapse; width: 100%;"
+        >
+          <thead>
+            <tr>
+              <th
+                style="padding: 5px 10px; font-weight: 700; font-size: 12px; border-bottom: 1px solid rgb(0, 0, 0); vertical-align: bottom; text-align: left; width: 32%;"
+              />
+              <th
+                style="padding: 5px 10px; font-weight: 700; font-size: 12px; border-bottom: 1px solid rgb(0, 0, 0); vertical-align: bottom; text-align: left;"
+              >
+                Average Quantity per Serving
+              </th>
+              <th
+                style="padding: 5px 10px; font-weight: 700; font-size: 12px; border-bottom: 1px solid rgb(0, 0, 0); vertical-align: bottom; text-align: left;"
+              >
+                % Daily Intake* (per Serving)
+              </th>
+              <th
+                style="padding: 5px 10px; font-weight: 700; font-size: 12px; border-bottom: 1px solid rgb(0, 0, 0); vertical-align: bottom; text-align: left;"
+              >
+                Average Quantity per 100 g
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td
+                colspan="4"
+                style="padding: 2px 10px; font-size: 12px; font-weight: 700; color: rgb(136, 136, 136);"
+              >
+                Inserire il valore serving size sopra per calcolare le quantità per porzione.
+              </td>
+            </tr>
+          </tbody>
+        </table>
+        <div
+          style="padding: 6px 10px 8px;"
+        >
+          <span
+            style="font-size: 10px; font-weight: 700;"
+          >
+            * Percentage daily intakes are based on an average adult diet of 8700 kJ
+          </span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+`;
+
+exports[`TabCanada — snapshot rendering > layout lineare 1`] = `
+<div>
+  <div
+    style="background: white;"
+  >
+    <div
+      data-table-export="true"
+      style="background: white; padding: 12px; border-radius: 0px; display: inline-block;"
+    >
+      <div
+        style="border: 0.5pt solid rgb(0, 0, 0); padding: 3pt; font-family: Arial, Helvetica, sans-serif; font-size: 7pt; display: inline-block; background-color: rgb(255, 255, 255); color: rgb(0, 0, 0); box-sizing: content-box;"
+      >
+        <div
+          style="white-space: nowrap;"
+        >
+          <span
+            style="font-size: 10pt; font-weight: 700;"
+          >
+            Nutrition Facts
+          </span>
+          <span
+            style="font-size: 7.5pt; font-weight: 400;"
+          >
+             
+            Per 30g
+          </span>
+           :
+          <span
+            style="font-size: 8pt; font-weight: 700;"
+          >
+             
+            Calories
+             
+            80
+          </span>
+        </div>
+        <div
+          style="white-space: nowrap; line-height: 8pt;"
+        >
+          <span
+            style="font-weight: 700;"
+          >
+            Fat
+          </span>
+           
+          6
+           g
+           
+          (8 %)
+          ,
+           
+          <span
+            style="font-weight: 700;"
+          >
+            Saturated Fat
+          </span>
+           
+          4.0
+           g + 
+          <span
+            style="font-weight: 700;"
+          >
+            Trans
+          </span>
+           
+          0
+           g
+           
+          (20 %)
+          ,
+           
+          <span
+            style="font-weight: 700;"
+          >
+            Cholesterol
+          </span>
+           
+          19
+           mg
+        </div>
+        <div
+          style="white-space: nowrap; line-height: 8pt;"
+        >
+          <span
+            style="font-weight: 700;"
+          >
+            Carbohydrate
+          </span>
+           
+          1
+           g,
+           
+          <span
+            style="font-weight: 700;"
+          >
+            Fibre
+          </span>
+           
+          0
+           g
+           
+          (0 %)
+          ,
+           
+          <span
+            style="font-weight: 700;"
+          >
+            Sugars
+          </span>
+           
+          1
+           g
+           
+          (1 %)
+          ,
+           
+          <span
+            style="font-weight: 700;"
+          >
+            Protein
+          </span>
+           
+          5
+           g,
+           
+          <span
+            style="font-weight: 700;"
+          >
+            Sodium
+          </span>
+           
+          100
+           mg
+           
+          (4 %)
+        </div>
+        <div
+          style="white-space: nowrap; line-height: 8pt;"
+        >
+          <span
+            style="font-weight: 700;"
+          >
+            Potassium
+          </span>
+           
+          35
+           mg
+           
+          (1 %)
+          ,
+           
+          <span
+            style="font-weight: 700;"
+          >
+            Calcium
+          </span>
+           
+          65
+           mg
+           
+          (5 %)
+          ,
+           
+          <span
+            style="font-weight: 700;"
+          >
+            Iron
+          </span>
+           
+          0.1
+           mg
+           
+          (0 %)
+        </div>
+        <div
+          style="display: flex; justify-content: space-between; gap: 16px; margin-top: -2px; white-space: nowrap;"
+        >
+          <span
+            style="font-size: 6pt; font-weight: 400;"
+          >
+            % = % Daily Value
+            <span
+              style="font-size: 9pt; position: relative; top: 2pt;"
+            >
+              *
+            </span>
+          </span>
+          <span
+            style="font-size: 6pt; font-weight: 400;"
+          >
+            <span
+              style="font-size: 9pt; position: relative; top: 2pt;"
+            >
+              *
+            </span>
+            5% or less is 
+            <span
+              style="font-weight: 700;"
+            >
+              a little
+            </span>
+            , 15% or more is 
+            <span
+              style="font-weight: 700;"
+            >
+              a lot
+            </span>
+          </span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+`;
+
+exports[`TabCanada — snapshot rendering > layout orizzontale 1`] = `
+<div>
+  <div
+    style="background: white;"
+  >
+    <div
+      data-table-export="true"
+      style="background: white; padding: 12px; border-radius: 0px; display: inline-block;"
+    >
+      <div
+        style="border: 1px solid rgb(0, 0, 0); padding: 3pt 3pt 0px; box-sizing: content-box; display: flex; width: 492px; background-color: rgb(255, 255, 255); color: rgb(0, 0, 0);"
+      >
+        <div
+          style="width: 155px; flex-shrink: 0; padding: 1px 6px 3pt 3pt; display: flex; flex-direction: column; justify-content: flex-start;"
+        >
+          <div
+            style="font-size: 22px; font-weight: 700; font-family: "Helvetica Neue Condensed Bold", "HelveticaNeue-CondensedBold", "Helvetica Neue", Helvetica, Arial, sans-serif; line-height: 0.9; color: rgb(0, 0, 0);"
+          >
+            Nutrition Facts
+            <br />
+            Valeur nutritive
+          </div>
+          <div
+            style="margin-top: 5pt; font-size: 8.5pt; font-family: "Helvetica Neue Condensed", "HelveticaNeue-Condensed", "Arial Narrow", Helvetica, Arial, sans-serif; font-weight: 400; color: rgb(0, 0, 0); line-height: 11pt;"
+          >
+            <div
+              style="color: rgb(0, 0, 0); white-space: nowrap; overflow: hidden;"
+            >
+              Per 30g
+            </div>
+            <div
+              style="color: rgb(0, 0, 0); white-space: nowrap; overflow: hidden;"
+            >
+              pour 30g
+            </div>
+          </div>
+          <div
+            style="margin-top: 3pt; font-size: 10.5pt; font-weight: 700; font-family: "Helvetica Neue Condensed Bold", "HelveticaNeue-CondensedBold", "Helvetica Neue", Helvetica, Arial, sans-serif; color: rgb(0, 0, 0); line-height: 13pt;"
+          >
+            Calories 
+            80
+          </div>
+          <div
+            style="margin-top: auto; font-family: "Helvetica Neue Condensed", "HelveticaNeue-Condensed", "Arial Narrow", Helvetica, Arial, sans-serif; font-weight: 400; color: rgb(0, 0, 0);"
+          >
+            <div
+              style="font-size: 6pt; line-height: 7pt;"
+            >
+              * DV = Daily Value
+            </div>
+            <div
+              style="font-size: 6pt; line-height: 7pt;"
+            >
+              * VQ = valeur quotidienne
+            </div>
+          </div>
+        </div>
+        <div
+          style="flex: 1 1 0%; display: flex; flex-direction: column;"
+        >
+          <div
+            style="display: flex;"
+          >
+            <div
+              style="width: 175px; flex-shrink: 0; padding: 1px 5px 0px;"
+            >
+              <div
+                style="border-bottom: 1px solid rgb(0, 0, 0); padding-bottom: 1px; text-align: right; font-size: 8px; font-weight: 700; font-family: "Helvetica Neue Condensed Bold", "HelveticaNeue-CondensedBold", "Helvetica Neue", Helvetica, Arial, sans-serif; color: rgb(0, 0, 0);"
+              >
+                % DV* / % VQ*
+              </div>
+            </div>
+            <div
+              style="width: 160px; flex-shrink: 0; padding: 1px 5px 0px;"
+            >
+              <div
+                style="border-bottom: 1px solid rgb(0, 0, 0); padding-bottom: 1px; text-align: right; font-size: 8px; font-weight: 700; font-family: "Helvetica Neue Condensed Bold", "HelveticaNeue-CondensedBold", "Helvetica Neue", Helvetica, Arial, sans-serif; color: rgb(0, 0, 0);"
+              >
+                % DV* / % VQ*
+              </div>
+            </div>
+          </div>
+          <div
+            style="display: flex; flex: 1 1 0%;"
+          >
+            <div
+              style="width: 175px; flex-shrink: 0; padding: 1px 5px 0px; display: flex; flex-direction: column; justify-content: space-between;"
+            >
+              <div
+                style="display: flex; justify-content: space-between; align-items: baseline; border-bottom: medium; padding-left: 0px; line-height: 11pt;"
+              >
+                <span
+                  style="font-family: "Helvetica Neue Condensed Bold", "HelveticaNeue-CondensedBold", "Helvetica Neue", Helvetica, Arial, sans-serif; font-size: 10px; font-weight: 700; color: rgb(0, 0, 0);"
+                >
+                  Fat / Lipides
+                   
+                  6 g
+                </span>
+                <span
+                  style="font-family: "Helvetica Neue Condensed", "HelveticaNeue-Condensed", "Arial Narrow", Helvetica, Arial, sans-serif; font-size: 10px; font-weight: 400; color: rgb(0, 0, 0);"
+                >
+                  8
+                   %
+                </span>
+              </div>
+              <div
+                style="display: flex; justify-content: space-between; align-items: baseline; border-bottom: 1px solid rgb(136, 136, 136); padding-bottom: 1px;"
+              >
+                <div
+                  style="flex: 1 1 0%;"
+                >
+                  <div
+                    style="padding-left: 8px; font-size: 10px; font-family: "Helvetica Neue Condensed", "HelveticaNeue-Condensed", "Arial Narrow", Helvetica, Arial, sans-serif; font-weight: 400; color: rgb(0, 0, 0); line-height: 11pt;"
+                  >
+                    Saturated / saturés 
+                    4.0
+                     g
+                  </div>
+                  <div
+                    style="padding-left: 8px; font-size: 10px; font-family: "Helvetica Neue Condensed", "HelveticaNeue-Condensed", "Arial Narrow", Helvetica, Arial, sans-serif; font-weight: 400; color: rgb(0, 0, 0); line-height: 11pt;"
+                  >
+                    + Trans / trans 
+                    0
+                     g
+                  </div>
+                </div>
+                <div
+                  style="font-size: 10px; font-family: "Helvetica Neue Condensed", "HelveticaNeue-Condensed", "Arial Narrow", Helvetica, Arial, sans-serif; font-weight: 400; color: rgb(0, 0, 0); padding-left: 4px; flex-shrink: 0;"
+                >
+                  20
+                   %
+                </div>
+              </div>
+              <div
+                style="display: flex; justify-content: space-between; align-items: baseline; border-bottom: medium; padding-left: 0px; line-height: 11pt;"
+              >
+                <span
+                  style="font-family: "Helvetica Neue Condensed Bold", "HelveticaNeue-CondensedBold", "Helvetica Neue", Helvetica, Arial, sans-serif; font-size: 10px; font-weight: 700; color: rgb(0, 0, 0);"
+                >
+                  Carbohydrate / Glucides
+                   
+                  1 g
+                </span>
+              </div>
+              <div
+                style="display: flex; justify-content: space-between; align-items: baseline; border-bottom: medium; padding-left: 8px; line-height: 11pt;"
+              >
+                <span
+                  style="font-family: "Helvetica Neue Condensed", "HelveticaNeue-Condensed", "Arial Narrow", Helvetica, Arial, sans-serif; font-size: 10px; font-weight: 400; color: rgb(0, 0, 0);"
+                >
+                  Fibre / Fibres
+                   
+                  0 g
+                </span>
+                <span
+                  style="font-family: "Helvetica Neue Condensed", "HelveticaNeue-Condensed", "Arial Narrow", Helvetica, Arial, sans-serif; font-size: 10px; font-weight: 400; color: rgb(0, 0, 0);"
+                >
+                  0
+                   %
+                </span>
+              </div>
+              <div
+                style="display: flex; justify-content: space-between; align-items: baseline; border-bottom: 2pt solid rgb(0, 0, 0); padding-left: 8px; line-height: 11pt;"
+              >
+                <span
+                  style="font-family: "Helvetica Neue Condensed", "HelveticaNeue-Condensed", "Arial Narrow", Helvetica, Arial, sans-serif; font-size: 10px; font-weight: 400; color: rgb(0, 0, 0);"
+                >
+                  Sugars / Sucres
+                   
+                  1 g
+                </span>
+                <span
+                  style="font-family: "Helvetica Neue Condensed", "HelveticaNeue-Condensed", "Arial Narrow", Helvetica, Arial, sans-serif; font-size: 10px; font-weight: 400; color: rgb(0, 0, 0);"
+                >
+                  1
+                   %
+                </span>
+              </div>
+            </div>
+            <div
+              style="width: 160px; flex-shrink: 0; padding: 1px 5px 0px; display: flex; flex-direction: column; justify-content: space-between;"
+            >
+              <div
+                style="display: flex; justify-content: space-between; align-items: baseline; border-bottom: 1px solid rgb(136, 136, 136); line-height: 11pt;"
+              >
+                <span
+                  style="font-family: "Helvetica Neue Condensed Bold", "HelveticaNeue-CondensedBold", "Helvetica Neue", Helvetica, Arial, sans-serif; font-size: 10px; font-weight: 700; color: rgb(0, 0, 0);"
+                >
+                  Protein / Protéines
+                   
+                  5 g
+                </span>
+              </div>
+              <div
+                style="display: flex; justify-content: space-between; align-items: baseline; border-bottom: 1px solid rgb(136, 136, 136); line-height: 11pt;"
+              >
+                <span
+                  style="font-family: "Helvetica Neue Condensed Bold", "HelveticaNeue-CondensedBold", "Helvetica Neue", Helvetica, Arial, sans-serif; font-size: 10px; font-weight: 700; color: rgb(0, 0, 0);"
+                >
+                  Cholesterol / Cholestérol
+                   
+                  19 mg
+                </span>
+              </div>
+              <div
+                style="display: flex; justify-content: space-between; align-items: baseline; border-bottom: 2pt solid rgb(0, 0, 0); line-height: 11pt;"
+              >
+                <span
+                  style="font-family: "Helvetica Neue Condensed Bold", "HelveticaNeue-CondensedBold", "Helvetica Neue", Helvetica, Arial, sans-serif; font-size: 10px; font-weight: 700; color: rgb(0, 0, 0);"
+                >
+                  Sodium
+                   
+                  100 mg
+                </span>
+                <span
+                  style="font-family: "Helvetica Neue Condensed", "HelveticaNeue-Condensed", "Arial Narrow", Helvetica, Arial, sans-serif; font-size: 10px; font-weight: 400; color: rgb(0, 0, 0);"
+                >
+                  4
+                   %
+                </span>
+              </div>
+              <div
+                style="display: flex; justify-content: space-between; align-items: baseline; border-bottom: medium; line-height: 11pt;"
+              >
+                <span
+                  style="font-family: "Helvetica Neue Condensed", "HelveticaNeue-Condensed", "Arial Narrow", Helvetica, Arial, sans-serif; font-size: 10px; font-weight: 400; color: rgb(0, 0, 0);"
+                >
+                  Potassium
+                   
+                  35 mg
+                </span>
+                <span
+                  style="font-family: "Helvetica Neue Condensed", "HelveticaNeue-Condensed", "Arial Narrow", Helvetica, Arial, sans-serif; font-size: 10px; font-weight: 400; color: rgb(0, 0, 0);"
+                >
+                  1
+                   %
+                </span>
+              </div>
+              <div
+                style="display: flex; justify-content: space-between; align-items: baseline; border-bottom: medium; line-height: 11pt;"
+              >
+                <span
+                  style="font-family: "Helvetica Neue Condensed", "HelveticaNeue-Condensed", "Arial Narrow", Helvetica, Arial, sans-serif; font-size: 10px; font-weight: 400; color: rgb(0, 0, 0);"
+                >
+                  Calcium
+                   
+                  65 mg
+                </span>
+                <span
+                  style="font-family: "Helvetica Neue Condensed", "HelveticaNeue-Condensed", "Arial Narrow", Helvetica, Arial, sans-serif; font-size: 10px; font-weight: 400; color: rgb(0, 0, 0);"
+                >
+                  5
+                   %
+                </span>
+              </div>
+              <div
+                style="display: flex; justify-content: space-between; align-items: baseline; border-bottom: 2pt solid rgb(0, 0, 0); line-height: 11pt;"
+              >
+                <span
+                  style="font-family: "Helvetica Neue Condensed", "HelveticaNeue-Condensed", "Arial Narrow", Helvetica, Arial, sans-serif; font-size: 10px; font-weight: 400; color: rgb(0, 0, 0);"
+                >
+                  Iron / Fer
+                   
+                  0.1 mg
+                </span>
+                <span
+                  style="font-family: "Helvetica Neue Condensed", "HelveticaNeue-Condensed", "Arial Narrow", Helvetica, Arial, sans-serif; font-size: 10px; font-weight: 400; color: rgb(0, 0, 0);"
+                >
+                  0
+                   %
+                </span>
+              </div>
+            </div>
+          </div>
+          <div
+            style="padding: 1px 5px 0px; font-size: 6pt; line-height: 12pt; font-family: "Helvetica Neue Condensed", "HelveticaNeue-Condensed", "Arial Narrow", Helvetica, Arial, sans-serif; font-weight: 400; color: rgb(0, 0, 0); text-align: justify; text-align-last: justify;"
+          >
+            * 5% or less is 
+            <span
+              style="font-family: "Helvetica Neue Condensed Bold", "HelveticaNeue-CondensedBold", "Helvetica Neue", Helvetica, Arial, sans-serif; font-weight: 700;"
+            >
+              a little
+            </span>
+            , 15% or more is 
+            <span
+              style="font-family: "Helvetica Neue Condensed Bold", "HelveticaNeue-CondensedBold", "Helvetica Neue", Helvetica, Arial, sans-serif; font-weight: 700;"
+            >
+              a lot
+            </span>
+             / * 5% ou moins c'est 
+            <span
+              style="font-family: "Helvetica Neue Condensed Bold", "HelveticaNeue-CondensedBold", "Helvetica Neue", Helvetica, Arial, sans-serif; font-weight: 700;"
+            >
+              peu
+            </span>
+            , 15% ou plus c'est 
+            <span
+              style="font-family: "Helvetica Neue Condensed Bold", "HelveticaNeue-CondensedBold", "Helvetica Neue", Helvetica, Arial, sans-serif; font-weight: 700;"
+            >
+              beaucoup
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+`;
+
+exports[`TabCanada — snapshot rendering > layout verticale 1`] = `
+<div>
+  <div
+    style="background: white;"
+  >
+    <div
+      data-table-export="true"
+      style="background: white; padding: 12px; border-radius: 0px; display: inline-block;"
+    >
+      <div
+        style="width: 280px; border: 2px solid rgb(0, 0, 0); padding: 4px 8px 6px; font-family: Arial, Helvetica, sans-serif; background-color: rgb(255, 255, 255); color: rgb(0, 0, 0); box-sizing: border-box;"
+      >
+        <div
+          style="line-height: 1.1;"
+        >
+          <div
+            style="font-size: 17px; font-weight: 700; font-family: Arial, Helvetica, sans-serif;"
+          >
+            Nutrition Facts
+          </div>
+          <div
+            style="font-size: 17px; font-weight: 700; font-family: Arial, Helvetica, sans-serif;"
+          >
+            Valeur nutritive
+          </div>
+        </div>
+        <div
+          style="font-size: 12px; font-family: Arial, Helvetica, sans-serif; font-weight: 400; border-bottom: 5px solid rgb(0, 0, 0); padding-bottom: 2px; margin: 2px 0px 0px;"
+        >
+          <div
+            style="display: flex; justify-content: space-between;"
+          >
+            <span>
+              Per 30g
+            </span>
+          </div>
+          <div
+            style="display: flex; justify-content: space-between;"
+          >
+            <span>
+              pour 30g
+            </span>
+          </div>
+        </div>
+        <div
+          style="display: flex; justify-content: space-between; align-items: flex-start; padding-top: 2px;"
+        >
+          <div
+            style="font-size: 13px; font-weight: 700; font-family: Arial, Helvetica, sans-serif; border-bottom: 3px solid rgb(0, 0, 0); padding-bottom: 3px;"
+          >
+            Calories
+             
+            80
+          </div>
+          <div
+            style="text-align: right; font-size: 8px; font-family: Arial, Helvetica, sans-serif; font-weight: 700; line-height: 1.4;"
+          >
+            % Daily Value*
+            <br />
+            % valeur quotidienne*
+          </div>
+        </div>
+        <div
+          style="display: flex; justify-content: space-between; align-items: baseline; border-bottom: medium; padding-left: 0px; padding-top: 1px; padding-bottom: 1px;"
+        >
+          <div
+            style="display: flex; align-items: baseline; gap: 2px; flex: 1 1 0%;"
+          >
+            <span
+              style="font-family: Arial, Helvetica, sans-serif; font-size: 11px; font-weight: 700;"
+            >
+              Fat / Lipides
+            </span>
+            <span
+              style="font-family: Arial, Helvetica, sans-serif; font-size: 11px; font-weight: 400;"
+            >
+              6g
+            </span>
+          </div>
+          <span
+            style="font-family: Arial, Helvetica, sans-serif; font-size: 11px; font-weight: 400; min-width: 22px; text-align: right;"
+          >
+            8
+            %
+          </span>
+        </div>
+        <div
+          style="display: flex; justify-content: space-between; align-items: baseline; border-bottom: medium; padding-left: 14px; padding-top: 1px; padding-bottom: 1px;"
+        >
+          <div
+            style="display: flex; align-items: baseline; gap: 2px; flex: 1 1 0%;"
+          >
+            <span
+              style="font-family: Arial, Helvetica, sans-serif; font-size: 11px; font-weight: 400;"
+            >
+              Saturated / saturés
+            </span>
+            <span
+              style="font-family: Arial, Helvetica, sans-serif; font-size: 11px; font-weight: 400;"
+            >
+              4.0g
+            </span>
+          </div>
+        </div>
+        <div
+          style="display: flex; justify-content: space-between; align-items: baseline; border-bottom: 1px solid rgb(187, 187, 187); padding-left: 14px; padding-top: 1px; padding-bottom: 1px;"
+        >
+          <div
+            style="display: flex; align-items: baseline; gap: 2px; flex: 1 1 0%;"
+          >
+            <span
+              style="font-family: Arial, Helvetica, sans-serif; font-size: 11px; font-weight: 400;"
+            >
+              + Trans / trans
+            </span>
+            <span
+              style="font-family: Arial, Helvetica, sans-serif; font-size: 11px; font-weight: 400;"
+            >
+              0g
+            </span>
+          </div>
+          <span
+            style="font-family: Arial, Helvetica, sans-serif; font-size: 11px; font-weight: 400; min-width: 22px; text-align: right;"
+          >
+            20
+            %
+          </span>
+        </div>
+        <div
+          style="display: flex; justify-content: space-between; align-items: baseline; border-bottom: medium; padding-left: 0px; padding-top: 1px; padding-bottom: 1px;"
+        >
+          <div
+            style="display: flex; align-items: baseline; gap: 2px; flex: 1 1 0%;"
+          >
+            <span
+              style="font-family: Arial, Helvetica, sans-serif; font-size: 11px; font-weight: 700;"
+            >
+              Carbohydrate / Glucides
+            </span>
+            <span
+              style="font-family: Arial, Helvetica, sans-serif; font-size: 11px; font-weight: 400;"
+            >
+              1g
+            </span>
+          </div>
+        </div>
+        <div
+          style="display: flex; justify-content: space-between; align-items: baseline; border-bottom: medium; padding-left: 14px; padding-top: 1px; padding-bottom: 1px;"
+        >
+          <div
+            style="display: flex; align-items: baseline; gap: 2px; flex: 1 1 0%;"
+          >
+            <span
+              style="font-family: Arial, Helvetica, sans-serif; font-size: 11px; font-weight: 400;"
+            >
+              Fibre / Fibres
+            </span>
+            <span
+              style="font-family: Arial, Helvetica, sans-serif; font-size: 11px; font-weight: 400;"
+            >
+              0g
+            </span>
+          </div>
+          <span
+            style="font-family: Arial, Helvetica, sans-serif; font-size: 11px; font-weight: 400; min-width: 22px; text-align: right;"
+          >
+            0
+            %
+          </span>
+        </div>
+        <div
+          style="display: flex; justify-content: space-between; align-items: baseline; border-bottom: 1px solid rgb(187, 187, 187); padding-left: 14px; padding-top: 1px; padding-bottom: 1px;"
+        >
+          <div
+            style="display: flex; align-items: baseline; gap: 2px; flex: 1 1 0%;"
+          >
+            <span
+              style="font-family: Arial, Helvetica, sans-serif; font-size: 11px; font-weight: 400;"
+            >
+              Sugars / Sucres
+            </span>
+            <span
+              style="font-family: Arial, Helvetica, sans-serif; font-size: 11px; font-weight: 400;"
+            >
+              1g
+            </span>
+          </div>
+          <span
+            style="font-family: Arial, Helvetica, sans-serif; font-size: 11px; font-weight: 400; min-width: 22px; text-align: right;"
+          >
+            1
+            %
+          </span>
+        </div>
+        <div
+          style="display: flex; justify-content: space-between; align-items: baseline; border-bottom: 1px solid rgb(187, 187, 187); padding-left: 0px; padding-top: 1px; padding-bottom: 1px;"
+        >
+          <div
+            style="display: flex; align-items: baseline; gap: 2px; flex: 1 1 0%;"
+          >
+            <span
+              style="font-family: Arial, Helvetica, sans-serif; font-size: 11px; font-weight: 700;"
+            >
+              Protein / Protéines
+            </span>
+            <span
+              style="font-family: Arial, Helvetica, sans-serif; font-size: 11px; font-weight: 400;"
+            >
+              5g
+            </span>
+          </div>
+        </div>
+        <div
+          style="display: flex; justify-content: space-between; align-items: baseline; border-bottom: 1px solid rgb(187, 187, 187); padding-left: 0px; padding-top: 1px; padding-bottom: 1px;"
+        >
+          <div
+            style="display: flex; align-items: baseline; gap: 2px; flex: 1 1 0%;"
+          >
+            <span
+              style="font-family: Arial, Helvetica, sans-serif; font-size: 11px; font-weight: 700;"
+            >
+              Cholesterol / Cholestérol
+            </span>
+            <span
+              style="font-family: Arial, Helvetica, sans-serif; font-size: 11px; font-weight: 400;"
+            >
+              19mg
+            </span>
+          </div>
+        </div>
+        <div
+          style="display: flex; justify-content: space-between; align-items: baseline; border-bottom: 3px solid rgb(0, 0, 0); padding-left: 0px; padding-top: 1px; padding-bottom: 1px;"
+        >
+          <div
+            style="display: flex; align-items: baseline; gap: 2px; flex: 1 1 0%;"
+          >
+            <span
+              style="font-family: Arial, Helvetica, sans-serif; font-size: 11px; font-weight: 700;"
+            >
+              Sodium
+            </span>
+            <span
+              style="font-family: Arial, Helvetica, sans-serif; font-size: 11px; font-weight: 400;"
+            >
+              100mg
+            </span>
+          </div>
+          <span
+            style="font-family: Arial, Helvetica, sans-serif; font-size: 11px; font-weight: 400; min-width: 22px; text-align: right;"
+          >
+            4
+            %
+          </span>
+        </div>
+        <div
+          style="display: flex; justify-content: space-between; align-items: baseline; border-bottom: 1px solid rgb(187, 187, 187); padding-left: 0px; padding-top: 1px; padding-bottom: 1px;"
+        >
+          <div
+            style="display: flex; align-items: baseline; gap: 2px; flex: 1 1 0%;"
+          >
+            <span
+              style="font-family: Arial, Helvetica, sans-serif; font-size: 11px; font-weight: 400;"
+            >
+              Potassium
+            </span>
+            <span
+              style="font-family: Arial, Helvetica, sans-serif; font-size: 11px; font-weight: 400;"
+            >
+              35mg
+            </span>
+          </div>
+          <span
+            style="font-family: Arial, Helvetica, sans-serif; font-size: 11px; font-weight: 400; min-width: 22px; text-align: right;"
+          >
+            1
+            %
+          </span>
+        </div>
+        <div
+          style="display: flex; justify-content: space-between; align-items: baseline; border-bottom: 1px solid rgb(187, 187, 187); padding-left: 0px; padding-top: 1px; padding-bottom: 1px;"
+        >
+          <div
+            style="display: flex; align-items: baseline; gap: 2px; flex: 1 1 0%;"
+          >
+            <span
+              style="font-family: Arial, Helvetica, sans-serif; font-size: 11px; font-weight: 400;"
+            >
+              Calcium
+            </span>
+            <span
+              style="font-family: Arial, Helvetica, sans-serif; font-size: 11px; font-weight: 400;"
+            >
+              65mg
+            </span>
+          </div>
+          <span
+            style="font-family: Arial, Helvetica, sans-serif; font-size: 11px; font-weight: 400; min-width: 22px; text-align: right;"
+          >
+            5
+            %
+          </span>
+        </div>
+        <div
+          style="display: flex; justify-content: space-between; align-items: baseline; border-bottom: 3px solid rgb(0, 0, 0); padding-left: 0px; padding-top: 1px; padding-bottom: 1px;"
+        >
+          <div
+            style="display: flex; align-items: baseline; gap: 2px; flex: 1 1 0%;"
+          >
+            <span
+              style="font-family: Arial, Helvetica, sans-serif; font-size: 11px; font-weight: 400;"
+            >
+              Iron / Fer
+            </span>
+            <span
+              style="font-family: Arial, Helvetica, sans-serif; font-size: 11px; font-weight: 400;"
+            >
+              0.1mg
+            </span>
+          </div>
+          <span
+            style="font-family: Arial, Helvetica, sans-serif; font-size: 11px; font-weight: 400; min-width: 22px; text-align: right;"
+          >
+            0
+            %
+          </span>
+        </div>
+        <div
+          style="padding-top: 2px;"
+        >
+          <div
+            style="font-size: 9px; font-family: "Arial Narrow", Arial, sans-serif; line-height: 1.2;"
+          >
+            * 5% or less is a 
+            <b>
+              little
+            </b>
+            , 15% or more is a 
+            <b>
+              lot
+            </b>
+          </div>
+          <div
+            style="font-size: 9px; font-family: "Arial Narrow", Arial, sans-serif; line-height: 1.2;"
+          >
+            * 5% ou moins c'est 
+            <b>
+              peu
+            </b>
+            , 15% ou plus c'est 
+            <b>
+              beaucoup
+            </b>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+`;
+
+exports[`TabCanada — snapshot rendering > riferimento confezione, misura tazze 1`] = `
+<div>
+  <div
+    style="background: white;"
+  >
+    <div
+      data-table-export="true"
+      style="background: white; padding: 12px; border-radius: 0px; display: inline-block;"
+    >
+      <div
+        style="width: 280px; border: 2px solid rgb(0, 0, 0); padding: 4px 8px 6px; font-family: Arial, Helvetica, sans-serif; background-color: rgb(255, 255, 255); color: rgb(0, 0, 0); box-sizing: border-box;"
+      >
+        <div
+          style="line-height: 1.1;"
+        >
+          <div
+            style="font-size: 17px; font-weight: 700; font-family: Arial, Helvetica, sans-serif;"
+          >
+            Nutrition Facts
+          </div>
+          <div
+            style="font-size: 17px; font-weight: 700; font-family: Arial, Helvetica, sans-serif;"
+          >
+            Valeur nutritive
+          </div>
+        </div>
+        <div
+          style="font-size: 12px; font-family: Arial, Helvetica, sans-serif; font-weight: 400; border-bottom: 5px solid rgb(0, 0, 0); padding-bottom: 2px; margin: 2px 0px 0px;"
+        >
+          <div
+            style="display: flex; justify-content: space-between;"
+          >
+            <span>
+              Per 1,0 cup
+            </span>
+            <span>
+              (1container 250g)
+            </span>
+          </div>
+          <div
+            style="display: flex; justify-content: space-between;"
+          >
+            <span>
+              pour 1,0 tasse
+            </span>
+            <span>
+              (1emballage 250g)
+            </span>
+          </div>
+        </div>
+        <div
+          style="display: flex; justify-content: space-between; align-items: flex-start; padding-top: 2px;"
+        >
+          <div
+            style="font-size: 13px; font-weight: 700; font-family: Arial, Helvetica, sans-serif; border-bottom: 3px solid rgb(0, 0, 0); padding-bottom: 3px;"
+          >
+            Calories
+             
+            640
+          </div>
+          <div
+            style="text-align: right; font-size: 8px; font-family: Arial, Helvetica, sans-serif; font-weight: 700; line-height: 1.4;"
+          >
+            % Daily Value*
+            <br />
+            % valeur quotidienne*
+          </div>
+        </div>
+        <div
+          style="display: flex; justify-content: space-between; align-items: baseline; border-bottom: medium; padding-left: 0px; padding-top: 1px; padding-bottom: 1px;"
+        >
+          <div
+            style="display: flex; align-items: baseline; gap: 2px; flex: 1 1 0%;"
+          >
+            <span
+              style="font-family: Arial, Helvetica, sans-serif; font-size: 11px; font-weight: 700;"
+            >
+              Fat / Lipides
+            </span>
+            <span
+              style="font-family: Arial, Helvetica, sans-serif; font-size: 11px; font-weight: 400;"
+            >
+              49g
+            </span>
+          </div>
+          <span
+            style="font-family: Arial, Helvetica, sans-serif; font-size: 11px; font-weight: 400; min-width: 22px; text-align: right;"
+          >
+            63
+            %
+          </span>
+        </div>
+        <div
+          style="display: flex; justify-content: space-between; align-items: baseline; border-bottom: medium; padding-left: 14px; padding-top: 1px; padding-bottom: 1px;"
+        >
+          <div
+            style="display: flex; align-items: baseline; gap: 2px; flex: 1 1 0%;"
+          >
+            <span
+              style="font-family: Arial, Helvetica, sans-serif; font-size: 11px; font-weight: 400;"
+            >
+              Saturated / saturés
+            </span>
+            <span
+              style="font-family: Arial, Helvetica, sans-serif; font-size: 11px; font-weight: 400;"
+            >
+              33g
+            </span>
+          </div>
+        </div>
+        <div
+          style="display: flex; justify-content: space-between; align-items: baseline; border-bottom: 1px solid rgb(187, 187, 187); padding-left: 14px; padding-top: 1px; padding-bottom: 1px;"
+        >
+          <div
+            style="display: flex; align-items: baseline; gap: 2px; flex: 1 1 0%;"
+          >
+            <span
+              style="font-family: Arial, Helvetica, sans-serif; font-size: 11px; font-weight: 400;"
+            >
+              + Trans / trans
+            </span>
+            <span
+              style="font-family: Arial, Helvetica, sans-serif; font-size: 11px; font-weight: 400;"
+            >
+              0g
+            </span>
+          </div>
+          <span
+            style="font-family: Arial, Helvetica, sans-serif; font-size: 11px; font-weight: 400; min-width: 22px; text-align: right;"
+          >
+            165
+            %
+          </span>
+        </div>
+        <div
+          style="display: flex; justify-content: space-between; align-items: baseline; border-bottom: medium; padding-left: 0px; padding-top: 1px; padding-bottom: 1px;"
+        >
+          <div
+            style="display: flex; align-items: baseline; gap: 2px; flex: 1 1 0%;"
+          >
+            <span
+              style="font-family: Arial, Helvetica, sans-serif; font-size: 11px; font-weight: 700;"
+            >
+              Carbohydrate / Glucides
+            </span>
+            <span
+              style="font-family: Arial, Helvetica, sans-serif; font-size: 11px; font-weight: 400;"
+            >
+              5g
+            </span>
+          </div>
+        </div>
+        <div
+          style="display: flex; justify-content: space-between; align-items: baseline; border-bottom: medium; padding-left: 14px; padding-top: 1px; padding-bottom: 1px;"
+        >
+          <div
+            style="display: flex; align-items: baseline; gap: 2px; flex: 1 1 0%;"
+          >
+            <span
+              style="font-family: Arial, Helvetica, sans-serif; font-size: 11px; font-weight: 400;"
+            >
+              Fibre / Fibres
+            </span>
+            <span
+              style="font-family: Arial, Helvetica, sans-serif; font-size: 11px; font-weight: 400;"
+            >
+              0g
+            </span>
+          </div>
+          <span
+            style="font-family: Arial, Helvetica, sans-serif; font-size: 11px; font-weight: 400; min-width: 22px; text-align: right;"
+          >
+            0
+            %
+          </span>
+        </div>
+        <div
+          style="display: flex; justify-content: space-between; align-items: baseline; border-bottom: 1px solid rgb(187, 187, 187); padding-left: 14px; padding-top: 1px; padding-bottom: 1px;"
+        >
+          <div
+            style="display: flex; align-items: baseline; gap: 2px; flex: 1 1 0%;"
+          >
+            <span
+              style="font-family: Arial, Helvetica, sans-serif; font-size: 11px; font-weight: 400;"
+            >
+              Sugars / Sucres
+            </span>
+            <span
+              style="font-family: Arial, Helvetica, sans-serif; font-size: 11px; font-weight: 400;"
+            >
+              5g
+            </span>
+          </div>
+          <span
+            style="font-family: Arial, Helvetica, sans-serif; font-size: 11px; font-weight: 400; min-width: 22px; text-align: right;"
+          >
+            5
+            %
+          </span>
+        </div>
+        <div
+          style="display: flex; justify-content: space-between; align-items: baseline; border-bottom: 1px solid rgb(187, 187, 187); padding-left: 0px; padding-top: 1px; padding-bottom: 1px;"
+        >
+          <div
+            style="display: flex; align-items: baseline; gap: 2px; flex: 1 1 0%;"
+          >
+            <span
+              style="font-family: Arial, Helvetica, sans-serif; font-size: 11px; font-weight: 700;"
+            >
+              Protein / Protéines
+            </span>
+            <span
+              style="font-family: Arial, Helvetica, sans-serif; font-size: 11px; font-weight: 400;"
+            >
+              46g
+            </span>
+          </div>
+        </div>
+        <div
+          style="display: flex; justify-content: space-between; align-items: baseline; border-bottom: 1px solid rgb(187, 187, 187); padding-left: 0px; padding-top: 1px; padding-bottom: 1px;"
+        >
+          <div
+            style="display: flex; align-items: baseline; gap: 2px; flex: 1 1 0%;"
+          >
+            <span
+              style="font-family: Arial, Helvetica, sans-serif; font-size: 11px; font-weight: 700;"
+            >
+              Cholesterol / Cholestérol
+            </span>
+            <span
+              style="font-family: Arial, Helvetica, sans-serif; font-size: 11px; font-weight: 400;"
+            >
+              160mg
+            </span>
+          </div>
+        </div>
+        <div
+          style="display: flex; justify-content: space-between; align-items: baseline; border-bottom: 3px solid rgb(0, 0, 0); padding-left: 0px; padding-top: 1px; padding-bottom: 1px;"
+        >
+          <div
+            style="display: flex; align-items: baseline; gap: 2px; flex: 1 1 0%;"
+          >
+            <span
+              style="font-family: Arial, Helvetica, sans-serif; font-size: 11px; font-weight: 700;"
+            >
+              Sodium
+            </span>
+            <span
+              style="font-family: Arial, Helvetica, sans-serif; font-size: 11px; font-weight: 400;"
+            >
+              830mg
+            </span>
+          </div>
+          <span
+            style="font-family: Arial, Helvetica, sans-serif; font-size: 11px; font-weight: 400; min-width: 22px; text-align: right;"
+          >
+            36
+            %
+          </span>
+        </div>
+        <div
+          style="display: flex; justify-content: space-between; align-items: baseline; border-bottom: 1px solid rgb(187, 187, 187); padding-left: 0px; padding-top: 1px; padding-bottom: 1px;"
+        >
+          <div
+            style="display: flex; align-items: baseline; gap: 2px; flex: 1 1 0%;"
+          >
+            <span
+              style="font-family: Arial, Helvetica, sans-serif; font-size: 11px; font-weight: 400;"
+            >
+              Potassium
+            </span>
+            <span
+              style="font-family: Arial, Helvetica, sans-serif; font-size: 11px; font-weight: 400;"
+            >
+              300mg
+            </span>
+          </div>
+          <span
+            style="font-family: Arial, Helvetica, sans-serif; font-size: 11px; font-weight: 400; min-width: 22px; text-align: right;"
+          >
+            6
+            %
+          </span>
+        </div>
+        <div
+          style="display: flex; justify-content: space-between; align-items: baseline; border-bottom: 1px solid rgb(187, 187, 187); padding-left: 0px; padding-top: 1px; padding-bottom: 1px;"
+        >
+          <div
+            style="display: flex; align-items: baseline; gap: 2px; flex: 1 1 0%;"
+          >
+            <span
+              style="font-family: Arial, Helvetica, sans-serif; font-size: 11px; font-weight: 400;"
+            >
+              Calcium
+            </span>
+            <span
+              style="font-family: Arial, Helvetica, sans-serif; font-size: 11px; font-weight: 400;"
+            >
+              530mg
+            </span>
+          </div>
+          <span
+            style="font-family: Arial, Helvetica, sans-serif; font-size: 11px; font-weight: 400; min-width: 22px; text-align: right;"
+          >
+            40
+            %
+          </span>
+        </div>
+        <div
+          style="display: flex; justify-content: space-between; align-items: baseline; border-bottom: 3px solid rgb(0, 0, 0); padding-left: 0px; padding-top: 1px; padding-bottom: 1px;"
+        >
+          <div
+            style="display: flex; align-items: baseline; gap: 2px; flex: 1 1 0%;"
+          >
+            <span
+              style="font-family: Arial, Helvetica, sans-serif; font-size: 11px; font-weight: 400;"
+            >
+              Iron / Fer
+            </span>
+            <span
+              style="font-family: Arial, Helvetica, sans-serif; font-size: 11px; font-weight: 400;"
+            >
+              0.5mg
+            </span>
+          </div>
+          <span
+            style="font-family: Arial, Helvetica, sans-serif; font-size: 11px; font-weight: 400; min-width: 22px; text-align: right;"
+          >
+            3
+            %
+          </span>
+        </div>
+        <div
+          style="padding-top: 2px;"
+        >
+          <div
+            style="font-size: 9px; font-family: "Arial Narrow", Arial, sans-serif; line-height: 1.2;"
+          >
+            * 5% or less is a 
+            <b>
+              little
+            </b>
+            , 15% or more is a 
+            <b>
+              lot
+            </b>
+          </div>
+          <div
+            style="font-size: 9px; font-family: "Arial Narrow", Arial, sans-serif; line-height: 1.2;"
+          >
+            * 5% ou moins c'est 
+            <b>
+              peu
+            </b>
+            , 15% ou plus c'est 
+            <b>
+              beaucoup
+            </b>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+`;
+
+exports[`TabCanada — snapshot rendering > valori a zero — nessun crash 1`] = `
+<div>
+  <div
+    style="background: white;"
+  >
+    <div
+      data-table-export="true"
+      style="background: white; padding: 12px; border-radius: 0px; display: inline-block;"
+    >
+      <div
+        style="width: 280px; border: 2px solid rgb(0, 0, 0); padding: 4px 8px 6px; font-family: Arial, Helvetica, sans-serif; background-color: rgb(255, 255, 255); color: rgb(0, 0, 0); box-sizing: border-box;"
+      >
+        <div
+          style="line-height: 1.1;"
+        >
+          <div
+            style="font-size: 17px; font-weight: 700; font-family: Arial, Helvetica, sans-serif;"
+          >
+            Nutrition Facts
+          </div>
+          <div
+            style="font-size: 17px; font-weight: 700; font-family: Arial, Helvetica, sans-serif;"
+          >
+            Valeur nutritive
+          </div>
+        </div>
+        <div
+          style="font-size: 12px; font-family: Arial, Helvetica, sans-serif; font-weight: 400; border-bottom: 5px solid rgb(0, 0, 0); padding-bottom: 2px; margin: 2px 0px 0px;"
+        >
+          <div
+            style="display: flex; justify-content: space-between;"
+          >
+            <span>
+              Per 0g
+            </span>
+          </div>
+          <div
+            style="display: flex; justify-content: space-between;"
+          >
+            <span>
+              pour 0g
+            </span>
+          </div>
+        </div>
+        <div
+          style="display: flex; justify-content: space-between; align-items: flex-start; padding-top: 2px;"
+        >
+          <div
+            style="font-size: 13px; font-weight: 700; font-family: Arial, Helvetica, sans-serif; border-bottom: 3px solid rgb(0, 0, 0); padding-bottom: 3px;"
+          >
+            Calories
+             
+            0
+          </div>
+          <div
+            style="text-align: right; font-size: 8px; font-family: Arial, Helvetica, sans-serif; font-weight: 700; line-height: 1.4;"
+          >
+            % Daily Value*
+            <br />
+            % valeur quotidienne*
+          </div>
+        </div>
+        <div
+          style="display: flex; justify-content: space-between; align-items: baseline; border-bottom: medium; padding-left: 0px; padding-top: 1px; padding-bottom: 1px;"
+        >
+          <div
+            style="display: flex; align-items: baseline; gap: 2px; flex: 1 1 0%;"
+          >
+            <span
+              style="font-family: Arial, Helvetica, sans-serif; font-size: 11px; font-weight: 700;"
+            >
+              Fat / Lipides
+            </span>
+            <span
+              style="font-family: Arial, Helvetica, sans-serif; font-size: 11px; font-weight: 400;"
+            >
+              0g
+            </span>
+          </div>
+          <span
+            style="font-family: Arial, Helvetica, sans-serif; font-size: 11px; font-weight: 400; min-width: 22px; text-align: right;"
+          >
+            0
+            %
+          </span>
+        </div>
+        <div
+          style="display: flex; justify-content: space-between; align-items: baseline; border-bottom: medium; padding-left: 14px; padding-top: 1px; padding-bottom: 1px;"
+        >
+          <div
+            style="display: flex; align-items: baseline; gap: 2px; flex: 1 1 0%;"
+          >
+            <span
+              style="font-family: Arial, Helvetica, sans-serif; font-size: 11px; font-weight: 400;"
+            >
+              Saturated / saturés
+            </span>
+            <span
+              style="font-family: Arial, Helvetica, sans-serif; font-size: 11px; font-weight: 400;"
+            >
+              0g
+            </span>
+          </div>
+        </div>
+        <div
+          style="display: flex; justify-content: space-between; align-items: baseline; border-bottom: 1px solid rgb(187, 187, 187); padding-left: 14px; padding-top: 1px; padding-bottom: 1px;"
+        >
+          <div
+            style="display: flex; align-items: baseline; gap: 2px; flex: 1 1 0%;"
+          >
+            <span
+              style="font-family: Arial, Helvetica, sans-serif; font-size: 11px; font-weight: 400;"
+            >
+              + Trans / trans
+            </span>
+            <span
+              style="font-family: Arial, Helvetica, sans-serif; font-size: 11px; font-weight: 400;"
+            >
+              0g
+            </span>
+          </div>
+          <span
+            style="font-family: Arial, Helvetica, sans-serif; font-size: 11px; font-weight: 400; min-width: 22px; text-align: right;"
+          >
+            0
+            %
+          </span>
+        </div>
+        <div
+          style="display: flex; justify-content: space-between; align-items: baseline; border-bottom: medium; padding-left: 0px; padding-top: 1px; padding-bottom: 1px;"
+        >
+          <div
+            style="display: flex; align-items: baseline; gap: 2px; flex: 1 1 0%;"
+          >
+            <span
+              style="font-family: Arial, Helvetica, sans-serif; font-size: 11px; font-weight: 700;"
+            >
+              Carbohydrate / Glucides
+            </span>
+            <span
+              style="font-family: Arial, Helvetica, sans-serif; font-size: 11px; font-weight: 400;"
+            >
+              0g
+            </span>
+          </div>
+        </div>
+        <div
+          style="display: flex; justify-content: space-between; align-items: baseline; border-bottom: medium; padding-left: 14px; padding-top: 1px; padding-bottom: 1px;"
+        >
+          <div
+            style="display: flex; align-items: baseline; gap: 2px; flex: 1 1 0%;"
+          >
+            <span
+              style="font-family: Arial, Helvetica, sans-serif; font-size: 11px; font-weight: 400;"
+            >
+              Fibre / Fibres
+            </span>
+            <span
+              style="font-family: Arial, Helvetica, sans-serif; font-size: 11px; font-weight: 400;"
+            >
+              0g
+            </span>
+          </div>
+          <span
+            style="font-family: Arial, Helvetica, sans-serif; font-size: 11px; font-weight: 400; min-width: 22px; text-align: right;"
+          >
+            0
+            %
+          </span>
+        </div>
+        <div
+          style="display: flex; justify-content: space-between; align-items: baseline; border-bottom: 1px solid rgb(187, 187, 187); padding-left: 14px; padding-top: 1px; padding-bottom: 1px;"
+        >
+          <div
+            style="display: flex; align-items: baseline; gap: 2px; flex: 1 1 0%;"
+          >
+            <span
+              style="font-family: Arial, Helvetica, sans-serif; font-size: 11px; font-weight: 400;"
+            >
+              Sugars / Sucres
+            </span>
+            <span
+              style="font-family: Arial, Helvetica, sans-serif; font-size: 11px; font-weight: 400;"
+            >
+              0g
+            </span>
+          </div>
+          <span
+            style="font-family: Arial, Helvetica, sans-serif; font-size: 11px; font-weight: 400; min-width: 22px; text-align: right;"
+          >
+            0
+            %
+          </span>
+        </div>
+        <div
+          style="display: flex; justify-content: space-between; align-items: baseline; border-bottom: 1px solid rgb(187, 187, 187); padding-left: 0px; padding-top: 1px; padding-bottom: 1px;"
+        >
+          <div
+            style="display: flex; align-items: baseline; gap: 2px; flex: 1 1 0%;"
+          >
+            <span
+              style="font-family: Arial, Helvetica, sans-serif; font-size: 11px; font-weight: 700;"
+            >
+              Protein / Protéines
+            </span>
+            <span
+              style="font-family: Arial, Helvetica, sans-serif; font-size: 11px; font-weight: 400;"
+            >
+              0g
+            </span>
+          </div>
+        </div>
+        <div
+          style="display: flex; justify-content: space-between; align-items: baseline; border-bottom: 1px solid rgb(187, 187, 187); padding-left: 0px; padding-top: 1px; padding-bottom: 1px;"
+        >
+          <div
+            style="display: flex; align-items: baseline; gap: 2px; flex: 1 1 0%;"
+          >
+            <span
+              style="font-family: Arial, Helvetica, sans-serif; font-size: 11px; font-weight: 700;"
+            >
+              Cholesterol / Cholestérol
+            </span>
+            <span
+              style="font-family: Arial, Helvetica, sans-serif; font-size: 11px; font-weight: 400;"
+            >
+              0mg
+            </span>
+          </div>
+        </div>
+        <div
+          style="display: flex; justify-content: space-between; align-items: baseline; border-bottom: 3px solid rgb(0, 0, 0); padding-left: 0px; padding-top: 1px; padding-bottom: 1px;"
+        >
+          <div
+            style="display: flex; align-items: baseline; gap: 2px; flex: 1 1 0%;"
+          >
+            <span
+              style="font-family: Arial, Helvetica, sans-serif; font-size: 11px; font-weight: 700;"
+            >
+              Sodium
+            </span>
+            <span
+              style="font-family: Arial, Helvetica, sans-serif; font-size: 11px; font-weight: 400;"
+            >
+              0mg
+            </span>
+          </div>
+          <span
+            style="font-family: Arial, Helvetica, sans-serif; font-size: 11px; font-weight: 400; min-width: 22px; text-align: right;"
+          >
+            0
+            %
+          </span>
+        </div>
+        <div
+          style="display: flex; justify-content: space-between; align-items: baseline; border-bottom: 1px solid rgb(187, 187, 187); padding-left: 0px; padding-top: 1px; padding-bottom: 1px;"
+        >
+          <div
+            style="display: flex; align-items: baseline; gap: 2px; flex: 1 1 0%;"
+          >
+            <span
+              style="font-family: Arial, Helvetica, sans-serif; font-size: 11px; font-weight: 400;"
+            >
+              Potassium
+            </span>
+            <span
+              style="font-family: Arial, Helvetica, sans-serif; font-size: 11px; font-weight: 400;"
+            >
+              0mg
+            </span>
+          </div>
+          <span
+            style="font-family: Arial, Helvetica, sans-serif; font-size: 11px; font-weight: 400; min-width: 22px; text-align: right;"
+          >
+            0
+            %
+          </span>
+        </div>
+        <div
+          style="display: flex; justify-content: space-between; align-items: baseline; border-bottom: 1px solid rgb(187, 187, 187); padding-left: 0px; padding-top: 1px; padding-bottom: 1px;"
+        >
+          <div
+            style="display: flex; align-items: baseline; gap: 2px; flex: 1 1 0%;"
+          >
+            <span
+              style="font-family: Arial, Helvetica, sans-serif; font-size: 11px; font-weight: 400;"
+            >
+              Calcium
+            </span>
+            <span
+              style="font-family: Arial, Helvetica, sans-serif; font-size: 11px; font-weight: 400;"
+            >
+              0mg
+            </span>
+          </div>
+          <span
+            style="font-family: Arial, Helvetica, sans-serif; font-size: 11px; font-weight: 400; min-width: 22px; text-align: right;"
+          >
+            0
+            %
+          </span>
+        </div>
+        <div
+          style="display: flex; justify-content: space-between; align-items: baseline; border-bottom: 3px solid rgb(0, 0, 0); padding-left: 0px; padding-top: 1px; padding-bottom: 1px;"
+        >
+          <div
+            style="display: flex; align-items: baseline; gap: 2px; flex: 1 1 0%;"
+          >
+            <span
+              style="font-family: Arial, Helvetica, sans-serif; font-size: 11px; font-weight: 400;"
+            >
+              Iron / Fer
+            </span>
+            <span
+              style="font-family: Arial, Helvetica, sans-serif; font-size: 11px; font-weight: 400;"
+            >
+              0mg
+            </span>
+          </div>
+          <span
+            style="font-family: Arial, Helvetica, sans-serif; font-size: 11px; font-weight: 400; min-width: 22px; text-align: right;"
+          >
+            0
+            %
+          </span>
+        </div>
+        <div
+          style="padding-top: 2px;"
+        >
+          <div
+            style="font-size: 9px; font-family: "Arial Narrow", Arial, sans-serif; line-height: 1.2;"
+          >
+            * 5% or less is a 
+            <b>
+              little
+            </b>
+            , 15% or more is a 
+            <b>
+              lot
+            </b>
+          </div>
+          <div
+            style="font-size: 9px; font-family: "Arial Narrow", Arial, sans-serif; line-height: 1.2;"
+          >
+            * 5% ou moins c'est 
+            <b>
+              peu
+            </b>
+            , 15% ou plus c'est 
+            <b>
+              beaucoup
+            </b>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+`;

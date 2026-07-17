@@ -39,14 +39,15 @@ function scaleResult(r: CalcResult, grams: number): CalcResult {
     return s;
 }
 
-// ─── Rounding helpers (Gulf) ──────────────────────────────────────────────────
-function arRndE(v: number): number { if (v < 5) return 0; if (v <= 50) return Math.round(v / 5) * 5; return Math.round(v / 10) * 10; }
-function arRndG(v: number): number { return v < 0.5 ? 0 : Math.round(v); }
-function arRndMg(v: number): number { return v < 5 ? 0 : Math.round(v / 5) * 5; }
+// ─── Rounding helpers (Gulf) — sorgente: versione desktop (TAB-UNIFY 2026-07-17) ──
+function arRndE(v: number): number { return Math.round(v); }
+function arRndG(v: number): number { return v < 10 ? Math.round(v * 10) / 10 : Math.round(v); }
+function arFmtG(v: number): string { const r = arRndG(v); return r < 10 ? r.toFixed(1) : r.toString(); }
+function arRndMg(v: number): number { return v < 1000 ? Math.round(v / 10) * 10 : Math.round(v / 100) * 100; }
 function arPct(v: number, dv: number): number { return Math.round(v / dv * 100); }
 function arDec1(n: number): string { return n.toFixed(1).replace('.', ','); }
 function arCupFmt(qty: number): string {
-    const fracs: [number, string][] = [[0.25, '1/4'], [1 / 3, '1/3'], [0.5, '1/2'], [2 / 3, '2/3'], [0.75, '3/4']];
+    const fracs: [number, string][] = [[0.25,'1/4'],[1/3,'1/3'],[0.5,'1/2'],[2/3,'2/3'],[0.75,'3/4']];
     const whole = Math.floor(qty);
     const frac = qty - whole;
     for (const [v, s] of fracs) { if (Math.abs(frac - v) < 0.07) return whole > 0 ? `${whole} ${s}` : s; }
@@ -55,10 +56,10 @@ function arCupFmt(qty: number): string {
 
 function buildArabiSI(arabi: ServingSizesNation, servingRef: USAServingRef, measure: USAMeasure, unit: string) {
     const pkgG = arabi.confezione ?? 0;
-    const svG = arabi.serving ?? 0;
+    const svG  = arabi.serving ?? 0;
     const refGrams = servingRef === 'confezione' ? pkgG : svG;
     const servingsPerContainer = (pkgG > 0 && svG > 0) ? arDec1(pkgG / svG) : '1';
-    const sizeLabel = servingRef === 'confezione' ? 'container' : 'Serving size';
+    const sizeLabel   = servingRef === 'confezione' ? 'container' : 'Serving size';
     const amountLabel = servingRef === 'confezione' ? 'Amount per container' : 'Amount per serving';
 
     let sizeValue: string;
@@ -80,25 +81,18 @@ function buildArabiSI(arabi: ServingSizesNation, servingRef: USAServingRef, meas
     return { refGrams, servingsPerContainer, sizeLabel, sizeValue, amountLabel };
 }
 
-// ─── Props ────────────────────────────────────────────────────────────────────
-interface TabArabiProps {
-    p: CalcResult;
-    arabi: ServingSizesNation;
-    servingRef: USAServingRef;
-    measure: USAMeasure;
+// ─── Component — markup UNIFICATO (sorgente: versione desktop, TAB-UNIFY 2026-07-17) ──
+export function TabArabi({ p, arabi, servingRef, measure, specificGravity }: {
+    p: CalcResult; arabi: ServingSizesNation;
+    servingRef: USAServingRef; measure: USAMeasure;
     specificGravity?: number;
-    full?: boolean;
-}
-
-// ─── Component ────────────────────────────────────────────────────────────────
-export function TabArabi({ p, arabi, servingRef, measure, specificGravity, full }: TabArabiProps) {
+}) {
     const unit = (specificGravity ?? 0) > 0 ? 'ml' : 'g';
     const si = buildArabiSI(arabi, servingRef, measure, unit);
-    const d = si.refGrams > 0 ? scaleResult(p, si.refGrams) : p;
-    const F = 'Arial, Helvetica, sans-serif';
+    const d  = si.refGrams > 0 ? scaleResult(p, si.refGrams) : p;
+    const F  = 'Arial, Helvetica, sans-serif';
 
-    const addedSugarsG = arRndG(d.zuccheri_agg);
-    const addedSugarsPct = arPct(addedSugarsG, DV_GULF.zuccheri_agg);
+    const addedSugarsStr = arFmtG(d.zuccheri_agg);
 
     const nutriRows = [
         { label: 'Total Fat',          val: d.grassi,        dvRef: DV_GULF.grassi,        unit: 'g',  bold: true,  indent: 0, italic: false },
@@ -106,65 +100,75 @@ export function TabArabi({ p, arabi, servingRef, measure, specificGravity, full 
         { label: 'Trans Fat',          val: d.trans,         dvRef: 0,                     unit: 'g',  bold: false, indent: 1, italic: true  },
         { label: 'Cholesterol',        val: d.colesterolo,   dvRef: DV_GULF.colesterolo,   unit: 'mg', bold: true,  indent: 0, italic: false },
         { label: 'Sodium',             val: d.sodio_mg,      dvRef: DV_GULF.sodio_mg,      unit: 'mg', bold: true,  indent: 0, italic: false },
-        { label: 'Total Carbohydrate', val: d.carboidratiTot, dvRef: DV_GULF.carboidratiTot, unit: 'g', bold: true, indent: 0, italic: false },
+        { label: 'Total Carbohydrate', val: d.carboidratiTot,dvRef: DV_GULF.carboidratiTot,unit: 'g',  bold: true,  indent: 0, italic: false },
         { label: 'Dietary Fiber',      val: d.fibre,         dvRef: DV_GULF.fibre,         unit: 'g',  bold: false, indent: 1, italic: false },
         { label: 'Total Sugars',       val: d.zuccheri,      dvRef: 0,                     unit: 'g',  bold: false, indent: 1, italic: false },
+        { label: `Includes ${addedSugarsStr}g Added Sugars`, val: d.zuccheri_agg, dvRef: DV_GULF.zuccheri_agg, unit: 'g', bold: false, indent: 2, italic: false },
         { label: 'Protein',            val: d.proteine,      dvRef: 0,                     unit: 'g',  bold: true,  indent: 0, italic: false },
     ];
 
     return (
         <div style={{ background: 'white' }}>
-            {!full && (
-                <h3 style={{ marginTop: 0, fontSize: 16, color: 'var(--color-navy)', borderBottom: '2px solid var(--color-orange)', paddingBottom: 8, marginBottom: 16 }}>
-                    Etichetta Nutrizionale (Gulf/Arabi)
-                </h3>
-            )}
             <div data-table-export style={{ background: 'white', padding: 12, display: 'inline-block' }}>
-                <div style={{ maxWidth: 310, border: '3px solid #000', padding: '8px 8px 6px 8px', fontFamily: F }}>
+                <div style={{ width: 310, border: '2.5px solid #000', padding: '8px 8px 6px 8px', fontFamily: F, color: '#000', boxSizing: 'border-box' as const }}>
 
-                    <div style={{ fontSize: 38, fontWeight: 900, lineHeight: 1, letterSpacing: '-0.5px' }}>Nutrition Facts</div>
+                    {/* Title */}
+                    <div style={{ fontSize: 38, fontWeight: 900, lineHeight: 1, whiteSpace: 'nowrap', textAlign: 'justify', textAlignLast: 'justify', WebkitTextStroke: '0.6px #000', borderBottom: '1px solid #000', paddingBottom: 3, marginBottom: 2 }}>Nutrition Facts</div>
 
-                    <div style={{ fontSize: 11, borderBottom: '1px solid #000', paddingBottom: 2, marginBottom: 2 }}>
+                    {/* Servings per container */}
+                    <div style={{ fontSize: 18, fontWeight: 400 }}>
                         {si.servingsPerContainer} servings per container
                     </div>
-
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', borderTop: '8px solid #000', paddingTop: 2, paddingBottom: 2 }}>
-                        <span style={{ fontSize: 13, fontWeight: 700 }}>{si.sizeLabel}</span>
-                        <span style={{ fontSize: 13, fontWeight: 700 }}>{si.sizeValue}</span>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+                        <span style={{ fontSize: 16, fontWeight: 900, WebkitTextStroke: '0.4px #000' }}>Serving size</span>
+                        <span style={{ fontSize: 16, fontWeight: 900, WebkitTextStroke: '0.4px #000' }}>{si.sizeValue}</span>
                     </div>
 
-                    <div style={{ borderTop: '4px solid #000', paddingTop: 1 }}>
-                        <div style={{ fontSize: 10, fontWeight: 700 }}>{si.amountLabel}</div>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', borderBottom: '4px solid #000', paddingBottom: 2 }}>
-                            <span style={{ fontSize: 28, fontWeight: 900 }}>Calories</span>
-                            <span style={{ fontSize: 48, fontWeight: 900, lineHeight: 1 }}>{arRndE(d.energyKcal)}</span>
+                    {/* Thick bar + Amount + Calories */}
+                    <div style={{ borderTop: '14px solid #000', marginTop: 3, paddingTop: 2 }}>
+                        <div style={{ fontSize: 14, fontWeight: 900, WebkitTextStroke: '0.4px #000', lineHeight: 1, marginBottom: 0 }}>{si.amountLabel}</div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', borderBottom: '8px solid #000', paddingBottom: 2, marginTop: -10 }}>
+                            <span style={{ fontSize: 32, fontWeight: 900, WebkitTextStroke: '0.8px #000' }}>Calories</span>
+                            <span style={{ fontSize: 48, fontWeight: 900, lineHeight: 1, WebkitTextStroke: '0.8px #000' }}>{arRndE(d.energyKcal)}</span>
                         </div>
                     </div>
 
-                    <div style={{ textAlign: 'right', fontSize: 10, fontWeight: 700, borderBottom: '1px solid #000', paddingBottom: 1, marginBottom: 1 }}>
+                    {/* % DV header */}
+                    <div style={{ textAlign: 'right', fontSize: 11, fontWeight: 900, WebkitTextStroke: '0.4px #000', paddingTop: 2, paddingBottom: 1, borderBottom: '1px solid #000' }}>
                         % Daily Value*
                     </div>
 
+                    {/* Nutrient rows */}
                     {nutriRows.map((r, i) => {
-                        const fmtV = r.unit === 'mg' ? `${arRndMg(r.val)}mg` : `${arRndG(r.val)}g`;
-                        const pct = r.dvRef > 0 ? arPct(r.unit === 'mg' ? arRndMg(r.val) : arRndG(r.val), r.dvRef) : null;
+                        const fmtV = r.unit === 'mg' ? `${arRndMg(r.val)} mg` : `${arFmtG(r.val)} g`;
+                        const pct  = r.dvRef > 0 ? arPct(r.unit === 'mg' ? arRndMg(r.val) : arRndG(r.val), r.dvRef) : null;
+                        const isLast = i === nutriRows.length - 1;
+                        // 0.5pt thicker on: Cholesterol(3), Sodium(4), TotalCarb(5), Includes(8), Protein/last
+                        const needsThickBorder = !isLast && ((r.bold && i > 0) || r.indent >= 2);
+                        const borderBottom = isLast ? '8px solid #000' : needsThickBorder ? '1.5px solid #000' : '1px solid #000';
+                        // label name bold, value regular for main nutrients
                         const labelNode = r.italic
-                            ? <><em>Trans</em>{' Fat '}{fmtV}</>
+                            ? <><em>Trans</em>{' Fat '}<span style={{ fontWeight: 400 }}>{fmtV}</span></>
+                            : r.indent >= 2
+                            ? <>{r.label}</>
+                            : r.bold
+                            ? <><span style={{ fontWeight: 900, WebkitTextStroke: '0.4px #000' }}>{r.label}</span>{' '}<span style={{ fontWeight: 400 }}>{fmtV}</span></>
                             : <>{r.label} {fmtV}</>;
                         return (
-                            <div key={i} style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #aaa', paddingLeft: r.indent * 16, paddingTop: 1, paddingBottom: 1 }}>
-                                <span style={{ fontSize: r.bold ? 13 : 12, fontWeight: r.bold ? 700 : 400 }}>{labelNode}</span>
-                                {pct !== null ? <span style={{ fontSize: 12, fontWeight: 700 }}>{pct}%</span> : <span />}
+                            <div key={i} style={{
+                                display: 'flex', justifyContent: 'space-between', alignItems: 'baseline',
+                                borderBottom,
+                                paddingLeft: r.indent * 18,
+                                paddingTop: 2, paddingBottom: 2,
+                            }}>
+                                <span style={{ fontSize: r.bold ? 15 : 13, fontWeight: r.bold ? 900 : 400 }}>{labelNode}</span>
+                                {pct !== null ? <span style={{ fontSize: 13, fontWeight: 900, WebkitTextStroke: '0.4px #000' }}>{pct}%</span> : <span />}
                             </div>
                         );
                     })}
 
-                    <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #aaa', paddingLeft: 32, fontSize: 11, paddingTop: 1, paddingBottom: 1 }}>
-                        <span>Includes {addedSugarsG}g Added Sugars</span>
-                        <span style={{ fontWeight: 700 }}>{addedSugarsPct}%</span>
-                    </div>
-
-                    <div style={{ fontSize: 9, paddingTop: 4, borderTop: '1px solid #000' }}>
+                    {/* Footnote */}
+                    <div style={{ fontSize: 11, paddingTop: 4, lineHeight: 1.3 }}>
                         *The % Daily Value (DV) tells you how much a nutrient in a serving of food contributes to a daily diet. 2,000 calories a day is used for general nutrition advice.
                     </div>
                 </div>
