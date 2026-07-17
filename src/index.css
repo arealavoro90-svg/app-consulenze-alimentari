@@ -505,8 +505,8 @@ body:has(.calc-outer-shell) {
   overflow: hidden;
 }
 .split-panel-left {
-  /* width gestita inline da SplitShell (drag-resize) */
-  flex-shrink: 0;
+  flex: 1;
+  min-width: 0;
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -525,8 +525,8 @@ body:has(.calc-outer-shell) {
   background: var(--color-orange);
 }
 .split-panel-right {
-  flex: 1;
-  min-width: 0;
+  flex: 0 0 700px;
+  width: 700px;
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -2032,28 +2032,31 @@ a:focus-visible,
 .table-scroll-area {
   flex: 1;
   overflow-y: auto;
+  overflow-x: auto;
   padding: 14px;
 }
 
-/* Colonna porzioni fissa — redesign pannello destro 2026-07 */
-/* ponytail: overflow:visible — .portions-col non ha scroll container antenato (fratello di .table-scroll-area), sticky era dead CSS */
-.table-panel-body { display: flex; gap: 12px; align-items: flex-start; min-height: 0; flex: 1; overflow: visible; }
+/* Colonna porzioni — sempre sotto la tabella (mai laterale: la tabella deve
+   avere sempre tutta la larghezza disponibile, niente cutoff su Australia). */
+.table-panel-body { display: flex; flex-direction: column; gap: 12px; min-height: 0; flex: 1; overflow: visible; }
 .table-panel-body .table-scroll-area { flex: 1; min-width: 0; }
 .portions-col {
-  width: 170px; flex-shrink: 0;
+  width: 100%; flex-shrink: 0;
   background: var(--color-surface); border: 1px solid var(--color-border);
-  border-radius: var(--radius-sm); padding: 12px;
-  display: flex; flex-direction: column; gap: 10px;
-  max-height: calc(100vh - 200px); overflow-y: auto;
+  border-radius: var(--radius-sm); padding: 10px;
+  display: flex; flex-direction: row; flex-wrap: wrap; align-items: flex-end; gap: 8px;
+  max-height: none; overflow-y: visible;
 }
-.portions-col-title { font-size: 12px; font-weight: 700; color: var(--color-text); }
-.portions-col .field-label { font-size: 11px; text-transform: none; letter-spacing: 0; }
-@media (max-width: 1279px) {
-  .table-panel-body { flex-direction: column; }
-  .portions-col { width: 100%; position: static; flex-direction: row; flex-wrap: wrap; align-items: flex-end; max-height: none; }
-  .portions-col .field { flex: 1 1 140px; }
-  .portions-col-title { width: 100%; }
+.portions-col .field { flex: 1 1 130px; }
+.portions-col-title { width: 100%; font-size: 11px; font-weight: 700; color: var(--color-text); text-transform: uppercase; letter-spacing: 0.04em; }
+.portions-col-section {
+  width: 100%;
+  font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em;
+  color: var(--color-text-muted); margin-top: 8px; padding-bottom: 3px;
+  border-bottom: 1px solid var(--color-border);
 }
+.portions-col .field-label { font-size: 10px; text-transform: none; letter-spacing: 0; }
+.portions-col .field-input { padding: 4px 6px !important; font-size: 11px !important; }
 
 .table-panel-footer {
   flex-shrink: 0;
