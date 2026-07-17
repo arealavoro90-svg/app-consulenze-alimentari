@@ -99,6 +99,7 @@ const CONFIDENCE_THRESHOLD = 50;
 export interface ParsedGroup {
   name: string;
   lines: ParsedLine[];
+  pzUV?: number;
 }
 
 /**

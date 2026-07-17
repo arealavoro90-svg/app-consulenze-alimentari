@@ -244,6 +244,8 @@ export function NutrizionaleCalcMobile() {
 
     const handleSmartImportMobile = useCallback((result: SmartImportResult) => {
         if (!result.components.length) return;
+        if (result.productName) updateForm({ denominazione: result.productName });
+        if (result.finishedWeight) updateForm({ pesoFinito_g: String(result.finishedWeight) });
         const firstId = components[0]?.id;
         setComponents((prev: MobileComponent[]) => {
             let updated = prev;
@@ -256,10 +258,9 @@ export function NutrizionaleCalcMobile() {
                     resa: 100,
                 }));
                 if (ci === 0 && firstId) {
-                    const name = result.productName || comp.name;
-                    updated = updated.map((c: MobileComponent) => c.id !== firstId ? c : { ...c, rows: [...c.rows, ...newRows], name: c.name || name });
+                    updated = updated.map((c: MobileComponent) => c.id !== firstId ? c : { ...c, rows: [...c.rows, ...newRows], name: c.name || comp.name, pzUV: comp.pzUV ?? c.pzUV });
                 } else {
-                    updated = [...updated, { ...makeComponent(), name: comp.name, rows: newRows }];
+                    updated = [...updated, { ...makeComponent(), name: comp.name, rows: newRows, pzUV: comp.pzUV ?? 1 }];
                 }
             });
             return updated;

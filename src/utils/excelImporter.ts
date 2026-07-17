@@ -6,10 +6,15 @@ import type { ParsedGroup, ParsedLine } from './recipeParser';
 export interface ExcelImportData {
   productName: string;
   groups: ParsedGroup[];
+  finishedWeight?: number;
 }
 
 // Colonne componente nel foglio "calcoli": I(8), M(12), Q(16), U(20)
 const COMP_COLS = [8, 12, 16, 20];
+// "Per N° Pz:" (pezzi prodotti dal componente) è 3 colonne dopo la colonna componente: I→L, M→P, Q→T, U→X
+const PZ_COL_OFFSET = 3;
+// Peso del prodotto dopo cottura/disidratazione: cella AF13
+const FINISHED_WEIGHT_CELL = { r: 12, c: 31 };
 const CONFIDENCE_THRESHOLD = 50;
 
 export async function importFromExcel(file: File, db: DBIngredient[]): Promise<ExcelImportData> {
@@ -20,6 +25,9 @@ export async function importFromExcel(file: File, db: DBIngredient[]): Promise<E
   if (!ws) throw new Error('Foglio "calcoli" non trovato. Assicurati di usare il file Excel AEA originale.');
 
   const productName = String(ws['L7']?.v ?? 'Ricetta importata').trim();
+
+  const fwCell = ws[XLSX.utils.encode_cell(FINISHED_WEIGHT_CELL)];
+  const finishedWeight = typeof fwCell?.v === 'number' && fwCell.v > 0 ? fwCell.v : undefined;
 
   const fuse = new Fuse(db, {
     keys: ['nome', 'etichetta'],
@@ -39,6 +47,9 @@ export async function importFromExcel(file: File, db: DBIngredient[]): Promise<E
 
     const headerCell = ws[XLSX.utils.encode_cell({ r: 11, c: compCol })];
     const compName = String(headerCell?.v ?? `Componente ${ci + 1}`).replace('Ricetta ', '');
+
+    const pzCell = ws[XLSX.utils.encode_cell({ r: 11, c: compCol + PZ_COL_OFFSET })];
+    const pzUV = typeof pzCell?.v === 'number' && pzCell.v > 0 ? pzCell.v : undefined;
 
     const lines: ParsedLine[] = [];
 
@@ -76,10 +87,10 @@ export async function importFromExcel(file: File, db: DBIngredient[]): Promise<E
       });
     }
 
-    if (lines.length > 0) groups.push({ name: compName, lines });
+    if (lines.length > 0) groups.push({ name: compName, lines, pzUV });
   }
 
   if (groups.length === 0) throw new Error('Nessun ingrediente trovato. Controlla che la ricetta abbia grammi > 0 in almeno un componente.');
 
-  return { productName, groups };
+  return { productName, groups, finishedWeight };
 }

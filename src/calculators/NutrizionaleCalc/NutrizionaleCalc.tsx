@@ -1341,13 +1341,14 @@ export function NutrizionaleCalc() {
                 }));
                 if (ci === 0 && firstId) {
                     // primo componente → aggiunge al componente esistente
-                    updated = updated.map(c => c.id !== firstId ? c : { ...c, rows: [...c.rows, ...newRows], name: c.name || comp.name });
+                    updated = updated.map(c => c.id !== firstId ? c : { ...c, rows: [...c.rows, ...newRows], name: c.name || comp.name, pzUV: comp.pzUV ?? c.pzUV });
                 } else {
-                    updated = [...updated, { ...makeComp(), name: comp.name, rows: newRows }];
+                    updated = [...updated, { ...makeComp(), name: comp.name, rows: newRows, pzUV: comp.pzUV ?? 1 }];
                 }
             });
             return updated;
         });
+        if (result.finishedWeight) setFinishedWeight(String(result.finishedWeight));
         const total = result.components.reduce((s, c) => s + c.rows.length, 0);
         const label = result.productName ? `"${result.productName}"` : `${result.components.length} componente${result.components.length > 1 ? 'i' : ''}`;
         toast.success(`${total} ingredienti importati — ${label}.`);

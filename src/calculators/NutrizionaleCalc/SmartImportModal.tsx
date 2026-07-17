@@ -6,7 +6,8 @@ import type { DBIngredient } from '../../engines/nutrizionaleCalcEngine';
 
 export interface SmartImportResult {
   productName?: string;
-  components: Array<{ name: string; rows: Array<{ ing: DBIngredient; grams: number }> }>;
+  finishedWeight?: number;
+  components: Array<{ name: string; pzUV?: number; rows: Array<{ ing: DBIngredient; grams: number }> }>;
 }
 
 interface Props {
@@ -29,6 +30,7 @@ interface RowState {
 
 interface GroupState {
   name: string;
+  pzUV?: number;
   rows: RowState[];
 }
 
@@ -513,6 +515,7 @@ const EMPTY_ROW = (): RowState => ({
 function parsedGroupsToGroupState(parsed: ReturnType<typeof parseRecipeGroups>): GroupState[] {
   return parsed.map(g => ({
     name: g.name,
+    pzUV: g.pzUV,
     rows: g.lines.map(line => ({
       raw_text: line.raw_text,
       qty: line.parsed_quantity || 0,
@@ -530,6 +533,7 @@ export function SmartImportModal({ db, onClose, onImport }: Props) {
   const [rawText, setRawText] = useState('');
   const [groups, setGroups] = useState<GroupState[]>([]);
   const [productName, setProductName] = useState<string | undefined>();
+  const [finishedWeight, setFinishedWeight] = useState<number | undefined>();
   const [excelLoading, setExcelLoading] = useState(false);
   const [excelError, setExcelError] = useState<string | null>(null);
 
@@ -537,6 +541,7 @@ export function SmartImportModal({ db, onClose, onImport }: Props) {
     const parsed = parseRecipeGroups(rawText, db);
     setGroups(parsedGroupsToGroupState(parsed));
     setProductName(undefined);
+    setFinishedWeight(undefined);
     setPhase('validation');
   }, [rawText, db]);
 
@@ -547,6 +552,7 @@ export function SmartImportModal({ db, onClose, onImport }: Props) {
       const data = await importFromExcel(file, db);
       setGroups(parsedGroupsToGroupState(data.groups));
       setProductName(data.productName);
+      setFinishedWeight(data.finishedWeight);
       setPhase('validation');
     } catch (err) {
       setExcelError(err instanceof Error ? err.message : 'Errore durante la lettura del file.');
@@ -584,13 +590,14 @@ export function SmartImportModal({ db, onClose, onImport }: Props) {
   const handleImport = useCallback(() => {
     const components = groups.map(g => ({
       name: g.name,
+      pzUV: g.pzUV,
       rows: g.rows
         .filter(r => r.selectedIngredient !== null && r.qty > 0)
         .map(r => ({ ing: r.selectedIngredient!, grams: toGrams(r.qty, r.unit) })),
     })).filter(c => c.rows.length > 0);
-    onImport({ productName, components });
+    onImport({ productName, finishedWeight, components });
     onClose();
-  }, [groups, productName, onImport, onClose]);
+  }, [groups, productName, finishedWeight, onImport, onClose]);
 
   const allRows = groups.flatMap(g => g.rows);
   const matchedCount = allRows.filter(r => r.selectedIngredient !== null).length;
