@@ -225,7 +225,7 @@ function VertLayout({ d, si, addedSugarsG, addedSugarsPct, rows, vitamins }:
                 {si.servingsPerContainer} servings per container
             </div>
 
-            {/* Serving size — justify distribuisce parole su tutta larghezza */}
+            {/* Serving size */}
             <div style={{ fontSize: 14, fontWeight: 900, WebkitTextStroke: '0.5px black', paddingTop: 2, paddingBottom: 2, textAlign: 'justify', textAlignLast: 'justify' as any, letterSpacing: '0px' }}>
                 {si.sizeLabel} {si.sizeValue}
             </div>
@@ -514,9 +514,9 @@ function LinearLayout({ d, si, addedSugarsG, addedSugarsPct, vitamins }:
                 </span>
                 {sizeRight && <b style={{ fontWeight: 900, WebkitTextStroke: '0.3px black', marginRight: 12 }}>{sizeRight},</b>}
             </div>
-            {/* Line 2: Amount per Serving + Calories (moderately larger) + Total Fat + Sat.Fat */}
+            {/* Line 2: Amount per Serving + Calories */}
             <div>
-                {'\u2002'}Amount per Serving:{' '}
+                {'\u2002'}{'Amount per Serving'}:{' '}
                 <b style={{ fontSize: 17, fontWeight: 900, WebkitTextStroke: '0.3px black' }}>Calories</b>{' '}
                 <b style={{ fontSize: 17, fontWeight: 900, WebkitTextStroke: '0.3px black' }}>{kcal},</b>{'  '}
                 <b style={{ fontWeight: 900, WebkitTextStroke: '0.3px black' }}>Total Fat</b>{'  '}{rG(d.grassi)}g{' '}{pdv(rG(d.grassi), DV_USA.grassi)},{'  '}

@@ -101,10 +101,10 @@ export function TabAustralia({ p, au }: { p: CalcResult; au: ServingSizesNation 
                     <table style={{ borderCollapse: 'collapse', width: '100%' }}>
                         <thead>
                             <tr>
-                                <th style={{ ...thStyle, textAlign: 'left', width: '32%' }}></th>
-                                <th style={{ ...thStyle, textAlign: 'left' }}>Average Quantity per Serving</th>
-                                <th style={{ ...thStyle, textAlign: 'left' }}>% Daily Intake* (per Serving)</th>
-                                <th style={{ ...thStyle, textAlign: 'left' }}>Average Quantity per 100 g</th>
+                                <th style={{ ...thStyle, textAlign: 'left', width: '23%' }}></th>
+                                <th style={{ ...thStyle, textAlign: 'left' }}>Average Quantity<br />per Serving</th>
+                                <th style={{ ...thStyle, textAlign: 'left' }}>% Daily Intake*<br />(per Serving)</th>
+                                <th style={{ ...thStyle, textAlign: 'left' }}>Average Quantity<br />per 100&nbsp;g</th>
                             </tr>
                         </thead>
                         <tbody>

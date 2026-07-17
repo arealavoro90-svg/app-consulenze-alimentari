@@ -593,22 +593,28 @@ exports[`TabAustralia — snapshot rendering > con serving e confezione 1`] = `
           <thead>
             <tr>
               <th
-                style="padding: 5px 10px; font-weight: 700; font-size: 12px; border-bottom: 1px solid rgb(0, 0, 0); vertical-align: bottom; text-align: left; width: 32%;"
+                style="padding: 5px 10px; font-weight: 700; font-size: 12px; border-bottom: 1px solid rgb(0, 0, 0); vertical-align: bottom; text-align: left; width: 23%;"
               />
               <th
                 style="padding: 5px 10px; font-weight: 700; font-size: 12px; border-bottom: 1px solid rgb(0, 0, 0); vertical-align: bottom; text-align: left;"
               >
-                Average Quantity per Serving
+                Average Quantity
+                <br />
+                per Serving
               </th>
               <th
                 style="padding: 5px 10px; font-weight: 700; font-size: 12px; border-bottom: 1px solid rgb(0, 0, 0); vertical-align: bottom; text-align: left;"
               >
-                % Daily Intake* (per Serving)
+                % Daily Intake*
+                <br />
+                (per Serving)
               </th>
               <th
                 style="padding: 5px 10px; font-weight: 700; font-size: 12px; border-bottom: 1px solid rgb(0, 0, 0); vertical-align: bottom; text-align: left;"
               >
-                Average Quantity per 100 g
+                Average Quantity
+                <br />
+                per 100 g
               </th>
             </tr>
           </thead>
@@ -843,22 +849,28 @@ exports[`TabAustralia — snapshot rendering > senza serving — messaggio place
           <thead>
             <tr>
               <th
-                style="padding: 5px 10px; font-weight: 700; font-size: 12px; border-bottom: 1px solid rgb(0, 0, 0); vertical-align: bottom; text-align: left; width: 32%;"
+                style="padding: 5px 10px; font-weight: 700; font-size: 12px; border-bottom: 1px solid rgb(0, 0, 0); vertical-align: bottom; text-align: left; width: 23%;"
               />
               <th
                 style="padding: 5px 10px; font-weight: 700; font-size: 12px; border-bottom: 1px solid rgb(0, 0, 0); vertical-align: bottom; text-align: left;"
               >
-                Average Quantity per Serving
+                Average Quantity
+                <br />
+                per Serving
               </th>
               <th
                 style="padding: 5px 10px; font-weight: 700; font-size: 12px; border-bottom: 1px solid rgb(0, 0, 0); vertical-align: bottom; text-align: left;"
               >
-                % Daily Intake* (per Serving)
+                % Daily Intake*
+                <br />
+                (per Serving)
               </th>
               <th
                 style="padding: 5px 10px; font-weight: 700; font-size: 12px; border-bottom: 1px solid rgb(0, 0, 0); vertical-align: bottom; text-align: left;"
               >
-                Average Quantity per 100 g
+                Average Quantity
+                <br />
+                per 100 g
               </th>
             </tr>
           </thead>

@@ -20,7 +20,8 @@ exports[`TabUE — snapshot rendering > 100g — solo obbligatori 1`] = `
               DICHIARAZIONE NUTRIZIONALE
             </th>
             <th
-              style="background: rgb(245, 245, 245); border: 1px solid rgb(153, 153, 153); padding: 6px 4px; text-align: center; font-weight: 700; font-size: 11px; width: 64px;"
+              style="background: rgb(245, 245, 245); border: 1px solid rgb(153, 153, 153); padding: 6px 4px; text-align: center; font-weight: 700; font-size: 11px; width: 64px; cursor: help;"
+              title="% AR = percentuale dell'Assunzione di Riferimento giornaliera per un adulto medio (8400 kJ / 2000 kcal). Fonte: Reg. UE 1169/2011."
             >
               % AR *
             </th>
@@ -279,7 +280,8 @@ exports[`TabUE — snapshot rendering > 100g — tutti gli opzionali 1`] = `
               DICHIARAZIONE NUTRIZIONALE
             </th>
             <th
-              style="background: rgb(245, 245, 245); border: 1px solid rgb(153, 153, 153); padding: 6px 4px; text-align: center; font-weight: 700; font-size: 11px; width: 64px;"
+              style="background: rgb(245, 245, 245); border: 1px solid rgb(153, 153, 153); padding: 6px 4px; text-align: center; font-weight: 700; font-size: 11px; width: 64px; cursor: help;"
+              title="% AR = percentuale dell'Assunzione di Riferimento giornaliera per un adulto medio (8400 kJ / 2000 kcal). Fonte: Reg. UE 1169/2011."
             >
               % AR *
             </th>
@@ -1205,7 +1207,8 @@ exports[`TabUE — snapshot rendering > per porzione (125g) 1`] = `
               DICHIARAZIONE NUTRIZIONALE
             </th>
             <th
-              style="background: rgb(245, 245, 245); border: 1px solid rgb(153, 153, 153); padding: 6px 4px; text-align: center; font-weight: 700; font-size: 11px; width: 64px;"
+              style="background: rgb(245, 245, 245); border: 1px solid rgb(153, 153, 153); padding: 6px 4px; text-align: center; font-weight: 700; font-size: 11px; width: 64px; cursor: help;"
+              title="% AR = percentuale dell'Assunzione di Riferimento giornaliera per un adulto medio (8400 kJ / 2000 kcal). Fonte: Reg. UE 1169/2011."
             >
               % AR *
             </th>
@@ -1464,7 +1467,8 @@ exports[`TabUE — snapshot rendering > per unità di vendita (250g) 1`] = `
               DICHIARAZIONE NUTRIZIONALE
             </th>
             <th
-              style="background: rgb(245, 245, 245); border: 1px solid rgb(153, 153, 153); padding: 6px 4px; text-align: center; font-weight: 700; font-size: 11px; width: 64px;"
+              style="background: rgb(245, 245, 245); border: 1px solid rgb(153, 153, 153); padding: 6px 4px; text-align: center; font-weight: 700; font-size: 11px; width: 64px; cursor: help;"
+              title="% AR = percentuale dell'Assunzione di Riferimento giornaliera per un adulto medio (8400 kJ / 2000 kcal). Fonte: Reg. UE 1169/2011."
             >
               % AR *
             </th>
@@ -1723,7 +1727,8 @@ exports[`TabUE — snapshot rendering > prodotto liquido (peso specifico 1.02) 1
               DICHIARAZIONE NUTRIZIONALE
             </th>
             <th
-              style="background: rgb(245, 245, 245); border: 1px solid rgb(153, 153, 153); padding: 6px 4px; text-align: center; font-weight: 700; font-size: 11px; width: 64px;"
+              style="background: rgb(245, 245, 245); border: 1px solid rgb(153, 153, 153); padding: 6px 4px; text-align: center; font-weight: 700; font-size: 11px; width: 64px; cursor: help;"
+              title="% AR = percentuale dell'Assunzione di Riferimento giornaliera per un adulto medio (8400 kJ / 2000 kcal). Fonte: Reg. UE 1169/2011."
             >
               % AR *
             </th>
@@ -1982,7 +1987,8 @@ exports[`TabUE — snapshot rendering > valori a zero — nessun crash 1`] = `
               DICHIARAZIONE NUTRIZIONALE
             </th>
             <th
-              style="background: rgb(245, 245, 245); border: 1px solid rgb(153, 153, 153); padding: 6px 4px; text-align: center; font-weight: 700; font-size: 11px; width: 64px;"
+              style="background: rgb(245, 245, 245); border: 1px solid rgb(153, 153, 153); padding: 6px 4px; text-align: center; font-weight: 700; font-size: 11px; width: 64px; cursor: help;"
+              title="% AR = percentuale dell'Assunzione di Riferimento giornaliera per un adulto medio (8400 kJ / 2000 kcal). Fonte: Reg. UE 1169/2011."
             >
               % AR *
             </th>

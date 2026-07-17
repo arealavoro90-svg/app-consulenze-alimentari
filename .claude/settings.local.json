@@ -74,7 +74,16 @@
       "Bash(git stash *)",
       "Bash(echo \"TSC:$?\")",
       "Bash(wc:*)",
-      "Bash(/Users/novanta/.claude/plugins/cache/claude-plugins-official/superpowers/5.0.7/skills/brainstorming/scripts/stop-server.sh /tmp/brainstorm-3955-1784019422)"
+      "Bash(/Users/novanta/.claude/plugins/cache/claude-plugins-official/superpowers/5.0.7/skills/brainstorming/scripts/stop-server.sh /tmp/brainstorm-3955-1784019422)",
+      "Bash(sed -n '3087,3225p' src/calculators/NutrizionaleCalc/NutrizionaleCalc.tsx)",
+      "Bash(sed -n '51,145p' src/calculators/NutrizionaleCalc/TabAustralia.tsx)",
+      "Read(//tmp/**)",
+      "Bash(awk 'NR>=3226' src/calculators/NutrizionaleCalc/NutrizionaleCalc.tsx)",
+      "Bash(git -C /Users/novanta/Desktop/APP/App_prova/.worktrees/desktop-right-panel show 95fe866:src/calculators/NutrizionaleCalc/NutrizionaleCalc.tsx)",
+      "Bash(echo \"TSC_EXIT:$?\")",
+      "Bash(git revert:*)",
+      "Bash(git -C /Users/novanta/Desktop/APP/App_prova worktree list)",
+      "Bash(awk -F: '$1 < 2891 || $1 > 3365')"
     ]
   },
   "hooks": {

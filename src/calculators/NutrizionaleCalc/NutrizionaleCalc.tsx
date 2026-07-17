@@ -1825,7 +1825,7 @@ export function NutrizionaleCalc() {
                 <div ref={isMobileInline ? undefined : tableRef} className={`table-scroll-area${isFlashing ? ' value-flash' : ''}`} style={{ overflowX: 'auto' }}>
                     {activeTab === 'UE' && (
                         <>
-                            <div style={{ border: '1px solid var(--color-border)', borderRadius: 'var(--radius-md)', overflow: 'hidden', marginTop: 8 }}>
+                            <div className="table-wrap-center" style={{ border: '1px solid var(--color-border)', borderRadius: 'var(--radius-md)', overflow: 'hidden', marginTop: 8 }}>
                                 <TabUE
                                     p={per100display}
                                     ue={ue}
@@ -1907,23 +1907,23 @@ export function NutrizionaleCalc() {
                         </>
                     )}
                     {activeTab === 'USA' && (
-                        <div style={{ border: '1px solid var(--color-border)', borderRadius: 'var(--radius-md)', overflow: 'hidden', marginTop: 8 }}>
+                        <div className="table-wrap-center" style={{ border: '1px solid var(--color-border)', borderRadius: 'var(--radius-md)', overflow: 'hidden', marginTop: 8 }}>
                             <TabUSA p={per100display} usa={usa} specificGravity={parseFloat(specificGravity) || 0}
                                 servingRef="serving" measure="g" subTab="verticale" />
                         </div>
                     )}
                     {activeTab === 'Canada' && (
-                        <div style={{ border: '1px solid var(--color-border)', borderRadius: 'var(--radius-md)', overflow: 'hidden', marginTop: 8 }}>
+                        <div className="table-wrap-center" style={{ border: '1px solid var(--color-border)', borderRadius: 'var(--radius-md)', overflow: 'hidden', marginTop: 8 }}>
                             <TabCanada p={per100display} ca={ca} servingRef="serving" measure="g" subTab="verticale" />
                         </div>
                     )}
                     {activeTab === 'Australia' && (
-                        <div style={{ border: '1px solid var(--color-border)', borderRadius: 'var(--radius-md)', overflow: 'hidden', marginTop: 8 }}>
+                        <div className="table-wrap-center" style={{ border: '1px solid var(--color-border)', borderRadius: 'var(--radius-md)', overflow: 'hidden', marginTop: 8 }}>
                             <TabAustralia p={per100display} au={au} />
                         </div>
                     )}
                     {activeTab === 'Arabi' && (
-                        <div style={{ border: '1px solid var(--color-border)', borderRadius: 'var(--radius-md)', overflow: 'hidden', marginTop: 8 }}>
+                        <div className="table-wrap-center" style={{ border: '1px solid var(--color-border)', borderRadius: 'var(--radius-md)', overflow: 'hidden', marginTop: 8 }}>
                             <TabArabi p={per100display} arabi={arabi} servingRef="serving" measure="g" specificGravity={parseFloat(specificGravity) || 0} />
                         </div>
                     )}
@@ -1931,42 +1931,40 @@ export function NutrizionaleCalc() {
 
                 {/* Colonna porzioni — struttura speculare al DownloadTableModal */}
                 <aside className="portions-col" aria-label={`Porzioni ${activeTab}`}>
-                    <div className="portions-col-title">{activeTab}</div>
-
                     {/* ── UE: sezione Colonne (specchia "Colonne" del modal) ── */}
                     {activeTab === 'UE' && (
-                        <>
-                            <div className="portions-col-section">Colonne</div>
+                        <div role="group" aria-label="Colonne" style={{ display: 'contents' }}>
                             {(['porzione', 'confezione', 'pezzo'] as const).map((k, i) => {
-                                const labels = ['Porzione (g/ml)', 'U.V. / Conf. (g/ml)', 'Pezzo (g/ml)'];
+                                const shortLabels = ['Porzione', 'U.V./Conf.', 'Pezzo'];
+                                const fullLabels = ['Porzione (g/ml)', 'U.V. / Conf. (g/ml)', 'Pezzo (g/ml)'];
                                 return (
                                     <div key={k} className="field">
-                                        <label className="field-label" htmlFor={`portion-ue-${k}`}>{labels[i]}</label>
+                                        <label className="field-label" htmlFor={`portion-ue-${k}`} title={fullLabels[i]}>{shortLabels[i]}</label>
                                         <input id={`portion-ue-${k}`} type="number" min={0} placeholder="—" value={ue[k] || ''}
                                             onChange={e => setUE(prev => ({ ...prev, [k]: parseFloat(e.target.value) || undefined }))}
                                             className="field-input" />
                                     </div>
                                 );
                             })}
-                        </>
+                        </div>
                     )}
 
                     {/* ── Australia: solo riferimenti serving ── */}
                     {activeTab === 'Australia' && (
-                        <>
-                            <div className="portions-col-section">Riferimento</div>
+                        <div role="group" aria-label="Riferimento" style={{ display: 'contents' }}>
                             {(['serving', 'confezione', 'pezzo'] as const).map((k, i) => {
-                                const labels = ['Serving size (g/ml)', 'Confezione (g/ml)', 'Pezzo (g/ml)'];
+                                const shortLabels = ['Serving', 'Confez.', 'Pezzo'];
+                                const fullLabels = ['Serving size (g/ml)', 'Confezione (g/ml)', 'Pezzo (g/ml)'];
                                 return (
                                     <div key={k} className="field">
-                                        <label className="field-label" htmlFor={`portion-au-${k}`}>{labels[i]}</label>
+                                        <label className="field-label" htmlFor={`portion-au-${k}`} title={fullLabels[i]}>{shortLabels[i]}</label>
                                         <input id={`portion-au-${k}`} type="number" min={0} placeholder="—" value={au[k] || ''}
                                             onChange={e => setAU(prev => ({ ...prev, [k]: parseFloat(e.target.value) || undefined }))}
                                             className="field-input" />
                                     </div>
                                 );
                             })}
-                        </>
+                        </div>
                     )}
 
                     {/* ── USA / Canada / Arabi: Riferimento + Unità ── */}
@@ -1976,41 +1974,43 @@ export function NutrizionaleCalc() {
                         const vals = activeTab === 'USA' ? usa : activeTab === 'Canada' ? ca : arabi;
                         return (
                             <>
-                                <div className="portions-col-section">Riferimento</div>
-                                <div className="field">
-                                    <label className="field-label" htmlFor="portion-serving">Serving size (g/ml)</label>
-                                    <input id="portion-serving" type="number" min={0} placeholder="—" value={vals.serving || ''}
-                                        onChange={e => setFn(prev => ({ ...prev, serving: parseFloat(e.target.value) || undefined }))}
-                                        className="field-input" />
-                                </div>
-                                <div className="field">
-                                    <label className="field-label" htmlFor="portion-confezione">Confezione (g/ml)</label>
-                                    <input id="portion-confezione" type="number" min={0} placeholder="—" value={vals.confezione || ''}
-                                        onChange={e => setFn(prev => ({ ...prev, confezione: parseFloat(e.target.value) || undefined }))}
-                                        className="field-input" />
+                                <div role="group" aria-label="Riferimento" style={{ display: 'contents' }}>
+                                    <div className="field">
+                                        <label className="field-label" htmlFor="portion-serving" title="Serving size (g/ml)">Serving</label>
+                                        <input id="portion-serving" type="number" min={0} placeholder="—" value={vals.serving || ''}
+                                            onChange={e => setFn(prev => ({ ...prev, serving: parseFloat(e.target.value) || undefined }))}
+                                            className="field-input" />
+                                    </div>
+                                    <div className="field">
+                                        <label className="field-label" htmlFor="portion-confezione" title="Confezione (g/ml)">Confez.</label>
+                                        <input id="portion-confezione" type="number" min={0} placeholder="—" value={vals.confezione || ''}
+                                            onChange={e => setFn(prev => ({ ...prev, confezione: parseFloat(e.target.value) || undefined }))}
+                                            className="field-input" />
+                                    </div>
                                 </div>
 
-                                <div className="portions-col-section">Unità</div>
-                                <div className="field">
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                                        <label className="field-label" htmlFor="portion-cup">1 Cup = {cupMl}ml → (g)</label>
+                                <span className="portions-col-divider" aria-hidden="true" />
+
+                                <div role="group" aria-label="Unità" style={{ display: 'contents' }}>
+                                    <div className="field">
+                                        <label className="field-label" htmlFor="portion-cup" title={`1 Cup = ${cupMl}ml → (g)`}>Cup</label>
                                         <InfoTooltip text={`Una cup è un contenitore fisico standard da ${cupMl}ml. Inserisci il peso in grammi di una cup piena del tuo prodotto. Es: 1 cup di farina = 120g, 1 cup di riso = 185g, 1 cup di liquido = ~${cupMl}g.`} />
+                                        <input id="portion-cup" type="number" min={0} placeholder="—" value={vals.cup || ''}
+                                            onChange={e => setFn(prev => ({ ...prev, cup: parseFloat(e.target.value) || undefined }))}
+                                            className="field-input" />
                                     </div>
-                                    <input id="portion-cup" type="number" min={0} placeholder="—" value={vals.cup || ''}
-                                        onChange={e => setFn(prev => ({ ...prev, cup: parseFloat(e.target.value) || undefined }))}
-                                        className="field-input" />
-                                </div>
-                                <div className="field">
-                                    <label className="field-label" htmlFor="portion-cucchiaio">1 Cucchiaio = 15ml → (g)</label>
-                                    <input id="portion-cucchiaio" type="number" min={0} placeholder="—" value={vals.cucchiaio || ''}
-                                        onChange={e => setFn(prev => ({ ...prev, cucchiaio: parseFloat(e.target.value) || undefined }))}
-                                        className="field-input" />
-                                </div>
-                                <div className="field">
-                                    <label className="field-label" htmlFor="portion-pezzo">Pezzo (g)</label>
-                                    <input id="portion-pezzo" type="number" min={0} placeholder="—" value={vals.pezzo || ''}
-                                        onChange={e => setFn(prev => ({ ...prev, pezzo: parseFloat(e.target.value) || undefined }))}
-                                        className="field-input" />
+                                    <div className="field">
+                                        <label className="field-label" htmlFor="portion-cucchiaio" title="1 Cucchiaio = 15ml → (g)">Cucch.</label>
+                                        <input id="portion-cucchiaio" type="number" min={0} placeholder="—" value={vals.cucchiaio || ''}
+                                            onChange={e => setFn(prev => ({ ...prev, cucchiaio: parseFloat(e.target.value) || undefined }))}
+                                            className="field-input" />
+                                    </div>
+                                    <div className="field">
+                                        <label className="field-label" htmlFor="portion-pezzo" title="Pezzo (g)">Pezzo</label>
+                                        <input id="portion-pezzo" type="number" min={0} placeholder="—" value={vals.pezzo || ''}
+                                            onChange={e => setFn(prev => ({ ...prev, pezzo: parseFloat(e.target.value) || undefined }))}
+                                            className="field-input" />
+                                    </div>
                                 </div>
                             </>
                         );

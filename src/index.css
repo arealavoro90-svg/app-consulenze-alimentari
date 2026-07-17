@@ -525,8 +525,8 @@ body:has(.calc-outer-shell) {
   background: var(--color-orange);
 }
 .split-panel-right {
-  flex: 0 0 700px;
-  width: 700px;
+  flex: 0 0 610px;
+  width: 610px;
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -1980,9 +1980,9 @@ a:focus-visible,
   display: flex;
   background: var(--color-surface);
   border-radius: 7px;
-  padding: 3px;
+  padding: 2px;
   gap: 2px;
-  margin-bottom: 8px;
+  margin-bottom: 4px;
 }
 .right-seg-btn {
   flex: 1;
@@ -2017,7 +2017,7 @@ a:focus-visible,
 }
 .table-panel-header {
   flex-shrink: 0;
-  padding: 10px 16px 0;
+  padding: 6px 16px 0;
   border-bottom: 1px solid var(--color-border);
   background: var(--color-bg-card);
 }
@@ -2027,13 +2027,17 @@ a:focus-visible,
   text-transform: uppercase;
   letter-spacing: 0.07em;
   color: var(--color-text-muted);
-  margin-bottom: 8px;
+  margin-bottom: 4px;
 }
 .table-scroll-area {
   flex: 1;
   overflow-y: auto;
   overflow-x: auto;
-  padding: 14px;
+  padding: 10px;
+}
+.table-scroll-area .table-wrap-center {
+  display: flex;
+  justify-content: center;
 }
 
 /* Colonna porzioni — sempre sotto la tabella (mai laterale: la tabella deve
@@ -2044,19 +2048,17 @@ a:focus-visible,
   width: 100%; flex-shrink: 0;
   background: var(--color-surface); border: 1px solid var(--color-border);
   border-radius: var(--radius-sm); padding: 10px;
-  display: flex; flex-direction: row; flex-wrap: wrap; align-items: flex-end; gap: 8px;
+  display: flex; flex-direction: row; flex-wrap: wrap; align-items: center; gap: 8px;
   max-height: none; overflow-y: visible;
 }
-.portions-col .field { flex: 1 1 130px; }
-.portions-col-title { width: 100%; font-size: 11px; font-weight: 700; color: var(--color-text); text-transform: uppercase; letter-spacing: 0.04em; }
-.portions-col-section {
-  width: 100%;
-  font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em;
-  color: var(--color-text-muted); margin-top: 8px; padding-bottom: 3px;
-  border-bottom: 1px solid var(--color-border);
+.portions-col .field { flex: 1 1 auto; flex-direction: row; align-items: center; gap: 3px; }
+.portions-col-divider { width: 1px; align-self: stretch; background: var(--color-border); margin: 0 2px; }
+.portions-col .field-label {
+  font-size: 10px; text-transform: none; letter-spacing: 0;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  max-width: 44px; cursor: help;
 }
-.portions-col .field-label { font-size: 10px; text-transform: none; letter-spacing: 0; }
-.portions-col .field-input { padding: 4px 6px !important; font-size: 11px !important; }
+.portions-col .field-input { width: 48px; padding: 4px 5px !important; font-size: 11px !important; text-align: center; }
 
 .table-panel-footer {
   flex-shrink: 0;
