@@ -10,9 +10,10 @@ export function LoginPage() {
     const { login } = useAuth();
     const navigate = useNavigate();
 
-    // Load demo credentials from environment
-    const demoEmail = import.meta.env.VITE_DEMO_EMAIL || 'demo@aeaconsulenze.it';
-    const demoPassword = import.meta.env.VITE_DEMO_PASSWORD || 'Demo2024!';
+    // Account demo pubblico (mock, esposto volutamente nella UI).
+    // Nessuna credenziale via VITE_*: finirebbe inlinata nel bundle client.
+    const demoEmail = 'demo@aeaconsulenze.it';
+    const demoPassword = 'Demo2024!';
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();

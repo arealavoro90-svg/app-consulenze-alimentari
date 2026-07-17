@@ -80,6 +80,8 @@ export async function apiMe(): Promise<User> {
         const data = await apiFetch<BackendUser>('/api/auth/me/');
         return mapUser(data);
     } catch {
+        // TODO go-live: rimuovere questo fallback — aea_user è cache UI manipolabile
+        // dall'utente (localStorage), non sorgente di verità di autorizzazione.
         // Backend non raggiungibile o token mock — leggi dalla cache
         const cached = localStorage.getItem('aea_user');
         if (cached) {
