@@ -60,6 +60,7 @@ export function DownloadTableModal({
     const [euSubTab, setEuSubTab] = useState<EUSubTab>('100g');
     const [servingRef, setServingRef] = useState<USAServingRef>('serving');
     const [measure, setMeasure] = useState<USAMeasure>('g');
+    const [downloading, setDownloading] = useState(false);
 
     // ─── Effective values derivati durante il render (no useEffect) ───────────
     // ponytail: derive instead of setState-in-effect (lint set-state-in-effect)
@@ -95,6 +96,7 @@ export function DownloadTableModal({
             return;
         }
         const target = container.querySelector<HTMLElement>('[data-table-export]') ?? container;
+        setDownloading(true);
         try {
             const canvas = await html2canvas(target, { scale: 2, backgroundColor: '#ffffff', useCORS: true });
             const link = document.createElement('a');
@@ -104,6 +106,8 @@ export function DownloadTableModal({
         } catch (e) {
             console.error('PNG Export error:', e);  // fix 4: prefisso log ripristinato
             toast.error("Errore durante l'esportazione della tabella in PNG.");
+        } finally {
+            setDownloading(false);
         }
     }
 
@@ -250,8 +254,8 @@ export function DownloadTableModal({
 
                 {/* Footer */}
                 <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 16 }}>
-                    <button className="btn btn-accent" onClick={handleDownload} style={{ padding: '8px 20px' }}>
-                        Scarica PNG
+                    <button className="btn btn-accent" onClick={handleDownload} disabled={downloading} style={{ padding: '8px 20px' }}>
+                        {downloading ? 'Generazione…' : 'Scarica PNG'}
                     </button>
                 </div>
             </div>

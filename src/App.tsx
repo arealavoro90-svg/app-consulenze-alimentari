@@ -8,6 +8,7 @@ import { AppShell } from './components/AppShell';
 import { Dashboard } from './components/Dashboard';
 import { useMobile } from './hooks/useMobile';
 import { RisorseLinks } from './components/RisorseLinks';
+import { ErrorBoundary } from './components/ErrorBoundary';
 
 const NutrizionaleCalc = lazy(() =>
     import('./calculators/NutrizionaleCalc/NutrizionaleCalc').then(m => ({ default: m.NutrizionaleCalc }))
@@ -41,6 +42,7 @@ function NutrizionaleCalcEntry() {
 
 export default function App() {
   return (
+    <ErrorBoundary>
     <AuthProvider>
       <BrowserRouter>
         <Suspense fallback={null}>
@@ -119,5 +121,6 @@ export default function App() {
         </Suspense>
       </BrowserRouter>
     </AuthProvider>
+    </ErrorBoundary>
   );
 }
