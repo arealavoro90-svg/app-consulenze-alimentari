@@ -3,17 +3,13 @@
  * Restituisce il tipo User di mockUsers.ts (stessa interfaccia)
  * in modo che AuthContext non richieda modifiche alla firma pubblica.
  *
- * Strategia: se il backend Django non è raggiungibile (sviluppo locale senza
- * backend attivo), usa il fallback MOCK_USERS. In produzione (VITE_API_URL
- * configurato), usa solo il backend reale.
+ * AUTH-2 (2026-07-30): nessun fallback su errore. Se il backend rifiuta le
+ * credenziali o non risponde, l'errore propaga al chiamante (AuthContext),
+ * che nega l'accesso. Un'interruzione del backend non deve mai tradursi in
+ * un login con account finto.
  */
-import { apiFetch, setTokens } from './client';
+import { apiFetch } from './client';
 import type { User, ToolId } from '../data/mockUsers';
-
-// import.meta.env.PROD è una costante compile-time: Vite elimina i rami
-// mock dal bundle di produzione tramite tree-shaking (dead-code elimination).
-// In dev il fallback mock rimane disponibile per sviluppo offline.
-const IS_PROD: boolean = import.meta.env.PROD;
 
 // Struttura restituita da /api/auth/login/ (S5: token solo in cookie, non nel body)
 interface BackendLoginResponse {
@@ -43,24 +39,13 @@ function mapUser(u: BackendUser): User {
     };
 }
 
-/** Chiama /api/auth/login/. Se il backend non è raggiungibile, usa MOCK_USERS come fallback. */
+/** Chiama /api/auth/login/. Se il backend rifiuta le credenziali o non risponde, l'errore propaga: nessun accesso. */
 export async function apiLogin(email: string, password: string): Promise<User> {
-    try {
-        const data = await apiFetch<BackendLoginResponse>('/api/auth/login/', {
-            method: 'POST',
-            body:   JSON.stringify({ email, password }),
-        });
-        return mapUser(data.user); // S5: token via cookie httpOnly, nessun setTokens
-    } catch {
-        // Backend non raggiungibile — fallback mock (rimuovere quando Django è in prod)
-        const { MOCK_USERS } = await import('../data/mockUsers');
-        const found = MOCK_USERS.find(
-            u => u.email === email && u.password === password
-        );
-        if (!found) throw new Error('Credenziali non valide');
-        setTokens('mock-access-token', 'mock-refresh-token');
-        return found;
-    }
+    const data = await apiFetch<BackendLoginResponse>('/api/auth/login/', {
+        method: 'POST',
+        body:   JSON.stringify({ email, password }),
+    });
+    return mapUser(data.user); // S5: token via cookie httpOnly, nessun setTokens
 }
 
 /**
@@ -74,19 +59,8 @@ export async function apiLogout(): Promise<void> {
     }
 }
 
-/** Verifica il token corrente. Se backend non raggiungibile, legge la cache localStorage. */
+/** Verifica il token corrente. Se il backend non risponde o lo rifiuta, l'errore propaga: sessione considerata scaduta. */
 export async function apiMe(): Promise<User> {
-    try {
-        const data = await apiFetch<BackendUser>('/api/auth/me/');
-        return mapUser(data);
-    } catch {
-        // TODO go-live: rimuovere questo fallback — aea_user è cache UI manipolabile
-        // dall'utente (localStorage), non sorgente di verità di autorizzazione.
-        // Backend non raggiungibile o token mock — leggi dalla cache
-        const cached = localStorage.getItem('aea_user');
-        if (cached) {
-            try { return JSON.parse(cached) as User; } catch { /* corrotto */ }
-        }
-        throw new Error('Sessione scaduta');
-    }
+    const data = await apiFetch<BackendUser>('/api/auth/me/');
+    return mapUser(data);
 }

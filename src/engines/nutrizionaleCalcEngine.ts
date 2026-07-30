@@ -244,6 +244,27 @@ export function calcClaims(r: CalcResult, isLiquid = false): string[] {
 }
 
 /**
+ * QUID (Dichiarazione Quantitativa degli Ingredienti) — % di un ingrediente nel
+ * prodotto finito. Se l'ingrediente è "acqua", sottrae l'acqua persa in cottura
+ * (caloAcqua) dal suo peso grezzo prima di calcolare la percentuale; gli altri
+ * ingredienti restano invariati. Usata sia per il valore di ogni riga sia per il
+ * totale in header: stessa funzione in entrambi i punti, per costruzione la somma
+ * dei QUID di riga corrisponde sempre al totale (nessuna doppia formula da tenere
+ * allineata a mano).
+ *
+ * Calcolato a precisione piena fino al risultato finale, arrotondato solo in
+ * visualizzazione — scelta intenzionale, più precisa del foglio Excel storico
+ * sugli ingredienti in piccola quantità (che arrotonda un passaggio intermedio
+ * a 2 decimali prima di applicare il fattore di concentrazione). Non allineare
+ * il calcolo intermedio a un arrotondamento anticipato per "assomigliare" all'Excel.
+ */
+export function calcQuid(grammiXpzuv: number, isAcqua: boolean, caloAcqua: number, pesoFinitoPz: number): number {
+    if (pesoFinitoPz <= 0) return 0;
+    const grammiEffettivi = isAcqua ? Math.max(0, grammiXpzuv - caloAcqua) : grammiXpzuv;
+    return (grammiEffettivi / pesoFinitoPz) * 100;
+}
+
+/**
  * Energia kcal/kJ da macro (EU Reg. 1169/2011, All. XIV) per 100g.
  * `carboidrati` include polioli ed eritritolo (convenzione form ingrediente custom);
  * eritritolo escluso dal computo (0 kcal/kJ per g).

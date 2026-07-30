@@ -10,11 +10,6 @@ export function LoginPage() {
     const { login } = useAuth();
     const navigate = useNavigate();
 
-    // Account demo pubblico (mock, esposto volutamente nella UI).
-    // Nessuna credenziale via VITE_*: finirebbe inlinata nel bundle client.
-    const demoEmail = 'demo@aeaconsulenze.it';
-    const demoPassword = 'Demo2024!';
-
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setError('');
@@ -26,12 +21,6 @@ export function LoginPage() {
         } else {
             setError('Email o password non corretti. Controlla le credenziali.');
         }
-    };
-
-    const fillDemo = (demoEmail: string, demoPass: string) => {
-        setEmail(demoEmail);
-        setPassword(demoPass);
-        setError('');
     };
 
     return (
@@ -69,43 +58,6 @@ export function LoginPage() {
                 <div className="login-card">
                     <h2 className="login-title">Accedi al portale</h2>
                     <p className="login-subtitle">Inserisci le credenziali ricevute da AEA</p>
-
-                    {/* Demo credentials banner */}
-                    <div style={{
-                        background: 'rgba(255, 126, 46, 0.06)',
-                        border: '1px solid rgba(255, 126, 46, 0.22)',
-                        borderRadius: 8,
-                        padding: '12px 16px',
-                        marginBottom: 24,
-                        fontSize: 13,
-                    }}>
-                        <strong style={{ color: 'var(--color-navy)' }}>Accesso Demo</strong>
-                        <span style={{ display: 'block', fontSize: 12, color: 'var(--color-text-muted)', marginTop: 3 }}>
-                            Usa il bottone per accedere con account demo
-                        </span>
-                        <button
-                            type="button"
-                            style={{
-                                marginTop: 10,
-                                display: 'inline-flex',
-                                alignItems: 'center',
-                                gap: 6,
-                                background: 'var(--color-navy)',
-                                border: 'none',
-                                borderRadius: 6,
-                                padding: '6px 14px',
-                                cursor: 'pointer',
-                                fontWeight: 700,
-                                fontSize: 12,
-                                color: '#fff',
-                                letterSpacing: '0.02em',
-                                fontFamily: 'inherit',
-                            }}
-                            onClick={() => fillDemo(demoEmail, demoPassword)}
-                        >
-                            Entra come Demo →
-                        </button>
-                    </div>
 
                     {error && <div className="login-error">{error}</div>}
 

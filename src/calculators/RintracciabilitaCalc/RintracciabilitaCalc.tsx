@@ -4,6 +4,9 @@ import { useAuth } from '../../auth/AuthContext';
 import { useArchive } from '../../hooks/useArchive';
 import { useLocalStorage } from '../../hooks/useLocalStorage';
 import { ArchiveModal } from '../../components/ArchiveModal';
+import { ConfirmDialog } from '../../components/ui/ConfirmDialog';
+import { PromptDialog } from '../../components/ui/PromptDialog';
+import { useToast } from '../../components/ui/Toast';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface Ingredient {
@@ -187,6 +190,13 @@ export function RintracciabilitaCalc() {
     const [isArchiveOpen, setIsArchiveOpen] = useState(false);
     const [currentId, setCurrentId] = useState<string | undefined>(undefined);
     const [currentName, setCurrentName] = useState('');
+    const toast = useToast();
+    const [confirmState, setConfirmState] = useState<{
+        open: boolean; title: string; message: string; variant: 'danger' | 'warning' | 'info'; confirmLabel: string; onConfirm: () => void;
+    }>({ open: false, title: '', message: '', variant: 'warning', confirmLabel: 'Conferma', onConfirm: () => {} });
+    const openConfirm = (opts: Omit<typeof confirmState, 'open'>) => setConfirmState({ ...opts, open: true });
+    const closeConfirm = () => setConfirmState(prev => ({ ...prev, open: false }));
+    const [promptOpen, setPromptOpen] = useState(false);
 
     // Guide — persisted in localStorage with useLocalStorage hook
     const [guideOpen, setGuideOpen] = useLocalStorage<boolean>('costi_guide_open', true);
@@ -222,12 +232,14 @@ export function RintracciabilitaCalc() {
     const result = useMemo(() => calcAll(data), [data]);
 
     // Archive
-    const handleSave = () => {
-        const name = currentName || prompt('Nome per questo calcolo:', data.productName || 'Costi Produzione') || '';
-        if (!name) return;
+    const doSaveWithName = (name: string) => {
         const id = saveItem(name, data, currentId);
         setCurrentId(id); setCurrentName(name);
-        alert('Salvato!');
+        toast.success('Salvato!');
+    };
+    const handleSave = () => {
+        if (currentName) { doSaveWithName(currentName); return; }
+        setPromptOpen(true);
     };
     const handleLoad = (item: any) => {
         setData({ ...DEFAULT, ...(item.data as CostiData) });
@@ -235,13 +247,22 @@ export function RintracciabilitaCalc() {
         setIsArchiveOpen(false);
     };
     const handleNew = () => {
-        if (data.productName && !confirm('Iniziare un nuovo calcolo? I dati non salvati andranno persi.')) return;
+        if (data.productName) {
+            openConfirm({
+                title: 'Nuovo calcolo',
+                message: 'Iniziare un nuovo calcolo? I dati non salvati andranno persi.',
+                variant: 'warning',
+                confirmLabel: 'Continua',
+                onConfirm: () => { closeConfirm(); setData(DEFAULT); setCurrentId(undefined); setCurrentName(''); },
+            });
+            return;
+        }
         setData(DEFAULT); setCurrentId(undefined); setCurrentName('');
     };
 
     // PDF
     const handlePDF = () => {
-        if (!data.productName) { alert('Inserisci almeno il nome del prodotto prima di scaricare il PDF.'); return; }
+        if (!data.productName) { toast.warning('Inserisci almeno il nome del prodotto prima di scaricare il PDF.'); return; }
         const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
         const M = 14; const CW = 210 - M * 2; let y = 0;
 
@@ -335,6 +356,24 @@ export function RintracciabilitaCalc() {
                             <span><strong>Confezioni:</strong> {d.nConf || '—'} × {d.pesoNettoG || '—'} g</span></>
                     )} />
             )}
+
+            <ConfirmDialog
+                open={confirmState.open}
+                title={confirmState.title}
+                message={confirmState.message}
+                variant={confirmState.variant}
+                confirmLabel={confirmState.confirmLabel}
+                onConfirm={confirmState.onConfirm}
+                onCancel={closeConfirm}
+            />
+            <PromptDialog
+                open={promptOpen}
+                title="Nome per questo calcolo"
+                defaultValue={data.productName || 'Costi Produzione'}
+                confirmLabel="Salva"
+                onConfirm={(name) => { setPromptOpen(false); doSaveWithName(name); }}
+                onCancel={() => setPromptOpen(false)}
+            />
 
             {/* Page header */}
             <div className="page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 12 }}>

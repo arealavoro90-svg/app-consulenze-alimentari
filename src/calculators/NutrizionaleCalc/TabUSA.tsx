@@ -341,6 +341,7 @@ function NutrRow({ r, noBorder }: { r: NRow; noBorder?: boolean }) {
 // ════════════════════════════════════════════════════════════════════════════════
 // ORIZZONTALE
 // ════════════════════════════════════════════════════════════════════════════════
+// eslint-disable-next-line @typescript-eslint/no-unused-vars -- measure destrutturato per coerenza con VertLayout/LinearLayout, non usato qui
 function HorizLayout({ d, si, addedSugarsG, addedSugarsPct, rows, vitamins, measure: _measure, servingRef }:
     { d: CalcResult; si: ServingInfo; addedSugarsG: number; addedSugarsPct: number; rows: NRow[]; vitamins: VitRow[]; measure: USAMeasure; servingRef: USAServingRef }) {
     const F = 'Arial, Helvetica, sans-serif';

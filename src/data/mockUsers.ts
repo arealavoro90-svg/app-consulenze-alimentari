@@ -61,50 +61,6 @@ export const TOOLS_CATALOG: Record<ToolId, { label: string; icon: string; descri
   },
 };
 
-export const MOCK_USERS: User[] = [
-  {
-    id: 'admin-1',
-    email: 'admin@aea.it',
-    password: 'admin2024',
-    name: 'Gelsomino Panico',
-    company: 'AEA Consulenze Alimentari',
-    purchasedTools: ['nutrizionale', 'etichette', 'etichette-vini', 'rintracciabilita', 'trattamento-termico', 'schede-complete', 'scheda-processo', 'excel-import'],
-    role: 'admin',
-  },
-  {
-    id: 'demo',
-    email: 'demo@aeaconsulenze.it',
-    password: 'Demo2024!',
-    name: 'Utente Demo',
-    company: 'Demo AEA',
-    purchasedTools: ['nutrizionale', 'etichette', 'etichette-vini', 'rintracciabilita', 'trattamento-termico', 'schede-complete', 'scheda-processo'],
-    role: 'demo',
-  },
-  {
-    id: 'client-1',
-    email: 'mario@test.it',
-    password: 'password123',
-    name: 'Mario Rossi',
-    company: 'Rossi Alimentari Srl',
-    purchasedTools: ['nutrizionale'],
-    role: 'client',
-  },
-  {
-    id: 'client-2',
-    email: 'laura@test.it',
-    password: 'password123',
-    name: 'Laura Bianchi',
-    company: 'Bianchi Food SpA',
-    purchasedTools: ['etichette', 'nutrizionale', 'rintracciabilita'],
-    role: 'client',
-  },
-  {
-    id: 'client-3',
-    email: 'vino@test.it',
-    password: 'password123',
-    name: 'Carlo Verdi',
-    company: 'Cantina Verdi',
-    purchasedTools: ['etichette-vini', 'nutrizionale'],
-    role: 'client',
-  },
-];
+// MOCK_USERS rimosso — AUTH-2 (2026-07-30): nessun account finto deve poter
+// autenticare un utente, nemmeno in caso di errore del backend. Vedi
+// CONSOLIDAMENTO.md, sezione "AUTH-2".

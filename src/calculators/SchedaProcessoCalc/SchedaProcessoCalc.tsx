@@ -4,6 +4,9 @@ import { useAuth } from '../../auth/AuthContext';
 import { useArchive } from '../../hooks/useArchive';
 import { useLocalStorage } from '../../hooks/useLocalStorage';
 import { ArchiveModal } from '../../components/ArchiveModal';
+import { ConfirmDialog } from '../../components/ui/ConfirmDialog';
+import { PromptDialog } from '../../components/ui/PromptDialog';
+import { useToast } from '../../components/ui/Toast';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface ComponenteFabbisogno {
@@ -70,6 +73,13 @@ export function SchedaProcessoCalc() {
     const [isArchiveOpen, setIsArchiveOpen] = useState(false);
     const [currentId, setCurrentId] = useState<string | undefined>(undefined);
     const [currentName, setCurrentName] = useState('');
+    const toast = useToast();
+    const [confirmState, setConfirmState] = useState<{
+        open: boolean; title: string; message: string; variant: 'danger' | 'warning' | 'info'; confirmLabel: string; onConfirm: () => void;
+    }>({ open: false, title: '', message: '', variant: 'warning', confirmLabel: 'Conferma', onConfirm: () => {} });
+    const openConfirm = (opts: Omit<typeof confirmState, 'open'>) => setConfirmState({ ...opts, open: true });
+    const closeConfirm = () => setConfirmState(prev => ({ ...prev, open: false }));
+    const [promptOpen, setPromptOpen] = useState(false);
 
     // Guide — persisted in localStorage with useLocalStorage hook
     const [guideOpen, setGuideOpen] = useLocalStorage<boolean>('processo_guide_open', true);
@@ -139,12 +149,14 @@ export function SchedaProcessoCalc() {
         }));
 
     // Archive
-    const handleSave = () => {
-        const name = currentName || prompt('Nome per questa scheda:', data.nomeProdotto || 'Scheda Processo') || '';
-        if (!name) return;
+    const doSaveWithName = (name: string) => {
         const id = saveItem(name, data, currentId);
         setCurrentId(id); setCurrentName(name);
-        alert('Salvato!');
+        toast.success('Salvato!');
+    };
+    const handleSave = () => {
+        if (currentName) { doSaveWithName(currentName); return; }
+        setPromptOpen(true);
     };
     const handleLoad = (item: any) => {
         setData({ ...DEFAULT, ...(item.data as SchedaData) });
@@ -152,13 +164,22 @@ export function SchedaProcessoCalc() {
         setIsArchiveOpen(false);
     };
     const handleNew = () => {
-        if (data.nomeProdotto && !confirm('Iniziare una nuova scheda? I dati non salvati andranno persi.')) return;
+        if (data.nomeProdotto) {
+            openConfirm({
+                title: 'Nuova scheda',
+                message: 'Iniziare una nuova scheda? I dati non salvati andranno persi.',
+                variant: 'warning',
+                confirmLabel: 'Continua',
+                onConfirm: () => { closeConfirm(); setData(DEFAULT); setCurrentId(undefined); setCurrentName(''); },
+            });
+            return;
+        }
         setData(DEFAULT); setCurrentId(undefined); setCurrentName('');
     };
 
     // PDF
     const handlePDF = () => {
-        if (!data.nomeProdotto) { alert('Inserisci almeno il nome del prodotto prima di scaricare il PDF.'); return; }
+        if (!data.nomeProdotto) { toast.warning('Inserisci almeno il nome del prodotto prima di scaricare il PDF.'); return; }
         const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
         const M = 14; const CW = 210 - M * 2; let y = 0;
 
@@ -264,6 +285,24 @@ export function SchedaProcessoCalc() {
                             <span><strong>Data:</strong> {d.dataProduzione || '—'}</span></>
                     )} />
             )}
+
+            <ConfirmDialog
+                open={confirmState.open}
+                title={confirmState.title}
+                message={confirmState.message}
+                variant={confirmState.variant}
+                confirmLabel={confirmState.confirmLabel}
+                onConfirm={confirmState.onConfirm}
+                onCancel={closeConfirm}
+            />
+            <PromptDialog
+                open={promptOpen}
+                title="Nome per questa scheda"
+                defaultValue={data.nomeProdotto || 'Scheda Processo'}
+                confirmLabel="Salva"
+                onConfirm={(name) => { setPromptOpen(false); doSaveWithName(name); }}
+                onCancel={() => setPromptOpen(false)}
+            />
 
             {/* Page header */}
             <div className="page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 12 }}>

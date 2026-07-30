@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { calcNutrients, scaleResult, energyFromMacros, ZERO_CALC, type DBIngredient, type Component } from './nutrizionaleCalcEngine';
+import { calcNutrients, scaleResult, energyFromMacros, calcQuid, ZERO_CALC, type DBIngredient, type Component } from './nutrizionaleCalcEngine';
 import { parseDecimalIT } from '../utils/validation';
 
 // ─── Fixtures ─────────────────────────────────────────────────────────────────
@@ -170,5 +170,55 @@ describe('energyFromMacros', () => {
     it('campi opzionali omessi trattati come 0', () => {
         const { kcal } = energyFromMacros({ grassi: 0, carboidrati: 10, proteine: 5 });
         expect(kcal).toBe(10*4 + 5*4);
+    });
+});
+
+// ─── calcQuid ───────────────────────────────────────────────────────────────
+
+describe('calcQuid', () => {
+    it('ingrediente non-acqua: % semplice sul peso finito', () => {
+        expect(calcQuid(50, false, 0, 200)).toBe(25);
+    });
+
+    it('pesoFinitoPz = 0 → 0 (evita divisione per zero)', () => {
+        expect(calcQuid(50, false, 10, 0)).toBe(0);
+    });
+
+    it('ingrediente acqua: sottrae il calo acqua dal proprio peso prima della %', () => {
+        // 100g acqua grezza, 20g persi in cottura → 80g effettivi su 200g finiti = 40%
+        expect(calcQuid(100, true, 20, 200)).toBe(40);
+    });
+
+    it('ingrediente acqua: clamp a 0 se il calo supera il peso dell\'acqua (mai negativo)', () => {
+        expect(calcQuid(10, true, 50, 200)).toBe(0);
+    });
+
+    it('regressione: la somma dei QUID di riga combacia col totale (bug header risolto)', () => {
+        // Ricetta "Lasagna"-stile: 500g ingredienti grezzi, 400g peso finito (100g persi in cottura,
+        // tutti dall'acqua). Prima del fix, l'header sommava il totale grezzo (500/400*100=125%)
+        // invece della somma dei QUID di riga (che tengono conto del calo acqua).
+        const pesoFinitoPz = 400;
+        const caloAcqua = 100; // 500 grezzi - 400 finiti
+        const ingredienti = [
+            { grammiXpzuv: 200, isAcqua: false }, // pasta
+            { grammiXpzuv: 150, isAcqua: false }, // ragù
+            { grammiXpzuv: 100, isAcqua: true },  // acqua di cottura, persa
+            { grammiXpzuv: 50,  isAcqua: false }, // besciamella/formaggio
+        ];
+        const quidPerRiga = ingredienti.map(i => calcQuid(i.grammiXpzuv, i.isAcqua, caloAcqua, pesoFinitoPz));
+        const totQuid = quidPerRiga.reduce((s, q) => s + q, 0);
+
+        // 200/400 + 150/400 + 0/400(100-100 calo) + 50/400 = 50+37.5+0+12.5 = 100
+        expect(totQuid).toBeGreaterThanOrEqual(99.9);
+        expect(totQuid).toBeLessThanOrEqual(100.1);
+    });
+
+    it('senza calo cottura (peso finito = totale grezzo), somma resta 100%', () => {
+        const pesoFinitoPz = 300;
+        const caloAcqua = 0;
+        const righe = [80, 120, 100].map(g => calcQuid(g, false, caloAcqua, pesoFinitoPz));
+        const tot = righe.reduce((s, q) => s + q, 0);
+        expect(tot).toBeGreaterThanOrEqual(99.9);
+        expect(tot).toBeLessThanOrEqual(100.1);
     });
 });

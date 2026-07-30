@@ -1,19 +1,17 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { apiFetch } from '../../api/client';
 import { useNavigate } from 'react-router-dom';
 import { Salad, ClipboardList, Globe, Archive } from 'lucide-react';
 import { useAuth } from '../../auth/AuthContext';
 import { useArchive } from '../../hooks/useArchive';
 import { useAutosave } from '../../hooks/useAutosave';
+import { useIngredientsDB } from '../../hooks/useIngredientsDB';
 import { CalcoloTab } from './mobile/CalcoloTab';
 import { TabellaTab } from './mobile/TabellaTab';
 import { RiepilogoTab } from './mobile/RiepilogoTab';
 import { ArchivioTab } from './mobile/ArchivioTab';
 import { readBridge } from './sessionBridge';
-import { isValidDBIngredient } from '../../utils/validation';
 import { SmartImportModal } from './SmartImportModal';
 import type { SmartImportResult } from './SmartImportModal';
-import { useToast } from '../../components/ui/Toast';
 import {
     type DBIngredient,
     type CalcResult,
@@ -122,7 +120,6 @@ export function NutrizionaleCalcMobile() {
     const hasExcelImport = hasTool('excel-import');
     const navigate = useNavigate();
     const archive = useArchive<MobileArchiveEntry>('nut_mobile_v2');
-    const toast = useToast();
 
     const [activeTab, setActiveTab] = useState<MobileTab>('ricetta');
 
@@ -141,99 +138,76 @@ export function NutrizionaleCalcMobile() {
     const { loadDraft } = useAutosave(AUTOSAVE_KEY, { form, components }, true, 2000);
 
     // Database ingredienti
-    const [db, setDb] = useState<DBIngredient[]>([]);
-    const [loadingDB, setLoadingDB] = useState(true);
-    const [dbError, setDbError] = useState<string | null>(null);
+    const { db, loadingDB, dbError } = useIngredientsDB('Impossibile caricare il database. Ricarica la pagina.');
 
+    // Ripristina stato dal bridge desktop→mobile (window resize scenario), o dall'autosave mobile
     useEffect(() => {
-        // S0: carica da endpoint Django autenticato; in dev senza backend → fallback statico
-        const fromAPI = () => apiFetch<DBIngredient[]>('/api/ingredients/');
-        const fromStatic = () => fetch('/data/ingredientsDB.json').then(r => r.json() as Promise<DBIngredient[]>);
-        fromAPI()
-            .catch(() => fromStatic())
-            .then((data: DBIngredient[]) => {
-                let base = data;
-                try {
-                    const raw = JSON.parse(
-                        localStorage.getItem('custom_ingredients') || '[]'
-                    ) as unknown;
-                    const custom = Array.isArray(raw) ? raw.filter(isValidDBIngredient) as DBIngredient[] : [];
-                    if (custom.length) base = [...base, ...custom];
-                } catch {}
-                setDb(base);
-                setLoadingDB(false);
-
-                // Ripristina stato dal bridge desktop→mobile (window resize scenario)
-                const draft = readBridge();
-                if (draft && draft.source === 'desktop') {
-                    const mobileComps: MobileComponent[] = draft.components.map(comp => ({
+        if (loadingDB || db.length === 0) return;
+        const draft = readBridge();
+        if (draft && draft.source === 'desktop') {
+            const mobileComps: MobileComponent[] = draft.components.map(comp => ({
+                id: String(Date.now() + Math.random()),
+                name: comp.name,
+                pzUV: comp.pzUV,
+                rows: comp.rows.flatMap(r => {
+                    const found = db.find(dbi => dbi.nome === r.ingNome);
+                    return found ? [{
                         id: String(Date.now() + Math.random()),
-                        name: comp.name,
-                        pzUV: comp.pzUV,
-                        rows: comp.rows.flatMap(r => {
-                            const found = base.find(dbi => dbi.nome === r.ingNome);
-                            return found ? [{
-                                id: String(Date.now() + Math.random()),
-                                ing: found,
-                                grams: r.grams,
-                                resa: r.resa,
-                                eurKg: r.eurKg,
-                            }] : [];
-                        }),
-                        additiveRows: comp.additiveRows.map(ar => ({
-                            id: String(Date.now() + Math.random()),
-                            categoria: ar.categoria,
-                            nomeSpecifico: ar.nomeSpecifico,
-                            grams: (ar as { grams?: number }).grams ?? 0,
-                            eurKg: (ar as { eurKg?: number }).eurKg ?? 0,
-                            resa: (ar as { resa?: number }).resa ?? 100,
-                        })),
-                    }));
-                    if (mobileComps.some((c: MobileComponent) => c.rows.length > 0)) {
-                        setComponents(mobileComps);
-                        setForm({
-                            denominazione:    draft.denominazione,
-                            porzione_g:       draft.ue_porzione || '100',
-                            pesoFinito_g:     draft.pesoFinito_g,
-                            ue_porzione:      draft.ue_porzione,
-                            ue_confezione:    draft.ue_confezione,
-                            ue_pezzo:         draft.ue_pezzo,
-                            usa_serving:      draft.usa_serving,
-                            usa_confezione:   draft.usa_confezione,
-                            usa_cup:          draft.usa_cup,
-                            usa_cucchiaio:    draft.usa_cucchiaio,
-                            usa_pezzo:        draft.usa_pezzo,
-                            ca_serving:       draft.ca_serving,
-                            ca_confezione:    draft.ca_confezione,
-                            ca_cup:           draft.ca_cup,
-                            ca_cucchiaio:     draft.ca_cucchiaio,
-                            ca_pezzo:         draft.ca_pezzo,
-                            au_serving:       draft.au_serving,
-                            au_confezione:    draft.au_confezione,
-                            au_pezzo:         draft.au_pezzo,
-                            arabi_serving:    draft.arabi_serving,
-                            arabi_confezione: draft.arabi_confezione,
-                            arabi_cup:        draft.arabi_cup,
-                            arabi_cucchiaio:  draft.arabi_cucchiaio,
-                            arabi_pezzo:      draft.arabi_pezzo,
-                            specificGravity:  draft.specificGravity,
-                        });
-                    }
-                } else {
-                    // Nessun bridge desktop → ripristina autosave mobile (se presente)
-                    const saved = loadDraft();
-                    if (saved?.components?.some((c: MobileComponent) => c.rows.length > 0)) {
-                        setForm(saved.form);
-                        setComponents(saved.components);
-                    }
-                }
-            })
-            .catch(err => {
-                console.error('Error loading DB:', err);
-                setLoadingDB(false);
-                setDbError('Impossibile caricare il database. Ricarica la pagina.');
-            });
-    }, []);
+                        ing: found,
+                        grams: r.grams,
+                        resa: r.resa,
+                        eurKg: r.eurKg,
+                    }] : [];
+                }),
+                additiveRows: comp.additiveRows.map(ar => ({
+                    id: String(Date.now() + Math.random()),
+                    categoria: ar.categoria,
+                    nomeSpecifico: ar.nomeSpecifico,
+                    grams: (ar as { grams?: number }).grams ?? 0,
+                    eurKg: (ar as { eurKg?: number }).eurKg ?? 0,
+                    resa: (ar as { resa?: number }).resa ?? 100,
+                })),
+            }));
+            if (mobileComps.some((c: MobileComponent) => c.rows.length > 0)) {
+                setComponents(mobileComps);
+                setForm({
+                    denominazione:    draft.denominazione,
+                    porzione_g:       draft.ue_porzione || '100',
+                    pesoFinito_g:     draft.pesoFinito_g,
+                    ue_porzione:      draft.ue_porzione,
+                    ue_confezione:    draft.ue_confezione,
+                    ue_pezzo:         draft.ue_pezzo,
+                    usa_serving:      draft.usa_serving,
+                    usa_confezione:   draft.usa_confezione,
+                    usa_cup:          draft.usa_cup,
+                    usa_cucchiaio:    draft.usa_cucchiaio,
+                    usa_pezzo:        draft.usa_pezzo,
+                    ca_serving:       draft.ca_serving,
+                    ca_confezione:    draft.ca_confezione,
+                    ca_cup:           draft.ca_cup,
+                    ca_cucchiaio:     draft.ca_cucchiaio,
+                    ca_pezzo:         draft.ca_pezzo,
+                    au_serving:       draft.au_serving,
+                    au_confezione:    draft.au_confezione,
+                    au_pezzo:         draft.au_pezzo,
+                    arabi_serving:    draft.arabi_serving,
+                    arabi_confezione: draft.arabi_confezione,
+                    arabi_cup:        draft.arabi_cup,
+                    arabi_cucchiaio:  draft.arabi_cucchiaio,
+                    arabi_pezzo:      draft.arabi_pezzo,
+                    specificGravity:  draft.specificGravity,
+                });
+            }
+        } else {
+            // Nessun bridge desktop → ripristina autosave mobile (se presente)
+            const saved = loadDraft();
+            if (saved?.components?.some((c: MobileComponent) => c.rows.length > 0)) {
+                setForm(saved.form);
+                setComponents(saved.components);
+            }
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [loadingDB]);
 
     const updateForm = (patch: Partial<MobileNutForm>) =>
         setForm(prev => ({ ...prev, ...patch }));
@@ -343,6 +317,7 @@ export function NutrizionaleCalcMobile() {
         { id: 'archivio',  label: 'Archivio',  icon: <Archive size={21} /> },
     ];
 
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars -- firma callback onExportPDF, regione non necessaria qui
     const handleExportPDF = (_region: string) => {
         window.print();
     };
