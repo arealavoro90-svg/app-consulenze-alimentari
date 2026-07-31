@@ -13,6 +13,8 @@ import { readBridge } from './sessionBridge';
 import { SmartImportModal } from './SmartImportModal';
 import type { SmartImportResult } from './SmartImportModal';
 import { ConfirmDialog } from '../../components/ui/ConfirmDialog';
+import { CustomIngredientModal } from './CustomIngredientModal';
+import { BrowseIngredientsModal } from './BrowseIngredientsModal';
 import { migrateMobileArchive, mobileEntryToArchiveData } from './archiveCompat';
 import type { ArchiveData } from './NutrizionaleCalc';
 import {
@@ -145,7 +147,13 @@ export function NutrizionaleCalcMobile() {
     const { loadDraft } = useAutosave(AUTOSAVE_KEY, { form, components }, true, 2000);
 
     // Database ingredienti
-    const { db, loadingDB, dbError } = useIngredientsDB('Impossibile caricare il database. Ricarica la pagina.');
+    const { db, setDb, loadingDB, dbError, loadDB } = useIngredientsDB('Impossibile caricare il database. Ricarica la pagina.');
+
+    // ── Database ingredienti: nuovo/sfoglia (stessi modal del desktop) ────────
+    const [showCustomModal, setShowCustomModal] = useState(false);
+    const [showBrowseModal, setShowBrowseModal] = useState(false);
+    const [editIngredient, setEditIngredient] = useState<{ ing: DBIngredient; isCustom: boolean } | null>(null);
+    const addCustomIngredient = (ing: DBIngredient) => setDb(prev => [...prev, ing]);
 
     // Ripristina stato dal bridge desktop→mobile (window resize scenario), o dall'autosave mobile
     useEffect(() => {
@@ -402,6 +410,7 @@ export function NutrizionaleCalcMobile() {
                             db={db}
                             loadingDB={loadingDB}
                             dbError={dbError}
+                            onRetryDB={loadDB}
                             components={components}
                             onAddComponent={addComponent}
                             onRemoveComponent={removeComponent}
@@ -416,6 +425,8 @@ export function NutrizionaleCalcMobile() {
                             onOpenSmartImport={() => setShowSmartImport(true)}
                             onOpenArchive={() => goToSection('archivio')}
                             onNewRecipe={handleNewRecipe}
+                            onOpenCustomIngredient={() => setShowCustomModal(true)}
+                            onOpenBrowseDB={() => setShowBrowseModal(true)}
                             hasExcelImport={hasExcelImport}
                             calcResult={calcResult}
                         />
@@ -493,6 +504,39 @@ export function NutrizionaleCalcMobile() {
                     db={db}
                     onClose={() => setShowSmartImport(false)}
                     onImport={handleSmartImportMobile}
+                />
+            )}
+
+            {/* ── Database ingredienti: stessi modal e stesso wiring del desktop ── */}
+            {showCustomModal && (
+                <CustomIngredientModal
+                    onClose={() => setShowCustomModal(false)}
+                    onSave={(ing) => { addCustomIngredient(ing); }}
+                />
+            )}
+            {editIngredient && (
+                <CustomIngredientModal
+                    initialIngredient={editIngredient.ing}
+                    originalNome={editIngredient.isCustom ? editIngredient.ing.nome : undefined}
+                    onClose={() => setEditIngredient(null)}
+                    onSave={(ing) => {
+                        if (editIngredient.isCustom) {
+                            setDb(prev => [...prev.filter(i => i.nome !== editIngredient.ing.nome), ing]);
+                        } else {
+                            addCustomIngredient(ing);
+                        }
+                        setEditIngredient(null);
+                    }}
+                />
+            )}
+            {showBrowseModal && (
+                <BrowseIngredientsModal
+                    db={db}
+                    onClose={() => setShowBrowseModal(false)}
+                    onEditIngredient={(ing, isCustom) => {
+                        setShowBrowseModal(false);
+                        setEditIngredient({ ing, isCustom });
+                    }}
                 />
             )}
 

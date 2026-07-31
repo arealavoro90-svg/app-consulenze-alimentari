@@ -1118,7 +1118,9 @@ a:focus-visible,
 }
 
 .btn-accent {
-  background: var(--color-orange-a11y);
+  /* Stesso arancione brand di .topbar-btn-primary ("Nuova ricetta") — scelta esplicita
+     dell'utente 2026-07-31: priorità coerenza brand sul contrasto AA (era --color-orange-a11y). */
+  background: var(--color-orange);
   color: #fff;
   box-shadow: 0 2px 10px rgba(255, 126, 46, 0.30);
 }

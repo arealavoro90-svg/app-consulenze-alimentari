@@ -33,8 +33,9 @@ const VARIANT_CONFIG = {
         icon: Info,
         iconColor: 'var(--color-accent)',
         iconBg: 'var(--color-accent-bg)',
-        confirmBg: 'var(--color-orange-a11y)', // 4.87:1
-        confirmHover: '#974b1b',                // 6.29:1
+        // arancione brand pieno (scelta utente 2026-07-31: coerenza sul contrasto AA)
+        confirmBg: 'var(--color-orange)',
+        confirmHover: 'var(--color-orange-hover)',
     },
 };
 

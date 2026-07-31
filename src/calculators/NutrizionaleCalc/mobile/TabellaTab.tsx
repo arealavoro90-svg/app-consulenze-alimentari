@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import html2canvas from 'html2canvas';
 import { Settings2, X, Maximize2, Download } from 'lucide-react';
 import { TabUE, DEFAULT_OPTIONALS } from '../TabUE';
@@ -194,10 +195,10 @@ interface ExportFormat {
 }
 const DEFAULT_EXPORT_FORMAT: ExportFormat = { subTab: 'verticale', euSubTab: '100g', servingRef: 'serving', measure: 'g' };
 
-// ─── Modal opzioni esportazione — stessa logica di DownloadTableModal (desktop),
-// adattata a bottom-sheet mobile. Aperta sempre al tap su "Scarica PNG", come nel desktop. ──
+// ─── Modal opzioni esportazione — stessa logica di DownloadTableModal (desktop):
+// opzioni + anteprima live della tabella + cattura PNG interna (html2canvas). ──
 function ExportOptionsModal({
-    region, showLayout, showColonne, showRiferimento, showUnita, ue, nation, onConfirm, onClose,
+    region, showLayout, showColonne, showRiferimento, showUnita, ue, nation, productName, renderPreview, onClose,
 }: {
     region: Region;
     showLayout: boolean;
@@ -206,13 +207,36 @@ function ExportOptionsModal({
     showUnita: boolean;
     ue: { porzione?: number; confezione?: number; pezzo?: number };
     nation: { confezione?: number; cup?: number; cucchiaio?: number; pezzo?: number };
-    onConfirm: (format: ExportFormat) => void;
+    productName: string;
+    renderPreview: (format: ExportFormat) => React.ReactNode;
     onClose: () => void;
 }) {
     const [subTab, setSubTab] = useState<SubTab>('verticale');
     const [euSubTab, setEuSubTab] = useState<EUSubTab>('100g');
     const [servingRef, setServingRef] = useState<USAServingRef>('serving');
     const [measure, setMeasure] = useState<USAMeasure>('g');
+    const [downloading, setDownloading] = useState(false);
+    const [exportError, setExportError] = useState<string | null>(null);
+    const previewRef = useRef<HTMLDivElement>(null);
+
+    const handleDownload = async () => {
+        const target = previewRef.current;
+        if (!target) return;
+        setDownloading(true);
+        setExportError(null);
+        try {
+            const canvas = await html2canvas(target, { scale: 2, backgroundColor: '#ffffff', useCORS: true });
+            const link = document.createElement('a');
+            link.download = `${productName || 'tabella'}_nutrizionale.png`;
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+        } catch (e) {
+            console.error('PNG Export error:', e);
+            setExportError("Errore durante l'esportazione della tabella in PNG.");
+        } finally {
+            setDownloading(false);
+        }
+    };
 
     useEffect(() => {
         const h = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
@@ -220,7 +244,9 @@ function ExportOptionsModal({
         return () => document.removeEventListener('keydown', h);
     }, [onClose]);
 
-    return (
+    // Portal su body: il modal è montato dentro .m-slide-track (transform: translateX),
+    // che rompe position:fixed — senza portal lo sheet finisce clippato/fuori viewport.
+    return createPortal(
         <div
             role="dialog"
             aria-modal="true"
@@ -285,16 +311,34 @@ function ExportOptionsModal({
                     />
                 )}
 
+                {/* Anteprima live della tabella col formato scelto (come desktop) */}
+                <div
+                    ref={previewRef}
+                    style={{
+                        border: '1px solid var(--color-border)', borderRadius: 8,
+                        padding: 12, marginTop: 8, overflowX: 'auto',
+                        display: 'flex', justifyContent: 'center', background: '#fff',
+                    }}
+                >
+                    {renderPreview({ subTab, euSubTab, servingRef, measure })}
+                </div>
+
+                {exportError && (
+                    <p style={{ fontSize: 12, color: 'var(--color-danger)', margin: '8px 0 0' }}>{exportError}</p>
+                )}
+
                 <button
                     type="button"
-                    className="m-btn m-btn--primary"
-                    style={{ width: '100%', marginTop: 8 }}
-                    onClick={() => onConfirm({ subTab, euSubTab, servingRef, measure })}
+                    className="m-btn m-btn--accent"
+                    style={{ width: '100%', marginTop: 10 }}
+                    disabled={downloading}
+                    onClick={handleDownload}
                 >
-                    Scarica PNG
+                    {downloading ? 'Generazione…' : 'Scarica PNG'}
                 </button>
             </div>
-        </div>
+        </div>,
+        document.body
     );
 }
 
@@ -317,7 +361,8 @@ function FullscreenOverlay({
 
     if (!open) return null;
 
-    return (
+    // Portal su body: stesso problema del modal export (ancestor con transform rompe position:fixed).
+    return createPortal(
         <div className={`m-fullscreen-overlay ${exiting ? 'm-fullscreen-exit' : 'm-fullscreen-enter'}`}>
             <div className="m-fullscreen-overlay__header">
                 <span className="m-fullscreen-overlay__title">
@@ -330,7 +375,8 @@ function FullscreenOverlay({
             <div className="m-fullscreen-overlay__body">
                 {children}
             </div>
-        </div>
+        </div>,
+        document.body
     );
 }
 
@@ -344,37 +390,9 @@ export function TabellaTab({ calcResult, form, onChange, onSave, hasIngredients,
     const [selectedOptionals, setSelectedOptionals] = useState<SelectedOptionals>({ ...DEFAULT_OPTIONALS });
     const [nutrientModalOpen, setNutrientModalOpen] = useState(false);
 
-    // Anteprima sempre fissa (verticale/100g/serving/g) come nel desktop — le scelte di
-    // layout/riferimento/unità vivono solo in ExportOptionsModal, mai in anteprima.
+    // Anteprima principale sempre fissa (verticale/100g/serving/g) come nel desktop —
+    // le scelte di formato e la cattura PNG vivono dentro ExportOptionsModal.
     const [exportModalOpen, setExportModalOpen] = useState(false);
-    const [printFormat, setPrintFormat] = useState<ExportFormat | null>(null);
-    const exportRef = useRef<HTMLDivElement>(null);
-
-    // Col formato scelto renderizzato, cattura la tabella in PNG (stesso path del
-    // DownloadTableModal desktop: html2canvas scale 2, sfondo bianco) e torna alla vista fissa.
-    useEffect(() => {
-        if (!printFormat) return;
-        let cancelled = false;
-        const raf = requestAnimationFrame(() => requestAnimationFrame(async () => {
-            const target = exportRef.current;
-            if (!target) { setPrintFormat(null); return; }
-            try {
-                const canvas = await html2canvas(target, { scale: 2, backgroundColor: '#ffffff', useCORS: true });
-                if (cancelled) return;
-                const link = document.createElement('a');
-                link.download = `${form.denominazione || 'tabella'}_nutrizionale.png`;
-                link.href = canvas.toDataURL('image/png');
-                link.click();
-            } catch (e) {
-                console.error('PNG Export error:', e);
-                if (!cancelled) showNotice('error', "Errore durante l'esportazione della tabella in PNG.");
-            } finally {
-                if (!cancelled) setPrintFormat(null);
-            }
-        }));
-        return () => { cancelled = true; cancelAnimationFrame(raf); };
-        // eslint-disable-next-line react-hooks/exhaustive-deps -- form.denominazione/showNotice letti al momento dell'export, non devono ritriggerarlo
-    }, [printFormat]);
 
     // Fullscreen overlay
     const [fullscreenOpen, setFullscreenOpen] = useState(false);
@@ -460,11 +478,35 @@ export function TabellaTab({ calcResult, form, onChange, onSave, hasIngredients,
     // ExportOptionsModal (stato locale, reset ad ogni apertura), le opzioni non
     // disponibili sono semplicemente disabled lì.
 
-    // ─── Formato export effettivo per regione (fisso finché non si esporta) ──
-    const fmt = printFormat ?? DEFAULT_EXPORT_FORMAT;
+    // ─── Formato anteprima principale: sempre fisso (come desktop) ──
+    const fmt = DEFAULT_EXPORT_FORMAT;
 
+    // Anteprima nel modal export — stessa struttura di renderDownloadPreview desktop.
+    const renderExportPreview = (f: ExportFormat): React.ReactNode => {
+        switch (selectedRegion) {
+            case 'UE':
+                return <TabUE p={calcResult as Parameters<typeof TabUE>[0]['p']} ue={ue} specificGravity={sg > 0 ? sg : undefined}
+                    selectedOptionals={selectedOptionals} showOptionals={true} activeSubTab={f.euSubTab} />;
+            case 'USA':
+                return <TabUSA p={calcResult as Parameters<typeof TabUSA>[0]['p']} usa={usa} specificGravity={sg > 0 ? sg : 1}
+                    servingRef={f.servingRef} measure={f.measure} subTab={f.subTab} />;
+            case 'Canada':
+                return <TabCanada p={calcResult} ca={ca} servingRef={f.servingRef} measure={f.measure} subTab={f.subTab} />;
+            case 'Australia':
+                return <TabAustralia p={calcResult} au={au} />;
+            case 'Arabi':
+                return <TabArabi p={calcResult} arabi={arabi} servingRef={f.servingRef} measure={f.measure}
+                    specificGravity={sg > 0 ? sg : undefined} />;
+            default:
+                return null;
+        }
+    };
+
+    // flex '1 0 auto' (shrink 0, NO minHeight:0): il root cresce col contenuto e scrolla
+    // nel panel — con minHeight:0 flexbox schiacciava la barra chip a zero appena la
+    // tabella la superava in altezza (bug "le chip spariscono selezionando un paese").
     return (
-        <div style={{ paddingTop: 8, paddingBottom: 0, flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
+        <div style={{ paddingTop: 8, paddingBottom: 0, flex: '1 0 auto', display: 'flex', flexDirection: 'column' }}>
 
             {/* ── Region chip bar ─────────────────────────────────────────── */}
             <div className="m-region-tabs">
@@ -537,7 +579,7 @@ export function TabellaTab({ calcResult, form, onChange, onSave, hasIngredients,
                             </div>
                             {/* EU table — sempre per 100g in anteprima, altre viste solo in esportazione */}
                             <TablePreviewWrap layout="verticale" onExpand={() => setFullscreenOpen(true)}>
-                                <div key={`tbl-UE-${fmt.euSubTab}`} ref={exportRef} className="m-table-appear">
+                                <div key={`tbl-UE-${fmt.euSubTab}`} className="m-table-appear">
                                     <TabUE
                                         p={calcResult as Parameters<typeof TabUE>[0]['p']}
                                         ue={ue}
@@ -624,7 +666,7 @@ export function TabellaTab({ calcResult, form, onChange, onSave, hasIngredients,
                             />
                             {/* Layout/riferimento/unità: solo in esportazione (ExportOptionsModal), anteprima sempre verticale/g/serving */}
                             <TablePreviewWrap layout="verticale" onExpand={() => setFullscreenOpen(true)}>
-                                <div key={`tbl-USA-${fmt.subTab}-${fmt.servingRef}-${fmt.measure}`} ref={exportRef} className="m-table-appear">
+                                <div key={`tbl-USA-${fmt.subTab}-${fmt.servingRef}-${fmt.measure}`} className="m-table-appear">
                                     <TabUSA
                                         p={calcResult as Parameters<typeof TabUSA>[0]['p']}
                                         usa={usa}
@@ -671,7 +713,7 @@ export function TabellaTab({ calcResult, form, onChange, onSave, hasIngredients,
                             />
                             {/* Layout/riferimento/unità: solo in esportazione (ExportOptionsModal), anteprima sempre verticale/g/serving */}
                             <TablePreviewWrap layout="verticale" onExpand={() => setFullscreenOpen(true)}>
-                                <div key={`tbl-Canada-${fmt.subTab}-${fmt.servingRef}-${fmt.measure}`} ref={exportRef} className="m-table-appear">
+                                <div key={`tbl-Canada-${fmt.subTab}-${fmt.servingRef}-${fmt.measure}`} className="m-table-appear">
                                     <TabCanada
                                         p={calcResult}
                                         ca={ca}
@@ -713,7 +755,7 @@ export function TabellaTab({ calcResult, form, onChange, onSave, hasIngredients,
                                 open={servingOpen} onToggle={() => setServingOpen(o => !o)}
                             />
                             <TablePreviewWrap layout="verticale" onExpand={() => setFullscreenOpen(true)}>
-                                <div key={`tbl-Australia`} ref={exportRef} className="m-table-appear">
+                                <div key={`tbl-Australia`} className="m-table-appear">
                                     <TabAustralia p={calcResult} au={au} />
                                 </div>
                             </TablePreviewWrap>
@@ -746,7 +788,7 @@ export function TabellaTab({ calcResult, form, onChange, onSave, hasIngredients,
                             />
                             {/* Riferimento/unità: solo in esportazione (ExportOptionsModal), anteprima sempre serving/g */}
                             <TablePreviewWrap layout="verticale" onExpand={() => setFullscreenOpen(true)}>
-                                <div key={`tbl-Arabi-${fmt.servingRef}-${fmt.measure}`} ref={exportRef} className="m-table-appear">
+                                <div key={`tbl-Arabi-${fmt.servingRef}-${fmt.measure}`} className="m-table-appear">
                                     <TabArabi
                                         p={calcResult}
                                         arabi={arabi}
@@ -835,11 +877,11 @@ export function TabellaTab({ calcResult, form, onChange, onSave, hasIngredients,
                 </button>
                 <button
                     type="button"
-                    className="m-btn m-btn--green"
+                    className="m-btn m-btn--accent"
                     style={{ flex: 1 }}
                     onClick={handleExport}
                 >
-                    <Download size={14} /> Scarica PNG
+                    <Download size={14} /> Scarica
                 </button>
             </div>
 
@@ -861,8 +903,9 @@ export function TabellaTab({ calcResult, form, onChange, onSave, hasIngredients,
                     showUnita={selectedRegion === 'USA' || selectedRegion === 'Canada' || selectedRegion === 'Arabi'}
                     ue={ue}
                     nation={selectedRegion === 'USA' ? usa : selectedRegion === 'Canada' ? ca : selectedRegion === 'Arabi' ? arabi : {}}
+                    productName={form.denominazione}
+                    renderPreview={renderExportPreview}
                     onClose={() => setExportModalOpen(false)}
-                    onConfirm={format => { setExportModalOpen(false); setPrintFormat(format); }}
                 />
             )}
         </div>

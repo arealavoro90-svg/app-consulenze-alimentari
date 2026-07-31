@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Search, Trash2, ChevronDown, ChevronUp, Plus, X, Sparkles, FolderOpen, FileSpreadsheet, ArrowRight, RotateCcw } from 'lucide-react';
+import { Trash2, ChevronDown, Plus, Sparkles, FolderOpen, FileSpreadsheet, ArrowRight, RotateCcw, BookOpen } from 'lucide-react';
 import { parseDecimalIT } from '../../../utils/validation';
 import { ADDITIVI_CATEGORIE, ADDITIVI_SPECIFICI } from '../shared/constants';
+import { IngSearch } from '../IngSearch';
 import type {
     MobileNutForm, DBIngredient, MobileComponent, RecipeRow, AdditiveRow, CalcResult,
 } from '../NutrizionaleCalcMobile';
@@ -13,6 +14,7 @@ interface Props {
     db: DBIngredient[];
     loadingDB: boolean;
     dbError: string | null;
+    onRetryDB: () => void;
     components: MobileComponent[];
     onAddComponent: () => void;
     onRemoveComponent: (id: string) => void;
@@ -27,203 +29,19 @@ interface Props {
     onOpenSmartImport: () => void;
     onOpenArchive: () => void;
     onNewRecipe: () => void;
+    onOpenCustomIngredient: () => void;
+    onOpenBrowseDB: () => void;
     hasExcelImport: boolean;
     calcResult?: CalcResult;
 }
 
-function searchDB(q: string, db: DBIngredient[]): DBIngredient[] {
-    if (!q || q.trim().length < 2) return [];
-    const query = q.toLowerCase().trim();
-    return db
-        .filter(ing => {
-            const nome = (ing.nome || '').trim().toLowerCase();
-            const etichetta = (ing.etichetta || '').toLowerCase();
-            return nome.includes(query) || etichetta.includes(query);
-        })
-        .sort((a, b) => {
-            const nA = (a.nome || '').trim().toLowerCase();
-            const nB = (b.nome || '').trim().toLowerCase();
-            if (nA === query && nB !== query) return -1;
-            if (nB === query && nA !== query) return 1;
-            if (nA.startsWith(query) && !nB.startsWith(query)) return -1;
-            if (nB.startsWith(query) && !nA.startsWith(query)) return 1;
-            return nA.localeCompare(nB, 'it');
-        })
-        .slice(0, 30);
-}
-
-function nv(v: unknown): number { const x = Number(v); return isNaN(x) ? 0 : x; }
-
-// ─── Modale picker ingredienti ────────────────────────────────────────────────
-const ING_RECENTI_KEY = 'ing_recenti';
-const MAX_RECENTI_M = 8;
-
-function saveRecenteMobile(ing: DBIngredient): void {
-    try {
-        const names: string[] = JSON.parse(localStorage.getItem(ING_RECENTI_KEY) ?? '[]');
-        localStorage.setItem(ING_RECENTI_KEY, JSON.stringify([ing.nome, ...names.filter(n => n !== ing.nome)].slice(0, 10)));
-    } catch { /* ignore */ }
-}
-
-function IngredientPickerModal({ db, compId, onAdd, onClose }: {
-    db: DBIngredient[];
-    compId: string;
-    onAdd: (compId: string, ing: DBIngredient) => void;
-    onClose: () => void;
-}) {
-    const [q, setQ] = useState('');
-    const inputRef = useRef<HTMLInputElement>(null);
-    const recenti: DBIngredient[] = (() => {
-        try {
-            const names: string[] = JSON.parse(localStorage.getItem(ING_RECENTI_KEY) ?? '[]');
-            return names.flatMap(n => { const f = db.find(d => d.nome === n); return f ? [f] : []; }).slice(0, MAX_RECENTI_M);
-        } catch { return []; }
-    })();
-
-    useEffect(() => {
-        // Autofocus con piccolo ritardo per garantire il mount dell'overlay
-        const t = setTimeout(() => inputRef.current?.focus(), 80);
-        return () => clearTimeout(t);
-    }, []);
-
-    // Chiudi con Escape
-    useEffect(() => {
-        const h = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
-        document.addEventListener('keydown', h);
-        return () => document.removeEventListener('keydown', h);
-    }, [onClose]);
-
-    const results: DBIngredient[] = q.trim().length >= 2
-        ? searchDB(q, db)
-        : db.slice(0, 30).sort((a, b) => (a.nome || '').localeCompare(b.nome || '', 'it'));
-
-    return (
-        <div
-            role="dialog"
-            aria-modal="true"
-            aria-label="Aggiungi ingrediente"
-            style={{
-                position: 'fixed', inset: 0, zIndex: 1200,
-                background: 'rgba(12,19,38,0.55)',
-                display: 'flex', flexDirection: 'column',
-            }}
-            onMouseDown={e => { if (e.target === e.currentTarget) onClose(); }}
-        >
-            {/* Panel */}
-            <div style={{
-                position: 'absolute', left: 0, right: 0, bottom: 0,
-                maxHeight: '85dvh',
-                background: 'var(--m-bg)',
-                borderRadius: '16px 16px 0 0',
-                display: 'flex', flexDirection: 'column',
-                overflow: 'hidden',
-            }}>
-                {/* Handle */}
-                <div style={{ display: 'flex', justifyContent: 'center', padding: '10px 0 4px' }}>
-                    <div style={{ width: 36, height: 4, borderRadius: 2, background: 'var(--m-border)' }} />
-                </div>
-
-                {/* Header */}
-                <div style={{
-                    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                    padding: '0 16px 10px',
-                }}>
-                    <span style={{ fontSize: 15, fontWeight: 700, color: 'var(--m-text)' }}>
-                        Aggiungi ingrediente
-                    </span>
-                    <button
-                        type="button"
-                        onClick={onClose}
-                        style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, color: 'var(--m-text-muted)' }}
-                        aria-label="Chiudi"
-                    >
-                        <X size={18} />
-                    </button>
-                </div>
-
-                {/* Barra di ricerca */}
-                <div style={{ padding: '0 16px 10px', position: 'relative' }}>
-                    <Search size={14} style={{
-                        position: 'absolute', left: 28, top: '50%',
-                        transform: 'translateY(-50%)',
-                        color: 'var(--m-text-muted)', pointerEvents: 'none',
-                    }} />
-                    <input
-                        ref={inputRef}
-                        className="m-input"
-                        type="text"
-                        placeholder="Cerca ingrediente…"
-                        aria-label="Cerca ingrediente"
-                        value={q}
-                        onChange={e => setQ(e.target.value)}
-                        style={{ paddingLeft: 34, fontSize: 14 }}
-                        autoComplete="off"
-                        autoCorrect="off"
-                        autoCapitalize="off"
-                    />
-                </div>
-
-                {/* Lista */}
-                <div style={{ overflowY: 'auto', flex: 1, paddingBottom: 'env(safe-area-inset-bottom, 12px)' }}>
-                    {/* Recenti (solo quando non si sta cercando) */}
-                    {q.trim().length < 2 && recenti.length > 0 && (<>
-                        <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.5, color: 'var(--m-text-muted)', padding: '8px 16px 4px' }}>
-                            Recenti
-                        </div>
-                        {recenti.map((ing, i) => (
-                            <button
-                                key={`r-${i}`}
-                                type="button"
-                                onClick={() => { saveRecenteMobile(ing); onAdd(compId, ing); onClose(); }}
-                                style={{ display: 'block', width: '100%', background: 'transparent', border: 'none', borderBottom: '1px solid var(--m-border-light)', padding: '10px 16px', textAlign: 'left', cursor: 'pointer' }}
-                            >
-                                <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--m-text)' }}>{(ing.nome || '').trim()}</div>
-                                <div style={{ fontSize: 11, color: 'var(--m-text-muted)', marginTop: 2 }}>
-                                    {Math.round(nv(ing.kcal))} kcal · {nv(ing.grassi).toFixed(1)}g G · {nv(ing.carboidrati).toFixed(1)}g C
-                                </div>
-                            </button>
-                        ))}
-                        <div style={{ height: 1, background: 'var(--m-border)', margin: '4px 0 8px' }} />
-                    </>)}
-                    {results.length === 0 && q.trim().length >= 2 && (
-                        <p style={{ textAlign: 'center', fontSize: 13, color: 'var(--m-text-muted)', padding: '20px 16px' }}>
-                            Nessun risultato per "{q}"
-                        </p>
-                    )}
-                    {results.map((ing, i) => (
-                        <button
-                            key={i}
-                            type="button"
-                            onClick={() => { saveRecenteMobile(ing); onAdd(compId, ing); onClose(); }}
-                            style={{
-                                display: 'block', width: '100%', background: 'transparent',
-                                border: 'none', borderBottom: '1px solid var(--m-border-light)',
-                                padding: '10px 16px', textAlign: 'left', cursor: 'pointer',
-                            }}
-                        >
-                            <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--m-text)' }}>
-                                {(ing.nome || '').trim()}
-                            </div>
-                            <div style={{ fontSize: 11, color: 'var(--m-text-muted)', marginTop: 2 }}>
-                                {Math.round(nv(ing.kcal))} kcal · {nv(ing.grassi).toFixed(1)}g G · {nv(ing.carboidrati).toFixed(1)}g C
-                            </div>
-                        </button>
-                    ))}
-                    {q.trim().length < 2 && (
-                        <p style={{ textAlign: 'center', fontSize: 11, color: 'var(--m-text-faint)', padding: '8px 16px 16px' }}>
-                            Digita almeno 2 caratteri per cercare nel database completo
-                        </p>
-                    )}
-                </div>
-            </div>
-        </div>
-    );
-}
-
 // ─── Sub-component: single recipe row ────────────────────────────────────────
-function RecipeRowItem({ row, compId, onRemove, onUpdate }: {
+// Stesso markup/classi della riga ingrediente desktop (.ing-row-compact + espandibile
+// €/kg + Resa in .ing-field-group) — replica visiva richiesta esplicitamente.
+function RecipeRowItem({ row, compId, isLast, onRemove, onUpdate }: {
     row: RecipeRow;
     compId: string;
+    isLast: boolean;
     onRemove: (compId: string, rowId: string) => void;
     onUpdate: (compId: string, rowId: string, patch: Partial<RecipeRow>) => void;
 }) {
@@ -231,12 +49,6 @@ function RecipeRowItem({ row, compId, onRemove, onUpdate }: {
     const [resaRaw, setResaRaw] = useState(String(row.resa));
     const [eurRaw, setEurRaw] = useState(String(row.eurKg));
     const [expanded, setExpanded] = useState(false);
-    const [removing, setRemoving] = useState(false);
-
-    const handleRemove = () => {
-        setRemoving(true);
-        setTimeout(() => onRemove(compId, row.id), 200);
-    };
 
     const handleGrams = (v: string) => {
         setGramsRaw(v);
@@ -255,63 +67,74 @@ function RecipeRowItem({ row, compId, onRemove, onUpdate }: {
     };
 
     return (
-        <div className={`m-ing-row${removing ? ' m-ing-row--removing' : ''}`} style={{ marginBottom: 5 }}>
-            {/* Main row */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '7px 10px' }}>
+        <div style={{ borderBottom: isLast && !expanded ? 'none' : '1px solid var(--color-border)' }}>
+            {/* Compact row */}
+            <div className="ing-row-compact">
                 <button
                     type="button"
                     onClick={() => setExpanded(e => !e)}
-                    style={{ background: 'none', border: 'none', padding: 2, cursor: 'pointer', color: 'var(--m-text-muted)', flexShrink: 0 }}
+                    style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 2, color: 'var(--color-text-muted)', flexShrink: 0, display: 'flex', alignItems: 'center' }}
+                    title={expanded ? 'Comprimi' : 'Espandi €/kg e Resa dopo cottura (%)'}
                     aria-label="Espandi dettagli"
                 >
-                    {expanded ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
+                    <ChevronDown size={12} style={{ transform: expanded ? 'rotate(0deg)' : 'rotate(-90deg)', transition: 'transform 0.15s' }} />
                 </button>
-                <div className="m-ing-row__name">
-                    <div className="m-ing-row__title">
-                        {(row.ing.nome || '').trim()}
-                    </div>
-                    <div className="m-ing-row__sub">
-                        {Math.round(nv(row.ing.kcal))} kcal/100g
-                        {row.resa !== 100 && <span style={{ marginLeft: 6, color: 'var(--color-orange)', fontWeight: 600 }}>resa {row.resa}%</span>}
-                        {row.eurKg > 0 && <span style={{ marginLeft: 6, color: 'var(--m-text-faint)' }}>{row.eurKg.toFixed(2)} €/kg</span>}
-                    </div>
+                <div className="ing-row-name">
+                    <div className="ing-row-name-label">{(row.ing.nome || '').trim()}</div>
+                    {row.ing.kcal != null && (
+                        <div className="ing-row-kcal">{row.ing.kcal} kcal/100g</div>
+                    )}
                 </div>
-                <input
-                    className="m-input m-input--num m-ing-row__input"
-                    type="number"
-                    inputMode="decimal"
-                    min="0"
-                    step="1"
-                    value={gramsRaw}
-                    onChange={e => handleGrams(e.target.value)}
-                    style={{ width: 58, textAlign: 'right', flexShrink: 0, fontSize: 13 }}
-                    aria-label={`Grammi di ${(row.ing.nome || '').trim()}`}
-                />
-                <span className="m-ing-row__unit">g</span>
+                <div className="ing-row-grams">
+                    <input
+                        type="number"
+                        inputMode="decimal"
+                        min="0"
+                        step="1"
+                        style={{ width: 58, fontSize: 12, border: '1px solid var(--color-border)', borderRadius: 'var(--radius-sm)', padding: '3px 6px', textAlign: 'right', fontFamily: 'inherit', color: 'var(--color-text)', outline: 'none' }}
+                        value={gramsRaw}
+                        onChange={e => handleGrams(e.target.value)}
+                        aria-label={`Grammi di ${(row.ing.nome || '').trim()}`}
+                    />
+                    <span style={{ fontSize: 12, color: 'var(--color-text-muted)' }}>g</span>
+                </div>
                 <button
                     type="button"
-                    onClick={handleRemove}
-                    className="m-ing-row__remove"
+                    onClick={() => onRemove(compId, row.id)}
+                    className="ing-delete-btn"
+                    title="Rimuovi ingrediente"
                     aria-label={`Rimuovi ${(row.ing.nome || '').trim()}`}
+                    style={{ width: 24, height: 24, flexShrink: 0 }}
                 >
-                    <Trash2 size={13} />
+                    <Trash2 size={12} />
                 </button>
             </div>
 
-            {/* Expanded: resa + eurKg */}
+            {/* Expandable detail: €/kg e Resa % — stesso layout desktop */}
             {expanded && (
-                <div style={{
-                    display: 'flex', gap: 8, padding: '6px 10px 8px 34px',
-                    borderTop: '1px solid var(--m-border)',
-                    background: 'rgba(0,0,0,0.02)',
-                }}>
-                    <div style={{ flex: 1 }}>
-                        <label htmlFor={`resa-${row.id}`} style={{ fontSize: 12, color: 'var(--m-text-muted)', display: 'block', marginBottom: 2 }}>
-                            Resa %
-                        </label>
+                <div style={{ borderTop: '1px solid var(--color-border)', padding: '8px 10px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, background: 'var(--color-surface)' }}>
+                    <div className="ing-field-group">
+                        <div className="ing-field-header">
+                            <label className="ing-field-label" htmlFor={`eur-${row.id}`}>€/kg</label>
+                        </div>
+                        <input
+                            id={`eur-${row.id}`}
+                            type="number"
+                            inputMode="decimal"
+                            min="0"
+                            step="0.01"
+                            placeholder="0"
+                            value={eurRaw}
+                            onChange={e => handleEur(e.target.value)}
+                            className="form-input ing-input"
+                        />
+                    </div>
+                    <div className="ing-field-group">
+                        <div className="ing-field-header">
+                            <label className="ing-field-label" htmlFor={`resa-${row.id}`}>Resa dopo cottura (%)</label>
+                        </div>
                         <input
                             id={`resa-${row.id}`}
-                            className="m-input m-input--num"
                             type="number"
                             inputMode="decimal"
                             min="0"
@@ -319,23 +142,7 @@ function RecipeRowItem({ row, compId, onRemove, onUpdate }: {
                             step="1"
                             value={resaRaw}
                             onChange={e => handleResa(e.target.value)}
-                            style={{ width: '100%', textAlign: 'right', fontSize: 12 }}
-                        />
-                    </div>
-                    <div style={{ flex: 1 }}>
-                        <label htmlFor={`eur-${row.id}`} style={{ fontSize: 12, color: 'var(--m-text-muted)', display: 'block', marginBottom: 2 }}>
-                            €/kg
-                        </label>
-                        <input
-                            id={`eur-${row.id}`}
-                            className="m-input m-input--num"
-                            type="number"
-                            inputMode="decimal"
-                            min="0"
-                            step="0.01"
-                            value={eurRaw}
-                            onChange={e => handleEur(e.target.value)}
-                            style={{ width: '100%', textAlign: 'right', fontSize: 12 }}
+                            className="form-input ing-input"
                         />
                     </div>
                 </div>
@@ -458,61 +265,43 @@ function AdditiveRowItem({ row, compId, onRemove, onUpdate }: {
 }
 
 // ─── Sub-component: additive section ─────────────────────────────────────────
+// Stesso layout della sezione "Additivi tecnologici" desktop: divider con titolo,
+// descrizione, bottone "Aggiungi additivo" sopra le card, sempre visibile.
 function AdditiveSection({ comp, onAdd, onRemove, onUpdate }: {
     comp: MobileComponent;
     onAdd: (compId: string) => void;
     onRemove: (compId: string, rowId: string) => void;
     onUpdate: (compId: string, rowId: string, patch: Partial<AdditiveRow>) => void;
 }) {
-    const [open, setOpen] = useState(false);
-
     return (
-        <div style={{ marginTop: 8, borderTop: '1px dashed var(--m-border)', paddingTop: 6 }}>
-            <button
-                type="button"
-                onClick={() => setOpen(o => !o)}
-                style={{
-                    display: 'flex', alignItems: 'center', gap: 6,
-                    background: 'none', border: 'none', cursor: 'pointer',
-                    fontSize: 12, color: 'var(--m-text-muted)', padding: '2px 0',
-                }}
-            >
-                {open ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
-                Additivi {comp.additiveRows.length > 0 ? `(${comp.additiveRows.length})` : ''}
-            </button>
-
-            {open && (
-                <div style={{ marginTop: 6 }}>
-                    {comp.additiveRows.map(row => (
-                        <AdditiveRowItem
-                            key={row.id}
-                            row={row}
-                            compId={comp.id}
-                            onRemove={onRemove}
-                            onUpdate={onUpdate}
-                        />
-                    ))}
-                    <button
-                        type="button"
-                        onClick={() => onAdd(comp.id)}
-                        style={{
-                            display: 'flex', alignItems: 'center', gap: 4,
-                            background: 'none', border: '1px dashed var(--m-orange, #ff7e2e)',
-                            borderRadius: 6, padding: '4px 10px',
-                            fontSize: 12, color: 'var(--m-orange, #ff7e2e)', cursor: 'pointer',
-                        }}
-                    >
-                        <Plus size={12} /> Aggiungi additivo
-                    </button>
-                </div>
-            )}
+        <div style={{ marginTop: 12 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, margin: '4px 0 6px' }}>
+                <div style={{ flex: 1, height: 1, background: 'var(--color-border)' }} />
+                <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--color-text-muted)' }}>Additivi tecnologici</span>
+                <div style={{ flex: 1, height: 1, background: 'var(--color-border)' }} />
+            </div>
+            <p style={{ fontSize: 11, color: 'var(--color-text-muted)', margin: '0 0 8px' }}>Conservanti, coloranti, addensanti (E-numbers). Non contribuiscono al calcolo nutrizionale ma compaiono in etichetta.</p>
+            <div style={{ marginBottom: 8 }}>
+                <button type="button" className="btn btn-outline" style={{ fontSize: 12, padding: '5px 14px' }} onClick={() => onAdd(comp.id)}>
+                    <Plus size={13} /> Aggiungi additivo
+                </button>
+            </div>
+            {comp.additiveRows.map(row => (
+                <AdditiveRowItem
+                    key={row.id}
+                    row={row}
+                    compId={comp.id}
+                    onRemove={onRemove}
+                    onUpdate={onUpdate}
+                />
+            ))}
         </div>
     );
 }
 
 // ─── Sub-component: single component card ────────────────────────────────────
 function ComponentCard({
-    comp, index, isOnly, db,
+    comp, index, isOnly, db, loadingDB, dbError, onRetryDB,
     onRemoveComponent,
     onUpdateName,
     onUpdatePzUV,
@@ -527,6 +316,9 @@ function ComponentCard({
     index: number;
     isOnly: boolean;
     db: DBIngredient[];
+    loadingDB: boolean;
+    dbError: string | null;
+    onRetryDB: () => void;
     onRemoveComponent: (id: string) => void;
     onUpdateName: (id: string, name: string) => void;
     onUpdatePzUV: (id: string, pzUV: number) => void;
@@ -538,7 +330,6 @@ function ComponentCard({
     onUpdateAdditiveRow: (compId: string, rowId: string, patch: Partial<AdditiveRow>) => void;
 }) {
     const [pzRaw, setPzRaw] = useState(String(comp.pzUV));
-    const [pickerOpen, setPickerOpen] = useState(false);
     const [collapsed, setCollapsed] = useState(false);
     const totalGrams = comp.rows.reduce((s, r) => s + r.grams, 0);
 
@@ -550,15 +341,6 @@ function ComponentCard({
 
     return (
         <>
-            {pickerOpen && (
-                <IngredientPickerModal
-                    db={db}
-                    compId={comp.id}
-                    onAdd={onAddRow}
-                    onClose={() => setPickerOpen(false)}
-                />
-            )}
-
             <div className="m-comp-card">
                 {/* Card header — tappabile per collassare */}
                 <div
@@ -642,22 +424,9 @@ function ComponentCard({
                             </div>
                         )}
                     </div>
-                    {/* Pulsante apri picker */}
-                    <button
-                        type="button"
-                        onClick={() => setPickerOpen(true)}
-                        style={{
-                            display: 'flex', alignItems: 'center', gap: 6,
-                            width: '100%', padding: '8px 12px', marginBottom: 6,
-                            background: 'var(--m-surface)',
-                            border: '1.5px dashed var(--m-orange, #ff7e2e)',
-                            borderRadius: 8, cursor: 'pointer',
-                            fontSize: 13, color: 'var(--m-orange, #ff7e2e)',
-                        }}
-                    >
-                        <Search size={13} />
-                        Cerca e aggiungi ingrediente…
-                    </button>
+                    {/* Ricerca ingredienti — stesso componente IngSearch del desktop */}
+                    <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--color-text-muted)', marginBottom: 4, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Cerca e aggiungi ingrediente dal database</div>
+                    <IngSearch onAdd={(ing) => onAddRow(comp.id, ing)} db={db} loading={loadingDB} error={dbError} onRetry={onRetryDB} />
 
                     {comp.rows.length === 0 ? (
                         <p style={{ fontSize: 12, color: 'var(--m-text-muted)', textAlign: 'center', margin: '8px 0 4px' }}>
@@ -665,15 +434,19 @@ function ComponentCard({
                         </p>
                     ) : (
                         <>
-                            {comp.rows.map(row => (
-                                <RecipeRowItem
-                                    key={row.id}
-                                    row={row}
-                                    compId={comp.id}
-                                    onRemove={onRemoveRow}
-                                    onUpdate={onUpdateRow}
-                                />
-                            ))}
+                            {/* Contenitore bordato unico, come la lista ingredienti desktop */}
+                            <div style={{ border: '1px solid var(--color-border)', borderRadius: 'var(--radius-md)', overflow: 'hidden', marginBottom: 6 }}>
+                                {comp.rows.map((row, rowIdx) => (
+                                    <RecipeRowItem
+                                        key={row.id}
+                                        row={row}
+                                        compId={comp.id}
+                                        isLast={rowIdx === comp.rows.length - 1}
+                                        onRemove={onRemoveRow}
+                                        onUpdate={onUpdateRow}
+                                    />
+                                ))}
+                            </div>
                             <div style={{ fontSize: 12, color: 'var(--m-text-muted)', textAlign: 'right', marginTop: 2, marginBottom: 4 }}>
                                 Totale: {totalGrams.toFixed(1)} g (normalizzato a 100g)
                             </div>
@@ -695,7 +468,7 @@ function ComponentCard({
 // ─── Main CalcoloTab ──────────────────────────────────────────────────────────
 export function CalcoloTab({
     form, onChange, onGoToTabella,
-    db, loadingDB, dbError,
+    db, loadingDB, dbError, onRetryDB,
     components,
     onAddComponent, onRemoveComponent,
     onUpdateComponentName, onUpdateComponentPzUV,
@@ -704,6 +477,8 @@ export function CalcoloTab({
     onOpenSmartImport,
     onOpenArchive,
     onNewRecipe,
+    onOpenCustomIngredient,
+    onOpenBrowseDB,
     hasExcelImport,
     calcResult,
 }: Props) {
@@ -812,6 +587,16 @@ export function CalcoloTab({
                     <div className="m-section__line" />
                     <span className="m-section__title">Ingredienti</span>
                     <div className="m-section__line" />
+                </div>
+
+                {/* Database ingredienti — stesse azioni del menu "Database" desktop */}
+                <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
+                    <button type="button" className="btn btn-outline" style={{ fontSize: 12, padding: '5px 14px', flex: 1, justifyContent: 'center' }} onClick={onOpenCustomIngredient}>
+                        <Plus size={13} /> Nuovo ingrediente
+                    </button>
+                    <button type="button" className="btn btn-outline" style={{ fontSize: 12, padding: '5px 14px', flex: 1, justifyContent: 'center' }} onClick={onOpenBrowseDB}>
+                        <BookOpen size={13} /> Sfoglia database
+                    </button>
                 </div>
 
                 {/* Import strip — sempre visibile sopra gli ingredienti */}
@@ -967,6 +752,9 @@ export function CalcoloTab({
                                     index={idx}
                                     isOnly={components.length === 1}
                                     db={db}
+                                    loadingDB={loadingDB}
+                                    dbError={dbError}
+                                    onRetryDB={onRetryDB}
                                     onRemoveComponent={onRemoveComponent}
                                     onUpdateName={onUpdateComponentName}
                                     onUpdatePzUV={onUpdateComponentPzUV}

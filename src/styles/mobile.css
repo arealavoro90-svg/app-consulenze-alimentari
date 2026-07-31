@@ -202,7 +202,8 @@
 }
 .m-btn:active { transform: scale(0.98); opacity: 0.9; }
 .m-btn--primary   { background: var(--m-navy); color: var(--m-orange); }
-.m-btn--accent    { background: var(--m-orange-a11y); color: #fff; }
+/* arancione brand pieno (scelta utente 2026-07-31: coerenza con desktop .btn-accent) */
+.m-btn--accent    { background: var(--m-orange); color: #fff; }
 .m-btn--green     { background: var(--m-green); color: #fff; }
 .m-btn--ghost     { background: var(--m-border); color: var(--m-text); }
 .m-btn--full      { width: 100%; }
@@ -384,6 +385,8 @@
   position: sticky;
   top: 0;
   z-index: 10;
+  /* mai comprimere la barra nel flex column del root (bug chip invisibili) */
+  flex-shrink: 0;
 }
 
 .m-region-tab {
