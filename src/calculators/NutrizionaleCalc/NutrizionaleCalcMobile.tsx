@@ -12,6 +12,9 @@ import { ArchivioTab } from './mobile/ArchivioTab';
 import { readBridge } from './sessionBridge';
 import { SmartImportModal } from './SmartImportModal';
 import type { SmartImportResult } from './SmartImportModal';
+import { ConfirmDialog } from '../../components/ui/ConfirmDialog';
+import { migrateMobileArchive, mobileEntryToArchiveData } from './archiveCompat';
+import type { ArchiveData } from './NutrizionaleCalc';
 import {
     type DBIngredient,
     type CalcResult,
@@ -119,7 +122,11 @@ export function NutrizionaleCalcMobile() {
     const { user, hasTool } = useAuth();
     const hasExcelImport = hasTool('excel-import');
     const navigate = useNavigate();
-    const archive = useArchive<MobileArchiveEntry>('nut_mobile_v2');
+    // Migrazione one-time del vecchio archivio mobile nello schema unificato.
+    // useState initializer: gira durante il primo render, PRIMA dell'effect di
+    // useArchive che legge la chiave (idempotente, sicura in StrictMode).
+    useState(() => { migrateMobileArchive(); return null; });
+    const archive = useArchive<ArchiveData>('nutrizionale-v3');
 
     const [activeTab, setActiveTab] = useState<MobileTab>('ricetta');
 
@@ -284,11 +291,66 @@ export function NutrizionaleCalcMobile() {
             ...c, additiveRows: c.additiveRows.map(r => r.id !== rowId ? r : { ...r, ...patch }),
         }));
 
-    const loadFromArchive = (entry: MobileArchiveEntry) => {
-        setForm(entry.form ?? EMPTY_FORM);
-        setComponents(entry.components?.length ? entry.components : [makeComponent()]);
-        setCurrentRegion(entry.region);
+    // Carica dallo schema unificato ArchiveData: gli ingredienti sono salvati per
+    // nome e risolti contro il DB (stesso pattern di handleLoad desktop).
+    const loadFromArchive = (d: ArchiveData) => {
+        const rnd = () => String(Date.now() + Math.random());
+        const skipped: string[] = [];
+        const comps: MobileComponent[] = (d.componenti ?? []).map(sc => ({
+            id: rnd(),
+            name: sc.nome || '',
+            pzUV: sc.pz_uv || 1,
+            rows: (sc.ingredienti ?? []).flatMap(sr => {
+                const found = db.find(i => i.nome === sr.nome);
+                if (!found) { skipped.push(sr.nome); return []; }
+                return [{
+                    id: rnd(),
+                    ing: found,
+                    grams: sr.grammi || 0,
+                    resa: typeof sr.resa === 'number' ? sr.resa : 100,
+                    eurKg: typeof sr.eurKg === 'number' ? sr.eurKg : 0,
+                }];
+            }),
+            additiveRows: (sc.additiveRows ?? []).map(ar => ({
+                id: rnd(),
+                categoria: ar.categoria || '',
+                nomeSpecifico: ar.nomeSpecifico || '',
+                grams: ar.grams || 0,
+                eurKg: ar.eurKg || 0,
+                resa: ar.resa || 100,
+            })),
+        }));
+        if (skipped.length > 0) console.warn('Ingredienti non trovati nel database e rimossi:', skipped.join(', '));
+        const serv = (d.serving_sizes ?? {}) as Partial<ArchiveData['serving_sizes']>;
+        const numStr = (v?: number) => (v && v > 0 ? String(v) : '');
+        setForm({
+            ...EMPTY_FORM,
+            denominazione: d.nome_prodotto || '',
+            pesoFinito_g: d.peso_finito_pz ? String(d.peso_finito_pz) : '',
+            specificGravity: d.specificGravity || '',
+            porzione_g: numStr(serv.UE?.porzione) || EMPTY_FORM.porzione_g,
+            ue_porzione: numStr(serv.UE?.porzione), ue_confezione: numStr(serv.UE?.confezione), ue_pezzo: numStr(serv.UE?.pezzo),
+            usa_serving: numStr(serv.USA?.serving), usa_confezione: numStr(serv.USA?.confezione), usa_cup: numStr(serv.USA?.cup), usa_cucchiaio: numStr(serv.USA?.cucchiaio), usa_pezzo: numStr(serv.USA?.pezzo),
+            ca_serving: numStr(serv.Canada?.serving), ca_confezione: numStr(serv.Canada?.confezione), ca_cup: numStr(serv.Canada?.cup), ca_cucchiaio: numStr(serv.Canada?.cucchiaio), ca_pezzo: numStr(serv.Canada?.pezzo),
+            au_serving: numStr(serv.Australia?.serving), au_confezione: numStr(serv.Australia?.confezione), au_pezzo: numStr(serv.Australia?.pezzo),
+            arabi_serving: numStr(serv.Arabi?.serving), arabi_confezione: numStr(serv.Arabi?.confezione), arabi_cup: numStr(serv.Arabi?.cup), arabi_cucchiaio: numStr(serv.Arabi?.cucchiaio), arabi_pezzo: numStr(serv.Arabi?.pezzo),
+        });
+        setComponents(comps.length ? comps : [makeComponent()]);
+        setCurrentRegion(d.region ?? null);
         goToSection('ricetta');
+    };
+
+    // ── Nuova ricetta — stesso pattern di conferma del desktop (handleNew/doResetRecipe) ──
+    const [confirmNewOpen, setConfirmNewOpen] = useState(false);
+    const doResetRecipe = () => {
+        setForm(EMPTY_FORM);
+        setComponents([makeComponent()]);
+        setCurrentRegion(null);
+    };
+    const handleNewRecipe = () => {
+        const hasData = components.some(c => c.rows.length > 0) || form.denominazione.trim().length > 0;
+        if (hasData) { setConfirmNewOpen(true); return; }
+        doResetRecipe();
     };
 
     const pesoFinito = parseFloat(form.pesoFinito_g) || 0;
@@ -315,11 +377,6 @@ export function NutrizionaleCalcMobile() {
         { id: 'mercati',   label: 'Mercati',   icon: <Globe size={21} /> },
         { id: 'archivio',  label: 'Archivio',  icon: <Archive size={21} /> },
     ];
-
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars -- firma callback onExportPDF, regione non necessaria qui
-    const handleExportPDF = (_region: string) => {
-        window.print();
-    };
 
     const hasIngredients = components.some(c => c.rows.length > 0);
 
@@ -358,6 +415,7 @@ export function NutrizionaleCalcMobile() {
                             onUpdateAdditiveRow={updateAdditiveRow}
                             onOpenSmartImport={() => setShowSmartImport(true)}
                             onOpenArchive={() => goToSection('archivio')}
+                            onNewRecipe={handleNewRecipe}
                             hasExcelImport={hasExcelImport}
                             calcResult={calcResult}
                         />
@@ -380,19 +438,17 @@ export function NutrizionaleCalcMobile() {
                             form={form}
                             onChange={updateForm}
                             onSave={(region) => {
-                                archive.saveItem(
-                                    form.denominazione || 'Senza nome',
-                                    {
-                                        denominazione: form.denominazione,
-                                        porzione_g: parseFloat(form.porzione_g) || 100,
-                                        region,
-                                        calcResult,
-                                        form,
-                                        components,
-                                    }
-                                );
+                                const name = form.denominazione || 'Senza nome';
+                                const existing = archive.items.find(i => i.name === name);
+                                archive.saveItem(name, mobileEntryToArchiveData({
+                                    denominazione: form.denominazione,
+                                    porzione_g: parseFloat(form.porzione_g) || 100,
+                                    region,
+                                    calcResult,
+                                    form,
+                                    components,
+                                }), existing?.id);
                             }}
-                            onExportPDF={handleExportPDF}
                             hasIngredients={hasIngredients}
                             presentAllergens={presentAllergens}
                             crossAllergens={crossAllergens}
@@ -439,6 +495,16 @@ export function NutrizionaleCalcMobile() {
                     onImport={handleSmartImportMobile}
                 />
             )}
+
+            <ConfirmDialog
+                open={confirmNewOpen}
+                title="Nuova ricetta"
+                message="Vuoi davvero creare una nuova ricetta? I dati non salvati andranno persi."
+                variant="warning"
+                confirmLabel="Crea nuova"
+                onConfirm={() => { setConfirmNewOpen(false); doResetRecipe(); }}
+                onCancel={() => setConfirmNewOpen(false)}
+            />
         </div>
     );
 }

@@ -54,11 +54,21 @@ export interface ServingSizesNation {
     cup?: number; cucchiaio?: number; serving?: number; confezione?: number; pezzo?: number;
 }
 export interface UEServing { porzione?: number; confezione?: number; pezzo?: number; }
-interface ArchiveData {
+// Schema archivio unificato desktop+mobile (chiave localStorage 'nutrizionale-v3').
+// Campi opzionali aggiunti in modo additivo: le ricette salvate prima restano leggibili.
+export interface ArchiveData {
     nome_prodotto: string;
-    componenti: { nome: string; pz_uv: number; ingredienti: { nome: string; grammi: number }[] }[];
+    componenti: {
+        nome: string;
+        pz_uv: number;
+        ingredienti: { nome: string; grammi: number; resa?: number; eurKg?: number }[];
+        additiveRows?: { categoria: string; nomeSpecifico: string; grams: number; eurKg: number; resa: number }[];
+    }[];
     additivi: string[];
     peso_finito_pz: number;
+    specificGravity?: string;
+    kcal_100g?: number;
+    region?: 'UE' | 'USA' | 'Canada' | 'Australia' | 'Arabi';
     serving_sizes: {
         UE: UEServing;
         USA: ServingSizesNation;
@@ -814,11 +824,14 @@ export function NutrizionaleCalc() {
             componenti: components.map(c => ({
                 nome: c.name,
                 pz_uv: c.pzUV,
-                ingredienti: c.rows.map(r => ({ nome: r.ing.nome, grammi: r.grams })),
+                ingredienti: c.rows.map(r => ({ nome: r.ing.nome, grammi: r.grams, resa: r.resa, eurKg: r.eurKg })),
                 additiveRows: c.additiveRows,
             })),
             additivi: additiveChips.map(a => a.nome),
             peso_finito_pz: fw,
+            specificGravity: specificGravity || undefined,
+            kcal_100g: per100display.energyKcal,
+            region: activeTab,
             serving_sizes: { UE: ue, USA: usa, Canada: ca, Australia: au, Arabi: arabi }
         }, existing?.id);
         clearDraft();
@@ -852,7 +865,13 @@ export function NutrizionaleCalc() {
                     const grams = typeof sr.grammi === 'number' ? sr.grammi : (sr.grams || 0);
                     const found = db.find(dbi => dbi.nome === ingName);
                     if (!found) { skippedLoad.push(ingName); return []; }
-                    return [{ id: String(Date.now() + Math.random()), ing: found, grams, eurKg: 0, resa: 100 }];
+                    return [{
+                        id: String(Date.now() + Math.random()),
+                        ing: found,
+                        grams,
+                        eurKg: typeof sr.eurKg === 'number' ? sr.eurKg : 0,
+                        resa: typeof sr.resa === 'number' ? sr.resa : 100,
+                    }];
                 }),
                 additiveRows: (sc.additiveRows || []).map((ar: any) => ({
                     id: String(Date.now() + Math.random()),

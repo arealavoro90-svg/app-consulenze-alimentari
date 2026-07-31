@@ -1,15 +1,15 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Search, Archive, Trash2 } from 'lucide-react';
 import type { ArchiveItem } from '../../../hooks/useArchive';
-import type { MobileArchiveEntry } from '../NutrizionaleCalcMobile';
+import type { ArchiveData } from '../NutrizionaleCalc';
 
 interface Props {
-    items: ArchiveItem<MobileArchiveEntry>[];
-    onLoad: (entry: MobileArchiveEntry) => void;
+    items: ArchiveItem<ArchiveData>[];
+    onLoad: (data: ArchiveData) => void;
     onDelete: (id: string) => void;
 }
 
-type Region = MobileArchiveEntry['region'];
+type Region = NonNullable<ArchiveData['region']>;
 
 const REGION_CODE: Record<Region, string> = {
     UE:        'EU',
@@ -65,7 +65,7 @@ export function ArchivioTab({ items, onLoad, onDelete }: Props) {
         clearTimer();
     };
 
-    const handleTap = (item: ArchiveItem<MobileArchiveEntry>) => {
+    const handleTap = (item: ArchiveItem<ArchiveData>) => {
         // Only fire tap if context menu is not being shown (timer already fired would set ctxId)
         if (ctxId === null) {
             onLoad(item.data);
@@ -74,7 +74,7 @@ export function ArchivioTab({ items, onLoad, onDelete }: Props) {
 
     const dismissCtx = () => setCtxId(null);
 
-    const handleOpen = (item: ArchiveItem<MobileArchiveEntry>) => {
+    const handleOpen = (item: ArchiveItem<ArchiveData>) => {
         setCtxId(null);
         onLoad(item.data);
     };
@@ -126,7 +126,7 @@ export function ArchivioTab({ items, onLoad, onDelete }: Props) {
                 <div>
                     {filtered.map(item => {
                         const region = item.data.region;
-                        const kcal   = Math.round(item.data.calcResult.energyKcal);
+                        const kcal   = item.data.kcal_100g != null ? Math.round(item.data.kcal_100g) : null;
                         return (
                             <div
                                 key={item.id}
@@ -142,13 +142,15 @@ export function ArchivioTab({ items, onLoad, onDelete }: Props) {
                                     if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleOpen(item); }
                                 }}
                             >
-                                <div className={`m-archive-badge m-archive-badge--${region}`}>
-                                    {REGION_CODE[region]}
-                                </div>
+                                {region && (
+                                    <div className={`m-archive-badge m-archive-badge--${region}`}>
+                                        {REGION_CODE[region]}
+                                    </div>
+                                )}
                                 <div className="m-archive-info">
                                     <div className="m-archive-name m-archive-card__title">{item.name}</div>
                                     <div className="m-archive-meta m-archive-card__meta">
-                                        {formatDate(item.date)} · {kcal} kcal/100 g
+                                        {formatDate(item.date)}{kcal != null ? ` · ${kcal} kcal/100 g` : ''}
                                     </div>
                                 </div>
                                 <button

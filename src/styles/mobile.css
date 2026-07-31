@@ -371,42 +371,41 @@
   position: fixed; inset: 0; z-index: 99;
 }
 
-/* ── Region chip bar (TabellaTab) ────────────────────────────────────────── */
+/* ── Region chip bar (TabellaTab) — stile allineato a .right-seg desktop:
+   track unica larghezza piena, chip flex:1 sempre tutte visibili in una riga,
+   nessuno scroll orizzontale nascosto (era la causa del bug "spariscono"). ── */
 .m-region-tabs {
   display: flex;
-  gap: 6px;
-  padding: 10px 16px 8px;
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-  scrollbar-width: none;
+  gap: 2px;
+  padding: 8px;
+  margin: 8px 16px;
+  background: var(--m-border-light);
+  border-radius: 8px;
   position: sticky;
   top: 0;
   z-index: 10;
-  background: var(--m-bg);
-  border-bottom: 1px solid var(--m-border-light);
 }
-.m-region-tabs::-webkit-scrollbar { display: none; }
 
 .m-region-tab {
-  flex-shrink: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
+  flex: 1;
+  min-width: 0;
   min-height: 44px;
-  padding: 6px 14px;
-  background: var(--m-surface);
-  border: 1.5px solid var(--m-border);
-  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px 2px;
+  background: transparent;
+  border: none;
+  border-radius: 6px;
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
-  transition: background 0.15s, border-color 0.15s;
+  transition: background 0.15s, box-shadow 0.15s;
 }
 .m-region-tab--active {
-  background: var(--m-navy);
-  border-color: var(--m-navy);
-  color: #fff;
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(12, 19, 38, 0.15);
 }
-.m-region-tab--active span { color: #fff !important; opacity: 1 !important; }
+.m-region-tab--active span { color: var(--m-navy) !important; opacity: 1 !important; }
 
 /* ── Segmented control — pill separate, coerenti con .btn-accent/.btn-outline desktop ── */
 .m-segmented {

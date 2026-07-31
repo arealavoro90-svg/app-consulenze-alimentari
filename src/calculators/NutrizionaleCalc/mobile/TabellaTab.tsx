@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import html2canvas from 'html2canvas';
 import { Settings2, X, Maximize2, Download } from 'lucide-react';
 import { TabUE, DEFAULT_OPTIONALS } from '../TabUE';
 import { TabUSA } from '../TabUSA';
@@ -19,7 +20,6 @@ interface Props {
     form: MobileNutForm;
     onChange: (patch: Partial<MobileNutForm>) => void;
     onSave: (region: Region) => void;
-    onExportPDF: (region: Region) => void;
     hasIngredients?: boolean;
     presentAllergens?: string[];
     crossAllergens?: string[];
@@ -127,7 +127,7 @@ function TablePreviewWrap({
                     <Maximize2 size={13} /> Schermo intero
                 </button>
             </div>
-            <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
+            <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch', display: 'flex', justifyContent: 'center' }}>
                 {children}
             </div>
         </div>
@@ -185,6 +185,119 @@ function ServingSection({ title, fields, form, onChange, open, onToggle }: {
     );
 }
 
+// ─── Export format state (scelto solo al momento dell'esportazione, mai in anteprima) ──
+interface ExportFormat {
+    subTab: SubTab;
+    euSubTab: EUSubTab;
+    servingRef: USAServingRef;
+    measure: USAMeasure;
+}
+const DEFAULT_EXPORT_FORMAT: ExportFormat = { subTab: 'verticale', euSubTab: '100g', servingRef: 'serving', measure: 'g' };
+
+// ─── Modal opzioni esportazione — stessa logica di DownloadTableModal (desktop),
+// adattata a bottom-sheet mobile. Aperta sempre al tap su "Scarica PNG", come nel desktop. ──
+function ExportOptionsModal({
+    region, showLayout, showColonne, showRiferimento, showUnita, ue, nation, onConfirm, onClose,
+}: {
+    region: Region;
+    showLayout: boolean;
+    showColonne: boolean;
+    showRiferimento: boolean;
+    showUnita: boolean;
+    ue: { porzione?: number; confezione?: number; pezzo?: number };
+    nation: { confezione?: number; cup?: number; cucchiaio?: number; pezzo?: number };
+    onConfirm: (format: ExportFormat) => void;
+    onClose: () => void;
+}) {
+    const [subTab, setSubTab] = useState<SubTab>('verticale');
+    const [euSubTab, setEuSubTab] = useState<EUSubTab>('100g');
+    const [servingRef, setServingRef] = useState<USAServingRef>('serving');
+    const [measure, setMeasure] = useState<USAMeasure>('g');
+
+    useEffect(() => {
+        const h = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
+        document.addEventListener('keydown', h);
+        return () => document.removeEventListener('keydown', h);
+    }, [onClose]);
+
+    return (
+        <div
+            role="dialog"
+            aria-modal="true"
+            aria-label={`Opzioni esportazione ${region}`}
+            style={{ position: 'fixed', inset: 0, background: 'rgba(12,19,38,0.5)', zIndex: 1000, display: 'flex', alignItems: 'flex-end' }}
+            onClick={onClose}
+        >
+            <div
+                style={{ background: '#fff', width: '100%', maxHeight: '80vh', overflowY: 'auto', borderRadius: '16px 16px 0 0', padding: 16 }}
+                onClick={e => e.stopPropagation()}
+            >
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+                    <span style={{ fontSize: 15, fontWeight: 700, color: 'var(--m-text)' }}>Opzioni esportazione — {region}</span>
+                    <button type="button" onClick={onClose} aria-label="Chiudi" style={{ background: 'none', border: 'none', padding: 4, cursor: 'pointer', color: 'var(--m-text-muted)' }}>
+                        <X size={20} />
+                    </button>
+                </div>
+
+                {showLayout && (
+                    <SegmentedControl<SubTab>
+                        label="Layout"
+                        options={[
+                            { v: 'verticale', label: 'Verticale' },
+                            { v: 'orizzontale', label: 'Orizzontale' },
+                            { v: 'lineare', label: 'Lineare' },
+                        ]}
+                        value={subTab} onChange={setSubTab}
+                    />
+                )}
+                {showColonne && (
+                    <SegmentedControl<EUSubTab>
+                        label="Colonne"
+                        options={[
+                            { v: '100g', label: 'per 100g' },
+                            { v: 'porzione', label: 'Porzione', disabled: ue.porzione == null },
+                            { v: 'uv', label: 'Confezione', disabled: ue.confezione == null },
+                            { v: 'pezzo', label: 'Pezzo', disabled: ue.pezzo == null },
+                        ]}
+                        value={euSubTab} onChange={setEuSubTab}
+                    />
+                )}
+                {showRiferimento && (
+                    <SegmentedControl<USAServingRef>
+                        label="Riferimento"
+                        options={[
+                            { v: 'serving', label: 'Porzione' },
+                            { v: 'confezione', label: 'Confezione', disabled: !nation.confezione },
+                        ]}
+                        value={servingRef} onChange={setServingRef}
+                    />
+                )}
+                {showUnita && (
+                    <SegmentedControl<USAMeasure>
+                        label="Unità"
+                        options={[
+                            { v: 'g', label: 'g' },
+                            { v: 'tazze', label: 'Tazze', disabled: !nation.cup },
+                            { v: 'cucchiai', label: 'Cucchiai', disabled: !nation.cucchiaio },
+                            { v: 'pezzi', label: 'Pezzi', disabled: !nation.pezzo },
+                        ]}
+                        value={measure} onChange={setMeasure}
+                    />
+                )}
+
+                <button
+                    type="button"
+                    className="m-btn m-btn--primary"
+                    style={{ width: '100%', marginTop: 8 }}
+                    onClick={() => onConfirm({ subTab, euSubTab, servingRef, measure })}
+                >
+                    Scarica PNG
+                </button>
+            </div>
+        </div>
+    );
+}
+
 function FullscreenOverlay({
     open, exiting, region, layout, onClose, children,
 }: {
@@ -222,29 +335,46 @@ function FullscreenOverlay({
 }
 
 // ─── Component ────────────────────────────────────────────────────────────────
-export function TabellaTab({ calcResult, form, onChange, onSave, onExportPDF, hasIngredients, presentAllergens = [], crossAllergens = [], initialRegion }: Props) {
+export function TabellaTab({ calcResult, form, onChange, onSave, hasIngredients, presentAllergens = [], crossAllergens = [], initialRegion }: Props) {
     const [selectedRegion, setSelectedRegion] = useState<Region | null>(initialRegion ?? null);
     useEffect(() => { if (initialRegion) setSelectedRegion(initialRegion); }, [initialRegion]);
     const [notice, setNotice] = useState<{ type: 'success' | 'error'; msg: string } | null>(null);
 
-    // EU display options
-    const [euSubTab, setEuSubTab] = useState<EUSubTab>('100g');
+    // EU: nutrienti facoltativi mostrati — persistente, non è formato di export (come desktop)
     const [selectedOptionals, setSelectedOptionals] = useState<SelectedOptionals>({ ...DEFAULT_OPTIONALS });
     const [nutrientModalOpen, setNutrientModalOpen] = useState(false);
 
-    // USA display options
-    const [usaSubTab, setUsaSubTab] = useState<SubTab>('verticale');
-    const [usaMeasure, setUsaMeasure] = useState<USAMeasure>('g');
-    const [usaServingRef, setUsaServingRef] = useState<USAServingRef>('serving');
+    // Anteprima sempre fissa (verticale/100g/serving/g) come nel desktop — le scelte di
+    // layout/riferimento/unità vivono solo in ExportOptionsModal, mai in anteprima.
+    const [exportModalOpen, setExportModalOpen] = useState(false);
+    const [printFormat, setPrintFormat] = useState<ExportFormat | null>(null);
+    const exportRef = useRef<HTMLDivElement>(null);
 
-    // Canada display options
-    const [caSubTab, setCaSubTab] = useState<SubTab>('verticale');
-    const [caMeasure, setCaMeasure] = useState<USAMeasure>('g');
-    const [caServingRef, setCaServingRef] = useState<USAServingRef>('serving');
-
-    // Arabi display options
-    const [arabiServingRef, setArabiServingRef] = useState<USAServingRef>('serving');
-    const [arabiMeasure, setArabiMeasure] = useState<USAMeasure>('g');
+    // Col formato scelto renderizzato, cattura la tabella in PNG (stesso path del
+    // DownloadTableModal desktop: html2canvas scale 2, sfondo bianco) e torna alla vista fissa.
+    useEffect(() => {
+        if (!printFormat) return;
+        let cancelled = false;
+        const raf = requestAnimationFrame(() => requestAnimationFrame(async () => {
+            const target = exportRef.current;
+            if (!target) { setPrintFormat(null); return; }
+            try {
+                const canvas = await html2canvas(target, { scale: 2, backgroundColor: '#ffffff', useCORS: true });
+                if (cancelled) return;
+                const link = document.createElement('a');
+                link.download = `${form.denominazione || 'tabella'}_nutrizionale.png`;
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+            } catch (e) {
+                console.error('PNG Export error:', e);
+                if (!cancelled) showNotice('error', "Errore durante l'esportazione della tabella in PNG.");
+            } finally {
+                if (!cancelled) setPrintFormat(null);
+            }
+        }));
+        return () => { cancelled = true; cancelAnimationFrame(raf); };
+        // eslint-disable-next-line react-hooks/exhaustive-deps -- form.denominazione/showNotice letti al momento dell'export, non devono ritriggerarlo
+    }, [printFormat]);
 
     // Fullscreen overlay
     const [fullscreenOpen, setFullscreenOpen] = useState(false);
@@ -288,9 +418,9 @@ export function TabellaTab({ calcResult, form, onChange, onSave, onExportPDF, ha
         setTimeout(() => setSaveFlash(false), 450);
     };
 
-    const handlePDF = () => {
+    const handleExport = () => {
         if (!selectedRegion) { showNotice('error', 'Seleziona prima una regione.'); return; }
-        onExportPDF(selectedRegion);
+        setExportModalOpen(true);
     };
 
     // ─── Serving size objects for each region ───────────────────────────────
@@ -326,25 +456,12 @@ export function TabellaTab({ calcResult, form, onChange, onSave, onExportPDF, ha
         pezzo: nf(form.arabi_pezzo) || undefined,
     };
 
-    // ─── Guard: se il peso di riferimento viene rimosso, torna al default ───
-    // (stesso pattern del desktop per euSubTab)
-    React.useEffect(() => {
-        if (euSubTab === 'porzione' && !ue.porzione) setEuSubTab('100g');
-        if (euSubTab === 'uv' && !ue.confezione) setEuSubTab('100g');
-        if (euSubTab === 'pezzo' && !ue.pezzo) setEuSubTab('100g');
-    }, [euSubTab, ue.porzione, ue.confezione, ue.pezzo]);
-    React.useEffect(() => {
-        if (usaServingRef === 'confezione' && !usa.confezione) setUsaServingRef('serving');
-        if ((usaMeasure === 'tazze' && !usa.cup) || (usaMeasure === 'cucchiai' && !usa.cucchiaio) || (usaMeasure === 'pezzi' && !usa.pezzo)) setUsaMeasure('g');
-    }, [usaServingRef, usaMeasure, usa.confezione, usa.cup, usa.cucchiaio, usa.pezzo]);
-    React.useEffect(() => {
-        if (caServingRef === 'confezione' && !ca.confezione) setCaServingRef('serving');
-        if ((caMeasure === 'tazze' && !ca.cup) || (caMeasure === 'cucchiai' && !ca.cucchiaio) || (caMeasure === 'pezzi' && !ca.pezzo)) setCaMeasure('g');
-    }, [caServingRef, caMeasure, ca.confezione, ca.cup, ca.cucchiaio, ca.pezzo]);
-    React.useEffect(() => {
-        if (arabiServingRef === 'confezione' && !arabi.confezione) setArabiServingRef('serving');
-        if ((arabiMeasure === 'tazze' && !arabi.cup) || (arabiMeasure === 'cucchiai' && !arabi.cucchiaio) || (arabiMeasure === 'pezzi' && !arabi.pezzo)) setArabiMeasure('g');
-    }, [arabiServingRef, arabiMeasure, arabi.confezione, arabi.cup, arabi.cucchiaio, arabi.pezzo]);
+    // Nota: niente guard-effect su riferimento/unità/layout — vivono solo dentro
+    // ExportOptionsModal (stato locale, reset ad ogni apertura), le opzioni non
+    // disponibili sono semplicemente disabled lì.
+
+    // ─── Formato export effettivo per regione (fisso finché non si esporta) ──
+    const fmt = printFormat ?? DEFAULT_EXPORT_FORMAT;
 
     return (
         <div style={{ paddingTop: 8, paddingBottom: 0, flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
@@ -363,10 +480,11 @@ export function TabellaTab({ calcResult, form, onChange, onSave, onExportPDF, ha
                                 setServingOpen(true);
                             }}
                             aria-pressed={isActive}
+                            aria-label={r.sub ? `${r.label} — ${r.sub}` : r.label}
+                            title={r.sub}
                             className={isActive ? 'm-region-tab m-region-tab--active' : 'm-region-tab'}
                         >
-                            <span style={{ fontSize: 13, fontWeight: 800 }}>{r.label}</span>
-                            {r.sub && <span style={{ fontSize: 9, marginTop: 1 }}>{r.sub}</span>}
+                            <span style={{ fontSize: 12, fontWeight: 700 }}>{r.label}</span>
                         </button>
                     );
                 })}
@@ -402,45 +520,31 @@ export function TabellaTab({ calcResult, form, onChange, onSave, onExportPDF, ha
                                 form={form} onChange={onChange}
                                 open={servingOpen} onToggle={() => setServingOpen(o => !o)}
                             />
-                            {/* EU sub-tab selector + nutrienti button */}
+                            {/* Nutrienti facoltativi — persistente, non è formato di export */}
                             <div style={{ padding: '0 16px 12px' }}>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-                                    <SegmentedControl<EUSubTab>
-                                        label="Vista tabella:"
-                                        inline
-                                        options={[
-                                            { v: '100g', label: 'per 100g' },
-                                            { v: 'porzione', label: 'Porzione', disabled: !ue.porzione },
-                                            { v: 'uv', label: 'Confezione', disabled: !ue.confezione },
-                                            { v: 'pezzo', label: 'Pezzo', disabled: !ue.pezzo },
-                                        ]}
-                                        value={euSubTab}
-                                        onChange={setEuSubTab}
-                                    />
-                                    <button
-                                        type="button"
-                                        onClick={() => setNutrientModalOpen(true)}
-                                        style={{
-                                            display: 'flex', alignItems: 'center', gap: 4,
-                                            background: 'none', border: '1px solid var(--m-orange, #ff7e2e)',
-                                            borderRadius: 20, padding: '3px 10px',
-                                            fontSize: 11, color: 'var(--m-orange, #ff7e2e)', cursor: 'pointer',
-                                        }}
-                                    >
-                                        <Settings2 size={11} /> Nutrienti
-                                    </button>
-                                </div>
+                                <button
+                                    type="button"
+                                    onClick={() => setNutrientModalOpen(true)}
+                                    style={{
+                                        display: 'flex', alignItems: 'center', gap: 4,
+                                        background: 'none', border: '1px solid var(--m-orange, #ff7e2e)',
+                                        borderRadius: 20, padding: '3px 10px',
+                                        fontSize: 11, color: 'var(--m-orange, #ff7e2e)', cursor: 'pointer',
+                                    }}
+                                >
+                                    <Settings2 size={11} /> Nutrienti
+                                </button>
                             </div>
-                            {/* EU table */}
-                            <TablePreviewWrap layout={euSubTab} onExpand={() => setFullscreenOpen(true)}>
-                                <div key={`tbl-UE-${euSubTab}`} className="m-table-appear">
+                            {/* EU table — sempre per 100g in anteprima, altre viste solo in esportazione */}
+                            <TablePreviewWrap layout="verticale" onExpand={() => setFullscreenOpen(true)}>
+                                <div key={`tbl-UE-${fmt.euSubTab}`} ref={exportRef} className="m-table-appear">
                                     <TabUE
                                         p={calcResult as Parameters<typeof TabUE>[0]['p']}
                                         ue={ue}
                                         specificGravity={sg > 0 ? sg : undefined}
                                         selectedOptionals={selectedOptionals}
                                         showOptionals={true}
-                                        activeSubTab={euSubTab}
+                                        activeSubTab={fmt.euSubTab}
                                     />
                                 </div>
                             </TablePreviewWrap>
@@ -448,7 +552,7 @@ export function TabellaTab({ calcResult, form, onChange, onSave, onExportPDF, ha
                                 open={fullscreenOpen}
                                 exiting={fullscreenExiting}
                                 region="EU"
-                                layout={euSubTab}
+                                layout="verticale"
                                 onClose={closeFullscreen}
                             >
                                 <TabUE
@@ -457,7 +561,7 @@ export function TabellaTab({ calcResult, form, onChange, onSave, onExportPDF, ha
                                     specificGravity={sg > 0 ? sg : undefined}
                                     selectedOptionals={selectedOptionals}
                                     showOptionals={true}
-                                    activeSubTab={euSubTab}
+                                    activeSubTab="100g"
                                 />
                             </FullscreenOverlay>
                             {/* ── Claim nutrizionali EU (Reg. 2006/1924) ──── */}
@@ -518,50 +622,16 @@ export function TabellaTab({ calcResult, form, onChange, onSave, onExportPDF, ha
                                 form={form} onChange={onChange}
                                 open={servingOpen} onToggle={() => setServingOpen(o => !o)}
                             />
-                            <div style={{ padding: '0 16px 12px', display: 'flex', flexWrap: 'wrap', gap: 10, rowGap: 8 }}>
-                                <SegmentedControl<SubTab>
-                                    label="Layout:"
-                                    inline
-                                    options={[
-                                        { v: 'verticale', label: 'Verticale' },
-                                        { v: 'orizzontale', label: 'Orizzontale' },
-                                        { v: 'lineare', label: 'Lineare' },
-                                    ]}
-                                    value={usaSubTab}
-                                    onChange={setUsaSubTab}
-                                />
-                                <SegmentedControl<USAServingRef>
-                                    label="Riferimento:"
-                                    inline
-                                    options={[
-                                        { v: 'serving', label: 'Porzione' },
-                                        { v: 'confezione', label: 'Confezione', disabled: !usa.confezione },
-                                    ]}
-                                    value={usaServingRef}
-                                    onChange={setUsaServingRef}
-                                />
-                                <SegmentedControl<USAMeasure>
-                                    label="Unità:"
-                                    inline
-                                    options={[
-                                        { v: 'g', label: 'g' },
-                                        { v: 'tazze', label: 'Tazze', disabled: !usa.cup },
-                                        { v: 'cucchiai', label: 'Cucchiai', disabled: !usa.cucchiaio },
-                                        { v: 'pezzi', label: 'Pezzi', disabled: !usa.pezzo },
-                                    ]}
-                                    value={usaMeasure}
-                                    onChange={setUsaMeasure}
-                                />
-                            </div>
-                            <TablePreviewWrap layout={usaSubTab} onExpand={() => setFullscreenOpen(true)}>
-                                <div key={`tbl-USA-${usaSubTab}-${usaServingRef}-${usaMeasure}`} className="m-table-appear">
+                            {/* Layout/riferimento/unità: solo in esportazione (ExportOptionsModal), anteprima sempre verticale/g/serving */}
+                            <TablePreviewWrap layout="verticale" onExpand={() => setFullscreenOpen(true)}>
+                                <div key={`tbl-USA-${fmt.subTab}-${fmt.servingRef}-${fmt.measure}`} ref={exportRef} className="m-table-appear">
                                     <TabUSA
                                         p={calcResult as Parameters<typeof TabUSA>[0]['p']}
                                         usa={usa}
                                         specificGravity={sg > 0 ? sg : 1}
-                                        servingRef={usaServingRef}
-                                        measure={usaMeasure}
-                                        subTab={usaSubTab}
+                                        servingRef={fmt.servingRef}
+                                        measure={fmt.measure}
+                                        subTab={fmt.subTab}
                                     />
                                 </div>
                             </TablePreviewWrap>
@@ -569,26 +639,16 @@ export function TabellaTab({ calcResult, form, onChange, onSave, onExportPDF, ha
                                 open={fullscreenOpen}
                                 exiting={fullscreenExiting}
                                 region="USA"
-                                layout={usaSubTab}
+                                layout="verticale"
                                 onClose={closeFullscreen}
                             >
-                                <SegmentedControl<SubTab>
-                                    label="Layout:"
-                                    options={[
-                                        { v: 'verticale', label: 'Verticale' },
-                                        { v: 'orizzontale', label: 'Orizzontale' },
-                                        { v: 'lineare', label: 'Lineare' },
-                                    ]}
-                                    value={usaSubTab}
-                                    onChange={setUsaSubTab}
-                                />
                                 <TabUSA
                                     p={calcResult as Parameters<typeof TabUSA>[0]['p']}
                                     usa={usa}
                                     specificGravity={sg > 0 ? sg : 1}
-                                    servingRef={usaServingRef}
-                                    measure={usaMeasure}
-                                    subTab={usaSubTab}
+                                    servingRef="serving"
+                                    measure="g"
+                                    subTab="verticale"
                                 />
                             </FullscreenOverlay>
                         </div>
@@ -609,49 +669,15 @@ export function TabellaTab({ calcResult, form, onChange, onSave, onExportPDF, ha
                                 form={form} onChange={onChange}
                                 open={servingOpen} onToggle={() => setServingOpen(o => !o)}
                             />
-                            <div style={{ padding: '0 16px 12px', display: 'flex', flexWrap: 'wrap', gap: 10, rowGap: 8 }}>
-                                <SegmentedControl<SubTab>
-                                    label="Layout:"
-                                    inline
-                                    options={[
-                                        { v: 'verticale', label: 'Verticale' },
-                                        { v: 'orizzontale', label: 'Orizzontale' },
-                                        { v: 'lineare', label: 'Lineare' },
-                                    ]}
-                                    value={caSubTab}
-                                    onChange={setCaSubTab}
-                                />
-                                <SegmentedControl<USAServingRef>
-                                    label="Riferimento:"
-                                    inline
-                                    options={[
-                                        { v: 'serving', label: 'Porzione' },
-                                        { v: 'confezione', label: 'Confezione', disabled: !ca.confezione },
-                                    ]}
-                                    value={caServingRef}
-                                    onChange={setCaServingRef}
-                                />
-                                <SegmentedControl<USAMeasure>
-                                    label="Unità:"
-                                    inline
-                                    options={[
-                                        { v: 'g', label: 'g' },
-                                        { v: 'tazze', label: 'Tazze', disabled: !ca.cup },
-                                        { v: 'cucchiai', label: 'Cucchiai', disabled: !ca.cucchiaio },
-                                        { v: 'pezzi', label: 'Pezzi', disabled: !ca.pezzo },
-                                    ]}
-                                    value={caMeasure}
-                                    onChange={setCaMeasure}
-                                />
-                            </div>
-                            <TablePreviewWrap layout={caSubTab} onExpand={() => setFullscreenOpen(true)}>
-                                <div key={`tbl-Canada-${caSubTab}-${caServingRef}-${caMeasure}`} className="m-table-appear">
+                            {/* Layout/riferimento/unità: solo in esportazione (ExportOptionsModal), anteprima sempre verticale/g/serving */}
+                            <TablePreviewWrap layout="verticale" onExpand={() => setFullscreenOpen(true)}>
+                                <div key={`tbl-Canada-${fmt.subTab}-${fmt.servingRef}-${fmt.measure}`} ref={exportRef} className="m-table-appear">
                                     <TabCanada
                                         p={calcResult}
                                         ca={ca}
-                                        servingRef={caServingRef}
-                                        measure={caMeasure}
-                                        subTab={caSubTab}
+                                        servingRef={fmt.servingRef}
+                                        measure={fmt.measure}
+                                        subTab={fmt.subTab}
                                     />
                                 </div>
                             </TablePreviewWrap>
@@ -659,25 +685,15 @@ export function TabellaTab({ calcResult, form, onChange, onSave, onExportPDF, ha
                                 open={fullscreenOpen}
                                 exiting={fullscreenExiting}
                                 region="Canada"
-                                layout={caSubTab}
+                                layout="verticale"
                                 onClose={closeFullscreen}
                             >
-                                <SegmentedControl<SubTab>
-                                    label="Layout:"
-                                    options={[
-                                        { v: 'verticale', label: 'Verticale' },
-                                        { v: 'orizzontale', label: 'Orizzontale' },
-                                        { v: 'lineare', label: 'Lineare' },
-                                    ]}
-                                    value={caSubTab}
-                                    onChange={setCaSubTab}
-                                />
                                 <TabCanada
                                     p={calcResult}
                                     ca={ca}
-                                    servingRef={caServingRef}
-                                    measure={caMeasure}
-                                    subTab={caSubTab}
+                                    servingRef="serving"
+                                    measure="g"
+                                    subTab="verticale"
                                 />
                             </FullscreenOverlay>
                         </div>
@@ -697,7 +713,7 @@ export function TabellaTab({ calcResult, form, onChange, onSave, onExportPDF, ha
                                 open={servingOpen} onToggle={() => setServingOpen(o => !o)}
                             />
                             <TablePreviewWrap layout="verticale" onExpand={() => setFullscreenOpen(true)}>
-                                <div key={`tbl-Australia`} className="m-table-appear">
+                                <div key={`tbl-Australia`} ref={exportRef} className="m-table-appear">
                                     <TabAustralia p={calcResult} au={au} />
                                 </div>
                             </TablePreviewWrap>
@@ -728,37 +744,14 @@ export function TabellaTab({ calcResult, form, onChange, onSave, onExportPDF, ha
                                 form={form} onChange={onChange}
                                 open={servingOpen} onToggle={() => setServingOpen(o => !o)}
                             />
-                            <div style={{ padding: '0 16px 12px', display: 'flex', flexWrap: 'wrap', gap: 10, rowGap: 8 }}>
-                                <SegmentedControl<USAServingRef>
-                                    label="Riferimento:"
-                                    inline
-                                    options={[
-                                        { v: 'serving', label: 'Porzione' },
-                                        { v: 'confezione', label: 'Confezione', disabled: !arabi.confezione },
-                                    ]}
-                                    value={arabiServingRef}
-                                    onChange={setArabiServingRef}
-                                />
-                                <SegmentedControl<USAMeasure>
-                                    label="Unità:"
-                                    inline
-                                    options={[
-                                        { v: 'g', label: 'g' },
-                                        { v: 'tazze', label: 'Tazze', disabled: !arabi.cup },
-                                        { v: 'cucchiai', label: 'Cucchiai', disabled: !arabi.cucchiaio },
-                                        { v: 'pezzi', label: 'Pezzi', disabled: !arabi.pezzo },
-                                    ]}
-                                    value={arabiMeasure}
-                                    onChange={setArabiMeasure}
-                                />
-                            </div>
+                            {/* Riferimento/unità: solo in esportazione (ExportOptionsModal), anteprima sempre serving/g */}
                             <TablePreviewWrap layout="verticale" onExpand={() => setFullscreenOpen(true)}>
-                                <div key={`tbl-Arabi-${arabiServingRef}-${arabiMeasure}`} className="m-table-appear">
+                                <div key={`tbl-Arabi-${fmt.servingRef}-${fmt.measure}`} ref={exportRef} className="m-table-appear">
                                     <TabArabi
                                         p={calcResult}
                                         arabi={arabi}
-                                        servingRef={arabiServingRef}
-                                        measure={arabiMeasure}
+                                        servingRef={fmt.servingRef}
+                                        measure={fmt.measure}
                                         specificGravity={sg > 0 ? sg : undefined}
                                     />
                                 </div>
@@ -773,8 +766,8 @@ export function TabellaTab({ calcResult, form, onChange, onSave, onExportPDF, ha
                                 <TabArabi
                                     p={calcResult}
                                     arabi={arabi}
-                                    servingRef={arabiServingRef}
-                                    measure={arabiMeasure}
+                                    servingRef="serving"
+                                    measure="g"
                                     specificGravity={sg > 0 ? sg : undefined}
                                 />
                             </FullscreenOverlay>
@@ -844,9 +837,9 @@ export function TabellaTab({ calcResult, form, onChange, onSave, onExportPDF, ha
                     type="button"
                     className="m-btn m-btn--green"
                     style={{ flex: 1 }}
-                    onClick={handlePDF}
+                    onClick={handleExport}
                 >
-                    <Download size={14} /> PDF
+                    <Download size={14} /> Scarica PNG
                 </button>
             </div>
 
@@ -857,6 +850,21 @@ export function TabellaTab({ calcResult, form, onChange, onSave, onExportPDF, ha
                 selected={selectedOptionals}
                 onChange={setSelectedOptionals}
             />
+
+            {/* Opzioni esportazione — sempre aperta al tap su "Scarica PNG", come nel desktop */}
+            {exportModalOpen && selectedRegion && (
+                <ExportOptionsModal
+                    region={selectedRegion}
+                    showLayout={selectedRegion === 'USA' || selectedRegion === 'Canada'}
+                    showColonne={selectedRegion === 'UE' && (ue.porzione != null || ue.confezione != null || ue.pezzo != null)}
+                    showRiferimento={selectedRegion === 'USA' || selectedRegion === 'Canada' || selectedRegion === 'Arabi'}
+                    showUnita={selectedRegion === 'USA' || selectedRegion === 'Canada' || selectedRegion === 'Arabi'}
+                    ue={ue}
+                    nation={selectedRegion === 'USA' ? usa : selectedRegion === 'Canada' ? ca : selectedRegion === 'Arabi' ? arabi : {}}
+                    onClose={() => setExportModalOpen(false)}
+                    onConfirm={format => { setExportModalOpen(false); setPrintFormat(format); }}
+                />
+            )}
         </div>
     );
 }

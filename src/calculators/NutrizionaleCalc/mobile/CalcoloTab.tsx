@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Search, Trash2, ChevronDown, ChevronUp, Plus, X, Sparkles, FolderOpen, FileSpreadsheet, ArrowRight } from 'lucide-react';
+import { Search, Trash2, ChevronDown, ChevronUp, Plus, X, Sparkles, FolderOpen, FileSpreadsheet, ArrowRight, RotateCcw } from 'lucide-react';
 import { parseDecimalIT } from '../../../utils/validation';
 import { ADDITIVI_CATEGORIE, ADDITIVI_SPECIFICI } from '../shared/constants';
 import type {
@@ -26,6 +26,7 @@ interface Props {
     onUpdateAdditiveRow: (compId: string, rowId: string, patch: Partial<AdditiveRow>) => void;
     onOpenSmartImport: () => void;
     onOpenArchive: () => void;
+    onNewRecipe: () => void;
     hasExcelImport: boolean;
     calcResult?: CalcResult;
 }
@@ -344,6 +345,8 @@ function RecipeRowItem({ row, compId, onRemove, onUpdate }: {
 }
 
 // ─── Sub-component: single additive row ──────────────────────────────────────
+// Stesse classi .ing-* del desktop (NutrizionaleCalc.tsx) — card sempre aperta,
+// Grammi/€/kg/Resa sempre visibili assieme, nessun accordion (era "troppo piccola").
 function AdditiveRowItem({ row, compId, onRemove, onUpdate }: {
     row: AdditiveRow;
     compId: string;
@@ -351,54 +354,51 @@ function AdditiveRowItem({ row, compId, onRemove, onUpdate }: {
     onUpdate: (compId: string, rowId: string, patch: Partial<AdditiveRow>) => void;
 }) {
     const [gramsRaw, setGramsRaw] = useState(String(row.grams));
-    const [resaRaw, setResaRaw] = useState(String(row.resa));
     const [eurRaw, setEurRaw] = useState(String(row.eurKg));
-    const [expanded, setExpanded] = useState(false);
+    const [resaRaw, setResaRaw] = useState(String(row.resa));
 
     const handleGrams = (v: string) => {
         setGramsRaw(v);
         const num = parseDecimalIT(v);
         if (!isNaN(num) && num >= 0) onUpdate(compId, row.id, { grams: num });
     };
-    const handleResa = (v: string) => {
-        setResaRaw(v);
-        const num = parseDecimalIT(v);
-        if (!isNaN(num) && num >= 0 && num <= 100) onUpdate(compId, row.id, { resa: num });
-    };
     const handleEur = (v: string) => {
         setEurRaw(v);
         const num = parseDecimalIT(v);
         if (!isNaN(num) && num >= 0) onUpdate(compId, row.id, { eurKg: num });
     };
+    const handleResa = (v: string) => {
+        setResaRaw(v);
+        const num = parseDecimalIT(v);
+        if (!isNaN(num) && num >= 0 && num <= 100) onUpdate(compId, row.id, { resa: num });
+    };
+
+    const fabbA = row.grams / ((row.resa || 100) / 100);
+    const costoA = (fabbA / 1000) * row.eurKg;
 
     return (
-        <div style={{ marginBottom: 8, border: '1px solid var(--m-border)', borderRadius: 6, padding: 6 }}>
-            <div style={{ display: 'flex', gap: 6, alignItems: 'flex-start' }}>
-                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 4 }}>
-                    {/* Categoria */}
+        <div className="ing-card">
+            <div className="ing-card-header">
+                <div style={{ display: 'flex', gap: 8, flex: 1, flexWrap: 'wrap' }}>
                     <select
-                        className="m-input"
+                        className="form-input"
                         aria-label="Categoria additivo"
                         value={row.categoria}
-                        onChange={e => onUpdate(compId, row.id, {
-                            categoria: e.target.value,
-                            nomeSpecifico: '',
-                        })}
-                        style={{ fontSize: 12 }}
+                        onChange={e => onUpdate(compId, row.id, { categoria: e.target.value, nomeSpecifico: '' })}
+                        style={{ flex: '1 1 140px', fontSize: 12 }}
                     >
                         <option value="">— Categoria —</option>
                         {ADDITIVI_CATEGORIE.map(c => (
                             <option key={c} value={c}>{c}</option>
                         ))}
                     </select>
-                    {/* Nome specifico: select filtrato per categoria */}
                     <select
-                        className="m-input"
+                        className="form-input"
                         aria-label="Nome additivo"
                         value={row.nomeSpecifico}
                         onChange={e => onUpdate(compId, row.id, { nomeSpecifico: e.target.value })}
                         disabled={!row.categoria}
-                        style={{ fontSize: 12, color: row.nomeSpecifico ? 'var(--m-text)' : 'var(--m-text-muted)' }}
+                        style={{ flex: '1 1 140px', fontSize: 12 }}
                     >
                         <option value="">
                             {row.categoria ? '— Seleziona additivo —' : '— Prima seleziona categoria —'}
@@ -408,70 +408,49 @@ function AdditiveRowItem({ row, compId, onRemove, onUpdate }: {
                         ))}
                     </select>
                 </div>
-                <input
-                    className="m-input m-input--num"
-                    type="number"
-                    inputMode="decimal"
-                    min="0"
-                    step="1"
-                    value={gramsRaw}
-                    onChange={e => handleGrams(e.target.value)}
-                    style={{ width: 58, textAlign: 'right', flexShrink: 0, fontSize: 13, marginTop: 2 }}
-                    aria-label="Grammi additivo"
-                />
-                <button
-                    type="button"
-                    onClick={() => setExpanded(e => !e)}
-                    style={{ background: 'none', border: 'none', padding: 4, marginTop: 2, cursor: 'pointer', color: 'var(--m-text-muted)', flexShrink: 0 }}
-                    aria-label="Espandi dettagli additivo"
-                >
-                    {expanded ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
-                </button>
-                <button
-                    type="button"
-                    onClick={() => onRemove(compId, row.id)}
-                    style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#e53e3e', padding: 4, marginTop: 2 }}
-                    aria-label="Rimuovi additivo"
-                >
+                <button type="button" className="ing-delete-btn" onClick={() => onRemove(compId, row.id)} aria-label="Rimuovi additivo">
                     <Trash2 size={13} />
                 </button>
             </div>
-
-            {expanded && (
-                <div style={{ display: 'flex', gap: 8, marginTop: 6, paddingTop: 6, borderTop: '1px solid var(--m-border)' }}>
-                    <div style={{ flex: 1 }}>
-                        <label htmlFor={`add-resa-${row.id}`} style={{ fontSize: 12, color: 'var(--m-text-muted)', display: 'block', marginBottom: 2 }}>
-                            Resa %
-                        </label>
+            <div className="ing-card-body">
+                <div className="ing-field-group">
+                    <div className="ing-field-header"><span className="ing-field-label">Grammi</span></div>
+                    <div className="ing-field-input-wrap">
                         <input
-                            id={`add-resa-${row.id}`}
-                            className="m-input m-input--num"
-                            type="number"
-                            inputMode="decimal"
-                            min="0"
-                            max="100"
-                            step="1"
-                            value={resaRaw}
-                            onChange={e => handleResa(e.target.value)}
-                            style={{ width: '100%', textAlign: 'right', fontSize: 12 }}
+                            type="number" inputMode="decimal" min="0" step="1"
+                            className="form-input ing-input"
+                            value={gramsRaw}
+                            onChange={e => handleGrams(e.target.value)}
+                            aria-label="Grammi additivo"
                         />
+                        <span className="ing-unit">g</span>
                     </div>
-                    <div style={{ flex: 1 }}>
-                        <label htmlFor={`add-eur-${row.id}`} style={{ fontSize: 12, color: 'var(--m-text-muted)', display: 'block', marginBottom: 2 }}>
-                            €/kg
-                        </label>
-                        <input
-                            id={`add-eur-${row.id}`}
-                            className="m-input m-input--num"
-                            type="number"
-                            inputMode="decimal"
-                            min="0"
-                            step="0.01"
-                            value={eurRaw}
-                            onChange={e => handleEur(e.target.value)}
-                            style={{ width: '100%', textAlign: 'right', fontSize: 12 }}
-                        />
-                    </div>
+                </div>
+                <div className="ing-field-group">
+                    <div className="ing-field-header"><span className="ing-field-label">€/kg</span></div>
+                    <input
+                        type="text" inputMode="decimal"
+                        className="form-input ing-input"
+                        value={eurRaw}
+                        onChange={e => handleEur(e.target.value)}
+                        aria-label="Prezzo al kg additivo"
+                    />
+                </div>
+                <div className="ing-field-group">
+                    <div className="ing-field-header"><span className="ing-field-label">Resa dopo cottura (%)</span></div>
+                    <input
+                        type="text" inputMode="decimal"
+                        className="form-input ing-input"
+                        value={resaRaw}
+                        onChange={e => handleResa(e.target.value)}
+                        aria-label="Resa additivo"
+                    />
+                </div>
+            </div>
+            {row.eurKg > 0 && (
+                <div className="ing-cost-line">
+                    <span>Grammi reali: <strong>{fabbA.toFixed(1)}g</strong></span>
+                    <span>Costo: <strong style={{ color: 'var(--color-orange)' }}>{costoA.toFixed(4)} €</strong></span>
                 </div>
             )}
         </div>
@@ -724,6 +703,7 @@ export function CalcoloTab({
     onAddAdditiveRow, onRemoveAdditiveRow, onUpdateAdditiveRow,
     onOpenSmartImport,
     onOpenArchive,
+    onNewRecipe,
     hasExcelImport,
     calcResult,
 }: Props) {
@@ -742,6 +722,20 @@ export function CalcoloTab({
                     <div className="m-section__line" />
                     <span className="m-section__title">Prodotto</span>
                     <div className="m-section__line" />
+                </div>
+                <div style={{ padding: '0 16px 8px', display: 'flex', justifyContent: 'flex-end' }}>
+                    <button
+                        type="button"
+                        onClick={onNewRecipe}
+                        style={{
+                            display: 'flex', alignItems: 'center', gap: 4,
+                            background: 'none', border: '1px solid var(--m-border)',
+                            borderRadius: 6, padding: '4px 10px',
+                            fontSize: 11, fontWeight: 600, color: 'var(--m-text-muted)', cursor: 'pointer',
+                        }}
+                    >
+                        <RotateCcw size={12} /> Nuova ricetta
+                    </button>
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                     <div className="m-field">
