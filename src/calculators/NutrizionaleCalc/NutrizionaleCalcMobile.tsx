@@ -271,7 +271,6 @@ export function NutrizionaleCalcMobile() {
     const addAdditiveRow = (compId: string) =>
         setComponents(prev => prev.map(c => c.id !== compId ? c : {
             ...c,
-            // ponytail: grams/eurKg/resa required by engine AdditiveRow; mobile additivi non pesati → 0/100
             additiveRows: [...c.additiveRows, { id: String(Date.now() + Math.random()), categoria: '', nomeSpecifico: '', grams: 0, eurKg: 0, resa: 100 }],
         }));
 

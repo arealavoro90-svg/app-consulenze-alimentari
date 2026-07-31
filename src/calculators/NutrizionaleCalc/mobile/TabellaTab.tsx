@@ -113,7 +113,7 @@ function TablePreviewWrap({
         <div style={{ padding: '0 16px 8px' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
                 {isWide ? (
-                    <span style={{ fontSize: 10, color: 'var(--m-text-muted, #5e6b80)', fontStyle: 'italic' }}>
+                    <span style={{ fontSize: 10, color: 'var(--m-text-muted)', fontStyle: 'italic' }}>
                         Scorri lateralmente per vedere tutta la tabella
                     </span>
                 ) : (
@@ -278,7 +278,7 @@ export function TabellaTab({ calcResult, form, onChange, onSave, onExportPDF, ha
 
     const handleSave = () => {
         if (!selectedRegion) { showNotice('error', 'Seleziona prima una regione.'); return; }
-        if (!form.denominazione.trim()) { showNotice('error', 'Inserisci la denominazione nel tab Calcolo.'); return; }
+        if (!form.denominazione.trim()) { showNotice('error', 'Inserisci la denominazione nella scheda Ricetta.'); return; }
         if (!hasIngredients) { showNotice('error', 'Aggiungi almeno un ingrediente prima di salvare.'); return; }
         const porzione = nf(form.ue_porzione || form.porzione_g);
         if (porzione <= 0) { showNotice('error', 'Imposta una porzione valida (> 0 g).'); return; }
@@ -375,7 +375,7 @@ export function TabellaTab({ calcResult, form, onChange, onSave, onExportPDF, ha
             {/* No data warning */}
             {!hasData && (
                 <div className="m-notice m-notice--error" style={{ margin: '0 16px 12px' }}>
-                    Aggiungi almeno un ingrediente nel tab Calcolo prima di generare la tabella.
+                    Aggiungi almeno un ingrediente nella scheda Ricetta prima di generare la tabella.
                 </div>
             )}
 
@@ -467,7 +467,7 @@ export function TabellaTab({ calcResult, form, onChange, onSave, onExportPDF, ha
                                     <div style={{ padding: '12px 16px 0', borderTop: '1px solid #eaecf0' }}>
                                         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
                                             <span style={{ fontSize: 12, fontWeight: 600 }}>Claim nutrizionali EU</span>
-                                            <label style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 12, cursor: 'pointer', color: 'var(--m-text-muted, #5e6b80)' }}>
+                                            <label style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 12, cursor: 'pointer', color: 'var(--m-text-muted)' }}>
                                                 <input
                                                     type="checkbox"
                                                     checked={isLiquid}
@@ -478,7 +478,7 @@ export function TabellaTab({ calcResult, form, onChange, onSave, onExportPDF, ha
                                             </label>
                                         </div>
                                         {claims.length === 0 ? (
-                                            <p style={{ fontSize: 11, color: 'var(--m-text-muted, #5e6b80)', fontStyle: 'italic', margin: 0 }}>
+                                            <p style={{ fontSize: 11, color: 'var(--m-text-muted)', fontStyle: 'italic', margin: 0 }}>
                                                 Nessun claim applicabile.
                                             </p>
                                         ) : (
@@ -486,7 +486,7 @@ export function TabellaTab({ calcResult, form, onChange, onSave, onExportPDF, ha
                                                 {claims.map(c => (
                                                     <span key={c} style={{
                                                         fontSize: 11, fontWeight: 700, letterSpacing: '0.03em',
-                                                        background: 'var(--m-navy, #1a2340)', color: '#fff',
+                                                        background: 'var(--m-navy)', color: '#fff',
                                                         borderRadius: 5, padding: '4px 8px',
                                                     }}>
                                                         {c}
@@ -494,7 +494,7 @@ export function TabellaTab({ calcResult, form, onChange, onSave, onExportPDF, ha
                                                 ))}
                                             </div>
                                         )}
-                                        <p style={{ fontSize: 10, color: 'var(--m-text-muted, #5e6b80)', margin: '6px 0 8px', lineHeight: 1.4 }}>
+                                        <p style={{ fontSize: 10, color: 'var(--m-text-muted)', margin: '6px 0 8px', lineHeight: 1.4 }}>
                                             Reg. 2006/1924 — verificare con consulente prima di apporli in etichetta.
                                         </p>
                                     </div>

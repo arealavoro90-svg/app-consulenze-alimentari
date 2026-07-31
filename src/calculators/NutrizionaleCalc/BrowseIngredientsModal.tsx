@@ -187,6 +187,12 @@ export function BrowseIngredientsModal({ onClose, db, onEditIngredient }: Props)
     const [soloPersonali, setSoloPersonali] = useState(false);
     const [expandedIdx, setExpandedIdx] = useState<number | null>(null);
 
+    useEffect(() => {
+        const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
+        document.addEventListener('keydown', handler);
+        return () => document.removeEventListener('keydown', handler);
+    }, [onClose]);
+
     const filtered = useMemo(() => {
         const q = search.trim().toLowerCase();
         let list = db.filter(ing => {
@@ -336,7 +342,13 @@ export function BrowseIngredientsModal({ onClose, db, onEditIngredient }: Props)
                                             ? 'var(--color-surface-hover, #f9fafb)'
                                             : 'var(--color-surface, #fff)',
                                     }}
+                                    role="button"
+                                    tabIndex={0}
+                                    aria-expanded={isExpanded}
                                     onClick={() => toggleExpand(idx)}
+                                    onKeyDown={e => {
+                                        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleExpand(idx); }
+                                    }}
                                 >
                                     {/* Chevron */}
                                     <span style={{ fontSize: 11, color: 'var(--color-text-muted)', flexShrink: 0, width: 14 }}>

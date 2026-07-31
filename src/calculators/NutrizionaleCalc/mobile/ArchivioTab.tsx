@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Search, Archive } from 'lucide-react';
+import { Search, Archive, Trash2 } from 'lucide-react';
 import type { ArchiveItem } from '../../../hooks/useArchive';
 import type { MobileArchiveEntry } from '../NutrizionaleCalcMobile';
 
@@ -115,7 +115,7 @@ export function ArchivioTab({ items, onLoad, onDelete }: Props) {
                     </p>
                     <p className="m-empty__sub">
                         {items.length === 0
-                            ? 'Salva un calcolo dalla scheda Tabella per trovarlo qui.'
+                            ? 'Salva un calcolo dalla scheda Mercati per trovarlo qui.'
                             : 'Prova con un termine diverso.'}
                     </p>
                 </div>
@@ -131,10 +131,16 @@ export function ArchivioTab({ items, onLoad, onDelete }: Props) {
                             <div
                                 key={item.id}
                                 className="m-archive-item m-archive-card"
+                                role="button"
+                                tabIndex={0}
+                                aria-label={`Apri ${item.name}`}
                                 onTouchStart={e => handleTouchStart(item.id, e)}
                                 onTouchEnd={handleTouchEnd}
                                 onTouchMove={handleTouchMove}
                                 onClick={() => handleTap(item)}
+                                onKeyDown={e => {
+                                    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleOpen(item); }
+                                }}
                             >
                                 <div className={`m-archive-badge m-archive-badge--${region}`}>
                                     {REGION_CODE[region]}
@@ -145,6 +151,14 @@ export function ArchivioTab({ items, onLoad, onDelete }: Props) {
                                         {formatDate(item.date)} · {kcal} kcal/100 g
                                     </div>
                                 </div>
+                                <button
+                                    type="button"
+                                    className="m-archive-delete-btn"
+                                    aria-label={`Elimina ${item.name}`}
+                                    onClick={e => { e.stopPropagation(); handleDelete(item.id); }}
+                                >
+                                    <Trash2 size={15} />
+                                </button>
                                 <svg className="m-archive-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                                     <path d="M9 18l6-6-6-6" />
                                 </svg>

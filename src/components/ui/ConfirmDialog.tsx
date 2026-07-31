@@ -12,27 +12,29 @@ export interface ConfirmDialogProps {
     onCancel: () => void;
 }
 
+// confirmBg/confirmHover: testo bianco sopra, valori scelti per garantire contrasto
+// WCAG AA >=4.5:1 (icona/iconBg restano sui token originali, non sono testo-su-colore).
 const VARIANT_CONFIG = {
     danger: {
         icon: Trash2,
         iconColor: 'var(--color-danger)',
         iconBg: 'var(--color-danger-bg)',
-        confirmBg: 'var(--color-danger)',
-        confirmHover: '#c53030',
+        confirmBg: '#ce3838',   // 4.94:1
+        confirmHover: '#c53030', // 5.47:1
     },
     warning: {
         icon: AlertTriangle,
         iconColor: 'var(--color-warning)',
         iconBg: 'var(--color-warning-bg)',
-        confirmBg: 'var(--color-warning)',
-        confirmHover: '#b45309',
+        confirmBg: '#ae5f05',   // 4.73:1
+        confirmHover: '#945104', // 6.11:1
     },
     info: {
         icon: Info,
         iconColor: 'var(--color-accent)',
         iconBg: 'var(--color-accent-bg)',
-        confirmBg: 'var(--color-accent)',
-        confirmHover: 'var(--color-orange-hover)',
+        confirmBg: 'var(--color-orange-a11y)', // 4.87:1
+        confirmHover: '#974b1b',                // 6.29:1
     },
 };
 

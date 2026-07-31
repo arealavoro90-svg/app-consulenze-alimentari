@@ -104,17 +104,22 @@ Il tool principale usa esclusivamente l'engine locale. `nutritionalEngine.ts:cal
 
 ## 2. Sicurezza
 
-### 🆕 S0 — CRITICO · ingredientsDB.json pubblicamente scaricabile: esposizione dell'asset core
-**File:** `public/data/ingredientsDB.json` (478 KB, 1071 ingredienti)
+### 🟡 S0 — CRITICO · ingredientsDB.json pubblicamente scaricabile: esposizione dell'asset core
+**Stato:** RISOLTO (parte tecnica) — 2026-07-29. Backend Django deployato e collegato al frontend in produzione, verificato end-to-end.
+**File:** `public/data/ingredientsDB.json` (478 KB, 1071 ingredienti — 1065 già importati in Postgres)
 
-Tutto ciò che sta in `public/` viene servito da Vercel senza alcun controllo: chiunque può scaricare l'intero database nutrizionale con una singola richiesta GET all'URL diretto, senza login, senza rate limit. Il DB è l'asset di valore dell'app e la base del modello ad abbonamento per gli ~800 clienti: **al momento è un download gratuito per chiunque, concorrenti inclusi.**
+Tutto ciò che sta in `public/` viene servito da Vercel senza alcun controllo: chiunque può scaricare l'intero database nutrizionale con una singola richiesta GET all'URL diretto, senza login, senza rate limit. Il DB è l'asset di valore dell'app e la base del modello ad abbonamento per gli ~800 clienti.
 
-Combinato con S4 (credenziali mock nel bundle), il perimetro effettivo dell'app è zero: dati e accesso admin sono entrambi pubblici.
+**Cosa è stato fatto (2026-07-29):**
+- Backend Django già deployato e sano (`https://backend-snowy-seven-98.vercel.app`), Postgres Neon con 1065/1071 ingredienti importati
+- `VITE_API_URL` impostata nell'env Production del frontend (mancava — root cause per cui il backend non veniva mai chiamato)
+- **Bug reale trovato e corretto**: `connect-src 'self'` nella CSP (`vercel.json`) bloccava lato browser qualsiasi fetch verso il backend, prima ancora di CORS — aggiunto il dominio backend alla whitelist
+- Verificato in produzione (Safari, console reale): `/api/auth/me/` e `/api/ingredients/` rispondono `401` dal backend reale (atteso: l'utente demo non esiste nel Django reale) — la richiesta arriva a destinazione, CSP/CORS non bloccano più nulla, fallback silenzioso al JSON statico resta intatto per chi non ha un account reale
 
-**Azione (in ordine di robustezza crescente):**
-1. *Minimo (subito):* spostare il file fuori da `public/` e servirlo tramite endpoint autenticato del backend Django già esistente (`/api/ingredients/`), con il JWT già in uso.
-2. *Meglio:* endpoint di **ricerca** (`/api/ingredients/search?q=`) che restituisce solo i match, mai il dataset intero — protegge il DB anche dagli utenti autenticati e riduce drasticamente il payload mobile (vedi P3).
-3. In entrambi i casi: rate limiting sull'endpoint (Django REST Framework throttling).
+**Cosa resta aperto (non tecnico, di prodotto/processo):**
+1. Il file pubblico **non può ancora essere rimosso**: è l'unico modo per demo/mock di vedere gli ingredienti finché non esistono account clienti reali in Django (solo `admin@aea.it` esiste oggi) — dipende da AUTH-1/2
+2. Endpoint di **ricerca** (`/api/ingredients/search?q=`) invece del dataset intero — riduce payload mobile (vedi P3), non ancora fatto
+3. Rate limiting sull'endpoint (Django REST Framework throttling) — non ancora fatto
 
 ---
 
@@ -337,7 +342,7 @@ Punti con impatto potenzialmente critico che l'audit non ha esaminato. Da esegui
 |---|---|---|
 | ✅ Done | B1 | Aggiunto `sodium: 'SODIO'` a `nutrientNames` in `nutritionalEngine.ts:243` |
 | ✅ Done | B2 | Cambiato `< 0.12` in `<= 0.12` in `nutritionalEngine.ts:273` |
-| 🟡 Codice pronto, deploy pendente | 🆕 S0 | **Fatto (codice):** frontend usa `apiFetch('/api/ingredients/')` + fallback dev; `pagination_class = None` su `IngredientViewSet`. **Da fare (manuale, in ordine):** ① Deploy backend Django su Vercel/server ② `python manage.py import_ingredients public/data/ingredientsDB.json` ③ Rimuovere `public/data/ingredientsDB.json` dal repo e fare push |
+| 🟡 Tecnica risolta, file pubblico resta (dipende da AUTH-1/2) | 🆕 S0 | **Fatto (2026-07-29):** backend Django deployato e sano, 1065/1071 ingredienti importati in Postgres, `VITE_API_URL` impostata in prod, fix CSP `connect-src` (bloccava le chiamate), verificato end-to-end. **Resta:** rimuovere `public/data/ingredientsDB.json` (solo dopo aver creato account clienti reali — vedi AUTH-1/2), endpoint di ricerca, rate limiting |
 | ✅ N/A | S1 | jsPDF 4.2.1 installato — fix range era ≤4.2.0, già patched |
 | ✅ Done | 🆕 V1–V4 | V1: corretti potassium NRV 3500→2000 mg (era US DV) e claim proteine da RI-based a energy-based (≥12%/≥20% kcal). V2/V3/V4: nessun errore trovato |
 | ✅ Done | B3 | `calcClaims(r: CalcResult, isLiquid)` aggiunta a `nutrizionaleCalcEngine.ts` (campi italiani, nessuna dipendenza da dead-code engine). Collegata alla UI: toggle "Prodotto liquido" + badge claim sotto TabUE — desktop (`NutrizionaleCalc.tsx`) e mobile (`TabellaTab.tsx`). Soglie: fibre ≥3/6g, proteine ≥12/20% kcal, calcio/ferro/potassio vs NRV EU, sodio ≤120mg, zuccheri ≤5/2,5g, grassi ≤3/1,5g. `tsc --noEmit` zero errori. |
@@ -363,7 +368,7 @@ Punti con impatto potenzialmente critico che l'audit non ha esaminato. Da esegui
 | ✅ Done | V6 | Campione 20 ingredienti vs CREA BDA 2019 — 6 corretti (banana, parmigiano, burro, carote, fegato pollo, miele bio). Vedi sezione 7. |
 | ✅ Done | V7 | Accessibilità: 4 modal con role="dialog"+aria-modal (IngredientPicker, Browse, SmartImport, SavedTables); 6 input con aria-label/htmlFor (cerca, nome comp, pz/UV, resa, €/kg, selects additivi); div card header → role="button"+tabIndex+onKeyDown; font 10px→12px su 4 label muted. `tsc --noEmit` zero errori. |
 | ✅ Done | V8 | Analisi completa: no FreeText annotations, no "open in new window" → CVE S1 non applicabili. Fix UX: filename sanitizzato in `NutrizionaleCalc.tsx:1701` e `pdfGenerator.ts:140` (rimozione `<>"` dal nome file). |
-| 🟡 Codice pronto, deploy pendente | S0 | Vedi sopra |
+| 🟡 Tecnica risolta, file pubblico resta | S0 | Vedi sopra |
 | ✅ Done | S5 | httpOnly cookies: `CookieJWTAuthentication` (cookie → fallback header mock), `LoginView` imposta cookie, `LogoutView` li cancella + blacklist, `TokenRefreshView` custom con rotation. `apiFetch` usa `credentials:'include'`, rimosso header `Authorization`. Access token 60→15 min. |
 | ✅ Done | M2-nota | Costanti e logica unificate: `shared/constants.ts` per ALLERGEN/CROSS/ADDITIVI, engine per DBIngredient/CalcResult/RecipeRow/AdditiveRow/calcNutrients. ~750 righe duplicate rimosse. Archivio differito (schemi ArchiveData vs MobileArchiveEntry incompatibili — design separato). |
 | ✅ Done | Q4 | `IngredientDB` (schema inglese) rimosso. `DBIngredient` (italiano) è ora il tipo canonico, re-esportato da `ingredientsDB.ts`. `nutritionalEngine.ts` self-contained con tipo locale. `useSavedTables.ts` aggiornato. `tsc --noEmit` zero errori. |
@@ -394,7 +399,7 @@ Dati trattati: email, nome, azienda, ricette/schede prodotto (potenziale segreto
 | T2 | Password utenti hashate (Django `AbstractUser`) | ✅ bcrypt/PBKDF2 |
 | T3 | JWT in httpOnly cookie (non leggibili da JS) | ✅ S5 completato |
 | T4 | Security headers (CSP, X-Frame-Options, ecc.) | ✅ S7 completato |
-| T5 | Accesso ingredientsDB solo ad utenti autenticati | 🟡 S0 codice pronto, deploy pendente |
+| T5 | Accesso ingredientsDB solo ad utenti autenticati | 🟡 Backend collegato e funzionante; file pubblico resta come fallback finché non ci sono account clienti reali (AUTH-1/2) |
 | T6 | Backup database PostgreSQL con retention definita | ☐ Verificare con provider DB |
 | T7 | Log di accesso con retention ≤ 12 mesi | ☐ Configurare su Django/Vercel |
 

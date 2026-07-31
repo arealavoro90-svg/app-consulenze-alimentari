@@ -301,7 +301,7 @@ function RecipeRowItem({ row, compId, onRemove, onUpdate }: {
             {expanded && (
                 <div style={{
                     display: 'flex', gap: 8, padding: '6px 10px 8px 34px',
-                    borderTop: '1px solid var(--m-border, #eee)',
+                    borderTop: '1px solid var(--m-border)',
                     background: 'rgba(0,0,0,0.02)',
                 }}>
                     <div style={{ flex: 1 }}>
@@ -343,6 +343,141 @@ function RecipeRowItem({ row, compId, onRemove, onUpdate }: {
     );
 }
 
+// ─── Sub-component: single additive row ──────────────────────────────────────
+function AdditiveRowItem({ row, compId, onRemove, onUpdate }: {
+    row: AdditiveRow;
+    compId: string;
+    onRemove: (compId: string, rowId: string) => void;
+    onUpdate: (compId: string, rowId: string, patch: Partial<AdditiveRow>) => void;
+}) {
+    const [gramsRaw, setGramsRaw] = useState(String(row.grams));
+    const [resaRaw, setResaRaw] = useState(String(row.resa));
+    const [eurRaw, setEurRaw] = useState(String(row.eurKg));
+    const [expanded, setExpanded] = useState(false);
+
+    const handleGrams = (v: string) => {
+        setGramsRaw(v);
+        const num = parseDecimalIT(v);
+        if (!isNaN(num) && num >= 0) onUpdate(compId, row.id, { grams: num });
+    };
+    const handleResa = (v: string) => {
+        setResaRaw(v);
+        const num = parseDecimalIT(v);
+        if (!isNaN(num) && num >= 0 && num <= 100) onUpdate(compId, row.id, { resa: num });
+    };
+    const handleEur = (v: string) => {
+        setEurRaw(v);
+        const num = parseDecimalIT(v);
+        if (!isNaN(num) && num >= 0) onUpdate(compId, row.id, { eurKg: num });
+    };
+
+    return (
+        <div style={{ marginBottom: 8, border: '1px solid var(--m-border)', borderRadius: 6, padding: 6 }}>
+            <div style={{ display: 'flex', gap: 6, alignItems: 'flex-start' }}>
+                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 4 }}>
+                    {/* Categoria */}
+                    <select
+                        className="m-input"
+                        aria-label="Categoria additivo"
+                        value={row.categoria}
+                        onChange={e => onUpdate(compId, row.id, {
+                            categoria: e.target.value,
+                            nomeSpecifico: '',
+                        })}
+                        style={{ fontSize: 12 }}
+                    >
+                        <option value="">— Categoria —</option>
+                        {ADDITIVI_CATEGORIE.map(c => (
+                            <option key={c} value={c}>{c}</option>
+                        ))}
+                    </select>
+                    {/* Nome specifico: select filtrato per categoria */}
+                    <select
+                        className="m-input"
+                        aria-label="Nome additivo"
+                        value={row.nomeSpecifico}
+                        onChange={e => onUpdate(compId, row.id, { nomeSpecifico: e.target.value })}
+                        disabled={!row.categoria}
+                        style={{ fontSize: 12, color: row.nomeSpecifico ? 'var(--m-text)' : 'var(--m-text-muted)' }}
+                    >
+                        <option value="">
+                            {row.categoria ? '— Seleziona additivo —' : '— Prima seleziona categoria —'}
+                        </option>
+                        {(ADDITIVI_SPECIFICI[row.categoria] || []).map(n => (
+                            <option key={n} value={n}>{n}</option>
+                        ))}
+                    </select>
+                </div>
+                <input
+                    className="m-input m-input--num"
+                    type="number"
+                    inputMode="decimal"
+                    min="0"
+                    step="1"
+                    value={gramsRaw}
+                    onChange={e => handleGrams(e.target.value)}
+                    style={{ width: 58, textAlign: 'right', flexShrink: 0, fontSize: 13, marginTop: 2 }}
+                    aria-label="Grammi additivo"
+                />
+                <button
+                    type="button"
+                    onClick={() => setExpanded(e => !e)}
+                    style={{ background: 'none', border: 'none', padding: 4, marginTop: 2, cursor: 'pointer', color: 'var(--m-text-muted)', flexShrink: 0 }}
+                    aria-label="Espandi dettagli additivo"
+                >
+                    {expanded ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
+                </button>
+                <button
+                    type="button"
+                    onClick={() => onRemove(compId, row.id)}
+                    style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#e53e3e', padding: 4, marginTop: 2 }}
+                    aria-label="Rimuovi additivo"
+                >
+                    <Trash2 size={13} />
+                </button>
+            </div>
+
+            {expanded && (
+                <div style={{ display: 'flex', gap: 8, marginTop: 6, paddingTop: 6, borderTop: '1px solid var(--m-border)' }}>
+                    <div style={{ flex: 1 }}>
+                        <label htmlFor={`add-resa-${row.id}`} style={{ fontSize: 12, color: 'var(--m-text-muted)', display: 'block', marginBottom: 2 }}>
+                            Resa %
+                        </label>
+                        <input
+                            id={`add-resa-${row.id}`}
+                            className="m-input m-input--num"
+                            type="number"
+                            inputMode="decimal"
+                            min="0"
+                            max="100"
+                            step="1"
+                            value={resaRaw}
+                            onChange={e => handleResa(e.target.value)}
+                            style={{ width: '100%', textAlign: 'right', fontSize: 12 }}
+                        />
+                    </div>
+                    <div style={{ flex: 1 }}>
+                        <label htmlFor={`add-eur-${row.id}`} style={{ fontSize: 12, color: 'var(--m-text-muted)', display: 'block', marginBottom: 2 }}>
+                            €/kg
+                        </label>
+                        <input
+                            id={`add-eur-${row.id}`}
+                            className="m-input m-input--num"
+                            type="number"
+                            inputMode="decimal"
+                            min="0"
+                            step="0.01"
+                            value={eurRaw}
+                            onChange={e => handleEur(e.target.value)}
+                            style={{ width: '100%', textAlign: 'right', fontSize: 12 }}
+                        />
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+}
+
 // ─── Sub-component: additive section ─────────────────────────────────────────
 function AdditiveSection({ comp, onAdd, onRemove, onUpdate }: {
     comp: MobileComponent;
@@ -353,7 +488,7 @@ function AdditiveSection({ comp, onAdd, onRemove, onUpdate }: {
     const [open, setOpen] = useState(false);
 
     return (
-        <div style={{ marginTop: 8, borderTop: '1px dashed var(--m-border, #ddd)', paddingTop: 6 }}>
+        <div style={{ marginTop: 8, borderTop: '1px dashed var(--m-border)', paddingTop: 6 }}>
             <button
                 type="button"
                 onClick={() => setOpen(o => !o)}
@@ -370,52 +505,13 @@ function AdditiveSection({ comp, onAdd, onRemove, onUpdate }: {
             {open && (
                 <div style={{ marginTop: 6 }}>
                     {comp.additiveRows.map(row => (
-                        <div key={row.id} style={{
-                            display: 'flex', gap: 6, alignItems: 'flex-start',
-                            marginBottom: 8,
-                        }}>
-                            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 4 }}>
-                                {/* Categoria */}
-                                <select
-                                    className="m-input"
-                                    aria-label="Categoria additivo"
-                                    value={row.categoria}
-                                    onChange={e => onUpdate(comp.id, row.id, {
-                                        categoria: e.target.value,
-                                        nomeSpecifico: '',
-                                    })}
-                                    style={{ fontSize: 12 }}
-                                >
-                                    <option value="">— Categoria —</option>
-                                    {ADDITIVI_CATEGORIE.map(c => (
-                                        <option key={c} value={c}>{c}</option>
-                                    ))}
-                                </select>
-                                {/* Nome specifico: select filtrato per categoria */}
-                                <select
-                                    className="m-input"
-                                    aria-label="Nome additivo"
-                                    value={row.nomeSpecifico}
-                                    onChange={e => onUpdate(comp.id, row.id, { nomeSpecifico: e.target.value })}
-                                    disabled={!row.categoria}
-                                    style={{ fontSize: 12, color: row.nomeSpecifico ? 'var(--m-text)' : 'var(--m-text-muted)' }}
-                                >
-                                    <option value="">
-                                        {row.categoria ? '— Seleziona additivo —' : '— Prima seleziona categoria —'}
-                                    </option>
-                                    {(ADDITIVI_SPECIFICI[row.categoria] || []).map(n => (
-                                        <option key={n} value={n}>{n}</option>
-                                    ))}
-                                </select>
-                            </div>
-                            <button
-                                type="button"
-                                onClick={() => onRemove(comp.id, row.id)}
-                                style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#e53e3e', padding: 4, marginTop: 2 }}
-                            >
-                                <Trash2 size={13} />
-                            </button>
-                        </div>
+                        <AdditiveRowItem
+                            key={row.id}
+                            row={row}
+                            compId={comp.id}
+                            onRemove={onRemove}
+                            onUpdate={onUpdate}
+                        />
                     ))}
                     <button
                         type="button"
@@ -493,7 +589,7 @@ function ComponentCard({
                     aria-expanded={!collapsed}
                     aria-label={`${collapsed ? 'Espandi' : 'Comprimi'} componente ${index + 1}`}
                     style={{
-                        borderBottom: collapsed ? 'none' : '1px solid var(--m-border, #e0e0e0)',
+                        borderBottom: collapsed ? 'none' : '1px solid var(--m-border)',
                         cursor: 'pointer',
                         userSelect: 'none',
                     }}
@@ -930,6 +1026,7 @@ export function CalcoloTab({
                 className="m-btn m-btn--primary m-btn--full"
                 onClick={onGoToTabella}
                 disabled={!hasIngredients}
+                title={!hasIngredients ? 'Aggiungi almeno un ingrediente per continuare' : undefined}
             >
                 Vai a Mercati <ArrowRight size={14} />
             </button>

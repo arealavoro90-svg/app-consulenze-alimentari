@@ -277,3 +277,89 @@ Estratta la formula QUID (per singolo ingrediente) in una funzione pura `calcQui
 ### Cosa resta aperto
 
 - Discrepanza desktop/mobile sul calcolo QUID: il mobile (`mobile/RiepilogoTab.tsx`) non applica la correzione per l'acqua persa in cottura che il desktop ha sempre avuto — non è il bug segnalato in questa sessione (mobile non ha mai avuto lo scarto header/riga, essendo la stessa formula in entrambi i punti), ma resta una differenza di precisione tra le due piattaforme non ancora armonizzata.
+
+---
+
+## Roadmap consolidamento — prossimi passi (definita 2026-07-30)
+
+Discussa con l'utente dopo il deploy in produzione di AUTH-2/QUID/pulizia dati. Ottica: Valori Nutrizionali è il primo tool che verrà commercializzato — "pronto" significa che i numeri prodotti sono affidabili senza bisogno di ricontrollo manuale, non solo "non crasha".
+
+### Fascia 1 — Fiducia nei numeri (blocca la vendita se sbagliato)
+- [ ] Estendere la verifica dati oltre i 12 ingredienti controllati — il resto del database (~1053 ingredienti) non è mai stato confrontato con una fonte esterna in modo sistematico, solo a campione una volta (V6 in `AUDIT.md`).
+- [ ] Test su `CustomIngredientModal.tsx` (605 righe, 0 test oggi) — punto di inserimento dati manuale, nessuna rete di sicurezza automatica prima della stampa.
+- [ ] Allineare il QUID mobile al desktop — il mobile non applica la correzione per l'acqua persa in cottura (vedi sezione precedente).
+
+### Fascia 2 — Cose che un cliente pagante nota subito
+- [ ] Finire BUG-1 sui 4 calcolatori rimasti (Trattamento Termico, Schede Complete, Etichette Vini, Etichette) + `ArchiveModal` condiviso — oggi solo Scheda Processo e Rintracciabilità hanno dialog professionali (`ConfirmDialog`/`PromptDialog`/`Toast`), gli altri 4 + il modal archivio condiviso usano ancora `alert`/`confirm`/`prompt` nativi del browser.
+- [ ] Documenti GDPR (informativa privacy, cookie policy, DPA Vercel) — checklist già pronta in `AUDIT.md`, non ancora scritti.
+
+### Fascia 3 — Debito tecnico (non blocca la vendita, rallenta le modifiche future)
+- [ ] 25 avvisi eslint strutturali rimasti nel perimetro Nutrizionale (`react-hooks/set-state-in-effect`, `static-components`, `exhaustive-deps`, `no-explicit-any`) — vedi sezione lint scoped sopra.
+- [ ] `NutrizionaleCalc.tsx` resta un monolite (~2180 righe) anche dopo l'estrazione di `CustomIngredientModal`.
+- [ ] Pulizia fuori perimetro: `localizationModule.ts` orfano, `thermalEngine.ts`/`costsEngine.ts` morti negli altri tool.
+
+### Fuori dal mio perimetro
+- Provisioning account clienti reali (AUTH-1) — riservato all'utente + sviluppatore esterno.
+- Modalità demo/prova per la commercializzazione — decisione di prodotto da progettare, non ancora scoped.
+
+---
+
+## UI/UX Fase A — audit + fix implementati (2026-07-31)
+
+**Fase A (analisi)**: 4 agenti dispatchati in parallelo (`design:design-system`+`frontend-design`, `design:accessibility-review`, `design:design-critique`, `design:ux-copy`), sola lettura, consolidati in `UI-UX-AUDIT.md` (405 righe): 17 divergenze token, 24 problemi accessibilità (6 critical), 6/6 funzioni con divergenze desktop/mobile, ~19 stringhe microcopy problematiche.
+
+**Fase A.1 (fix mirati, stesso giorno)**: perimetro Nutrizionale + componenti condivisi (`ConfirmDialog`, `index.css`, `mobile.css`) — **tabelle nazionali mai toccate**, come richiesto. 9 fix applicati:
+
+1. `SmartImportModal.tsx` — bottone "Analizza ricetta" finto-disabled (`onClick` condizionale) → `disabled` HTML reale + `title`.
+2. `CustomIngredientModal.tsx` — dialog senza semantica: aggiunto `role="dialog"`/`aria-modal`/`aria-labelledby`, gestione Escape, `aria-label` su bottone chiusura.
+3. `CustomIngredientModal.tsx` — campo Fibre marcato "*" (obbligatorio) ma facoltativo nel codice → "○".
+4. `mobile/CalcoloTab.tsx` — bottone "Vai a Mercati" disabled ora con `title` che spiega il motivo.
+5. `ArchivioTab.tsx` — riga archivio apribile da tastiera; bottone "Elimina" sempre visibile (non solo via long-press touch).
+6. `BrowseIngredientsModal.tsx` — riga espandibile raggiungibile da tastiera; aggiunta gestione Escape.
+7. Naming incoerente ("tab Calcolo"/"scheda Tabella" nei messaggi vs "Ricetta"/"Mercati" reali in UI) corretto in `TabellaTab.tsx`/`ArchivioTab.tsx`.
+8. **QUID + additivi mobile** (`RiepilogoTab.tsx`) — stesso bug della sessione precedente (header/riga desktop), mai propagato al mobile: ora usa `calcQuid()` dell'engine con correzione acqua-cottura, e include il peso additivi nei totali (prima ignorato). Bug di correttezza dati, non solo UX.
+9. **Contrasto arancio WCAG** — `.btn-accent`/`.m-btn--accent`/`ConfirmDialog` (3 varianti) passavano da 2.54-4.13:1 a testo bianco; nuovi shade più scuri stessa tonalità (calcolo luminanza relativa reale, non stimato) → 4.73-6.29:1. Token brand originali (`--color-orange`/`--m-orange`) invariati dove già conformi (icone su navy, 7.28:1).
+
+Inoltre: rimossi 6 fallback CSS errati (`var(--m-text-muted, #5e6b80)` ecc. — il valore reale non corrispondeva al fallback scritto).
+
+**Verifica**: `tsc -b --noEmit` pulito e `npx vitest run` 104/104 verdi dopo ogni fix, ripetuto ad ogni step.
+
+**Non toccato (debito residuo)**:
+- Funzioni "Guida"/"Database" assenti su mobile (gap di scope, non bug).
+- Focus trap ciclico assente sui 7 dialog del tool, touch target sotto 44px vari, contrasto sidebar fly-out, copy/tono (emoji, blocco hero marketing) — non toccati, restano in `UI-UX-AUDIT.md`.
+
+Dettaglio completo per ogni fix (file:riga, motivazione) in `UI-UX-AUDIT.md`, sezione "Stato interventi".
+
+---
+
+## Fase A.2 — token CSS + additivi mobile pesabili (2026-07-31)
+
+Due item rimasti aperti dopo la Fase A.1, sbloccati su richiesta esplicita dell'utente, uno alla volta.
+
+### 1. Consolidamento 4 sistemi `:root` sovrapposti
+
+**Rischio**: `unified-tokens.css`, `motion.css`, `mobile.css`, `index.css` dichiaravano ciascuno un proprio set di `--color-*`/`--radius-*`/`--shadow-*`/`--m-*`, con valori spesso diversi per lo stesso nome — quale vincesse dipendeva dall'ordine di import, fragile a ogni modifica futura.
+
+**Verifica preliminare**: script Python che risolve gli alias `var()` prima di confrontare i valori (non solo i nomi) — ha permesso di distinguere conflitti reali da falsi positivi. Trovato un caso critico: `--color-bg-card` (`index.css`, `#ffffff`) e `--surface` (`unified-tokens.css`, `#eef1f5`) hanno lo stesso ruolo percepito ma valore **intenzionalmente diverso** (card bianche vs sfondo grigio generale) — escluso dalla rimozione, con commento di avviso inline.
+
+**Fix** (4 file, `unified-tokens.css` come unica fonte):
+1. `unified-tokens.css` — riallineati ai valori attualmente vincenti: `--surface` `#ffffff`→`#eef1f5`, `--border-focus` rgba→`#ff7e2e`, `--r-sm/md/lg` `4/8/10px`→`6/10/16px`, `--shadow-card` da riferimento a valore letterale. Rimosso blocco morto `@media (max-width: 899px)` che avrebbe ristretto i radius solo su mobile una volta tolta la dichiarazione ridondante di `index.css`.
+2. `motion.css` — rimosso blocco duplicato `--radius-*`/`--shadow-*`/`--color-*` (~30 righe), sostituito con commento di riferimento a `unified-tokens.css` (verificato via grep: nessun file importa `motion.css` da solo).
+3. `index.css` — rimosse 17 dichiarazioni `:root` duplicate-confermate (`--color-navy`, `--color-orange`, `--color-bg`, `--color-surface`, `--color-border(-focus)`, `--color-text(-muted)`, `--color-accent(-bg)`, `--color-danger/warning/success`, `--radius-sm/md/lg`, `--shadow-card`). **Tenuto** `--color-bg-card` con commento di avviso (vedi sopra).
+4. `mobile.css` — verificato: non dichiarava nessuno dei 4 token in conflitto, nessuna modifica necessaria.
+
+**Verifica**: confronto valore-per-valore (script) prima/dopo su tutti i token toccati → **zero variazione visiva** per costruzione (i valori vincenti sono stati preservati, solo deduplicati). `tsc -b --noEmit` pulito, `npx vitest run` 104/104 verdi.
+
+### 2. Additivi mobile pesabili (parità con desktop)
+
+**Gap**: `mobile/CalcoloTab.tsx`, sezione additivi — solo 2 `<select>` (categoria/nome), nessun input numerico. `grams`/`eurKg`/`resa` restavano fissi a `0`/`0`/`100` per ogni additivo aggiunto (`NutrizionaleCalcMobile.tsx`, `addAdditiveRow`) — un additivo pesante (es. un conservante dosato in grammi rilevanti) non contribuiva al peso finito né al costo ricetta su mobile, a differenza del desktop.
+
+**Verifica preliminare**: `updateAdditiveRow(compId, rowId, patch: Partial<AdditiveRow>)` già accettava qualunque campo — nessuna limitazione nel data layer, mancava solo l'input UI.
+
+**Fix**: estratto `AdditiveRowItem` (nuovo sub-componente in `mobile/CalcoloTab.tsx`), stesso pattern già in uso per gli ingredienti (`RecipeRowItem`): stato locale per stringa grezza (`gramsRaw`/`resaRaw`/`eurRaw`) + `parseDecimalIT()` con validazione di range, input grammi in riga principale, resa/€kg in sezione espandibile. Rimosso il commento `ponytail` in `NutrizionaleCalcMobile.tsx` che descriveva la limitazione ora risolta.
+
+**Verifica**: `tsc -b --noEmit` pulito, `npx vitest run --exclude '**/.worktrees/**' --exclude '**/.claude/**'` → 104/104 verdi.
+
+### Cosa resta aperto (invariato da Fase A.1)
+- Funzioni "Guida"/"Database" assenti su mobile.
+- Focus trap sui 7 dialog, touch target <44px vari, contrasto sidebar fly-out, copy/tono residuo — in `UI-UX-AUDIT.md`.

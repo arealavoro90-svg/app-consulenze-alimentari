@@ -12,11 +12,17 @@
    --enfold-main-color-bg:          #fafafa  (sfondo chiaro)
    ======================================================================== */
 :root {
-  /* Brand core */
-  --color-navy: #0c1326;
+  /* Brand core — --color-navy/--color-orange/--color-bg/--color-surface/--color-border/
+     --color-border-focus/--color-text/--color-text-muted/--color-accent/--color-accent-bg/
+     --color-danger/--color-warning/--color-success/--radius-sm/--radius-md/--radius-lg/
+     --shadow-card forniti da unified-tokens.css (caricato prima) — valori verificati identici,
+     rimossi qui per eliminare i 3 sistemi di token sovrapposti. --color-bg-card resta qui
+     apposta: pur avendo lo stesso nome del mapping unified, ha un valore diverso e intenzionale
+     (bianco puro per le card, contro il grigio chiaro di --color-surface) — NON unificare. */
   --color-navy-light: #1a2540;
-  --color-orange: #ff7e2e;
   --color-orange-hover: #dd5c0c;
+  /* Stessa tonalità, più scura: testo bianco sopra raggiunge 4.87:1 (WCAG AA 4.5:1). --color-orange resta invariato per icone/accenti su sfondo scuro, già conforme. */
+  --color-orange-a11y: #b25820;
   --color-orange-light: #ff9f4f;
   --color-green: #43821c;
   --color-green-light: #5aa024;
@@ -31,36 +37,19 @@
   --color-sidebar-active-text: #ff9f4f;
 
   /* Main content area (light) */
-  --color-bg: #f4f6f9;
   --color-bg-card: #ffffff;
   --color-bg-input: #f8f9fb;
-  --color-surface: #eef1f5;
-  --color-border: #dde2ea;
-  --color-border-focus: #ff7e2e;
 
   /* Text */
-  --color-text: #1a1f2e;
-  --color-text-muted: #5e6b80;
   --color-text-dim: #9ba8bb;
 
   /* Accents (mapped to orange for UI elements) */
-  --color-accent: #ff7e2e;
   --color-accent-light: #ff9f4f;
-  --color-accent-bg: rgba(255, 126, 46, 0.08);
   --color-primary: #0c1326;
   --color-primary-light: #1a2540;
 
-  /* Status */
-  --color-danger: #e53e3e;
-  --color-warning: #d97706;
-  --color-success: #43821c;
-
   /* Layout */
   --sidebar-width: 260px;
-  --radius-sm: 6px;
-  --radius-md: 10px;
-  --radius-lg: 16px;
-  --shadow-card: 0 1px 4px rgba(12, 19, 38, 0.06), 0 4px 16px rgba(12, 19, 38, 0.08);
   --shadow-glow: 0 0 20px rgba(255, 126, 46, 0.15);
   --transition: 0.2s ease;
 
@@ -1129,7 +1118,7 @@ a:focus-visible,
 }
 
 .btn-accent {
-  background: linear-gradient(135deg, var(--color-orange), var(--color-orange-hover));
+  background: var(--color-orange-a11y);
   color: #fff;
   box-shadow: 0 2px 10px rgba(255, 126, 46, 0.30);
 }

@@ -361,7 +361,9 @@ function PhaseInput({
       />
       <button
         type="button"
-        onClick={!isEmpty ? onAnalyze : undefined}
+        onClick={onAnalyze}
+        disabled={isEmpty}
+        title={isEmpty ? 'Incolla il testo della ricetta prima di analizzare' : undefined}
         style={{
           alignSelf: 'flex-end',
           display: 'flex',

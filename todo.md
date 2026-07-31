@@ -61,9 +61,20 @@ Obiettivo: NutrizionaleCalcMobile = NutrizionaleCalc al 100%.
 
 - [ ] **AUTH-1** — Pianificare backend reale (JWT/OAuth2) prima di uso commerciale.
       Auth attuale è mock frontend-only, password in chiaro in localStorage.
+      Aggiornamento 2026-07-29: backend Django collegato e funzionante (vedi S0), ma
+      esiste un solo utente reale (`admin@aea.it`) — mancano gli account clienti.
 - [ ] **AUTH-2** — Go-live Django: rimuovere fallback mock in `src/api/auth.ts`
       (apiLogin catch→MOCK_USERS, apiMe catch→aea_user cache). aea_user è manipolabile
       da console → role admin lato client. Marcato con TODO go-live (audit 2026-07-17).
+      Bloccato da AUTH-1 (senza account clienti reali, rimuovere il mock blocca tutti).
+
+      **Piano pianificato 2026-07-29 (stima ~2,5-3h):**
+      - A. Decisione: niente self-signup, account creati da staff via Django admin (già pronto in `apps/users/admin.py`) — 5 min
+      - B. Migrare/creare utenti reali in Django con ruolo + `purchased_tools` — 25-45 min
+      - C. Rimuovere fallback mock in `auth.ts`, decidere sorte bottone "Entra come Demo", tsc+lint+test — 45 min
+      - D. Test end-to-end: login per ogni ruolo, gating strumenti, logout/sessione scaduta — 45 min
+      - E. Deploy + verifica prod (stesso pattern S0) — 20 min
+      - Escluso: reset password via email (+2-4h, serve provider email non configurato), S8 GDPR (separato), import massivo clienti reali (scoping a parte)
 - [x] **TAB-UNIFY** — COMPLETATO 2026-07-17: tabelle Canada/Australia/Arabi unificate
       sui file condivisi Tab{Canada,Australia,Arabi}.tsx (sorgente normativa = versione
       desktop, come deciso). Inline desktop rimosse (~476 righe), snapshot di guardia
@@ -80,6 +91,10 @@ Obiettivo: NutrizionaleCalcMobile = NutrizionaleCalc al 100%.
 - [ ] **ETI-1** — Gap analysis EtichetteCalc: verificare se campi e PDF output
       coprono la specifica originale. Decidere se integrarla con nutritionalEngine
       o mantenerla standalone come generatore etichette grafiche.
+
+- [ ] **GUIDA-1** — Modificare la guida del tool nutrizionale (il modal "Guida rapida"
+      / onboarding a 3 passi in NutrizionaleCalc.tsx). Dettagli di cosa cambiare da
+      raccogliere a inizio sessione — richiesto 2026-07-17, non ancora scoperto cosa.
 
 ---
 
@@ -108,6 +123,14 @@ Obiettivo: NutrizionaleCalcMobile = NutrizionaleCalc al 100%.
 
 ## COMPLETATI
 
+- [x] **S0** — Backend Django collegato al frontend in produzione (2026-07-29). `VITE_API_URL`
+      impostata in prod (mancava, root cause per cui il backend non veniva mai chiamato); trovato
+      e corretto bug reale in `vercel.json`: `connect-src 'self'` nella CSP bloccava ogni fetch
+      verso il backend prima ancora di CORS. Verificato end-to-end in Safari: `/api/auth/me/` e
+      `/api/ingredients/` rispondono 401 dal backend reale (atteso, utente demo non esiste in
+      Django). Postgres Neon già con 1065/1071 ingredienti. Resta aperto: `public/data/ingredientsDB.json`
+      non rimovibile finché non esistono account clienti reali (vedi AUTH-1/2); endpoint di
+      ricerca e rate limiting ancora da fare (vedi AUDIT.md S0).
 - [x] **MOB-P1-0** — Ricerca ingredienti da DB → calcolo automatico in mobile CalcoloTab (2026-05-30).
       CalcoloTab riscritto: niente input manuali nutrienti. Ingredienti DB → calcNutrients() auto.
       File: NutrizionaleCalcMobile.tsx, CalcoloTab.tsx. Deploy produzione OK.

@@ -83,7 +83,10 @@
       "Bash(echo \"TSC_EXIT:$?\")",
       "Bash(git revert:*)",
       "Bash(git -C /Users/novanta/Desktop/APP/App_prova worktree list)",
-      "Bash(awk -F: '$1 < 2891 || $1 > 3365')"
+      "Bash(awk -F: '$1 < 2891 || $1 > 3365')",
+      "Bash(git check-ignore:*)",
+      "Bash(git worktree:*)",
+      "Bash(curl -s -X POST https://backend-snowy-seven-98.vercel.app/api/auth/login/ -H 'Content-Type: application/json' -d '{\"email\":\"admin@aea.it\",\"password\":\"Admin2024!\"}')"
     ]
   },
   "hooks": {

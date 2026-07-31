@@ -25,10 +25,10 @@
 
   /* Layout background — UGUALE desktop e mobile */
   --bg:        #f4f6f9;
-  --surface:   #ffffff;
+  --surface:   #eef1f5;
   --surface-2: #f0f2f6;
   --border:    #dde2ea;
-  --border-focus: rgba(255, 126, 46, 0.4);
+  --border-focus: #ff7e2e;
 
   /* Sidebar — invariata */
   --sidebar-bg:     #0c1326;
@@ -50,10 +50,10 @@
   --danger:  #e53e3e;
   --warning: #d97706;
 
-  /* Radius — max 10px su componenti primari */
-  --r-sm: 4px;
-  --r-md: 8px;
-  --r-lg: 10px;
+  /* Radius */
+  --r-sm: 6px;
+  --r-md: 10px;
+  --r-lg: 16px;
 
   /* Shadow — sottili */
   --shadow-sm: 0 1px 3px rgba(12, 19, 38, 0.06);
@@ -66,17 +66,6 @@
   --tabbar-h:  60px;   /* mobile bottom tab */
 }
 
-
-/* ═══════════════════════════════════════════════════════════
-   SECTION 2: MOBILE OVERRIDES — solo dimensioni, non colori
-   ═══════════════════════════════════════════════════════════ */
-
-@media (max-width: 899px) {
-  :root {
-    --topbar-h: 52px;
-    --r-md:     8px;
-  }
-}
 
 
 /* ═══════════════════════════════════════════════════════════
@@ -141,6 +130,6 @@ textarea {
   --radius-full: 9999px;
 
   /* Mapping shadow legacy */
-  --shadow-card:  var(--shadow-sm);
+  --shadow-card:  0 1px 4px rgba(12, 19, 38, 0.06), 0 4px 16px rgba(12, 19, 38, 0.08);
   --shadow-focus: 0 0 0 3px rgba(255, 126, 46, 0.12);
 }

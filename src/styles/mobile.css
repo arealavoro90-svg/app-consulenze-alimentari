@@ -6,6 +6,8 @@
   --m-navy:         #0c1326;
   --m-orange:       #ff7e2e;
   --m-orange-hover: #dd5c0c;
+  /* Stessa tonalità, più scura: testo bianco sopra raggiunge 4.87:1 (WCAG AA 4.5:1). --m-orange resta invariato per icone/accenti. */
+  --m-orange-a11y:  #b25820;
   --m-green:        #43821c;
   --m-border:       #e8e0d8;
   --m-border-light: #f0ebe3;
@@ -200,7 +202,7 @@
 }
 .m-btn:active { transform: scale(0.98); opacity: 0.9; }
 .m-btn--primary   { background: var(--m-navy); color: var(--m-orange); }
-.m-btn--accent    { background: var(--m-orange); color: #fff; }
+.m-btn--accent    { background: var(--m-orange-a11y); color: #fff; }
 .m-btn--green     { background: var(--m-green); color: #fff; }
 .m-btn--ghost     { background: var(--m-border); color: var(--m-text); }
 .m-btn--full      { width: 100%; }
@@ -263,6 +265,14 @@
 }
 .m-archive-meta { font-size: 11px; color: var(--m-text-muted); margin-top: 2px; }
 .m-archive-chevron { color: var(--m-text-faint); flex-shrink: 0; }
+.m-archive-delete-btn {
+  display: flex; align-items: center; justify-content: center;
+  width: 44px; height: 44px; flex-shrink: 0;
+  border: none; background: none; border-radius: 8px;
+  color: var(--m-text-faint); cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.m-archive-delete-btn:hover, .m-archive-delete-btn:focus-visible { color: #c53030; background: rgba(197,48,48,0.08); }
 
 /* ── Tools grid ─────────────────────────────────────────────────────────── */
 .m-tools-grid {

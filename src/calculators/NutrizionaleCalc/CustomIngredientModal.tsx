@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ChevronDown, ChevronRight, X, AlertTriangle, Save } from 'lucide-react';
 import { InfoTooltip } from './NutrizionaleCalc';
 import { isValidDBIngredient } from '../../utils/validation';
@@ -84,6 +84,12 @@ export function CustomIngredientModal({ onClose, onSave, initialIngredient, orig
     initialIngredient?: DBIngredient;
     originalNome?: string; // nome dell'ingrediente originale da rimuovere in caso di modifica
 }) {
+    useEffect(() => {
+        const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
+        document.addEventListener('keydown', handler);
+        return () => document.removeEventListener('keydown', handler);
+    }, [onClose]);
+
     const s = (v: number | undefined) => (v != null && v !== 0) ? String(v) : '';
     // Info base
     const [nome, setNome] = useState(initialIngredient?.nome ?? '');
@@ -339,13 +345,18 @@ export function CustomIngredientModal({ onClose, onSave, initialIngredient, orig
 
     return (
         <_ClearErrorsCtx.Provider value={clearErrors}>
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.55)', zIndex: 2000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
+        <div
+            style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.55)', zIndex: 2000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="custom-ing-modal-title"
+        >
             <div className="card" style={{ width: '100%', maxWidth: 700, maxHeight: '92vh', overflowY: 'auto' }}>
 
                 {/* Header */}
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-                    <h3 style={{ margin: 0 }}>{initialIngredient ? 'Modifica ingrediente' : 'Aggiungi ingrediente al Database'}</h3>
-                    <button className="btn btn-outline" onClick={onClose} style={{ display: 'flex', alignItems: 'center' }}><X size={14} /></button>
+                    <h3 id="custom-ing-modal-title" style={{ margin: 0 }}>{initialIngredient ? 'Modifica ingrediente' : 'Aggiungi ingrediente al Database'}</h3>
+                    <button className="btn btn-outline" onClick={onClose} aria-label="Chiudi" style={{ display: 'flex', alignItems: 'center' }}><X size={14} /></button>
                 </div>
 
                 {/* Legenda */}
@@ -429,7 +440,7 @@ export function CustomIngredientModal({ onClose, onSave, initialIngredient, orig
                         <NF label="* Carboidrati totali" value={carboidrati} onChange={setCarboidrati} err={!carboidrati && errors.length > 0} />
                         <NF label="* Zuccheri" value={zuccheri} onChange={setZuccheri} err={!zuccheri && errors.length > 0} />
                         <NF
-                            label="* Fibre alimentari (altamente consigliato, anche se non obbligatorio in base al Reg. UE 1169/2011)"
+                            label="○ Fibre alimentari (altamente consigliata, non obbligatoria in base al Reg. UE 1169/2011)"
                             value={fibre} onChange={v => { setFibre(v); clearErrors(); }}
                         />
                         <NF label="* Proteine" value={proteine} onChange={setProteine} err={!proteine && errors.length > 0} />

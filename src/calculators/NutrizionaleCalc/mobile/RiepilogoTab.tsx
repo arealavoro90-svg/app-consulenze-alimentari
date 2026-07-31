@@ -1,6 +1,9 @@
 import React, { useState } from 'react';
 import { Scale, Euro } from 'lucide-react';
 import type { MobileComponent } from '../NutrizionaleCalcMobile';
+import { calcQuid } from '../../../engines/nutrizionaleCalcEngine';
+
+const isAcqua = (nome: string) => (nome || '').trim().toLowerCase() === 'acqua';
 
 // ─── Merged ingredient row (desktop-equivalent) ───────────────────────────────
 export interface MergedIngredient {
@@ -63,9 +66,15 @@ export function RiepilogoTab({ components, pesoFinito, presentAllergens, crossAl
 
     // ── totals ────────────────────────────────────────────────────────────────
     const totGrammiTotali = merged.reduce((s, r) => s + r.grammiTotali, 0);
-    const totGrammiXpzuv  = merged.reduce((s, r) => s + r.grammiXpzuv, 0);
-    const pesoFinitoPz    = pesoFinito > 0 ? pesoFinito : totGrammiXpzuv;
-    const totQuid         = pesoFinitoPz > 0 ? (totGrammiXpzuv / pesoFinitoPz * 100) : 0;
+    const totAdditiveGramsXpzuv = components.reduce(
+        (s, c) => s + c.additiveRows.reduce((rs, r) => rs + (r.grams || 0), 0) / (c.pzUV || 1), 0
+    );
+    const totGrammiXpzuv = merged.reduce((s, r) => s + r.grammiXpzuv, 0) + totAdditiveGramsXpzuv;
+    const pesoFinitoPz   = pesoFinito > 0 ? pesoFinito : totGrammiXpzuv;
+    const caloAcqua      = totGrammiXpzuv > pesoFinitoPz ? totGrammiXpzuv - pesoFinitoPz : 0;
+    const totQuid        = merged.reduce(
+        (s, r) => s + calcQuid(r.grammiXpzuv, isAcqua(r.ing.nome), caloAcqua, pesoFinitoPz), 0
+    );
 
     let totCostoUV = 0;
     for (const r of merged) {
@@ -151,7 +160,7 @@ export function RiepilogoTab({ components, pesoFinito, presentAllergens, crossAl
             <div style={{ padding: '8px 16px 0', display: 'flex', flexDirection: 'column', gap: 8 }}>
                 {merged.map((row, i) => {
                     const pct   = totGrammiXpzuv > 0 ? row.grammiXpzuv / totGrammiXpzuv * 100 : 0;
-                    const quid  = pesoFinitoPz > 0 ? row.grammiXpzuv / pesoFinitoPz * 100 : 0;
+                    const quid  = calcQuid(row.grammiXpzuv, isAcqua(row.ing.nome), caloAcqua, pesoFinitoPz);
                     const costoKgPulito = row.eurKg > 0 ? row.eurKg / ((row.resa || 100) / 100) : 0;
                     const fabb  = row.grammiXpzuv / ((row.resa || 100) / 100);
                     const costoUV = row.eurKg > 0 ? (fabb / 1000) * row.eurKg : 0;
