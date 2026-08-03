@@ -764,11 +764,9 @@ body:has(.calc-outer-shell) {
   color: rgba(255,255,255,0.8);
 }
 .sidebar-flyout-item.active {
-  background: rgba(255,126,46,0.15);
-  border-left: 3px solid var(--color-orange);
+  background: rgba(255,126,46,0.22);
   color: var(--color-orange-light);
   font-weight: 600;
-  padding-left: 5px;
 }
 .sidebar-flyout-footer {
   border-top: 1px solid rgba(255,255,255,0.07);
@@ -1081,12 +1079,11 @@ a:focus-visible,
 }
 
 .stat-card {
-  background: var(--color-bg-input);
-  border: 1px solid var(--color-border);
+  background: var(--color-accent-bg);
+  border: 1px solid rgba(255, 126, 46, 0.18);
   border-radius: var(--radius-md);
   padding: 16px;
   text-align: center;
-  border-top: 3px solid var(--color-orange);
 }
 
 .stat-card .stat-value {
@@ -1400,8 +1397,8 @@ a:focus-visible,
   position: fixed;
   bottom: 0; left: 0; right: 0;
   height: 60px;
-  background: white;
-  border-top: 1px solid var(--color-border);
+  background: var(--color-bg-card);
+  border-top: 1.5px solid var(--color-border);
   justify-content: space-around;
   align-items: center;
   z-index: 100;
@@ -1419,14 +1416,34 @@ a:focus-visible,
   cursor: pointer;
   color: var(--color-text-muted);
   font-size: 10px;
-  font-weight: 500;
+  font-weight: 600;
   padding: 4px 0;
   line-height: 1;
   font-family: inherit;
+  position: relative;
+  transition: color var(--dur-fast, 150ms) ease;
+  -webkit-tap-highlight-color: transparent;
 }
-.mob-tab-item svg { color: var(--color-text-muted); }
+.mob-tab-item svg {
+  color: var(--color-text-muted);
+  transition: color var(--dur-fast, 150ms) ease, transform var(--dur-fast, 150ms) ease;
+}
 .mob-tab-item.active { color: var(--color-orange); }
-.mob-tab-item.active svg { color: var(--color-orange); stroke: var(--color-orange); }
+.mob-tab-item.active svg {
+  color: var(--color-orange);
+  transform: translateY(-1px);
+}
+.mob-tab-item.active::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 22%;
+  right: 22%;
+  height: 3px;
+  background: var(--color-orange);
+  border-radius: 0 0 3px 3px;
+}
+.mob-tab-item:active { transform: scale(0.93); transition: transform 80ms ease; }
 
 /* ── Mobile layout overrides (768px — matches HTML breakpoint) ── */
 @media (max-width: 768px) {
@@ -1439,6 +1456,15 @@ a:focus-visible,
     min-height: unset !important;
     padding: 0;
   }
+
+  /* BrowseIngredientsModal: nascondi mini valori in riga collassata, il nome
+     resta sempre leggibile — i valori restano disponibili tappando per espandere */
+  .bim-mini-val { display: none; }
+  /* ...e ripeti il nome nel pannello espanso (l'header può scrollare fuori vista) */
+  .bim-expanded-name { display: block !important; }
+  /* Badge/bottone compattati per lasciare più spazio al nome su schermi stretti */
+  .bim-badge { padding: 2px 6px !important; font-size: 10px !important; }
+  .bim-edit-btn { padding: 4px 8px !important; font-size: 11px !important; }
 
   /* Prodotto strip: full-width fields on mobile */
   .prodotto-strip { gap: 6px; }
@@ -2132,8 +2158,9 @@ a:focus-visible,
 .ing-delete-btn {
   background: transparent; border: 1.5px solid transparent; border-radius: 6px;
   color: var(--color-text-muted); cursor: pointer; padding: 3px 5px;
-  display: flex; align-items: center; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
   transition: all 0.15s ease; line-height: 1; margin-left: 8px;
+  min-width: 44px; min-height: 44px;
 }
 .ing-delete-btn:hover { background: rgba(229,62,62,.08); border-color: rgba(229,62,62,.25); color: #e53e3e; }
 .ing-card-body { display: grid; grid-template-columns: 2.2fr 1fr 1fr; }

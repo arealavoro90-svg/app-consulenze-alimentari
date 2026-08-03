@@ -132,6 +132,11 @@ function ExpandedDetails({ ing }: { ing: DBIngredient }) {
 
     return (
         <div style={{ paddingTop: 10, paddingBottom: 4 }}>
+            {/* Nome ripetuto qui: su mobile l'header collassato può scrollare fuori vista
+                quando il pannello espanso è alto (molti valori) */}
+            <div className="bim-expanded-name" style={{ display: 'none', fontWeight: 600, fontSize: 14, marginBottom: 6 }}>
+                {ing.nome}
+            </div>
             {visibleMacros.length > 0 && (
                 <>
                     <div style={sectionTitle}>Macronutrienti</div>
@@ -361,12 +366,13 @@ export function BrowseIngredientsModal({ onClose, db, onEditIngredient }: Props)
                                     </span>
 
                                     {/* Badge */}
-                                    <span style={isCustom ? badgeCustomStyle : badgeDBStyle}>
+                                    <span className="bim-badge" style={isCustom ? badgeCustomStyle : badgeDBStyle}>
                                         {isCustom ? 'Personale' : 'DB'}
                                     </span>
 
-                                    {/* Mini valori */}
-                                    <span style={miniValStyle}>
+                                    {/* Mini valori — nascosti sotto 560px: sul mobile schiacciavano il nome, i valori
+                                        sono comunque disponibili tappando la riga per espandere (ExpandedDetails). */}
+                                    <span className="bim-mini-val" style={miniValStyle}>
                                         {ing.kcal} kcal &nbsp;|&nbsp;
                                         G {fmt(ing.grassi)} g &nbsp;|&nbsp;
                                         C {fmt(ing.carboidrati)} g &nbsp;|&nbsp;
@@ -376,7 +382,7 @@ export function BrowseIngredientsModal({ onClose, db, onEditIngredient }: Props)
 
                                     {/* Modifica */}
                                     <button
-                                        className="btn btn-outline"
+                                        className="btn btn-outline bim-edit-btn"
                                         style={{ padding: '4px 10px', fontSize: 12, flexShrink: 0 }}
                                         onClick={e => {
                                             e.stopPropagation();

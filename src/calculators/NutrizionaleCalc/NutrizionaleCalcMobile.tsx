@@ -13,6 +13,8 @@ import { readBridge } from './sessionBridge';
 import { SmartImportModal } from './SmartImportModal';
 import type { SmartImportResult } from './SmartImportModal';
 import { ConfirmDialog } from '../../components/ui/ConfirmDialog';
+import { WelcomeModal } from '../../components/WelcomeModal';
+import { useLocalStorage } from '../../hooks/useLocalStorage';
 import { CustomIngredientModal } from './CustomIngredientModal';
 import { BrowseIngredientsModal } from './BrowseIngredientsModal';
 import { migrateMobileArchive, mobileEntryToArchiveData } from './archiveCompat';
@@ -129,6 +131,15 @@ export function NutrizionaleCalcMobile() {
     // useArchive che legge la chiave (idempotente, sicura in StrictMode).
     useState(() => { migrateMobileArchive(); return null; });
     const archive = useArchive<ArchiveData>('nutrizionale-v3');
+
+    const [welcomeSeen, setWelcomeSeen] = useLocalStorage<boolean>('aea_welcome_seen', false);
+    // sessionStorage: il remount desktop↔mobile su resize (vedi useMobile.ts) altrimenti
+    // la faceva riapparire ad ogni resize — al massimo 1 volta per sessione di navigazione.
+    const [showWelcome, setShowWelcome] = useState<boolean>(() => {
+        const shouldShow = !welcomeSeen && sessionStorage.getItem('aea_welcome_shown_session') !== '1';
+        if (shouldShow) sessionStorage.setItem('aea_welcome_shown_session', '1');
+        return shouldShow;
+    });
 
     const [activeTab, setActiveTab] = useState<MobileTab>('ricetta');
 
@@ -549,6 +560,12 @@ export function NutrizionaleCalcMobile() {
                 onConfirm={() => { setConfirmNewOpen(false); doResetRecipe(); }}
                 onCancel={() => setConfirmNewOpen(false)}
             />
+            {showWelcome && (
+                <WelcomeModal
+                    onClose={() => setShowWelcome(false)}
+                    onNeverShow={() => { setWelcomeSeen(true); setShowWelcome(false); }}
+                />
+            )}
         </div>
     );
 }

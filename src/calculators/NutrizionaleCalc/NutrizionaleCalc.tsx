@@ -218,7 +218,14 @@ export function NutrizionaleCalc() {
     useLocalStorage<boolean>('nutri_guide_open', true);
 
     const [welcomeSeen, setWelcomeSeen] = useLocalStorage<boolean>('aea_welcome_seen', false);
-    const [showWelcome, setShowWelcome] = useState<boolean>(!welcomeSeen);
+    // sessionStorage (non solo welcomeSeen): il remount desktop↔mobile su resize (vedi
+    // useMobile.ts) altrimenti la faceva riapparire ad ogni resize finché non premevi
+    // "non mostrare più" — al massimo 1 volta per sessione di navigazione.
+    const [showWelcome, setShowWelcome] = useState<boolean>(() => {
+        const shouldShow = !welcomeSeen && sessionStorage.getItem('aea_welcome_shown_session') !== '1';
+        if (shouldShow) sessionStorage.setItem('aea_welcome_shown_session', '1');
+        return shouldShow;
+    });
 
     const [expertTab, setExpertTab] = useState<'ricetta' | 'riepilogo'>('ricetta');
     const [dbMenuOpen, setDbMenuOpen] = useState(false);
@@ -296,6 +303,17 @@ export function NutrizionaleCalc() {
     const [ue, setUE] = useState<UEServing>({});
     // ponytail: fallback euSubTab rimosso — vista fissa 100g, scelte formato in DownloadTableModal
     const tableRef = useRef<HTMLDivElement>(null);
+    const segRef   = useRef<HTMLDivElement>(null);
+    const [indicatorStyle, setIndicatorStyle] = useState<{ left: number; width: number } | null>(null);
+
+    useEffect(() => {
+        if (!segRef.current) return;
+        const btn = segRef.current.querySelector<HTMLElement>('.right-seg-btn.active');
+        if (!btn) return;
+        const parent = segRef.current.getBoundingClientRect();
+        const rect   = btn.getBoundingClientRect();
+        setIndicatorStyle({ left: rect.left - parent.left, width: rect.width });
+    }, [activeTab]);
 
     // ─── Porzioni: colonna sempre visibile (redesign 2026-07) ───
     // ponytail: servingsGridOpen rimosso — porzioni ora sempre visibili in colonna fissa
@@ -924,7 +942,7 @@ export function NutrizionaleCalc() {
                     }
                 </div>
                 {/* Nation segmented control — matches HTML .right-seg */}
-                <div className="right-seg" role="group" aria-label="Mercato di riferimento">
+                <div ref={segRef} className="right-seg" role="group" aria-label="Mercato di riferimento" style={{ position: 'relative' }}>
                     {(['UE', 'USA', 'Canada', 'Australia', 'Arabi'] as NationTab[]).map(t => {
                         const labels: Record<NationTab, string> = { UE: 'EU', USA: 'USA', Canada: 'Canada', Australia: 'Australia', Arabi: 'Arabi' };
                         return (
@@ -933,6 +951,9 @@ export function NutrizionaleCalc() {
                             >{labels[t]}</button>
                         );
                     })}
+                    {indicatorStyle && (
+                        <span className="tab-indicator" style={{ left: indicatorStyle.left, width: indicatorStyle.width }} aria-hidden="true" />
+                    )}
                 </div>
 
             </div>{/* /table-panel-header */}
@@ -941,7 +962,7 @@ export function NutrizionaleCalc() {
                 <div className="table-panel-body">
                 <div ref={isMobileInline ? undefined : tableRef} className={`table-scroll-area${isFlashing ? ' value-flash' : ''}`} style={{ overflowX: 'auto' }}>
                     {activeTab === 'UE' && (
-                        <div className="table-wrap-center" style={{ border: '1px solid var(--color-border)', borderRadius: 'var(--radius-md)', overflow: 'hidden', marginTop: 8 }}>
+                        <div className="table-wrap-center animate-fade-up" style={{ border: '1px solid var(--color-border)', borderRadius: 'var(--radius-md)', overflow: 'hidden', marginTop: 8 }}>
                             <TabUE
                                 p={per100display}
                                 ue={ue}
@@ -953,7 +974,7 @@ export function NutrizionaleCalc() {
                         </div>
                     )}
                     {activeTab === 'USA' && (
-                        <div className="table-wrap-center" style={{ border: '1px solid var(--color-border)', borderRadius: 'var(--radius-md)', overflow: 'hidden', marginTop: 8 }}>
+                        <div className="table-wrap-center animate-fade-up" style={{ border: '1px solid var(--color-border)', borderRadius: 'var(--radius-md)', overflow: 'hidden', marginTop: 8 }}>
                             <TabUSA p={per100display} usa={usa} specificGravity={parseFloat(specificGravity) || 0}
                                 servingRef="serving" measure="g" subTab="verticale" />
                         </div>
@@ -961,17 +982,17 @@ export function NutrizionaleCalc() {
                     {activeTab === 'Canada' && (
                         // Canada (280px) è più stretta delle altre tabelle (~300-328px): l'intero box
                         // (bordo + tabella) scala come unità, così l'overflow:hidden non taglia nulla.
-                        <div className="table-wrap-center" style={{ border: '1px solid var(--color-border)', borderRadius: 'var(--radius-md)', overflow: 'hidden', marginTop: 8, transform: 'scale(1.12)', transformOrigin: 'center' }}>
+                        <div className="table-wrap-center animate-fade-up" style={{ border: '1px solid var(--color-border)', borderRadius: 'var(--radius-md)', overflow: 'hidden', marginTop: 8, transform: 'scale(1.12)', transformOrigin: 'center' }}>
                             <TabCanada p={per100display} ca={ca} servingRef="serving" measure="g" subTab="verticale" />
                         </div>
                     )}
                     {activeTab === 'Australia' && (
-                        <div className="table-wrap-center" style={{ border: '1px solid var(--color-border)', borderRadius: 'var(--radius-md)', overflow: 'hidden', marginTop: 8 }}>
+                        <div className="table-wrap-center animate-fade-up" style={{ border: '1px solid var(--color-border)', borderRadius: 'var(--radius-md)', overflow: 'hidden', marginTop: 8 }}>
                             <TabAustralia p={per100display} au={au} />
                         </div>
                     )}
                     {activeTab === 'Arabi' && (
-                        <div className="table-wrap-center" style={{ border: '1px solid var(--color-border)', borderRadius: 'var(--radius-md)', overflow: 'hidden', marginTop: 8 }}>
+                        <div className="table-wrap-center animate-fade-up" style={{ border: '1px solid var(--color-border)', borderRadius: 'var(--radius-md)', overflow: 'hidden', marginTop: 8 }}>
                             <TabArabi p={per100display} arabi={arabi} servingRef="serving" measure="g" specificGravity={parseFloat(specificGravity) || 0} />
                         </div>
                     )}
@@ -1379,7 +1400,7 @@ export function NutrizionaleCalc() {
                             )}
 
                             {/* Tab content */}
-                            <div className="expert-tab-content" style={{ flex: 1, overflowY: 'auto', padding: '14px' }}>
+                            <div key={expertTab} className="expert-tab-content animate-fade-up" style={{ flex: 1, overflowY: 'auto', padding: '14px' }}>
 
                         {expertTab === 'ricetta' && (<>
 
@@ -1553,7 +1574,7 @@ export function NutrizionaleCalc() {
                             <ChevronDown size={14} style={{ transform: isCompOpen ? 'rotate(0deg)' : 'rotate(-90deg)', transition: 'transform 0.2s', color: 'var(--color-text-muted)', pointerEvents: 'none' }} />
                         </div>
                     </div>
-                    {isCompOpen && (<div className="comp-card-body">
+                    {isCompOpen && (<div className="comp-card-body animate-fade-up">
                     <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 8 }}>
                         <input
                             type="text"
@@ -1842,7 +1863,7 @@ export function NutrizionaleCalc() {
                             <button onClick={() => setRiepilogoTab('q')} title="Visualizza quantità e grammature" className={`ri-toggle-btn${riepilogoTab === 'q' ? ' active' : ''}`}><Scale size={12} />Quantità</button>
                             <button onClick={() => setRiepilogoTab('c')} title="Visualizza costi e rese" className={`ri-toggle-btn${riepilogoTab === 'c' ? ' active' : ''}`}><Euro size={12} />Costi</button>
                         </div>
-                        <div className="riepilogo-wrapper" data-riepilogo-tab={riepilogoTab} style={{ overflowX: 'auto', margin: '0 -14px', padding: '0 14px' }}>
+                        <div key={riepilogoTab} className="riepilogo-wrapper animate-fade-up" data-riepilogo-tab={riepilogoTab} style={{ overflowX: 'auto', margin: '0 -14px', padding: '0 14px' }}>
                             <table className="riepilogo-table" style={{ borderCollapse: 'collapse', fontSize: 11, width: '100%', minWidth: 480 }}>
                                     <thead>
                                         <tr style={{ background: 'var(--color-orange)', color: 'white' }}>
