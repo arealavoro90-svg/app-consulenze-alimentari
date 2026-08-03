@@ -1001,14 +1001,14 @@ export function NutrizionaleCalc() {
                 {/* Valori facoltativi + Claim EU — fuori da table-scroll-area: non deve muoversi
                     quando la tabella cresce coi facoltativi attivi (a pari con la colonna porzioni) */}
                 {activeTab === 'UE' && (
-                    <div style={{ flexShrink: 0 }}>
+                    <div style={{ flexShrink: 0, padding: '0 12px' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                            <label style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 11, cursor: 'pointer', color: 'var(--color-text-muted)' }}>
+                            <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, fontWeight: 600, cursor: 'pointer', color: 'var(--color-text)' }}>
                                 <input
                                     type="checkbox"
                                     checked={showOptionals}
                                     onChange={e => setShowOptionals(e.target.checked)}
-                                    style={{ width: 13, height: 13, cursor: 'pointer', accentColor: 'var(--color-orange)' }}
+                                    style={{ width: 14, height: 14, cursor: 'pointer', accentColor: 'var(--color-orange)' }}
                                 />
                                 Mostra valori facoltativi
                             </label>
@@ -1030,8 +1030,7 @@ export function NutrizionaleCalc() {
                                 <div style={{
                                     marginTop: 10,
                                     background: 'color-mix(in srgb, var(--color-navy) 6%, var(--color-bg-card))',
-                                    border: '1px solid color-mix(in srgb, var(--color-navy) 18%, var(--color-border))',
-                                    borderRadius: 'var(--radius-md)',
+                                    borderRadius: 0,
                                     padding: '10px 12px',
                                 }}>
                                     <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: claims.length > 0 ? 8 : 0 }}>
