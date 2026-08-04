@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { ChevronDown, ChevronRight, X, AlertTriangle, Save } from 'lucide-react';
-import { InfoTooltip } from './NutrizionaleCalc';
+import { InfoTooltip } from './InfoTooltip';
 import { isValidDBIngredient } from '../../utils/validation';
 import { type DBIngredient, energyFromMacros } from '../../engines/nutrizionaleCalcEngine';
 

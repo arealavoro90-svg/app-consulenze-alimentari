@@ -7,7 +7,7 @@ import {
     ClipboardList, Scale, Euro,
     AlertTriangle, SlidersHorizontal,
     Trash2, X, BookOpen, ChevronDown,
-    Salad, Globe, ImageDown, Sparkles, FileSpreadsheet,
+    Salad, Globe, ImageDown, Sparkles, FileSpreadsheet, Search, RotateCcw,
 } from 'lucide-react';
 import { useAuth } from '../../auth/AuthContext';
 import { SmartImportModal } from './SmartImportModal';
@@ -44,6 +44,7 @@ import {
 } from '../../engines/nutrizionaleCalcEngine';
 import { ALLERGEN_FIELDS, CROSS_FIELDS, ADDITIVI_CATEGORIE, ADDITIVI_SPECIFICI } from './shared/constants';
 import { writeBridge, readBridge, buildDesktopDraft } from './sessionBridge';
+import { InfoTooltip } from './InfoTooltip';
 import { TabCanada } from './TabCanada';
 import { TabAustralia } from './TabAustralia';
 import { TabArabi } from './TabArabi';
@@ -87,88 +88,6 @@ export type SubTab = 'verticale' | 'orizzontale' | 'lineare';
 function n(v: unknown): number { const num = Number(v); return isNaN(num) ? 0 : num; }
 
 
-// ─── Tooltip component ────────────────────────────────────────────────────────
-const TOOLTIP_W = 230;
-const TOOLTIP_MARGIN = 8; // min distanza dal bordo viewport
-
-export function InfoTooltip({ text }: { text: string }) {
-    const [visible, setVisible] = useState(false);
-    const [pinned, setPinned] = useState(false);
-    const [pos, setPos] = useState<{ top: number; left: number; below: boolean } | null>(null);
-    const btnRef = useRef<HTMLButtonElement>(null);
-
-    const computePos = () => {
-        if (!btnRef.current) return;
-        const rect = btnRef.current.getBoundingClientRect();
-        const vw = window.innerWidth;
-
-        // Posizione orizzontale: centrata sul bottone, clamped nel viewport
-        let left = rect.left + rect.width / 2 - TOOLTIP_W / 2;
-        left = Math.max(TOOLTIP_MARGIN, Math.min(left, vw - TOOLTIP_W - TOOLTIP_MARGIN));
-
-        // Verticale: sopra di default, sotto se non c'è spazio (stima 110px di altezza)
-        const below = rect.top < 120;
-        const top = below ? rect.bottom + 6 : rect.top - 8;
-
-        setPos({ top, left, below });
-    };
-
-    const handleMouseEnter = () => { computePos(); setVisible(true); };
-    const handleMouseLeave = () => { if (!pinned) setVisible(false); };
-    const handleClick = (e: React.MouseEvent) => {
-        e.stopPropagation();
-        if (pinned) {
-            setPinned(false);
-            setVisible(false);
-        } else {
-            computePos();
-            setPinned(true);
-            setVisible(true);
-        }
-    };
-
-    // Chiude su click ovunque quando pinnato
-    useEffect(() => {
-        if (!pinned) return;
-        const close = () => { setPinned(false); setVisible(false); };
-        document.addEventListener('click', close);
-        return () => document.removeEventListener('click', close);
-    }, [pinned]);
-
-    return (
-        <span style={{ display: 'inline-flex', alignItems: 'center', marginLeft: 5 }}>
-            <button
-                ref={btnRef}
-                type="button"
-                title={text}
-                onMouseEnter={handleMouseEnter}
-                onMouseLeave={handleMouseLeave}
-                onClick={handleClick}
-                style={{
-                    background: 'none', border: '2px solid var(--color-orange)', cursor: 'pointer', padding: 0,
-                    width: 18, height: 18, borderRadius: '50%',
-                    fontSize: 11, fontWeight: 700, color: 'var(--color-orange)', lineHeight: 1,
-                    display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-                    flexShrink: 0,
-                }}
-            >i</button>
-            {visible && pos && (
-                <span style={{
-                    position: 'fixed',
-                    top: pos.top,
-                    left: pos.left,
-                    transform: pos.below ? 'none' : 'translateY(-100%)',
-                    background: 'var(--color-navy)', color: '#fff', fontSize: 11.5, lineHeight: 1.5,
-                    padding: '7px 11px', borderRadius: 'var(--radius-sm)', whiteSpace: 'normal',
-                    width: TOOLTIP_W, zIndex: 99999, boxShadow: '0 4px 16px rgba(0,0,0,0.25)',
-                    pointerEvents: 'none',
-                }}>
-                    {text}
-                </span>
-            )}
-        </span>
-    );
-}
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 const makeComp = (): Component => ({ id: String(Date.now() + Math.random()), name: '', rows: [], additiveRows: [], pzUV: 1 });
@@ -184,6 +103,7 @@ export function NutrizionaleCalc() {
     const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({}); // Track validation errors
     // const [fwErrorMsg, setFwErrorMsg] = useState('');
     const [archiveOpen, setArchiveOpen] = useState(false);
+    const [archiveSearch, setArchiveSearch] = useState('');
     const [showCustomModal, setShowCustomModal] = useState(false);
     const [showBrowseModal, setShowBrowseModal] = useState(false);
     const [showSmartImport, setShowSmartImport] = useState(false);
@@ -720,6 +640,7 @@ export function NutrizionaleCalc() {
         setUE({}); setUSA({}); setCA({}); setAU({}); setArabi({});
         setCurrentId(undefined);
         setCurrentName('');
+        setPzUVRaw({});
     };
 
     const handleNew = () => {
@@ -934,13 +855,6 @@ export function NutrizionaleCalc() {
         return (
             <div id={isMobileInline ? undefined : 'mob-tables-anchor'} className="table-panel-inner">
             <div className="table-panel-header">
-                {/* Product name as header anchor */}
-                <div className="table-panel-header-title" style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
-                    {productName
-                        ? <span style={{ fontWeight: 700 }}>{productName}</span>
-                        : <span style={{ fontStyle: 'italic', color: 'var(--color-text-muted)', fontWeight: 400 }}>Prodotto senza nome</span>
-                    }
-                </div>
                 {/* Nation segmented control — matches HTML .right-seg */}
                 <div ref={segRef} className="right-seg" role="group" aria-label="Mercato di riferimento" style={{ position: 'relative' }}>
                     {(['UE', 'USA', 'Canada', 'Australia', 'Arabi'] as NationTab[]).map(t => {
@@ -1320,35 +1234,69 @@ export function NutrizionaleCalc() {
             {/* Archive modal */}
             {archiveOpen && (
                 <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <div className="card" style={{ width: '90%', maxWidth: 520, maxHeight: '80vh', overflowY: 'auto' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+                    <div className="card" style={{ width: '90%', maxWidth: 520, maxHeight: '80vh', display: 'flex', flexDirection: 'column' }}>
+                        {/* Header */}
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12, flexShrink: 0 }}>
                             <h3 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: 7 }}><FolderOpen size={16} /> Archivio Ricette</h3>
-                            <button className="btn btn-outline" onClick={() => setArchiveOpen(false)} title="Chiudi" style={{ display: 'flex', alignItems: 'center', padding: '4px 8px' }}><X size={14} /></button>
+                            <button className="btn btn-outline" onClick={() => { setArchiveOpen(false); setArchiveSearch(''); }} title="Chiudi" style={{ display: 'flex', alignItems: 'center', padding: '4px 8px' }}><X size={14} /></button>
                         </div>
-                        {archiveItems.length === 0 && (
-                            <div style={{ textAlign: 'center', padding: '32px 20px', color: 'var(--color-text-muted)' }}>
-                                <Archive size={36} style={{ opacity: 0.25, marginBottom: 12 }} />
-                                <div style={{ fontWeight: 600, fontSize: 14, color: 'var(--color-text)', marginBottom: 6 }}>Nessuna ricetta salvata</div>
-                                <div style={{ fontSize: 13, lineHeight: 1.5 }}>Compila una ricetta e usa "Salva in archivio" per trovarla qui.</div>
-                            </div>
-                        )}
-                        {archiveItems.map(item => {
-                            const d = item.data as any;
-                            const title = d.nome_prodotto || d.productName || item.name || 'Ricetta Senza Nome';
-                            const ingCount = (d.componenti || d.components || []).reduce((s: number, c: any) => s + (c.ingredienti || c.rows || []).length, 0);
-                            return (
-                                <div key={item.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', borderBottom: '1px solid var(--color-border)' }}>
-                                    <div>
-                                        <div style={{ fontWeight: 600 }}>{title}</div>
-                                        <div style={{ fontSize: 12, color: 'var(--color-text-muted)' }}>{new Date(item.date).toLocaleDateString('it-IT')} · {ingCount} ingredienti</div>
+                        {/* Search */}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12, flexShrink: 0, background: 'var(--color-bg)', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-md)', padding: '6px 10px' }}>
+                            <Search size={14} style={{ color: 'var(--color-text-muted)', flexShrink: 0 }} />
+                            <input
+                                type="search"
+                                placeholder="Cerca prodotto…"
+                                value={archiveSearch}
+                                onChange={e => setArchiveSearch(e.target.value)}
+                                autoComplete="off"
+                                style={{ border: 'none', outline: 'none', background: 'transparent', fontSize: 13, flex: 1, color: 'var(--color-text)' }}
+                            />
+                        </div>
+                        {/* List */}
+                        <div style={{ overflowY: 'auto', flex: 1 }}>
+                            {(() => {
+                                const q = archiveSearch.trim().toLowerCase();
+                                const filtered = q ? archiveItems.filter(i => i.name.toLowerCase().includes(q)) : archiveItems;
+                                if (filtered.length === 0) return (
+                                    <div style={{ textAlign: 'center', padding: '32px 20px', color: 'var(--color-text-muted)' }}>
+                                        <Archive size={36} style={{ opacity: 0.25, marginBottom: 12 }} />
+                                        <div style={{ fontWeight: 600, fontSize: 14, color: 'var(--color-text)', marginBottom: 6 }}>
+                                            {archiveItems.length === 0 ? 'Nessuna ricetta salvata' : 'Nessun risultato'}
+                                        </div>
+                                        <div style={{ fontSize: 13, lineHeight: 1.5 }}>
+                                            {archiveItems.length === 0 ? 'Compila una ricetta e usa "Salva in archivio" per trovarla qui.' : 'Prova con un termine diverso.'}
+                                        </div>
                                     </div>
-                                    <div style={{ display: 'flex', gap: 8 }}>
-                                        <button className="btn btn-primary" style={{ fontSize: 12, padding: '4px 10px' }} onClick={() => handleLoad(item)}>Carica</button>
-                                        <button className="btn btn-outline" style={{ fontSize: 12, padding: '4px 10px', color: '#e53e3e', display: 'flex', alignItems: 'center', gap: 5 }} onClick={() => openConfirm({ title: 'Eliminare ricetta', message: `Vuoi eliminare "${title}"? L'azione è irreversibile.`, variant: 'danger', confirmLabel: 'Elimina', onConfirm: () => { closeConfirm(); deleteItem(item.id); } })}><Trash2 size={12} /> Elimina</button>
-                                    </div>
-                                </div>
-                            );
-                        })}
+                                );
+                                return filtered.map(item => {
+                                    const d = item.data as any;
+                                    const title = d.nome_prodotto || d.productName || item.name || 'Ricetta Senza Nome';
+                                    const ingCount = (d.componenti || d.components || []).reduce((s: number, c: any) => s + (c.ingredienti || c.rows || []).length, 0);
+                                    return (
+                                        <div key={item.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', borderBottom: '1px solid var(--color-border)' }}>
+                                            <div>
+                                                <div style={{ fontWeight: 600 }}>{title}</div>
+                                                <div style={{ fontSize: 12, color: 'var(--color-text-muted)' }}>{new Date(item.date).toLocaleDateString('it-IT')} · {ingCount} ingredienti</div>
+                                            </div>
+                                            <div style={{ display: 'flex', gap: 8 }}>
+                                                <button className="btn btn-primary" style={{ fontSize: 12, padding: '4px 10px' }} onClick={() => handleLoad(item)}>Carica</button>
+                                                <button className="btn btn-outline" style={{ fontSize: 12, padding: '4px 10px', color: '#e53e3e', display: 'flex', alignItems: 'center', gap: 5 }} onClick={() => openConfirm({ title: 'Eliminare ricetta', message: `Vuoi eliminare "${title}"? L'azione è irreversibile.`, variant: 'danger', confirmLabel: 'Elimina', onConfirm: () => { closeConfirm(); deleteItem(item.id); } })}><Trash2 size={12} /> Elimina</button>
+                                            </div>
+                                        </div>
+                                    );
+                                });
+                            })()}
+                        </div>
+                        {/* Footer: nuova ricetta */}
+                        <div style={{ borderTop: '1px solid var(--color-border)', paddingTop: 12, marginTop: 12, flexShrink: 0 }}>
+                            <button
+                                className="btn btn-outline"
+                                style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}
+                                onClick={() => { setArchiveOpen(false); setArchiveSearch(''); handleNew(); }}
+                            >
+                                <RotateCcw size={13} /> Nuova ricetta
+                            </button>
+                        </div>
                     </div>
                 </div>
             )}
@@ -1956,6 +1904,42 @@ export function NutrizionaleCalc() {
                 );
             })()}
 
+
+            {/* Allergeni */}
+            {allRows.length > 0 && (presentAllergens.length > 0 || crossAllergens.length > 0) && (
+                <div style={{ marginBottom: 20, background: 'var(--color-surface)', borderRadius: 'var(--radius-md)', padding: '14px 20px' }}>
+                    <div style={{ fontWeight: 800, fontSize: 14, marginBottom: 12 }}>Allergeni</div>
+                    {presentAllergens.length > 0 && (
+                        <div style={{ marginBottom: 10 }}>
+                            <div style={{ fontSize: 11, fontWeight: 700, color: '#c62828', textTransform: 'uppercase', marginBottom: 6 }}>Contiene:</div>
+                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                                {presentAllergens.map(a => (
+                                    <span key={a} style={{ fontSize: 12, fontWeight: 700, padding: '3px 10px', background: '#ffebee', color: '#c62828', borderRadius: 20, border: '1px solid #ef9a9a' }}>
+                                        {a}
+                                    </span>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+                    {crossAllergens.length > 0 && (
+                        <div>
+                            <div style={{ fontSize: 11, fontWeight: 700, color: '#e65100', textTransform: 'uppercase', marginBottom: 6 }}>Può contenere tracce di:</div>
+                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                                {crossAllergens.map(a => (
+                                    <span key={a} style={{ fontSize: 12, fontWeight: 600, padding: '3px 10px', background: '#fff3e0', color: '#e65100', borderRadius: 20, border: '1px solid #ffcc80' }}>
+                                        {a}
+                                    </span>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+                </div>
+            )}
+            {allRows.length > 0 && presentAllergens.length === 0 && crossAllergens.length === 0 && (
+                <div style={{ marginBottom: 20, fontSize: 12, color: 'var(--color-text-muted)', fontStyle: 'italic' }}>
+                    Nessun allergene rilevato dagli ingredienti del database.
+                </div>
+            )}
 
         </>)}
 
