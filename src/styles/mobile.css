@@ -1,17 +1,11 @@
 /* ── Mobile Design Tokens ───────────────────────────────────────────────── */
 
 :root {
-  --m-bg:           #faf7f4;
-  --m-surface:      #ffffff;
-  --m-navy:         #0c1326;
-  --m-orange:       #ff7e2e;
+  /* ponytail: --m-bg/surface/navy/orange/green/border/text rimossi — ereditati da unified-tokens.css Section 4 */
   --m-orange-hover: #dd5c0c;
   /* Stessa tonalità, più scura: testo bianco sopra raggiunge 4.87:1 (WCAG AA 4.5:1). --m-orange resta invariato per icone/accenti. */
   --m-orange-a11y:  #b25820;
-  --m-green:        #43821c;
-  --m-border:       #e8e0d8;
   --m-border-light: #f0ebe3;
-  --m-text:         #0c1326;
   --m-text-muted:   rgba(12, 19, 38, 0.45);
   --m-text-faint:   rgba(12, 19, 38, 0.25);
   --m-topbar-h:     52px;
@@ -377,11 +371,11 @@
    nessuno scroll orizzontale nascosto (era la causa del bug "spariscono"). ── */
 .m-region-tabs {
   display: flex;
-  gap: 2px;
-  padding: 8px;
-  margin: 8px 16px;
-  background: var(--m-border-light);
-  border-radius: 8px;
+  gap: 6px;
+  padding: 4px 16px;
+  margin: 8px 0;
+  /* nessun background/border-radius: i chip flottano senza box grigio */
+  background: var(--m-bg); /* solo per sticky — nasconde il contenuto che scorre sotto */
   position: sticky;
   top: 0;
   z-index: 10;
@@ -392,23 +386,25 @@
 .m-region-tab {
   flex: 1;
   min-width: 0;
-  min-height: 44px;
+  min-height: 36px;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 4px 2px;
+  padding: 4px 6px;
   background: transparent;
-  border: none;
-  border-radius: 6px;
+  border: 1.5px solid var(--m-border);
+  border-radius: 20px;
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
-  transition: background 0.15s, box-shadow 0.15s;
+  transition: background 0.15s, border-color 0.15s, box-shadow 0.15s;
 }
+.m-region-tab span { color: var(--m-text-muted); }
 .m-region-tab--active {
-  background: #fff;
-  box-shadow: 0 1px 3px rgba(12, 19, 38, 0.15);
+  background: var(--m-orange);
+  border-color: var(--m-orange);
+  box-shadow: 0 2px 6px rgba(255, 126, 46, 0.28);
 }
-.m-region-tab--active span { color: var(--m-navy) !important; opacity: 1 !important; }
+.m-region-tab--active span { color: #fff !important; opacity: 1 !important; }
 
 /* ── Segmented control — pill separate, coerenti con .btn-accent/.btn-outline desktop ── */
 .m-segmented {
