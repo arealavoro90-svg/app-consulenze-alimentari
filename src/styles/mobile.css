@@ -6,7 +6,7 @@
   /* Stessa tonalità, più scura: testo bianco sopra raggiunge 4.87:1 (WCAG AA 4.5:1). --m-orange resta invariato per icone/accenti. */
   --m-orange-a11y:  #b25820;
   --m-border-light: #f0ebe3;
-  --m-text-muted:   rgba(12, 19, 38, 0.45);
+  --m-text-muted:   rgba(12, 19, 38, 0.45); /* ponytail: alpha-based (desktop usa opaque #5e6b80) — modelli colore diversi, non unificabile */
   --m-text-faint:   rgba(12, 19, 38, 0.25);
   --m-topbar-h:     52px;
   --m-tabbar-h:     64px;

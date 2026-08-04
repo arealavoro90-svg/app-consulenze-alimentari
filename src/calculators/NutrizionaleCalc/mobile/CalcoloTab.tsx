@@ -583,10 +583,7 @@ export function CalcoloTab({
                                 value={form.pesoFinito_g}
                                 onChange={e => onChange({ pesoFinito_g: e.target.value })}
                             />
-                            <ValidationError
-                                message={validateFinishedWeight(form.pesoFinito_g === '' ? '' : parseDecimalIT(String(form.pesoFinito_g))).error}
-                                visible={form.pesoFinito_g !== '' && !validateFinishedWeight(parseDecimalIT(String(form.pesoFinito_g))).isValid}
-                            />
+                            {(() => { const r = form.pesoFinito_g !== '' ? validateFinishedWeight(parseDecimalIT(String(form.pesoFinito_g))) : null; return <ValidationError message={r?.error} visible={!!(r && !r.isValid)} />; })()}
                         </div>
                     </div>
                     <div>
