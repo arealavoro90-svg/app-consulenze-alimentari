@@ -1,20 +1,20 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { createPortal } from 'react-dom';
-import html2canvas from 'html2canvas';
-import { Settings2, X, Maximize2, Download } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Settings2, Download } from 'lucide-react';
 import { TabUE, DEFAULT_OPTIONALS } from '../TabUE';
 import { TabUSA } from '../TabUSA';
 import { TabCanada } from '../TabCanada';
 import { TabAustralia } from '../TabAustralia';
 import { TabArabi } from '../TabArabi';
 import { NutrientSelectModal } from '../NutrientSelectModal';
-import type { EUSubTab, SelectedOptionals } from '../TabUE';
-import type { USAServingRef, USAMeasure } from '../TabUSA';
+import type { SelectedOptionals } from '../TabUE';
 import type { CalcResult, MobileNutForm } from '../NutrizionaleCalcMobile';
 import { calcClaims } from '../../../engines/nutrizionaleCalcEngine';
+import { ExportOptionsModal } from '../ExportOptionsModal';
+import type { ExportFormat } from '../ExportOptionsModal';
+
+const DEFAULT_EXPORT_FORMAT: ExportFormat = { subTab: 'verticale', euSubTab: '100g', servingRef: 'serving', measure: 'g' };
 
 type Region = 'UE' | 'USA' | 'Canada' | 'Australia' | 'Arabi';
-type SubTab = 'verticale' | 'orizzontale' | 'lineare';
 
 interface Props {
     calcResult: CalcResult;
@@ -36,45 +36,6 @@ const REGIONS: { id: Region; label: string; sub: string }[] = [
 ];
 
 function nf(v: string): number { const x = parseFloat(v); return isNaN(x) ? 0 : x; }
-
-// ─── Segmented control (44px touch targets) ───────────────────────────────────
-// inline: label + chips su una riga sola (M2). disabled: opzione spenta finché manca il peso (M3).
-function SegmentedControl<T extends string>({
-    label,
-    options,
-    value,
-    onChange,
-    inline = false,
-}: {
-    label: string;
-    options: { v: T; label: string; disabled?: boolean }[];
-    value: T;
-    onChange: (v: T) => void;
-    inline?: boolean;
-}) {
-    return (
-        <div style={inline
-            ? { display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }
-            : { marginBottom: 10 }}>
-            <span className="m-segmented__label" style={inline ? { marginBottom: 0, flexShrink: 0 } : undefined}>{label}</span>
-            <div className="m-segmented">
-                {options.map(o => (
-                    <button
-                        key={o.v}
-                        type="button"
-                        disabled={o.disabled}
-                        className={`m-segmented__btn${value === o.v ? ' m-segmented__btn--active' : ''}`}
-                        title={o.disabled ? 'Inserisci prima il peso corrispondente nelle porzioni' : undefined}
-                        onClick={() => onChange(o.v)}
-                        aria-pressed={value === o.v}
-                    >
-                        {o.label}
-                    </button>
-                ))}
-            </div>
-        </div>
-    );
-}
 
 // ─── Serving field with grid layout ──────────────────────────────────────────
 function ServingField({ label, field, form, onChange }: {
@@ -100,36 +61,43 @@ function ServingField({ label, field, form, onChange }: {
     );
 }
 
-// ─── Table preview wrapper — always visible, no scaling ──────────────────────
-// La preview inline mostra il formato reale selezionato (scroll orizzontale se largo).
+// ─── Table preview wrapper ────────────────────────────────────────────────────
 function TablePreviewWrap({
-    layout, children, onExpand,
+    layout, children, onNutrients,
 }: {
     layout: string;
     children: React.ReactNode;
-    onExpand: () => void;
+    onNutrients?: () => void;
 }) {
     const isWide = layout === 'orizzontale' || layout === 'lineare';
     return (
         <div style={{ padding: '0 16px 8px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6, minHeight: onNutrients || isWide ? 24 : 0 }}>
                 {isWide ? (
                     <span style={{ fontSize: 10, color: 'var(--m-text-muted)', fontStyle: 'italic' }}>
                         Scorri lateralmente per vedere tutta la tabella
                     </span>
-                ) : (
-                    <span />
+                ) : <span />}
+                {onNutrients && (
+                    <button
+                        type="button"
+                        onClick={onNutrients}
+                        style={{
+                            display: 'flex', alignItems: 'center', gap: 3,
+                            background: 'none', border: '1px solid var(--m-border)',
+                            borderRadius: 6, padding: '3px 8px',
+                            fontSize: 11, color: 'var(--m-text-muted)', cursor: 'pointer',
+                        }}
+                    >
+                        <Settings2 size={11} /> Nutrienti
+                    </button>
                 )}
-                <button
-                    type="button"
-                    className="m-expand-btn"
-                    onClick={onExpand}
-                >
-                    <Maximize2 size={13} /> Schermo intero
-                </button>
             </div>
-            <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch', display: 'flex', justifyContent: 'center' }}>
-                {children}
+            {/* Fix centering: scroll container blocco, inner flex centra senza rompere lo scroll a sinistra */}
+            <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
+                <div style={{ display: 'flex', justifyContent: 'center', minWidth: 'fit-content' }}>
+                    {children}
+                </div>
             </div>
         </div>
     );
@@ -186,200 +154,6 @@ function ServingSection({ title, fields, form, onChange, open, onToggle }: {
     );
 }
 
-// ─── Export format state (scelto solo al momento dell'esportazione, mai in anteprima) ──
-interface ExportFormat {
-    subTab: SubTab;
-    euSubTab: EUSubTab;
-    servingRef: USAServingRef;
-    measure: USAMeasure;
-}
-const DEFAULT_EXPORT_FORMAT: ExportFormat = { subTab: 'verticale', euSubTab: '100g', servingRef: 'serving', measure: 'g' };
-
-// ─── Modal opzioni esportazione — stessa logica di DownloadTableModal (desktop):
-// opzioni + anteprima live della tabella + cattura PNG interna (html2canvas). ──
-function ExportOptionsModal({
-    region, showLayout, showColonne, showRiferimento, showUnita, ue, nation, productName, renderPreview, onClose,
-}: {
-    region: Region;
-    showLayout: boolean;
-    showColonne: boolean;
-    showRiferimento: boolean;
-    showUnita: boolean;
-    ue: { porzione?: number; confezione?: number; pezzo?: number };
-    nation: { confezione?: number; cup?: number; cucchiaio?: number; pezzo?: number };
-    productName: string;
-    renderPreview: (format: ExportFormat) => React.ReactNode;
-    onClose: () => void;
-}) {
-    const [subTab, setSubTab] = useState<SubTab>('verticale');
-    const [euSubTab, setEuSubTab] = useState<EUSubTab>('100g');
-    const [servingRef, setServingRef] = useState<USAServingRef>('serving');
-    const [measure, setMeasure] = useState<USAMeasure>('g');
-    const [downloading, setDownloading] = useState(false);
-    const [exportError, setExportError] = useState<string | null>(null);
-    const previewRef = useRef<HTMLDivElement>(null);
-
-    const handleDownload = async () => {
-        const target = previewRef.current;
-        if (!target) return;
-        setDownloading(true);
-        setExportError(null);
-        try {
-            const canvas = await html2canvas(target, { scale: 2, backgroundColor: '#ffffff', useCORS: true });
-            const link = document.createElement('a');
-            link.download = `${productName || 'tabella'}_nutrizionale.png`;
-            link.href = canvas.toDataURL('image/png');
-            link.click();
-        } catch (e) {
-            console.error('PNG Export error:', e);
-            setExportError("Errore durante l'esportazione della tabella in PNG.");
-        } finally {
-            setDownloading(false);
-        }
-    };
-
-    useEffect(() => {
-        const h = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
-        document.addEventListener('keydown', h);
-        return () => document.removeEventListener('keydown', h);
-    }, [onClose]);
-
-    // Portal su body: il modal è montato dentro .m-slide-track (transform: translateX),
-    // che rompe position:fixed — senza portal lo sheet finisce clippato/fuori viewport.
-    return createPortal(
-        <div
-            role="dialog"
-            aria-modal="true"
-            aria-label={`Opzioni esportazione ${region}`}
-            style={{ position: 'fixed', inset: 0, background: 'rgba(12,19,38,0.5)', zIndex: 1000, display: 'flex', alignItems: 'flex-end' }}
-            onClick={onClose}
-        >
-            <div
-                style={{ background: '#fff', width: '100%', maxHeight: '80vh', overflowY: 'auto', borderRadius: '16px 16px 0 0', padding: 16 }}
-                onClick={e => e.stopPropagation()}
-            >
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-                    <span style={{ fontSize: 15, fontWeight: 700, color: 'var(--m-text)' }}>Opzioni esportazione — {region}</span>
-                    <button type="button" onClick={onClose} aria-label="Chiudi" style={{ background: 'none', border: 'none', padding: 4, cursor: 'pointer', color: 'var(--m-text-muted)' }}>
-                        <X size={20} />
-                    </button>
-                </div>
-
-                {showLayout && (
-                    <SegmentedControl<SubTab>
-                        label="Layout"
-                        options={[
-                            { v: 'verticale', label: 'Verticale' },
-                            { v: 'orizzontale', label: 'Orizzontale' },
-                            { v: 'lineare', label: 'Lineare' },
-                        ]}
-                        value={subTab} onChange={setSubTab}
-                    />
-                )}
-                {showColonne && (
-                    <SegmentedControl<EUSubTab>
-                        label="Colonne"
-                        options={[
-                            { v: '100g', label: 'per 100g' },
-                            { v: 'porzione', label: 'Porzione', disabled: ue.porzione == null },
-                            { v: 'uv', label: 'Confezione', disabled: ue.confezione == null },
-                            { v: 'pezzo', label: 'Pezzo', disabled: ue.pezzo == null },
-                        ]}
-                        value={euSubTab} onChange={setEuSubTab}
-                    />
-                )}
-                {showRiferimento && (
-                    <SegmentedControl<USAServingRef>
-                        label="Riferimento"
-                        options={[
-                            { v: 'serving', label: 'Porzione' },
-                            { v: 'confezione', label: 'Confezione', disabled: !nation.confezione },
-                        ]}
-                        value={servingRef} onChange={setServingRef}
-                    />
-                )}
-                {showUnita && (
-                    <SegmentedControl<USAMeasure>
-                        label="Unità"
-                        options={[
-                            { v: 'g', label: 'g' },
-                            { v: 'tazze', label: 'Tazze', disabled: !nation.cup },
-                            { v: 'cucchiai', label: 'Cucchiai', disabled: !nation.cucchiaio },
-                            { v: 'pezzi', label: 'Pezzi', disabled: !nation.pezzo },
-                        ]}
-                        value={measure} onChange={setMeasure}
-                    />
-                )}
-
-                {/* Anteprima live della tabella col formato scelto (come desktop) */}
-                <div
-                    ref={previewRef}
-                    style={{
-                        border: '1px solid var(--color-border)', borderRadius: 8,
-                        padding: 12, marginTop: 8, overflowX: 'auto',
-                        display: 'flex', justifyContent: 'center', background: '#fff',
-                    }}
-                >
-                    {renderPreview({ subTab, euSubTab, servingRef, measure })}
-                </div>
-
-                {exportError && (
-                    <p style={{ fontSize: 12, color: 'var(--color-danger)', margin: '8px 0 0' }}>{exportError}</p>
-                )}
-
-                <button
-                    type="button"
-                    className="m-btn m-btn--accent"
-                    style={{ width: '100%', marginTop: 10 }}
-                    disabled={downloading}
-                    onClick={handleDownload}
-                >
-                    {downloading ? 'Generazione…' : 'Scarica PNG'}
-                </button>
-            </div>
-        </div>,
-        document.body
-    );
-}
-
-function FullscreenOverlay({
-    open, exiting, region, layout, onClose, children,
-}: {
-    open: boolean;
-    exiting: boolean;
-    region: string;
-    layout: string;
-    onClose: () => void;
-    children: React.ReactNode;
-}) {
-    React.useEffect(() => {
-        if (!open) return;
-        const h = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
-        document.addEventListener('keydown', h);
-        return () => document.removeEventListener('keydown', h);
-    }, [open, onClose]);
-
-    if (!open) return null;
-
-    // Portal su body: stesso problema del modal export (ancestor con transform rompe position:fixed).
-    return createPortal(
-        <div className={`m-fullscreen-overlay ${exiting ? 'm-fullscreen-exit' : 'm-fullscreen-enter'}`}>
-            <div className="m-fullscreen-overlay__header">
-                <span className="m-fullscreen-overlay__title">
-                    {region}{layout && layout !== 'default' ? ` — ${layout}` : ''}
-                </span>
-                <button type="button" className="m-fullscreen-overlay__close" onClick={onClose} aria-label="Chiudi">
-                    <X size={20} />
-                </button>
-            </div>
-            <div className="m-fullscreen-overlay__body">
-                {children}
-            </div>
-        </div>,
-        document.body
-    );
-}
-
 // ─── Component ────────────────────────────────────────────────────────────────
 export function TabellaTab({ calcResult, form, onChange, onSave, hasIngredients, presentAllergens = [], crossAllergens = [], initialRegion }: Props) {
     const [selectedRegion, setSelectedRegion] = useState<Region | null>(initialRegion ?? null);
@@ -393,10 +167,6 @@ export function TabellaTab({ calcResult, form, onChange, onSave, hasIngredients,
     // Anteprima principale sempre fissa (verticale/100g/serving/g) come nel desktop —
     // le scelte di formato e la cattura PNG vivono dentro ExportOptionsModal.
     const [exportModalOpen, setExportModalOpen] = useState(false);
-
-    // Fullscreen overlay
-    const [fullscreenOpen, setFullscreenOpen] = useState(false);
-    const [fullscreenExiting, setFullscreenExiting] = useState(false);
 
     // Key to trigger M3 animation (table appear) on region change
     const [tableKey, setTableKey] = useState(0);
@@ -414,14 +184,6 @@ export function TabellaTab({ calcResult, form, onChange, onSave, hasIngredients,
     const showNotice = (type: 'success' | 'error', msg: string) => {
         setNotice({ type, msg });
         setTimeout(() => setNotice(null), 3000);
-    };
-
-    const closeFullscreen = () => {
-        setFullscreenExiting(true);
-        setTimeout(() => {
-            setFullscreenOpen(false);
-            setFullscreenExiting(false);
-        }, 200);
     };
 
     const handleSave = () => {
@@ -562,23 +324,8 @@ export function TabellaTab({ calcResult, form, onChange, onSave, hasIngredients,
                                 form={form} onChange={onChange}
                                 open={servingOpen} onToggle={() => setServingOpen(o => !o)}
                             />
-                            {/* Nutrienti facoltativi — persistente, non è formato di export */}
-                            <div style={{ padding: '0 16px 12px' }}>
-                                <button
-                                    type="button"
-                                    onClick={() => setNutrientModalOpen(true)}
-                                    style={{
-                                        display: 'flex', alignItems: 'center', gap: 4,
-                                        background: 'none', border: '1px solid var(--m-orange, #ff7e2e)',
-                                        borderRadius: 20, padding: '3px 10px',
-                                        fontSize: 11, color: 'var(--m-orange, #ff7e2e)', cursor: 'pointer',
-                                    }}
-                                >
-                                    <Settings2 size={11} /> Nutrienti
-                                </button>
-                            </div>
                             {/* EU table — sempre per 100g in anteprima, altre viste solo in esportazione */}
-                            <TablePreviewWrap layout="verticale" onExpand={() => setFullscreenOpen(true)}>
+                            <TablePreviewWrap layout="verticale" onNutrients={() => setNutrientModalOpen(true)}>
                                 <div key={`tbl-UE-${fmt.euSubTab}`} className="m-table-appear">
                                     <TabUE
                                         p={calcResult as Parameters<typeof TabUE>[0]['p']}
@@ -590,22 +337,6 @@ export function TabellaTab({ calcResult, form, onChange, onSave, hasIngredients,
                                     />
                                 </div>
                             </TablePreviewWrap>
-                            <FullscreenOverlay
-                                open={fullscreenOpen}
-                                exiting={fullscreenExiting}
-                                region="EU"
-                                layout="verticale"
-                                onClose={closeFullscreen}
-                            >
-                                <TabUE
-                                    p={calcResult as Parameters<typeof TabUE>[0]['p']}
-                                    ue={ue}
-                                    specificGravity={sg > 0 ? sg : undefined}
-                                    selectedOptionals={selectedOptionals}
-                                    showOptionals={true}
-                                    activeSubTab="100g"
-                                />
-                            </FullscreenOverlay>
                             {/* ── Claim nutrizionali EU (Reg. 2006/1924) ──── */}
                             {(() => {
                                 const claims = calcClaims(calcResult as Parameters<typeof calcClaims>[0], isLiquid);
@@ -665,7 +396,7 @@ export function TabellaTab({ calcResult, form, onChange, onSave, hasIngredients,
                                 open={servingOpen} onToggle={() => setServingOpen(o => !o)}
                             />
                             {/* Layout/riferimento/unità: solo in esportazione (ExportOptionsModal), anteprima sempre verticale/g/serving */}
-                            <TablePreviewWrap layout="verticale" onExpand={() => setFullscreenOpen(true)}>
+                            <TablePreviewWrap layout="verticale" >
                                 <div key={`tbl-USA-${fmt.subTab}-${fmt.servingRef}-${fmt.measure}`} className="m-table-appear">
                                     <TabUSA
                                         p={calcResult as Parameters<typeof TabUSA>[0]['p']}
@@ -677,22 +408,6 @@ export function TabellaTab({ calcResult, form, onChange, onSave, hasIngredients,
                                     />
                                 </div>
                             </TablePreviewWrap>
-                            <FullscreenOverlay
-                                open={fullscreenOpen}
-                                exiting={fullscreenExiting}
-                                region="USA"
-                                layout="verticale"
-                                onClose={closeFullscreen}
-                            >
-                                <TabUSA
-                                    p={calcResult as Parameters<typeof TabUSA>[0]['p']}
-                                    usa={usa}
-                                    specificGravity={sg > 0 ? sg : 1}
-                                    servingRef="serving"
-                                    measure="g"
-                                    subTab="verticale"
-                                />
-                            </FullscreenOverlay>
                         </div>
                     )}
 
@@ -712,7 +427,7 @@ export function TabellaTab({ calcResult, form, onChange, onSave, hasIngredients,
                                 open={servingOpen} onToggle={() => setServingOpen(o => !o)}
                             />
                             {/* Layout/riferimento/unità: solo in esportazione (ExportOptionsModal), anteprima sempre verticale/g/serving */}
-                            <TablePreviewWrap layout="verticale" onExpand={() => setFullscreenOpen(true)}>
+                            <TablePreviewWrap layout="verticale" >
                                 <div key={`tbl-Canada-${fmt.subTab}-${fmt.servingRef}-${fmt.measure}`} className="m-table-appear">
                                     <TabCanada
                                         p={calcResult}
@@ -723,21 +438,6 @@ export function TabellaTab({ calcResult, form, onChange, onSave, hasIngredients,
                                     />
                                 </div>
                             </TablePreviewWrap>
-                            <FullscreenOverlay
-                                open={fullscreenOpen}
-                                exiting={fullscreenExiting}
-                                region="Canada"
-                                layout="verticale"
-                                onClose={closeFullscreen}
-                            >
-                                <TabCanada
-                                    p={calcResult}
-                                    ca={ca}
-                                    servingRef="serving"
-                                    measure="g"
-                                    subTab="verticale"
-                                />
-                            </FullscreenOverlay>
                         </div>
                     )}
 
@@ -754,20 +454,11 @@ export function TabellaTab({ calcResult, form, onChange, onSave, hasIngredients,
                                 form={form} onChange={onChange}
                                 open={servingOpen} onToggle={() => setServingOpen(o => !o)}
                             />
-                            <TablePreviewWrap layout="verticale" onExpand={() => setFullscreenOpen(true)}>
+                            <TablePreviewWrap layout="verticale" >
                                 <div key={`tbl-Australia`} className="m-table-appear">
                                     <TabAustralia p={calcResult} au={au} />
                                 </div>
                             </TablePreviewWrap>
-                            <FullscreenOverlay
-                                open={fullscreenOpen}
-                                exiting={fullscreenExiting}
-                                region="Australia"
-                                layout="default"
-                                onClose={closeFullscreen}
-                            >
-                                <TabAustralia p={calcResult} au={au} />
-                            </FullscreenOverlay>
                         </div>
                     )}
 
@@ -787,7 +478,7 @@ export function TabellaTab({ calcResult, form, onChange, onSave, hasIngredients,
                                 open={servingOpen} onToggle={() => setServingOpen(o => !o)}
                             />
                             {/* Riferimento/unità: solo in esportazione (ExportOptionsModal), anteprima sempre serving/g */}
-                            <TablePreviewWrap layout="verticale" onExpand={() => setFullscreenOpen(true)}>
+                            <TablePreviewWrap layout="verticale" >
                                 <div key={`tbl-Arabi-${fmt.servingRef}-${fmt.measure}`} className="m-table-appear">
                                     <TabArabi
                                         p={calcResult}
@@ -798,71 +489,9 @@ export function TabellaTab({ calcResult, form, onChange, onSave, hasIngredients,
                                     />
                                 </div>
                             </TablePreviewWrap>
-                            <FullscreenOverlay
-                                open={fullscreenOpen}
-                                exiting={fullscreenExiting}
-                                region="Arabi"
-                                layout="default"
-                                onClose={closeFullscreen}
-                            >
-                                <TabArabi
-                                    p={calcResult}
-                                    arabi={arabi}
-                                    servingRef="serving"
-                                    measure="g"
-                                    specificGravity={sg > 0 ? sg : undefined}
-                                />
-                            </FullscreenOverlay>
                         </div>
                     )}
                 </>
-            )}
-
-            {/* ─── Allergenici ─────────────────────────────────────────────── */}
-            {hasIngredients && (presentAllergens.length > 0 || crossAllergens.length > 0) && (
-                <div className="m-section" style={{ marginTop: 4 }}>
-                    <div className="m-section__header" style={{ cursor: 'default' }}>
-                        <div className="m-section__line" />
-                        <span className="m-section__title">Allergeni</span>
-                        <div className="m-section__line" />
-                    </div>
-                    {presentAllergens.length > 0 && (
-                        <div style={{ marginBottom: 8 }}>
-                            <p style={{ fontSize: 11, fontWeight: 700, color: '#c62828', margin: '0 0 6px' }}>
-                                Contiene:
-                            </p>
-                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}>
-                                {presentAllergens.map(a => (
-                                    <span key={a} style={{
-                                        fontSize: 11, fontWeight: 700, padding: '3px 9px',
-                                        background: '#ffebee', color: '#c62828',
-                                        borderRadius: 20, border: '1px solid #ef9a9a',
-                                    }}>
-                                        {a}
-                                    </span>
-                                ))}
-                            </div>
-                        </div>
-                    )}
-                    {crossAllergens.length > 0 && (
-                        <div>
-                            <p style={{ fontSize: 11, fontWeight: 700, color: '#e65100', margin: '0 0 6px' }}>
-                                Può contenere tracce di:
-                            </p>
-                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}>
-                                {crossAllergens.map(a => (
-                                    <span key={a} style={{
-                                        fontSize: 11, fontWeight: 600, padding: '3px 9px',
-                                        background: '#fff3e0', color: '#e65100',
-                                        borderRadius: 20, border: '1px solid #ffcc80',
-                                    }}>
-                                        {a}
-                                    </span>
-                                ))}
-                            </div>
-                        </div>
-                    )}
-                </div>
             )}
 
             {/* ─── Sticky CTA bar ─────────────────────────────────────────── */}
