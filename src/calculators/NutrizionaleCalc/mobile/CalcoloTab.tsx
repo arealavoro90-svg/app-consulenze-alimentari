@@ -1,8 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Trash2, ChevronDown, Plus, Sparkles, ArrowRight, RotateCcw, BookOpen } from 'lucide-react';
-import { parseDecimalIT } from '../../../utils/validation';
+import { parseDecimalIT, validateFinishedWeight, validateIngredientQuantity } from '../../../utils/validation';
 import { ADDITIVI_CATEGORIE, ADDITIVI_SPECIFICI } from '../shared/constants';
 import { IngSearch } from '../IngSearch';
+import { InfoTooltip } from '../InfoTooltip';
+import { ValidationError } from '../../../components/ValidationError';
 import type {
     MobileNutForm, DBIngredient, MobileComponent, RecipeRow, AdditiveRow, CalcResult,
 } from '../NutrizionaleCalcMobile';
@@ -49,10 +51,13 @@ function RecipeRowItem({ row, compId, isLast, onRemove, onUpdate }: {
     const [resaRaw, setResaRaw] = useState(String(row.resa));
     const [eurRaw, setEurRaw] = useState(String(row.eurKg));
     const [expanded, setExpanded] = useState(false);
+    const [gramsError, setGramsError] = useState<string | undefined>(undefined);
 
     const handleGrams = (v: string) => {
         setGramsRaw(v);
         const num = parseDecimalIT(v);
+        const result = validateIngredientQuantity(num, (row.ing.nome || '').trim());
+        setGramsError(result.isValid ? undefined : result.error);
         if (!isNaN(num) && num >= 0) onUpdate(compId, row.id, { grams: num });
     };
     const handleResa = (v: string) => {
@@ -109,13 +114,14 @@ function RecipeRowItem({ row, compId, isLast, onRemove, onUpdate }: {
                     <Trash2 size={12} />
                 </button>
             </div>
+            <ValidationError message={gramsError} visible={!!gramsError} />
 
             {/* Expandable detail: €/kg e Resa % — stesso layout desktop */}
             {expanded && (
                 <div style={{ borderTop: '1px solid var(--color-border)', padding: '8px 10px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, background: 'var(--color-surface)' }}>
                     <div className="ing-field-group">
                         <div className="ing-field-header">
-                            <label className="ing-field-label" htmlFor={`eur-${row.id}`}>€/kg</label>
+                            <label className="ing-field-label" htmlFor={`eur-${row.id}`}>€/kg<InfoTooltip text="Costo dell'ingrediente per kg, IVA esclusa. Usato per il calcolo del costo ricetta." /></label>
                         </div>
                         <input
                             id={`eur-${row.id}`}
@@ -131,7 +137,7 @@ function RecipeRowItem({ row, compId, isLast, onRemove, onUpdate }: {
                     </div>
                     <div className="ing-field-group">
                         <div className="ing-field-header">
-                            <label className="ing-field-label" htmlFor={`resa-${row.id}`}>Resa dopo cottura (%)</label>
+                            <label className="ing-field-label" htmlFor={`resa-${row.id}`}>Resa dopo cottura (%)<InfoTooltip text="Percentuale di peso rimanente dopo cottura/lavorazione. Es. 70 = perde il 30% del peso." /></label>
                         </div>
                         <input
                             id={`resa-${row.id}`}
@@ -565,7 +571,7 @@ export function CalcoloTab({
                             />
                         </div>
                         <div className="m-field" style={{ flex: 1 }}>
-                            <label className="m-label">Peso finito (g) <span style={{ fontWeight: 400, opacity: 0.6 }}>opz.</span></label>
+                            <label className="m-label">Peso finito (g) <span style={{ fontWeight: 400, opacity: 0.6 }}>opz.</span><InfoTooltip text="Peso del prodotto finito dopo cottura/lavorazione in grammi" /></label>
                             <span style={{ fontSize: 10, color: 'var(--m-text-faint)', display: 'block', marginBottom: 4 }}>Peso dopo cottura/lavorazione (calcola /100g)</span>
                             <input
                                 className="m-input m-input--num"
@@ -577,6 +583,10 @@ export function CalcoloTab({
                                 value={form.pesoFinito_g}
                                 onChange={e => onChange({ pesoFinito_g: e.target.value })}
                             />
+                            <ValidationError
+                                message={validateFinishedWeight(form.pesoFinito_g === '' ? '' : parseDecimalIT(String(form.pesoFinito_g))).error}
+                                visible={form.pesoFinito_g !== '' && !validateFinishedWeight(parseDecimalIT(String(form.pesoFinito_g))).isValid}
+                            />
                         </div>
                     </div>
                     <div>
@@ -587,7 +597,7 @@ export function CalcoloTab({
                                 onChange={e => { setShowLiquid(e.target.checked); if (!e.target.checked) onChange({ specificGravity: '' }); }}
                                 style={{ width: 14, height: 14, cursor: 'pointer', accentColor: 'var(--m-orange, #ff7e2e)' }}
                             />
-                            <span className="m-label" style={{ marginBottom: 0 }}>Prodotto liquido (peso specifico g/ml)</span>
+                            <span className="m-label" style={{ marginBottom: 0 }}>Prodotto liquido (peso specifico g/ml)<InfoTooltip text="Peso specifico per prodotti liquidi (g/ml). Lascia vuoto per prodotti solidi." /></span>
                         </label>
                         {showLiquid && (
                             <input
