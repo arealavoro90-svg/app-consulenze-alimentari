@@ -104,8 +104,10 @@ export function ExportOptionsModal({
                 scale: 2,
                 backgroundColor: '#ffffff',
                 useCORS: true,
-                // ponytail: wrappa i text node puri in <span> — html2canvas non renderizza
-                // text node DOM a font-size piccoli (es. valori numerici in TabCanada lineare).
+                // Forza viewport desktop: impedisce che html2canvas clippi le tabelle
+                // a larghezza mobile (es. USA lineare = 740px su iPhone SE = 375px).
+                windowWidth: 1200,
+                windowHeight: 900,
                 onclone: (clonedDoc: Document, el: HTMLElement) => {
                     const walker = clonedDoc.createTreeWalker(el, NodeFilter.SHOW_TEXT);
                     const nodes: Text[] = [];

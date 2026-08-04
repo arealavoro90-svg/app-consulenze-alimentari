@@ -33,7 +33,7 @@ function OptBtn({ label, active, disabled, onClick, disabledReason }: {
             disabled={disabled}
             title={disabled && disabledReason ? disabledReason : undefined}
             onClick={onClick}
-            style={{ fontSize: 11, padding: '3px 8px', opacity: disabled ? 0.4 : 1, width: '100%' }}
+            style={{ fontSize: 13, padding: '8px 10px', opacity: disabled ? 0.4 : 1, width: '100%' }}
         >
             {label}
         </button>
@@ -97,16 +97,65 @@ export function DownloadTableModal({
         }
         const target = container.querySelector<HTMLElement>('[data-table-export]') ?? container;
         setDownloading(true);
+
+        // html2canvas clippa in base all'overflow degli antenati anche su elemento specifico.
+        // Disabilita temporaneamente tutti gli overflow tra target e body.
+        const overflowFixes: { el: HTMLElement; overflowX: string; overflowY: string; scrollLeft: number }[] = [];
+        let ancestor: HTMLElement | null = target.parentElement;
+        while (ancestor && ancestor !== document.body) {
+            const cs = getComputedStyle(ancestor);
+            if (cs.overflowX !== 'visible' || cs.overflowY !== 'visible') {
+                overflowFixes.push({ el: ancestor, overflowX: ancestor.style.overflowX, overflowY: ancestor.style.overflowY, scrollLeft: ancestor.scrollLeft });
+                ancestor.style.overflowX = 'visible';
+                ancestor.style.overflowY = 'visible';
+                ancestor.scrollLeft = 0;
+            }
+            ancestor = ancestor.parentElement;
+        }
+
         try {
-            const canvas = await html2canvas(target, { scale: 2, backgroundColor: '#ffffff', useCORS: true });
+            const canvas = await html2canvas(target, {
+                scale: 2,
+                backgroundColor: '#ffffff',
+                useCORS: true,
+                windowWidth: 1200,
+                windowHeight: 900,
+                onclone: (clonedDoc: Document, el: HTMLElement) => {
+                    const walker = clonedDoc.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+                    const nodes: Text[] = [];
+                    let n: Node | null;
+                    while ((n = walker.nextNode())) nodes.push(n as Text);
+                    nodes.forEach(tn => {
+                        const span = clonedDoc.createElement('span');
+                        span.textContent = tn.textContent;
+                        tn.parentNode?.replaceChild(span, tn);
+                    });
+                },
+            });
+            const layoutLabels: Record<SubTab, string> = { verticale: 'Verticale', orizzontale: 'Orizzontale', lineare: 'Lineare' };
+            const euLabels: Record<EUSubTab, string> = { '100g': 'Per 100g', uv: 'UV', porzione: 'Porzione', pezzo: 'Pezzo' };
+            const formato = (region === 'USA' || region === 'Canada') ? layoutLabels[subTab]
+                : region === 'UE' ? euLabels[effEuSubTab]
+                : '';
+            const baseName = productName || 'tabella';
+            const fileName = formato
+                ? `${baseName} - tabella ${region} - ${formato}.png`
+                : `${baseName} - tabella ${region}.png`;
             const link = document.createElement('a');
-            link.download = `${productName || 'tabella'}_nutrizionale.png`;
+            link.download = fileName;
             link.href = canvas.toDataURL('image/png');
+            document.body.appendChild(link);
             link.click();
+            document.body.removeChild(link);
         } catch (e) {
-            console.error('PNG Export error:', e);  // fix 4: prefisso log ripristinato
+            console.error('PNG Export error:', e);
             toast.error("Errore durante l'esportazione della tabella in PNG.");
         } finally {
+            overflowFixes.forEach(({ el, overflowX, overflowY, scrollLeft }) => {
+                el.style.overflowX = overflowX;
+                el.style.overflowY = overflowY;
+                el.scrollLeft = scrollLeft;
+            });
             setDownloading(false);
         }
     }

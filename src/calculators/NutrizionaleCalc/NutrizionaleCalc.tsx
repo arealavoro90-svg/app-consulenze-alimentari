@@ -683,7 +683,7 @@ export function NutrizionaleCalc() {
             // ── Tabella visiva (html2canvas) ──
             if (tableRef.current) {
                 const exportTarget = (tableRef.current.querySelector('[data-table-export]') as HTMLElement) ?? tableRef.current;
-                const canvas = await html2canvas(exportTarget, { scale: 2, backgroundColor: '#ffffff', useCORS: true });
+                const canvas = await html2canvas(exportTarget, { scale: 2, backgroundColor: '#ffffff', useCORS: true, windowWidth: 1200, windowHeight: 900 });
                 const imgData = canvas.toDataURL('image/png');
                 const imgH = (canvas.height / canvas.width) * CW;
                 const clampH = Math.min(imgH, 257 - y);
