@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Trash2, ChevronDown, Plus, Sparkles, FolderOpen, FileSpreadsheet, ArrowRight, RotateCcw, BookOpen } from 'lucide-react';
+import { Trash2, ChevronDown, Plus, Sparkles, ArrowRight, RotateCcw, BookOpen } from 'lucide-react';
 import { parseDecimalIT } from '../../../utils/validation';
 import { ADDITIVI_CATEGORIE, ADDITIVI_SPECIFICI } from '../shared/constants';
 import { IngSearch } from '../IngSearch';
@@ -91,7 +91,8 @@ function RecipeRowItem({ row, compId, isLast, onRemove, onUpdate }: {
                         inputMode="decimal"
                         min="0"
                         step="1"
-                        style={{ width: 58, fontSize: 12, border: '1px solid var(--color-border)', borderRadius: 'var(--radius-sm)', padding: '3px 6px', textAlign: 'right', fontFamily: 'inherit', color: 'var(--color-text)', outline: 'none' }}
+                        className="form-input ing-input"
+                        style={{ textAlign: 'right' }}
                         value={gramsRaw}
                         onChange={e => handleGrams(e.target.value)}
                         aria-label={`Grammi di ${(row.ing.nome || '').trim()}`}
@@ -104,7 +105,6 @@ function RecipeRowItem({ row, compId, isLast, onRemove, onUpdate }: {
                     className="ing-delete-btn"
                     title="Rimuovi ingrediente"
                     aria-label={`Rimuovi ${(row.ing.nome || '').trim()}`}
-                    style={{ width: 24, height: 24, flexShrink: 0 }}
                 >
                     <Trash2 size={12} />
                 </button>
@@ -145,6 +145,28 @@ function RecipeRowItem({ row, compId, isLast, onRemove, onUpdate }: {
                             className="form-input ing-input"
                         />
                     </div>
+                    {(row.ing.alcol ?? 0) > 0 && (
+                        <label style={{ gridColumn: '1 / -1', display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer', fontSize: 12, color: 'var(--color-text)' }}>
+                            <input
+                                type="checkbox"
+                                checked={row.postCottura ?? false}
+                                onChange={() => onUpdate(compId, row.id, { postCottura: !row.postCottura })}
+                                style={{ width: 14, height: 14, cursor: 'pointer', accentColor: 'var(--m-orange, #ff7e2e)' }}
+                            />
+                            <span>Post-cottura <span style={{ color: 'var(--color-text-muted)' }}>(alcol non evapora)</span></span>
+                        </label>
+                    )}
+                    {(row.ing.acqua ?? 0) > 90 && (
+                        <label style={{ gridColumn: '1 / -1', display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer', fontSize: 12, color: 'var(--color-text)' }}>
+                            <input
+                                type="checkbox"
+                                checked={row.acquaAggiunta ?? false}
+                                onChange={() => onUpdate(compId, row.id, { acquaAggiunta: !row.acquaAggiunta })}
+                                style={{ width: 14, height: 14, cursor: 'pointer', accentColor: 'var(--m-orange, #ff7e2e)' }}
+                            />
+                            <span>Acqua aggiunta <span style={{ color: 'var(--color-text-muted)' }}>(evapora dopo alcol)</span></span>
+                        </label>
+                    )}
                 </div>
             )}
         </div>
@@ -498,18 +520,20 @@ export function CalcoloTab({
                     <span className="m-section__title">Prodotto</span>
                     <div className="m-section__line" />
                 </div>
-                <div style={{ padding: '0 16px 8px', display: 'flex', justifyContent: 'flex-end' }}>
+                <div style={{ padding: '0 16px 8px' }}>
                     <button
                         type="button"
                         onClick={onNewRecipe}
                         style={{
-                            display: 'flex', alignItems: 'center', gap: 4,
-                            background: 'none', border: '1px solid var(--m-border)',
-                            borderRadius: 6, padding: '4px 10px',
-                            fontSize: 11, fontWeight: 600, color: 'var(--m-text-muted)', cursor: 'pointer',
+                            width: '100%',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+                            padding: '10px 14px', borderRadius: 10, border: 'none',
+                            background: 'linear-gradient(135deg, #ff7e2e, #dd5c0c)',
+                            color: '#fff', fontWeight: 700, fontSize: 13,
+                            cursor: 'pointer', boxShadow: '0 3px 10px rgba(255,126,46,0.3)',
                         }}
                     >
-                        <RotateCcw size={12} /> Nuova ricetta
+                        <RotateCcw size={14} /> Nuova ricetta
                     </button>
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -599,8 +623,8 @@ export function CalcoloTab({
                     </button>
                 </div>
 
-                {/* Import strip — sempre visibile sopra gli ingredienti */}
-                {!(!hasIngredients && !form.denominazione) && (
+                {/* Import strip — visibile solo su ricetta vuota, scompare quando inizia compilazione */}
+                {(!hasIngredients && !form.denominazione.trim()) && (
                     <button
                         type="button"
                         onClick={onOpenSmartImport}
@@ -640,110 +664,6 @@ export function CalcoloTab({
                     </div>
                 ) : (
                     <>
-                        {!hasIngredients && !form.denominazione && (
-                            <div style={{
-                                margin: '0 0 16px',
-                                borderRadius: 14,
-                                border: '1.5px solid var(--m-border)',
-                                background: 'var(--m-surface)',
-                                overflow: 'hidden',
-                            }}>
-                                {/* Hero */}
-                                <div style={{ padding: '24px 20px 20px', textAlign: 'center' }}>
-                                    <div style={{
-                                        width: 48, height: 48, borderRadius: 14,
-                                        background: 'linear-gradient(135deg, #ff7e2e, #dd5c0c)',
-                                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                        margin: '0 auto 14px',
-                                        boxShadow: '0 4px 12px rgba(255,126,46,0.3)',
-                                    }}>
-                                        <Sparkles size={24} color="#fff" />
-                                    </div>
-                                    <div style={{ fontWeight: 700, fontSize: 17, color: 'var(--m-text)', marginBottom: 6, letterSpacing: '-0.2px' }}>
-                                        Importazione intelligente
-                                    </div>
-                                    <div style={{ fontSize: 13, color: 'var(--m-text-muted)', lineHeight: 1.55, marginBottom: 18 }}>
-                                        Incolla la ricetta — abbino gli ingredienti al database in automatico
-                                    </div>
-                                    <button
-                                        type="button"
-                                        onClick={onOpenSmartImport}
-                                        style={{
-                                            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-                                            padding: '12px 20px', borderRadius: 10, border: 'none',
-                                            background: 'linear-gradient(135deg, #ff7e2e, #dd5c0c)',
-                                            color: '#fff', fontWeight: 700, fontSize: 14, cursor: 'pointer',
-                                            boxShadow: '0 4px 14px rgba(255,126,46,0.35)',
-                                            width: '100%',
-                                        }}
-                                    >
-                                        <Sparkles size={16} /> Inizia l'import intelligente
-                                    </button>
-                                </div>
-
-                                {/* Divider */}
-                                <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '0 20px' }}>
-                                    <div style={{ flex: 1, height: 1, background: 'var(--m-border)' }} />
-                                    <span style={{ fontSize: 11, color: 'var(--m-text-muted)', fontWeight: 500 }}>oppure</span>
-                                    <div style={{ flex: 1, height: 1, background: 'var(--m-border)' }} />
-                                </div>
-
-                                {/* Azioni secondarie */}
-                                <div style={{ display: 'flex', gap: 10, padding: '16px 20px 20px' }}>
-                                    <button
-                                        type="button"
-                                        onClick={onOpenArchive}
-                                        style={{
-                                            flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                            gap: 6, padding: '10px 8px', borderRadius: 10,
-                                            border: '1.5px solid var(--m-border)', background: 'var(--m-surface)',
-                                            color: 'var(--m-text)', fontSize: 13, fontWeight: 600, cursor: 'pointer',
-                                        }}
-                                    >
-                                        <FolderOpen size={15} /> Archivio
-                                    </button>
-                                    <button
-                                        type="button"
-                                        onClick={() => { denominazioneRef.current?.focus(); denominazioneRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' }); }}
-                                        style={{
-                                            flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                            gap: 6, padding: '10px 8px', borderRadius: 10,
-                                            border: '1.5px solid var(--m-border)', background: 'var(--m-surface)',
-                                            color: 'var(--m-text)', fontSize: 13, fontWeight: 600, cursor: 'pointer',
-                                        }}
-                                    >
-                                        <Plus size={15} /> Manuale
-                                    </button>
-                                </div>
-
-                                {/* Excel — solo utenti con excel-import */}
-                                {hasExcelImport && (
-                                    <div style={{
-                                        borderTop: '1px solid var(--m-border)',
-                                        padding: '12px 20px',
-                                        display: 'flex', alignItems: 'center', gap: 10,
-                                        background: '#f0fdf4',
-                                    }}>
-                                        <FileSpreadsheet size={15} color="#16a34a" style={{ flexShrink: 0 }} />
-                                        <span style={{ flex: 1, fontSize: 12, color: '#15803d', fontWeight: 500 }}>
-                                            Hai il Programma Excel AEA?
-                                        </span>
-                                        <button
-                                            type="button"
-                                            onClick={onOpenSmartImport}
-                                            style={{
-                                                padding: '6px 12px', borderRadius: 8,
-                                                border: '1.5px solid #16a34a', background: '#fff',
-                                                color: '#15803d', fontSize: 12, fontWeight: 600, cursor: 'pointer',
-                                                display: 'flex', alignItems: 'center', gap: 5,
-                                            }}
-                                        >
-                                            <FileSpreadsheet size={13} /> Importa .xlsx
-                                        </button>
-                                    </div>
-                                )}
-                            </div>
-                        )}
                         <div className="stagger-children--tight">
                             {components.map((comp, idx) => (
                                 <ComponentCard
@@ -808,10 +728,14 @@ export function CalcoloTab({
                 className="m-btn m-btn--primary m-btn--full"
                 onClick={onGoToTabella}
                 disabled={!hasIngredients}
-                title={!hasIngredients ? 'Aggiungi almeno un ingrediente per continuare' : undefined}
             >
-                Vai a Mercati <ArrowRight size={14} />
+                Riepilogo <ArrowRight size={14} />
             </button>
+            {!hasIngredients && (
+                <p style={{ textAlign: 'center', margin: '6px 0 0', fontSize: 12, color: 'var(--m-text-muted)' }}>
+                    Aggiungi almeno un ingrediente per continuare
+                </p>
+            )}
         </div>
         </>
     );
