@@ -1,4 +1,4 @@
-import { Component, type ReactNode } from 'react';
+import { Component, type ReactNode, type ErrorInfo } from 'react';
 
 interface Props { children: ReactNode }
 interface State { error: Error | null }
@@ -11,8 +11,11 @@ export class ErrorBoundary extends Component<Props, State> {
         return { error };
     }
 
-    componentDidCatch(error: Error) {
-        console.error('[ErrorBoundary]', error);
+    componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+        // componentStack indica in quale componente/props è avvenuto il throw — senza,
+        // il solo error.message spesso non basta a localizzare il bug (vedi bug ricetta
+        // legacy in EtichetteCalc: il messaggio da solo non diceva quale campo mancasse).
+        console.error('[ErrorBoundary]', error, errorInfo.componentStack);
     }
 
     render() {

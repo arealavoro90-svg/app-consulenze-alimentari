@@ -2,7 +2,7 @@ import { createContext, useContext, useState, useEffect } from 'react';
 import type { ReactNode } from 'react';
 import type { User, ToolId } from '../data/mockUsers';
 import { apiLogin, apiLogout, apiMe } from '../api/auth';
-import { getAccessToken, clearTokens } from '../api/client';
+import { clearTokens } from '../api/client';
 
 interface AuthContextType {
     user:            User | null;
@@ -29,17 +29,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
 
     /**
-     * Verifica il token JWT al mount.
-     * - Se non c'è token → pulisce eventuale cache obsoleta.
-     * - Se apiMe() fallisce (token scaduto/invalido) → logout silenzioso.
+     * Verifica la sessione al mount chiamando /api/auth/me/ — il token vive solo nel
+     * cookie httpOnly (S5), mai in localStorage, quindi va sempre verificato via rete,
+     * mai dedotto da uno storage locale che dal login via cookie non viene più scritto.
+     * Se apiMe() fallisce (cookie assente/scaduto) → logout silenzioso.
      */
     useEffect(() => {
-        const token = getAccessToken();
-        if (!token) {
-            setUser(null);
-            localStorage.removeItem(CACHE_KEY);
-            return;
-        }
         apiMe()
             .then((freshUser) => {
                 setUser(freshUser);

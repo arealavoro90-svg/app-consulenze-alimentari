@@ -17,7 +17,7 @@ export function useIngredientsDB(errorMessage = 'Impossibile caricare il databas
         fromAPI()
             .catch(() => fromStatic())
             .then(data => {
-                let base = data;
+                let base = Array.isArray(data) ? data : [];
                 try {
                     const raw = JSON.parse(localStorage.getItem('custom_ingredients') || '[]') as unknown[];
                     const custom = Array.isArray(raw) ? raw.filter(isValidDBIngredient) as DBIngredient[] : [];

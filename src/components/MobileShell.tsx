@@ -1,9 +1,11 @@
+import { useState } from 'react';
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
 import {
     Home, Salad, Tag, Wine, Package,
     Thermometer, FileText, Settings2,
 } from 'lucide-react';
 import { useAuth } from '../auth/AuthContext';
+import { ConfirmDialog } from './ui/ConfirmDialog';
 import type { ToolId } from '../data/mockUsers';
 
 const TAB_ICONS: Record<ToolId, React.ReactNode> = {
@@ -36,6 +38,9 @@ interface MobileShellProps {
 export function MobileShell({ pageLabel = 'Dashboard', insideTool = false }: MobileShellProps) {
     const { user, logout } = useAuth();
     const navigate = useNavigate();
+    const [logoutOpen, setLogoutOpen] = useState(false);
+
+    const handleLogout = () => { logout(); navigate('/login'); };
 
     const initials = user
         ? user.name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()
@@ -49,6 +54,7 @@ export function MobileShell({ pageLabel = 'Dashboard', insideTool = false }: Mob
     }));
 
     return (
+        <>
         <div className={`m-shell${insideTool ? ' m-shell--tool' : ''}`}>
             <header className={`m-topbar${insideTool ? ' m-topbar--tool' : ''}`}>
                 {insideTool ? (
@@ -68,7 +74,7 @@ export function MobileShell({ pageLabel = 'Dashboard', insideTool = false }: Mob
                         <button
                             type="button"
                             className="m-topbar__avatar"
-                            onClick={logout}
+                            onClick={() => setLogoutOpen(true)}
                             aria-label="Logout"
                         >
                             {initials}
@@ -90,7 +96,7 @@ export function MobileShell({ pageLabel = 'Dashboard', insideTool = false }: Mob
                         <button
                             type="button"
                             className="m-topbar__avatar"
-                            onClick={logout}
+                            onClick={() => setLogoutOpen(true)}
                             aria-label="Logout"
                         >
                             {initials}
@@ -149,5 +155,16 @@ export function MobileShell({ pageLabel = 'Dashboard', insideTool = false }: Mob
             </nav>
             )}
         </div>
+        <ConfirmDialog
+            open={logoutOpen}
+            title="Esci dall'account"
+            message="Vuoi davvero uscire? La sessione corrente verrà terminata."
+            confirmLabel="Esci"
+            cancelLabel="Annulla"
+            variant="warning"
+            onConfirm={handleLogout}
+            onCancel={() => setLogoutOpen(false)}
+        />
+        </>
     );
 }
