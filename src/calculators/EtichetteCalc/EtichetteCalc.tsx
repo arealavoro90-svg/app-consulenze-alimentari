@@ -2695,7 +2695,7 @@ export function EtichetteCalc() {
                         // di RICCO DI X, stesso nutriente non va ripetuto due volte).
                         const texts = Array.from(new Set(
                             HEALTH_CLAIMS_432_2012
-                                .filter(h => data.claimsSelezionati.includes(h.claim))
+                                .filter(h => allClaims.includes(h.claim))
                                 .map(h => h.texts[0])
                         ));
                         if (texts.length === 0) return null;
