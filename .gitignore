@@ -41,3 +41,5 @@ PROMPTS/
 # Env
 .env.local
 .worktrees/
+test-results/
+.claude/
