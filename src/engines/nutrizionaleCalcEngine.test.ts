@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { calcNutrients, scaleResult, energyFromMacros, calcQuid, ZERO_CALC, type DBIngredient, type Component } from './nutrizionaleCalcEngine';
+import { calcNutrients, scaleResult, energyFromMacros, calcQuid, calcClaims, ZERO_CALC, type DBIngredient, type Component, type CalcResult } from './nutrizionaleCalcEngine';
 import { parseDecimalIT } from '../utils/validation';
 
 // ─── Fixtures ─────────────────────────────────────────────────────────────────
@@ -170,6 +170,81 @@ describe('energyFromMacros', () => {
     it('campi opzionali omessi trattati come 0', () => {
         const { kcal } = energyFromMacros({ grassi: 0, carboidrati: 10, proteine: 5 });
         expect(kcal).toBe(10*4 + 5*4);
+    });
+});
+
+// ─── calcClaims ───────────────────────────────────────────────────────────────
+
+function makeResult(overrides: Partial<CalcResult>): CalcResult {
+    // sodio_mg=999 di default: evita claim sodio negli altri test
+    return { ...ZERO_CALC, energyKcal: 400, sodio_mg: 999, ...overrides };
+}
+
+describe('calcClaims', () => {
+    // ─── Fibre ───────────────────────────────────────────────────────────────
+    it('fibre 2.9g → nessun claim fibre', () => {
+        expect(calcClaims(makeResult({ fibre: 2.9 }))).not.toContain('FONTE DI FIBRE');
+    });
+    it('fibre esattamente 3g → FONTE DI FIBRE', () => {
+        expect(calcClaims(makeResult({ fibre: 3 }))).toContain('FONTE DI FIBRE');
+    });
+    it('fibre esattamente 6g → RICCO DI FIBRE (non FONTE)', () => {
+        const claims = calcClaims(makeResult({ fibre: 6 }));
+        expect(claims).toContain('RICCO DI FIBRE');
+        expect(claims).not.toContain('FONTE DI FIBRE');
+    });
+
+    // ─── Sodio ───────────────────────────────────────────────────────────────
+    it('sodio_mg esattamente 120 → A BASSO CONTENUTO DI SODIO (soglia ≤)', () => {
+        expect(calcClaims(makeResult({ sodio_mg: 120 }))).toContain('A BASSO CONTENUTO DI SODIO');
+    });
+    it('sodio_mg 121 → nessun claim sodio', () => {
+        expect(calcClaims(makeResult({ sodio_mg: 121 }))).not.toContain('A BASSO CONTENUTO DI SODIO');
+    });
+
+    // ─── Zuccheri (solidi/liquidi) ────────────────────────────────────────────
+    it('zuccheri 5g solido → A BASSO CONTENUTO DI ZUCCHERI', () => {
+        expect(calcClaims(makeResult({ zuccheri: 5 }))).toContain('A BASSO CONTENUTO DI ZUCCHERI');
+    });
+    it('zuccheri 5.1g solido → nessun claim zuccheri', () => {
+        expect(calcClaims(makeResult({ zuccheri: 5.1 }))).not.toContain('A BASSO CONTENUTO DI ZUCCHERI');
+    });
+    it('zuccheri 2.5g liquido → claim (soglia 2.5 per liquidi)', () => {
+        expect(calcClaims(makeResult({ zuccheri: 2.5 }), true)).toContain('A BASSO CONTENUTO DI ZUCCHERI');
+    });
+    it('zuccheri 2.6g liquido → nessun claim', () => {
+        expect(calcClaims(makeResult({ zuccheri: 2.6 }), true)).not.toContain('A BASSO CONTENUTO DI ZUCCHERI');
+    });
+
+    // ─── Grassi (solidi/liquidi) ──────────────────────────────────────────────
+    it('grassi 3g solido → A BASSO CONTENUTO DI GRASSI', () => {
+        expect(calcClaims(makeResult({ grassi: 3 }))).toContain('A BASSO CONTENUTO DI GRASSI');
+    });
+    it('grassi 3.1g solido → nessun claim grassi', () => {
+        expect(calcClaims(makeResult({ grassi: 3.1 }))).not.toContain('A BASSO CONTENUTO DI GRASSI');
+    });
+    it('grassi 1.5g liquido → claim (soglia 1.5 per liquidi)', () => {
+        expect(calcClaims(makeResult({ grassi: 1.5 }), true)).toContain('A BASSO CONTENUTO DI GRASSI');
+    });
+    it('grassi 1.6g liquido → nessun claim', () => {
+        expect(calcClaims(makeResult({ grassi: 1.6 }), true)).not.toContain('A BASSO CONTENUTO DI GRASSI');
+    });
+
+    // ─── Proteine (% energia) ────────────────────────────────────────────────
+    it('proteine 12% energia → FONTE DI PROTEINE', () => {
+        // 400 kcal totali, proteine = 12 → 12*4=48 kcal → 48/400=12%
+        expect(calcClaims(makeResult({ energyKcal: 400, proteine: 12 }))).toContain('FONTE DI PROTEINE');
+    });
+    it('proteine 20% energia → AD ALTO CONTENUTO DI PROTEINE (non FONTE)', () => {
+        // 400 kcal, proteine = 20 → 20*4=80 kcal → 80/400=20%
+        const claims = calcClaims(makeResult({ energyKcal: 400, proteine: 20 }));
+        expect(claims).toContain('AD ALTO CONTENUTO DI PROTEINE');
+        expect(claims).not.toContain('FONTE DI PROTEINE');
+    });
+    it('energyKcal=0 → nessun claim proteine (evita divisione per zero)', () => {
+        const claims = calcClaims(makeResult({ energyKcal: 0, proteine: 50 }));
+        expect(claims).not.toContain('FONTE DI PROTEINE');
+        expect(claims).not.toContain('AD ALTO CONTENUTO DI PROTEINE');
     });
 });
 

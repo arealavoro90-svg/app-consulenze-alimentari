@@ -557,7 +557,7 @@ exports[`TabAustralia — snapshot rendering > con serving e confezione 1`] = `
   >
     <div
       data-table-export="true"
-      style="background: white; padding: 12px; border-radius: 0px; display: inline-block; width: 560px; box-sizing: border-box;"
+      style="background: white; padding: 12px; border-radius: 0px; display: inline-block; min-width: 560px; box-sizing: border-box;"
     >
       <div
         style="border: 2px solid rgb(0, 0, 0); font-family: Arial, sans-serif; font-size: 12px;"
@@ -819,7 +819,7 @@ exports[`TabAustralia — snapshot rendering > senza serving — messaggio place
   >
     <div
       data-table-export="true"
-      style="background: white; padding: 12px; border-radius: 0px; display: inline-block; width: 560px; box-sizing: border-box;"
+      style="background: white; padding: 12px; border-radius: 0px; display: inline-block; min-width: 560px; box-sizing: border-box;"
     >
       <div
         style="border: 2px solid rgb(0, 0, 0); font-family: Arial, sans-serif; font-size: 12px;"
