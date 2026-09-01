@@ -701,7 +701,7 @@ export function EtichetteCalc() {
     const [leftTab, setLeftTab] = useState<'dati' | 'grafica'>('dati');
 
     // Archive state
-    const { items: savedLabels, saveItem, deleteItem } = useArchive<LabelData>('aea_archive_etichette');
+    const { items: savedLabels, saveItem, deleteItem } = useArchive<LabelData>('aea_archive_etichette', 'etichette');
     const [isArchiveOpen, setIsArchiveOpen] = useState(false);
     const [currentId, setCurrentId] = useState<string | undefined>(undefined);
     const [currentName, setCurrentName] = useState('');
@@ -1058,9 +1058,9 @@ export function EtichetteCalc() {
         }, 0);
     };
 
-    const doSaveWithName = (nameToSave: string) => {
+    const doSaveWithName = async (nameToSave: string) => {
         if (!nameToSave) return;
-        const id = saveItem(nameToSave, data, currentId);
+        const id = await saveItem(nameToSave, data, currentId);
         setCurrentId(id);
         setCurrentName(nameToSave);
         setIsDirty(false);

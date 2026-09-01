@@ -186,7 +186,7 @@ function ProgressBar({ color, pct, label }: { color: string; pct: number; label:
 export function RintracciabilitaCalc() {
     const { user } = useAuth();
     const [data, setData] = useState<CostiData>(DEFAULT);
-    const { items: savedItems, saveItem, deleteItem } = useArchive<CostiData>('aea_archive_rintracciabilita');
+    const { items: savedItems, saveItem, deleteItem } = useArchive<CostiData>('aea_archive_rintracciabilita', 'rintracciabilita');
     const [isArchiveOpen, setIsArchiveOpen] = useState(false);
     const [currentId, setCurrentId] = useState<string | undefined>(undefined);
     const [currentName, setCurrentName] = useState('');
@@ -232,8 +232,8 @@ export function RintracciabilitaCalc() {
     const result = useMemo(() => calcAll(data), [data]);
 
     // Archive
-    const doSaveWithName = (name: string) => {
-        const id = saveItem(name, data, currentId);
+    const doSaveWithName = async (name: string) => {
+        const id = await saveItem(name, data, currentId);
         setCurrentId(id); setCurrentName(name);
         toast.success('Salvato!');
     };

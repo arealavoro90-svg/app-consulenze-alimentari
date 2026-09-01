@@ -205,7 +205,7 @@ export function EtichetteViniCalc() {
     const [label, setLabel] = useState<LabelData>(defaultLabel);
 
     // Archive
-    const { items: savedItems, saveItem, deleteItem } = useArchive<ViniArchiveData>('aea_archive_vini');
+    const { items: savedItems, saveItem, deleteItem } = useArchive<ViniArchiveData>('aea_archive_vini', 'etichette-vini');
     const [isArchiveOpen, setIsArchiveOpen] = useState(false);
     const [currentId, setCurrentId] = useState<string | undefined>(undefined);
     const [currentName, setCurrentName] = useState('');
@@ -239,10 +239,10 @@ export function EtichetteViniCalc() {
     };
     const removeImballaggio = (id: string) => setL('imballaggi', label.imballaggi.filter(i => i.id !== id));
 
-    const handleSave = () => {
+    const handleSave = async () => {
         const name = currentName || prompt('Nome per questa etichetta:', `${label.nomeCommerciale || 'Etichetta'} — ${new Date().toLocaleDateString('it-IT')}`);
         if (!name) return;
-        const id = saveItem(name, { analytical, label }, currentId);
+        const id = await saveItem(name, { analytical, label }, currentId);
         setCurrentId(id);
         setCurrentName(name);
         alert('Salvato nell\'archivio!');

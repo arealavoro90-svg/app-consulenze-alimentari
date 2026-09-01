@@ -130,7 +130,7 @@ export function NutrizionaleCalcMobile() {
     // useState initializer: gira durante il primo render, PRIMA dell'effect di
     // useArchive che legge la chiave (idempotente, sicura in StrictMode).
     useState(() => { migrateMobileArchive(); return null; });
-    const archive = useArchive<ArchiveData>('nutrizionale-v3');
+    const archive = useArchive<ArchiveData>('nutrizionale-v3', 'nutrizionale');
 
     const [welcomeSeen, setWelcomeSeen] = useLocalStorage<boolean>('aea_welcome_seen', false);
     // sessionStorage: il remount desktop↔mobile su resize (vedi useMobile.ts) altrimenti

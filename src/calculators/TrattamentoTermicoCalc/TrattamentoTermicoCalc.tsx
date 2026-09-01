@@ -167,7 +167,7 @@ export function TrattamentoTermicoCalc() {
     const toggleGuide = () => setGuideOpen(prev => !prev);
 
     // Archive
-    const { items: savedItems, saveItem, deleteItem } = useArchive<F0ArchiveData>('aea_archive_f0');
+    const { items: savedItems, saveItem, deleteItem } = useArchive<F0ArchiveData>('aea_archive_f0', 'trattamento-termico');
     const [isArchiveOpen, setIsArchiveOpen] = useState(false);
     const [currentId, setCurrentId] = useState<string | undefined>(undefined);
     const [currentName, setCurrentName] = useState('');
@@ -216,10 +216,10 @@ export function TrattamentoTermicoCalc() {
         setRows(prev => prev.filter(r => r.id !== id));
     };
 
-    const handleSave = () => {
+    const handleSave = async () => {
         const name = currentName || prompt('Nome per questo calcolo F0:', `${product.prodotto || 'F0'} — ${new Date().toLocaleDateString('it-IT')}`);
         if (!name) return;
-        const id = saveItem(name, { mode, product, microorg, annotazioni, oraInizio, oraFine, rows }, currentId);
+        const id = await saveItem(name, { mode, product, microorg, annotazioni, oraInizio, oraFine, rows }, currentId);
         setCurrentId(id);
         setCurrentName(name);
         alert('Salvato nell\'archivio!');

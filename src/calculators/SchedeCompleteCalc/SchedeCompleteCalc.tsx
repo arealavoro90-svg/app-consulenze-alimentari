@@ -87,7 +87,7 @@ export function SchedeCompleteCalc() {
     const [activeTab, setActiveTab] = useState<'tecnica' | 'processo' | 'costi'>('tecnica');
 
     // Archive state
-    const { items: savedItems, saveItem, deleteItem } = useArchive<SchedaCompleta>('aea_archive_schede');
+    const { items: savedItems, saveItem, deleteItem } = useArchive<SchedaCompleta>('aea_archive_schede', 'schede-complete');
     const [isArchiveOpen, setIsArchiveOpen] = useState(false);
     const [currentId, setCurrentId] = useState<string | undefined>(undefined);
     const [currentName, setCurrentName] = useState('');
@@ -112,11 +112,11 @@ export function SchedeCompleteCalc() {
     const totalCostKg = rawCost + (batch > 0 ? (packaging + labor) / batch : 0);
     const margin = sell > 0 && totalCostKg > 0 ? ((sell - totalCostKg) / sell) * 100 : 0;
 
-    const handleSave = () => {
+    const handleSave = async () => {
         const nameToSave = currentName || data.productName || prompt("Inserisci un nome per la scheda: ", 'Scheda ' + new Date().toLocaleDateString());
         if (!nameToSave) return; // User cancelled
 
-        const id = saveItem(nameToSave, data, currentId);
+        const id = await saveItem(nameToSave, data, currentId);
         setCurrentId(id);
         setCurrentName(nameToSave);
         alert("Scheda salvata con successo nell'archivio!");

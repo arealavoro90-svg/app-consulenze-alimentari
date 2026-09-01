@@ -239,7 +239,7 @@ export function NutrizionaleCalc() {
     // ponytail: servingsGridOpen rimosso — porzioni ora sempre visibili in colonna fissa
     // ponytail: servingValsRef / auto-open effect rimossi — porzioni sempre visibili
 
-    const { items: archiveItems, saveItem, deleteItem } = useArchive<ArchiveData>('nutrizionale-v3');
+    const { items: archiveItems, saveItem, deleteItem, pendingMigration, migrateLocalToBackend, dismissMigration } = useArchive<ArchiveData>('nutrizionale-v3', 'nutrizionale');
     const [, setCurrentId] = useState<string | undefined>(undefined);
     const [, setCurrentName] = useState('');
     const [isFlashing, setIsFlashing] = useState(false);
@@ -1088,6 +1088,14 @@ export function NutrizionaleCalc() {
 
     return (
         <>
+            {/* Banner migrazione dati locali → cloud (appare solo la prima volta) */}
+            {pendingMigration.length > 0 && (
+                <div style={{ background: 'var(--color-orange)', color: '#fff', padding: '10px 16px', display: 'flex', alignItems: 'center', gap: 12, fontSize: 14 }}>
+                    <span>📦 Hai {pendingMigration.length} salvatag{pendingMigration.length === 1 ? 'gio' : 'gi'} locali. Vuoi caricarli nel cloud per accedervi da qualsiasi dispositivo?</span>
+                    <button onClick={() => void migrateLocalToBackend()} style={{ background: '#fff', color: 'var(--color-orange)', border: 'none', borderRadius: 6, padding: '4px 12px', fontWeight: 600, cursor: 'pointer' }}>Carica</button>
+                    <button onClick={dismissMigration} style={{ background: 'transparent', color: '#fff', border: '1px solid #fff', borderRadius: 6, padding: '4px 10px', cursor: 'pointer' }}>Ignora</button>
+                </div>
+            )}
             {/* Inject title into topbar-left slot */}
             {createPortal(
                 <div style={{ fontWeight: 600, fontSize: 17, color: 'var(--color-text)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', lineHeight: 1.2 }}>
