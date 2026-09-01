@@ -1,12 +1,19 @@
 import React, { useState } from 'react';
 import { X, ChevronRight, ChevronLeft, Database, Layers, Scale, ExternalLink } from 'lucide-react';
 
+interface Slide {
+    icon: React.ReactNode;
+    title: string;
+    content: React.ReactNode;
+}
+
 interface WelcomeModalProps {
     onClose: () => void;
     onNeverShow: () => void;
+    slides?: Slide[];
 }
 
-const SLIDES = [
+export const NUTRIZIONALE_SLIDES: Slide[] = [
     {
         icon: <Layers size={28} strokeWidth={1.5} />,
         title: 'Come funziona il calcolatore',
@@ -88,10 +95,78 @@ const SLIDES = [
     },
 ];
 
-export function WelcomeModal({ onClose, onNeverShow }: WelcomeModalProps) {
+export const ETICHETTE_SLIDES: Slide[] = [
+    {
+        icon: <Layers size={28} strokeWidth={1.5} />,
+        title: 'Come funziona il generatore',
+        content: (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                {[
+                    { step: '1', label: 'Ricetta collegata', desc: 'Collega una ricetta salvata nel tool Valori Nutrizionali per compilare automaticamente ingredienti, QUID, allergeni e tabella nutrizionale.' },
+                    { step: '2', label: 'Dati del prodotto', desc: 'Compila i campi obbligatori (denominazione, produttore, quantità netta, ingredienti) richiesti dal Reg. UE 1169/2011.' },
+                    { step: '3', label: 'Grafica e anteprima', desc: 'Imposta dimensioni, sfondo e logo, poi genera l\'anteprima dell\'etichetta e scarica il report.' },
+                ].map(s => (
+                    <div key={s.step} style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
+                        <div style={{
+                            minWidth: 28, height: 28, borderRadius: '50%',
+                            background: 'var(--color-orange)', color: '#fff',
+                            fontWeight: 800, fontSize: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+                        }}>{s.step}</div>
+                        <div>
+                            <div style={{ fontWeight: 700, fontSize: 13, color: 'var(--color-text)', marginBottom: 2 }}>{s.label}</div>
+                            <div style={{ fontSize: 12, color: 'var(--color-text-muted)', lineHeight: 1.5 }}>{s.desc}</div>
+                        </div>
+                    </div>
+                ))}
+            </div>
+        ),
+    },
+    {
+        icon: <Scale size={28} strokeWidth={1.5} />,
+        title: 'Ingredienti e QUID',
+        content: (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                <p style={{ margin: 0, fontSize: 12, color: 'var(--color-text-muted)', lineHeight: 1.6 }}>
+                    Il <strong>QUID</strong> (QUantitative Ingredient Declaration) è la percentuale di un ingrediente
+                    evidenziato in denominazione o immagine, obbligatoria per legge quando rilevante.
+                </p>
+                <div style={{ background: 'rgba(255,126,46,0.08)', border: '1px solid rgba(255,126,46,0.3)', borderRadius: 8, padding: '10px 14px' }}>
+                    <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--color-orange)', marginBottom: 8 }}>Con ricetta collegata</div>
+                    <div style={{ fontSize: 12, color: 'var(--color-text-muted)', lineHeight: 1.6 }}>
+                        Il generatore calcola automaticamente ordine ingredienti (per peso decrescente) e QUID%
+                        dalla ricetta collegata — restano comunque editabili prima di pubblicare.
+                    </div>
+                </div>
+                <p style={{ margin: 0, fontSize: 12, color: 'var(--color-text-muted)', lineHeight: 1.6 }}>
+                    Senza ricetta collegata, va compilato tutto manualmente: allergeni evidenziati in MAIUSCOLO,
+                    percentuali degli ingredienti caratterizzanti.
+                </p>
+            </div>
+        ),
+    },
+    {
+        icon: <Database size={28} strokeWidth={1.5} />,
+        title: 'Imballi e raccolta differenziata',
+        content: (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                <p style={{ margin: 0, fontSize: 12, color: 'var(--color-text-muted)', lineHeight: 1.6 }}>
+                    Dal 2023 (D.Lgs. 116/2020) ogni imballo va etichettato con materiale e indicazione
+                    di conferimento alla raccolta differenziata (es. "ALU 41" per l'alluminio).
+                </p>
+                <p style={{ margin: 0, fontSize: 12, color: 'var(--color-text-muted)', lineHeight: 1.6 }}>
+                    Aggiungi un imballo per ogni componente separabile della confezione (es. vaschetta, film,
+                    etichetta). Il generatore aggiunge automaticamente la dicitura "Verifica le disposizioni
+                    del tuo Comune".
+                </p>
+            </div>
+        ),
+    },
+];
+
+export function WelcomeModal({ onClose, onNeverShow, slides = NUTRIZIONALE_SLIDES }: WelcomeModalProps) {
     const [slide, setSlide] = useState(0);
-    const isLast = slide === SLIDES.length - 1;
-    const current = SLIDES[slide];
+    const isLast = slide === slides.length - 1;
+    const current = slides[slide];
 
     return (
         <div style={{
@@ -109,13 +184,13 @@ export function WelcomeModal({ onClose, onNeverShow }: WelcomeModalProps) {
                     </div>
                     <div style={{ flex: 1 }}>
                         <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--color-text-muted)', marginBottom: 2 }}>
-                            Guida rapida · Passo {slide + 1} di {SLIDES.length}
+                            Guida rapida · Passo {slide + 1} di {slides.length}
                         </div>
                         <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--color-navy, #1a2e4a)', lineHeight: 1.2 }}>
                             {current.title}
                         </div>
                     </div>
-                    <button type="button" onClick={onClose}
+                    <button type="button" onClick={onClose} aria-label="Chiudi guida rapida"
                         style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-text-muted)', padding: 4, display: 'flex', borderRadius: 4 }}>
                         <X size={16} />
                     </button>
@@ -125,7 +200,7 @@ export function WelcomeModal({ onClose, onNeverShow }: WelcomeModalProps) {
                 <div style={{ height: 3, background: 'var(--color-border)' }}>
                     <div style={{
                         height: '100%', background: 'var(--color-orange)',
-                        width: `${((slide + 1) / SLIDES.length) * 100}%`,
+                        width: `${((slide + 1) / slides.length) * 100}%`,
                         transition: 'width 0.25s ease',
                     }} />
                 </div>

@@ -156,6 +156,9 @@ export async function generateEtichettaPDF(
             scale: 2,
             useCORS: true,
             logging: false,
+            // Elementi marcati "print-ignore" (es. selettori di mercato/tab, controlli UI
+            // dell'editor) restano fuori dal PDF esportato — visibili solo mentre si lavora.
+            ignoreElements: (node) => node.classList.contains('print-ignore'),
         });
 
         const imgWidth = 210; // A4 width in mm
