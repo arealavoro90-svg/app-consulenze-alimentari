@@ -15,6 +15,7 @@
 ## Documentazione di riferimento
 - Stack, struttura, comandi: `README.md`
 - Workflow calcolo nutrizionale: skill `nutritional-calc` (`.claude/skills/nutritional-calc/SKILL.md`)
+- Riferimento normativo (etichette, claim, allergeni, tabelle multi-mercato, imballaggi): skill `normativa-alimentare` (`.claude/skills/normativa-alimentare/SKILL.md`)
 - Aggiunta nuovo strumento: skill `add-tool` (`.claude/skills/add-tool/SKILL.md`)
 - Permessi CLI preapprovati: `.claude/settings.local.json`
 

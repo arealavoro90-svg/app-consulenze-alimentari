@@ -86,7 +86,14 @@
       "Bash(awk -F: '$1 < 2891 || $1 > 3365')",
       "Bash(git check-ignore:*)",
       "Bash(git worktree:*)",
-      "Bash(curl -s -X POST https://backend-snowy-seven-98.vercel.app/api/auth/login/ -H 'Content-Type: application/json' -d '{\"email\":\"admin@aea.it\",\"password\":\"Admin2024!\"}')"
+      "Bash(curl -s -X POST https://backend-snowy-seven-98.vercel.app/api/auth/login/ -H 'Content-Type: application/json' -d '{\"email\":\"admin@aea.it\",\"password\":\"Admin2024!\"}')",
+      "Bash(npx playwright:*)",
+      "Bash(playwright --version)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:5173)",
+      "Bash(echo \"PID: $!\")",
+      "mcp__playwright__browser_navigate",
+      "Bash(ls /Users/novanta/Desktop/APP/App_prova/*.mjs)",
+      "Bash(xargs -I{} sh -c 'echo \"$\\(stat -f \"%Sm\" -t \"%Y-%m-%d %H:%M\" \"{}\" 2>/dev/null\\) {}\"')"
     ]
   },
   "hooks": {
