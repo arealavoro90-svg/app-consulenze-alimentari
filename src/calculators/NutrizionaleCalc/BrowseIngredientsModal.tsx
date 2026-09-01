@@ -43,7 +43,11 @@ type MicroRow = { label: string; value: number | undefined; unit: string };
 
 function fmt(v: number | undefined, dec = 1): string {
     if (v === undefined || v === null) return '';
-    return v.toFixed(dec);
+    // Difensivo: valori letti da localStorage (ingredienti custom) possono arrivare come
+    // stringa se il JSON è stato scritto/modificato a mano — v.toFixed() crasha su stringhe,
+    // sempre valido per Number(v) però (bug reale trovato: TypeError "v.toFixed is not a function").
+    const n = Number(v);
+    return Number.isFinite(n) ? n.toFixed(dec) : '';
 }
 
 function isPresent(v: number | undefined): boolean {

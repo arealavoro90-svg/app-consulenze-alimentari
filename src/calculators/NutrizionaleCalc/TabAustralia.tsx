@@ -80,7 +80,7 @@ export function TabAustralia({ p, au }: { p: CalcResult; au: ServingSizesNation 
 
     return (
         <div style={{ background: 'white' }}>
-            <div data-table-export style={{ background: 'white', padding: 12, borderRadius: 0, display: 'inline-block', width: 560, boxSizing: 'border-box' }}>
+            <div data-table-export style={{ background: 'white', padding: 12, borderRadius: 0, display: 'inline-block', minWidth: 560, boxSizing: 'border-box' }}>
                 <div style={{ border: bOut, fontFamily: 'Arial, sans-serif', fontSize: 12 }}>
                     {/* Titolo */}
                     <div style={{ textAlign: 'center', padding: '8px 12px 6px', borderBottom: bHdr }}>

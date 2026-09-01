@@ -46,26 +46,30 @@ const TS = {
 
 // ─── Rounding helpers (EU Reg. 1169/2011) ────────────────────────────────────
 const fUE = (v: string | number) => v.toString().replace('.', ',');
-function rUE_energy(v: number): string { return Math.round(v).toString(); }
-function rUE_macro(v: number): string {
+// export: riusate da EtichetteCalc.tsx per il formato lineare EU (Art. 34(2) Reg. 1169/2011)
+// — stessa cifra della tabella, mai un doppio arrotondamento. Solo funzioni pure, nessun
+// cambio a markup/calcoli/output di questo file.
+export function rUE_energy(v: number): string { return Math.round(v).toString(); }
+export function rUE_macro(v: number): string {
     // EU Reg. 1169/2011, Allegato XV: < 0.5g → "0"; < 10g → 1 decimal; ≥ 10g → whole number
+    // Trailing ".0" omesso: "9" è più leggibile di "9,0" e conforme al Reg. (non richiede zeri finali)
     if (v < 0.5) return '0';
-    if (v < 10) return fUE(v.toFixed(1));
+    if (v < 10) { const s = v.toFixed(1); return fUE(s.endsWith('.0') ? Math.round(v).toString() : s); }
     return Math.round(v).toString();
 }
-function rUE_sat(v: number): string {
+export function rUE_sat(v: number): string {
     if (v <= 0.1) return '0';
-    if (v < 10) return fUE(v.toFixed(1));
+    if (v < 10) { const s = v.toFixed(1); return fUE(s.endsWith('.0') ? Math.round(v).toString() : s); }
     return Math.round(v).toString();
 }
-function rUE_sale(v: number): string {
+export function rUE_sale(v: number): string {
     if (v <= 0.0125) return '0';
     if (v < 1) return fUE(v.toFixed(2));
     return fUE(v.toFixed(1));
 }
 function rUE_micro(v: number): string {
     if (v < 0.1) return '0';
-    if (v < 10) return fUE(v.toFixed(1));
+    if (v < 10) { const s = v.toFixed(1); return fUE(s.endsWith('.0') ? Math.round(v).toString() : s); }
     return Math.round(v).toString();
 }
 function rUE_pct(v: number, ref: number): number | null {

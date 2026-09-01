@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Salad, ClipboardList, Globe, Archive } from 'lucide-react';
 import { useAuth } from '../../auth/AuthContext';
@@ -9,7 +9,7 @@ import { CalcoloTab } from './mobile/CalcoloTab';
 import { TabellaTab } from './mobile/TabellaTab';
 import { RiepilogoTab } from './mobile/RiepilogoTab';
 import { ArchivioTab } from './mobile/ArchivioTab';
-import { readBridge } from './sessionBridge';
+import { readBridge, clearBridge } from './sessionBridge';
 import { SmartImportModal } from './SmartImportModal';
 import type { SmartImportResult } from './SmartImportModal';
 import { ConfirmDialog } from '../../components/ui/ConfirmDialog';
@@ -170,6 +170,7 @@ export function NutrizionaleCalcMobile() {
     useEffect(() => {
         if (loadingDB || db.length === 0) return;
         const draft = readBridge();
+        clearBridge();
         if (draft && draft.source === 'desktop') {
             const mobileComps: MobileComponent[] = draft.components.map(comp => ({
                 id: String(Date.now() + Math.random()),
@@ -404,10 +405,37 @@ export function NutrizionaleCalcMobile() {
 
     const tabIndex = TAB_ORDER.indexOf(activeTab);
 
+    // ── Swipe laterale ────────────────────────────────────────────────────────
+    const swipeStartX = useRef<number | null>(null);
+    const swipeStartY = useRef<number | null>(null);
+    const SWIPE_THRESHOLD = 50;
+
+    const handleTouchStart = (e: React.TouchEvent) => {
+        swipeStartX.current = e.touches[0].clientX;
+        swipeStartY.current = e.touches[0].clientY;
+    };
+    const handleTouchEnd = (e: React.TouchEvent) => {
+        if (swipeStartX.current === null || swipeStartY.current === null) return;
+        const deltaX = swipeStartX.current - e.changedTouches[0].clientX;
+        const deltaY = swipeStartY.current - e.changedTouches[0].clientY;
+        swipeStartX.current = null;
+        swipeStartY.current = null;
+        // Ignora se il gesto è più verticale che orizzontale (scroll)
+        if (Math.abs(deltaX) < SWIPE_THRESHOLD || Math.abs(deltaY) > Math.abs(deltaX)) return;
+        const newIndex = deltaX > 0
+            ? Math.min(tabIndex + 1, TAB_ORDER.length - 1)
+            : Math.max(tabIndex - 1, 0);
+        if (newIndex !== tabIndex) setActiveTab(TAB_ORDER[newIndex]);
+    };
+
     return (
         <div className="m-slide-wrapper">
             {/* ── Slide container ── */}
-            <div className="m-slide-container">
+            <div
+                className="m-slide-container"
+                onTouchStart={handleTouchStart}
+                onTouchEnd={handleTouchEnd}
+            >
                 <div
                     className="m-slide-track"
                     style={{ transform: `translateX(-${tabIndex * 25}%)` }}
@@ -417,7 +445,7 @@ export function NutrizionaleCalcMobile() {
                         <CalcoloTab
                             form={form}
                             onChange={updateForm}
-                            onGoToTabella={() => goToSection('mercati')}
+                            onGoToTabella={() => goToSection('riepilogo')}
                             db={db}
                             loadingDB={loadingDB}
                             dbError={dbError}
@@ -450,6 +478,7 @@ export function NutrizionaleCalcMobile() {
                             pesoFinito={parseFloat(form.pesoFinito_g) || 0}
                             presentAllergens={presentAllergens}
                             crossAllergens={crossAllergens}
+                            onGoToMercati={() => goToSection('mercati')}
                         />
                     </div>
 
@@ -484,6 +513,7 @@ export function NutrizionaleCalcMobile() {
                             items={archive.items}
                             onLoad={(entry) => loadFromArchive(entry)}
                             onDelete={(id) => archive.deleteItem(id)}
+                            onNewRecipe={() => { handleNewRecipe(); goToSection('ricetta'); }}
                         />
                     </div>
                 </div>

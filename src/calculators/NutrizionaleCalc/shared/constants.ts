@@ -12,6 +12,8 @@ export const ALLERGEN_FIELDS: { key: keyof DBIngredient; label: string }[] = [
     { key: 'all_anacardi', label: 'ANACARDI' },
     { key: 'all_solfiti', label: 'SOLFITI (>10 ppm)' }, { key: 'all_lupini', label: 'LUPINI' },
     { key: 'all_molluschi', label: 'MOLLUSCHI' },
+    { key: 'all_sedano', label: 'SEDANO' }, { key: 'all_senape', label: 'SENAPE' },
+    { key: 'all_sesamo', label: 'SESAMO' },
 ];
 
 export const CROSS_FIELDS: { key: keyof DBIngredient; label: string }[] = [

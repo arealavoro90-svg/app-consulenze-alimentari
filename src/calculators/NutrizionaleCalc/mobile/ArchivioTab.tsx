@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Search, Archive, Trash2 } from 'lucide-react';
+import { Search, Archive, Trash2, RotateCcw } from 'lucide-react';
 import type { ArchiveItem } from '../../../hooks/useArchive';
 import type { ArchiveData } from '../NutrizionaleCalc';
 
@@ -7,6 +7,7 @@ interface Props {
     items: ArchiveItem<ArchiveData>[];
     onLoad: (data: ArchiveData) => void;
     onDelete: (id: string) => void;
+    onNewRecipe: () => void;
 }
 
 type Region = NonNullable<ArchiveData['region']>;
@@ -29,7 +30,7 @@ function formatDate(iso: string): string {
 
 interface CtxPos { top: number; left: number }
 
-export function ArchivioTab({ items, onLoad, onDelete }: Props) {
+export function ArchivioTab({ items, onLoad, onDelete, onNewRecipe }: Props) {
     const [query, setQuery]     = useState('');
     const [ctxId, setCtxId]     = useState<string | null>(null);
     const [ctxPos, setCtxPos]   = useState<CtxPos>({ top: 0, left: 0 });
@@ -87,7 +88,7 @@ export function ArchivioTab({ items, onLoad, onDelete }: Props) {
     const ctxItem = ctxId ? items.find(it => it.id === ctxId) ?? null : null;
 
     return (
-        <div style={{ paddingBottom: 80 }}>
+        <><div style={{ paddingBottom: 16 }}>
             {/* Search bar */}
             <div style={{ padding: '12px 16px 8px' }}>
                 <div className="m-search">
@@ -148,8 +149,8 @@ export function ArchivioTab({ items, onLoad, onDelete }: Props) {
                                     </div>
                                 )}
                                 <div className="m-archive-info">
-                                    <div className="m-archive-name m-archive-card__title">{item.name}</div>
-                                    <div className="m-archive-meta m-archive-card__meta">
+                                    <div className="m-archive-name">{item.name}</div>
+                                    <div className="m-archive-meta">
                                         {formatDate(item.date)}{kcal != null ? ` · ${kcal} kcal/100 g` : ''}
                                     </div>
                                 </div>
@@ -170,34 +171,45 @@ export function ArchivioTab({ items, onLoad, onDelete }: Props) {
                 </div>
             )}
 
-            {/* Context menu overlay */}
-            {ctxId !== null && ctxItem !== null && (
-                <>
-                    <div className="m-ctx-overlay" onClick={dismissCtx} />
-                    <div
-                        className="m-ctx-menu"
-                        style={{
-                            top:  Math.min(ctxPos.top, window.innerHeight - 120),
-                            left: Math.min(ctxPos.left, window.innerWidth  - 180),
-                        }}
-                    >
-                        <button
-                            type="button"
-                            className="m-ctx-menu__item"
-                            onClick={() => handleOpen(ctxItem)}
-                        >
-                            Apri
-                        </button>
-                        <button
-                            type="button"
-                            className="m-ctx-menu__item m-ctx-menu__item--danger"
-                            onClick={() => handleDelete(ctxItem.id)}
-                        >
-                            Elimina
-                        </button>
-                    </div>
-                </>
-            )}
         </div>
+        <div className="m-cta-bar">
+            <button
+                type="button"
+                className="m-btn m-btn--primary m-btn--full"
+                onClick={onNewRecipe}
+            >
+                <RotateCcw size={14} /> Nuova ricetta
+            </button>
+        </div>
+
+        {/* Context menu overlay */}
+        {ctxId !== null && ctxItem !== null && (
+            <>
+                <div className="m-ctx-overlay" onClick={dismissCtx} />
+                <div
+                    className="m-ctx-menu"
+                    style={{
+                        top:  Math.min(ctxPos.top, window.innerHeight - 120),
+                        left: Math.min(ctxPos.left, window.innerWidth  - 180),
+                    }}
+                >
+                    <button
+                        type="button"
+                        className="m-ctx-menu__item"
+                        onClick={() => handleOpen(ctxItem)}
+                    >
+                        Apri
+                    </button>
+                    <button
+                        type="button"
+                        className="m-ctx-menu__item m-ctx-menu__item--danger"
+                        onClick={() => handleDelete(ctxItem.id)}
+                    >
+                        Elimina
+                    </button>
+                </div>
+            </>
+        )}
+        </>
     );
 }

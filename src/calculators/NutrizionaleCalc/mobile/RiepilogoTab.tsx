@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Scale, Euro } from 'lucide-react';
+import { Scale, Euro, ArrowRight } from 'lucide-react';
 import type { MobileComponent } from '../NutrizionaleCalcMobile';
 import { calcQuid } from '../../../engines/nutrizionaleCalcEngine';
 
@@ -44,6 +44,7 @@ interface Props {
     pesoFinito: number;          // peso finito in grammi/pz (0 = non inserito)
     presentAllergens: string[];
     crossAllergens: string[];
+    onGoToMercati: () => void;
 }
 
 type RTab = 'q' | 'c';
@@ -52,15 +53,22 @@ const fmt3 = (v: number) => v.toFixed(3).replace('.', ',');
 const fmt2 = (v: number) => v.toFixed(2).replace('.', ',');
 const fmtC = (v: number) => v > 0 ? v.toFixed(3).replace('.', ',') : '—';
 
-export function RiepilogoTab({ components, pesoFinito, presentAllergens, crossAllergens }: Props) {
+export function RiepilogoTab({ components, pesoFinito, presentAllergens, crossAllergens, onGoToMercati }: Props) {
     const [rTab, setRTab] = useState<RTab>('q');
 
     const merged = buildMergedIngredients(components);
     if (merged.length === 0) {
         return (
-            <div style={{ padding: '24px 16px', textAlign: 'center', color: 'var(--m-text-muted)', fontSize: 13 }}>
-                Aggiungi ingredienti nella scheda Ricetta per vedere il riepilogo.
-            </div>
+            <>
+                <div style={{ padding: '24px 16px', textAlign: 'center', color: 'var(--m-text-muted)', fontSize: 13 }}>
+                    Aggiungi ingredienti nella scheda Ricetta per vedere il riepilogo.
+                </div>
+                <div className="m-cta-bar">
+                    <button type="button" className="m-btn m-btn--primary m-btn--full" onClick={onGoToMercati}>
+                        Vai ai Mercati <ArrowRight size={14} />
+                    </button>
+                </div>
+            </>
         );
     }
 
@@ -90,7 +98,7 @@ export function RiepilogoTab({ components, pesoFinito, presentAllergens, crossAl
     const hasCosts = merged.some(r => r.eurKg > 0);
 
     return (
-        <div style={{ paddingTop: 8, paddingBottom: 100 }}>
+        <><div style={{ paddingTop: 8, paddingBottom: 16 }}>
 
             {/* ── Sub-toggle ──────────────────────────────────────────────── */}
             <div style={{ padding: '8px 16px 0' }}>
@@ -280,5 +288,15 @@ export function RiepilogoTab({ components, pesoFinito, presentAllergens, crossAl
             )}
 
         </div>
+        <div className="m-cta-bar">
+            <button
+                type="button"
+                className="m-btn m-btn--primary m-btn--full"
+                onClick={onGoToMercati}
+            >
+                Vai ai Mercati <ArrowRight size={14} />
+            </button>
+        </div>
+        </>
     );
 }
