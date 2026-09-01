@@ -36,7 +36,11 @@
     "vitB6": 0,
     "vitB9": 0,
     "vitB12": 0,
-    "categoria": "ingrediente"
+    "categoria": "ingrediente",
+    "rame": 0,
+    "manganese": 0,
+    "selenio": 0,
+    "iodio": 0
   },
   {
     "nome": "acciughe in olio di oliva",
@@ -3637,7 +3641,11 @@
     "vitB12": 0.17,
     "cross_latte": "1",
     "categoria": "ingrediente",
-    "fonte_dati": "CREA BDA 2019"
+    "fonte_dati": "CREA BDA 2019",
+    "rame": 0.01,
+    "manganese": 0.01,
+    "selenio": 1,
+    "iodio": 10.5
   },
   {
     "nome": "burro bio",
@@ -5089,7 +5097,11 @@
     "vitB6": 0.38,
     "vitB9": 5,
     "vitB12": 0.7,
-    "categoria": "ingrediente"
+    "categoria": "ingrediente",
+    "rame": 0.07,
+    "manganese": 0.04,
+    "selenio": 14,
+    "iodio": 3.3
   },
   {
     "nome": "carne di maiale (spalla)",
@@ -5237,7 +5249,11 @@
     "vitB6": 0.35,
     "vitB9": 6,
     "vitB12": 2.17,
-    "categoria": "ingrediente"
+    "categoria": "ingrediente",
+    "rame": 0.08,
+    "manganese": 0.02,
+    "selenio": 9.7,
+    "iodio": 2
   },
   {
     "nome": "carote",
@@ -10264,7 +10280,11 @@
     "vitB9": 0,
     "vitB12": 0,
     "all_grano": "1",
-    "categoria": "ingrediente"
+    "categoria": "ingrediente",
+    "rame": 0.08,
+    "manganese": 0.5,
+    "selenio": 8,
+    "iodio": 2
   },
   {
     "nome": "farina di grano tenero tipo \"00\" - 2",
@@ -12153,7 +12173,11 @@
     "vitE": 0.21,
     "vitB1": 0.02,
     "vitB2": 0.36,
-    "vitB3": 0.1
+    "vitB3": 0.1,
+    "rame": 0.03,
+    "manganese": 0.02,
+    "selenio": 12,
+    "iodio": 5.2
   },
   {
     "nome": "formaggio asiago",
@@ -15064,7 +15088,11 @@
     "vitB12": 0.38,
     "all_latte": "1",
     "cross_latte": "1",
-    "categoria": "ingrediente"
+    "categoria": "ingrediente",
+    "rame": 0.01,
+    "manganese": 0.004,
+    "selenio": 0.9,
+    "iodio": 9.8
   },
   {
     "nome": "latte scremato in polvere",
@@ -18908,7 +18936,15 @@
     "calcio": 184,
     "vitA_eq": 0,
     "cross_frutta_guscio": "1",
-    "categoria": "ingrediente"
+    "categoria": "ingrediente",
+    "rame": 1.03,
+    "manganese": 2.9,
+    "selenio": 1.6,
+    "iodio": 0,
+    "fosforo": 213,
+    "magnesio": 183,
+    "ferro": 3.04,
+    "zinco": 2.15
   },
   {
     "nome": "noci",
@@ -19655,7 +19691,11 @@
     "vitB6": 0,
     "vitB9": 0,
     "vitB12": 0,
-    "categoria": "ingrediente"
+    "categoria": "ingrediente",
+    "rame": 0.01,
+    "manganese": 0.02,
+    "selenio": 0.1,
+    "iodio": 0
   },
   {
     "nome": "olio extravergine di oliva bio",
@@ -21183,7 +21223,11 @@
     "vitB6": 0.23,
     "vitB9": 21.8,
     "vitB12": 0,
-    "categoria": "ingrediente"
+    "categoria": "ingrediente",
+    "rame": 1.33,
+    "manganese": 12.75,
+    "selenio": 3,
+    "iodio": 0
   },
   {
     "nome": "pepe nero in polvere BIO",
@@ -22871,7 +22915,11 @@
     "vitB6": 0.1,
     "vitB9": 8,
     "vitB12": 0,
-    "categoria": "ingrediente"
+    "categoria": "ingrediente",
+    "rame": 0.09,
+    "manganese": 0.13,
+    "selenio": 1.5,
+    "iodio": 1
   },
   {
     "nome": "pomodori secchi  senza sale",
@@ -25429,7 +25477,11 @@
     "vitB6": 0,
     "vitB9": 0,
     "vitB12": 0,
-    "categoria": "ingrediente"
+    "categoria": "ingrediente",
+    "rame": 0,
+    "manganese": 0,
+    "selenio": 0,
+    "iodio": 0
   },
   {
     "nome": "sale himalayano",
@@ -31856,7 +31908,11 @@
     "vitB12": 0.3,
     "categoria": "semilavorato",
     "all_glutine": "1",
-    "all_uova": "1"
+    "all_uova": "1",
+    "rame": 0.16,
+    "manganese": 1.18,
+    "selenio": 28.5,
+    "iodio": 2.9
   },
   {
     "nome": "misto per soffritto",
@@ -31895,7 +31951,11 @@
     "vitB9": 20,
     "vitB12": 0,
     "categoria": "semilavorato",
-    "all_sedano": "1"
+    "all_sedano": "1",
+    "rame": 0.08,
+    "manganese": 0.15,
+    "selenio": 0.5,
+    "iodio": 1
   },
   {
     "nome": "formaggio grattugiato da mix di formaggi a pasta dura",
