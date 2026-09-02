@@ -29,7 +29,36 @@ const CI_CROSS_LABELS: Record<string, string> = {
     cross_solfiti:'SOLFITI (>10 ppm)', cross_lupini:'LUPINI', cross_molluschi:'MOLLUSCHI',
 };
 
-// Stili e componente NF a livello di modulo (evita ricreazione ad ogni render)
+// ── Componenti ausiliari a livello di modulo (evita ricreazione ad ogni render) ─
+
+function AccHead({ label, color = '#718096', open, onToggle }: {
+    label: string; color?: string; open: boolean; onToggle: () => void;
+}) {
+    return (
+        <button type="button" onClick={onToggle} style={{ display: 'flex', alignItems: 'center', gap: 6, width: '100%', background: 'none', border: 'none', cursor: 'pointer', padding: 0, textAlign: 'left' }}>
+            {open ? <ChevronDown size={12} style={{ flexShrink: 0, color }} /> : <ChevronRight size={12} style={{ flexShrink: 0, color }} />}
+            <span style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.5, color }}>{label}</span>
+        </button>
+    );
+}
+
+function AllergenRow({ keys, labels, state, setState }: {
+    keys: readonly string[]; labels: Record<string, string>;
+    state: Record<string, boolean>; setState: React.Dispatch<React.SetStateAction<Record<string, boolean>>>;
+}) {
+    return (
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+            {keys.map(k => (
+                <label key={k} style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 12, cursor: 'pointer' }}>
+                    <input type="checkbox" checked={!!state[k]} onChange={e => setState(prev => ({ ...prev, [k]: e.target.checked }))} />
+                    {labels[k]}
+                </label>
+            ))}
+        </div>
+    );
+}
+
+// Stili a livello di modulo (evita ricreazione ad ogni render)
 const _iS: React.CSSProperties = { width: '100%', padding: '5px 8px', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-sm)', fontSize: 13, boxSizing: 'border-box' };
 const _iSRo: React.CSSProperties = { ..._iS, background: 'var(--color-bg-secondary,#f0f4ff)', color: 'var(--color-text-muted)', fontWeight: 600, cursor: 'default' };
 const _iSErr: React.CSSProperties = { ..._iS, border: '1.5px solid #e53e3e' };
@@ -320,28 +349,8 @@ export function CustomIngredientModal({ onClose, onSave, initialIngredient, orig
     // Accordion state per sezioni collassabili
     const [openSec, setOpenSec] = useState({ facoltativi: false, condizionali: false, micro: false, allergenici: false });
     const toggleSec = (k: keyof typeof openSec) => setOpenSec(prev => ({ ...prev, [k]: !prev[k] }));
-    const AccHead = ({ label, sKey, color = '#718096' }: { label: string; sKey: keyof typeof openSec; color?: string }) => (
-        <button type="button" onClick={() => toggleSec(sKey)} style={{ display: 'flex', alignItems: 'center', gap: 6, width: '100%', background: 'none', border: 'none', cursor: 'pointer', padding: 0, textAlign: 'left' }}>
-            {openSec[sKey] ? <ChevronDown size={12} style={{ flexShrink: 0, color }} /> : <ChevronRight size={12} style={{ flexShrink: 0, color }} />}
-            <span style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.5, color }}>{label}</span>
-        </button>
-    );
 
     const clearErrors = React.useCallback(() => setErrors([]), []);
-
-    const AllergenRow = ({ keys, labels, state, setState }: {
-        keys: readonly string[]; labels: Record<string, string>;
-        state: Record<string, boolean>; setState: React.Dispatch<React.SetStateAction<Record<string, boolean>>>;
-    }) => (
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-            {keys.map(k => (
-                <label key={k} style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 12, cursor: 'pointer' }}>
-                    <input type="checkbox" checked={!!state[k]} onChange={e => setState(prev => ({ ...prev, [k]: e.target.checked }))} />
-                    {labels[k]}
-                </label>
-            ))}
-        </div>
-    );
 
     return (
         <_ClearErrorsCtx.Provider value={clearErrors}>
@@ -450,7 +459,7 @@ export function CustomIngredientModal({ onClose, onSave, initialIngredient, orig
 
                 {/* 2 — Valori di macronutrienti facoltativi (collassabile) */}
                 <div style={secS}>
-                    <AccHead label="○ Valori di macronutrienti facoltativi" sKey="facoltativi" />
+                    <AccHead label="○ Valori di macronutrienti facoltativi" open={openSec.facoltativi} onToggle={() => toggleSec('facoltativi')} />
                     {openSec.facoltativi && (
                         <div style={{ marginTop: 10, ...grid3 }}>
                             <NF label="○ Acidi grassi monoinsaturi" value={monoins} onChange={setMonoins} />
@@ -465,7 +474,7 @@ export function CustomIngredientModal({ onClose, onSave, initialIngredient, orig
 
                 {/* 3 — Valori di macronutrienti obbligatori in taluni casi (collassabile) */}
                 <div style={secS}>
-                    <AccHead label="△ Valori obbligatori in taluni casi (USA/CA/AU/Arabi)" sKey="condizionali" color="#b7791f" />
+                    <AccHead label="△ Valori obbligatori in taluni casi (USA/CA/AU/Arabi)" color="#b7791f" open={openSec.condizionali} onToggle={() => toggleSec('condizionali')} />
                     {openSec.condizionali && (
                         <div style={{ marginTop: 10, ...grid3 }}>
                             <NF label="△ Acidi grassi trans" value={trans} onChange={setTrans}
@@ -485,7 +494,7 @@ export function CustomIngredientModal({ onClose, onSave, initialIngredient, orig
 
                 {/* 5 — Valori di micronutrienti (collassabile) */}
                 <div style={secS}>
-                    <AccHead label="Micronutrienti (nessuno obbligatorio in assoluto)" sKey="micro" color="#333" />
+                    <AccHead label="Micronutrienti (nessuno obbligatorio in assoluto)" color="#333" open={openSec.micro} onToggle={() => toggleSec('micro')} />
                     {openSec.micro && (<>
 
                     {/* 5a — Micronutrienti obbligatori in taluni casi */}
@@ -590,7 +599,7 @@ export function CustomIngredientModal({ onClose, onSave, initialIngredient, orig
 
                 {/* 5 — Allergeni (Reg. UE 1169/2011) */}
                 <div style={secS}>
-                    <AccHead label="Allergeni (Reg. UE 1169/2011)" sKey="allergenici" color="#c53030" />
+                    <AccHead label="Allergeni (Reg. UE 1169/2011)" color="#c53030" open={openSec.allergenici} onToggle={() => toggleSec('allergenici')} />
                     {openSec.allergenici && (<>
                         <div style={{ marginTop: 10, marginBottom: 8 }}>
                             <div style={{ fontSize: 11, fontWeight: 600, color: '#c53030', marginBottom: 6 }}>Contiene:</div>

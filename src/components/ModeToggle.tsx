@@ -3,6 +3,7 @@ import { useLocalStorage } from '../hooks/useLocalStorage';
 
 export type UIMode = 'guided' | 'expert';
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function useModeToggle() {
     return useLocalStorage<UIMode>('aea_ui_mode', 'guided');
 }

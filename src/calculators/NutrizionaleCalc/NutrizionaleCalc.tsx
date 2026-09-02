@@ -574,6 +574,7 @@ export function NutrizionaleCalc() {
     };
 
     const handleLoad = (item: typeof archiveItems[0]) => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any -- legacy archive shape is unknown
         const d = item.data as any; // Allow legacy fallback
         setProductName(d.nome_prodotto || d.productName || '');
         setFinishedWeight(d.peso_finito_pz ? String(d.peso_finito_pz) : (d.finishedWeight || ''));
@@ -588,12 +589,14 @@ export function NutrizionaleCalc() {
 
         const rawComps = d.componenti || d.components || [];
         const skippedLoad: string[] = [];
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any -- legacy archive deserialization
         const loadedComps: Component[] = rawComps.map((sc: any) => {
             const rowData = sc.ingredienti || sc.rows || [];
             return {
                 id: String(Date.now() + Math.random()),
                 name: sc.nome || sc.name || '',
                 pzUV: sc.pz_uv || sc.pzUV || 1,
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any -- legacy archive deserialization
                 rows: rowData.flatMap((sr: any) => {
                     const ingName = sr.nome || sr.name;
                     const grams = typeof sr.grammi === 'number' ? sr.grammi : (sr.grams || 0);
@@ -607,6 +610,7 @@ export function NutrizionaleCalc() {
                         resa: typeof sr.resa === 'number' ? sr.resa : 100,
                     }];
                 }),
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any -- legacy archive deserialization
                 additiveRows: (sc.additiveRows || []).map((ar: any) => ({
                     id: String(Date.now() + Math.random()),
                     categoria: ar.categoria || '',
@@ -1277,8 +1281,10 @@ export function NutrizionaleCalc() {
                                     </div>
                                 );
                                 return filtered.map(item => {
+                                    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- legacy archive shape
                                     const d = item.data as any;
                                     const title = d.nome_prodotto || d.productName || item.name || 'Ricetta Senza Nome';
+                                    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- legacy archive shape
                                     const ingCount = (d.componenti || d.components || []).reduce((s: number, c: any) => s + (c.ingredienti || c.rows || []).length, 0);
                                     return (
                                         <div key={item.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', borderBottom: '1px solid var(--color-border)' }}>

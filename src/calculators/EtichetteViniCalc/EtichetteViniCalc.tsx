@@ -223,7 +223,7 @@ export function EtichetteViniCalc() {
 
     // Handlers
     const setA = (field: keyof AnalyticalData, val: string) => setAnalytical(p => ({ ...p, [field]: val }));
-    const setL = (field: keyof LabelData, val: any) => setLabel(p => ({ ...p, [field]: val }));
+    const setL = (field: keyof LabelData, val: LabelData[keyof LabelData]) => setLabel(p => ({ ...p, [field]: val }));
 
     const addImballaggio = () => {
         if (label.imballaggi.length >= 5) return;
@@ -248,8 +248,8 @@ export function EtichetteViniCalc() {
         alert('Salvato nell\'archivio!');
     };
 
-    const handleLoad = (item: any) => {
-        const d = item.data as ViniArchiveData;
+    const handleLoad = (item: { id: string; name: string; date: string; data: ViniArchiveData }) => {
+        const d = item.data;
         setAnalytical(d.analytical || defaultAnalytical);
         setLabel(d.label || defaultLabel);
         setCurrentId(item.id);
@@ -329,6 +329,7 @@ export function EtichetteViniCalc() {
             label.imballaggi.forEach((im, i) => row(`${im.nome}`, `${im.codice} — ${im.smaltimento}`, i));
         }
 
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any -- jsPDF internal API not typed
         const pCount = (doc as any).internal.getNumberOfPages();
         for (let p = 1; p <= pCount; p++) {
             doc.setPage(p);
@@ -350,7 +351,7 @@ export function EtichetteViniCalc() {
             const a = document.createElement('a');
             a.download = `etichetta_vino_${(label.nomeCommerciale || 'vino').replace(/\s+/g, '_').toLowerCase()}.png`;
             a.href = url; a.click();
-        } catch (e) { alert('Errore esportazione PNG'); }
+        } catch { alert('Errore esportazione PNG'); }
     };
 
     // ── Guide steps ──────────────────────────────────────────────────────────
@@ -468,7 +469,7 @@ export function EtichetteViniCalc() {
                                     <input
                                         className="form-input"
                                         type="number" step={0.01} min={0}
-                                        value={(analytical as any)[field]}
+                                        value={analytical[field]}
                                         onChange={e => setA(field, e.target.value)}
                                         style={{ borderColor: color === 'green' ? '#22c55e' : '#f97316', background: color === 'green' ? 'rgba(34,197,94,0.04)' : 'rgba(249,115,22,0.04)' }}
                                     />
@@ -485,7 +486,7 @@ export function EtichetteViniCalc() {
                     <div className="card" style={{ alignSelf: 'start' }}>
                         <h3 style={{ fontWeight: 700, fontSize: 15, marginBottom: 18 }}>📊 Tabella Nutrizionale Calcolata</h3>
                         <div style={{ fontSize: 11, color: 'var(--color-text-muted)', marginBottom: 10 }}>Valori nutrizionali medi per 100 ml</div>
-                        <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' as any }}>
+                        <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
                         <table style={{ width: '100%', borderCollapse: 'collapse', fontFamily: 'inherit', minWidth: 260 }}>
                             <tbody>
                                 {([

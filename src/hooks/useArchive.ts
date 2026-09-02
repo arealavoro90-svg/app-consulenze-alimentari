@@ -56,6 +56,7 @@ export function useArchive<T>(storageKey: string, tool?: string) {
     // Carica archivio al mount e quando cambia il contesto auth.
     useEffect(() => {
         if (!useBackend || !tool) {
+            // eslint-disable-next-line react-hooks/set-state-in-effect -- sync from localStorage on auth change
             setItems(readLocal<T>(storageKey));
             return;
         }

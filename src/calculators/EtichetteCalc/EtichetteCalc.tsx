@@ -44,6 +44,7 @@ function ph(val: string, placeholder: string) {
 // il formato più compatto continua a sforare (bug reale trovato 2026-08-25 su USA: tabella
 // "lineare" tagliata a destra su etichetta 100x100mm) non esiste altro step: va segnalato invece
 // di restare silenzioso, perché l'export taglia il contenuto in eccesso senza avvisare.
+// eslint-disable-next-line react-refresh/only-export-components
 export function shouldFlagNutritionOverflow(current: number, maxStep: number, overflowsHeight: boolean, overflowsWidth: boolean): boolean {
     return current >= maxStep && (overflowsHeight || overflowsWidth);
 }
@@ -62,6 +63,7 @@ export const CSS_PX_PER_MM = 96 / 25.4;
 // identica alla formula originale (nessuna regressione sui formati che già funzionavano).
 // Fallback a baseDim/100 solo al primo render, quando il ResizeObserver non ha ancora misurato
 // nulla (renderedWidthPx/HeightPx a 0) — altrimenti flash a font-size 0.
+// eslint-disable-next-line react-refresh/only-export-components
 export function visualFontScale(renderedWidthPx: number, renderedHeightPx: number, baseDimMmFallback: number): number {
     if (renderedWidthPx <= 0 || renderedHeightPx <= 0) return baseDimMmFallback / 100;
     return Math.min(renderedWidthPx, renderedHeightPx) / (100 * CSS_PX_PER_MM);
@@ -111,6 +113,7 @@ export interface BarcodeMetrics {
 // dominante verticalmente su etichette piccole; l'altezza più bassa lo fa "integrare" meglio
 // col resto del contenuto senza intaccare la leggibilità del pattern di barre (che dipende
 // dalla larghezza del modulo, non dall'altezza).
+// eslint-disable-next-line react-refresh/only-export-components
 export function barcodeMetrics(userScalePercent: number, pxPerMm: number): BarcodeMetrics {
     const requestedMag = userScalePercent / 100;
     const magnification = Math.min(Math.max(requestedMag, BARCODE_MIN_MAGNIFICATION), BARCODE_MAX_MAGNIFICATION);
@@ -131,6 +134,7 @@ export function barcodeMetrics(userScalePercent: number, pxPerMm: number): Barco
 // dominante). Soglia 0,55 = punto in cui, in pratica, il barcode inizia a "schiacciare" il resto
 // della riga legale se ci stesse assieme — sopra quella quota va isolato in coda, sotto entra.
 export const BARCODE_SHARED_ROW_THRESHOLD = 0.55;
+// eslint-disable-next-line react-refresh/only-export-components
 export function shouldShareBarcodeRow(symbolWidthPx: number, availableWidthPx: number): boolean {
     return availableWidthPx > 0 && (symbolWidthPx / availableWidthPx) > BARCODE_SHARED_ROW_THRESHOLD;
 }
@@ -141,6 +145,7 @@ export function shouldShareBarcodeRow(symbolWidthPx: number, availableWidthPx: n
 // oggi. Soglia scelta sull'aspect ratio (non sulla larghezza assoluta): più prevedibile, non
 // dipende dall'unità di misura del formato.
 export const HORIZONTAL_TWO_COLUMN_ASPECT_THRESHOLD = 1.25;
+// eslint-disable-next-line react-refresh/only-export-components
 export function shouldUseTwoColumnLayout(widthMm: number, heightMm: number): boolean {
     return heightMm > 0 && (widthMm / heightMm) > HORIZONTAL_TWO_COLUMN_ASPECT_THRESHOLD;
 }
@@ -153,12 +158,14 @@ export function shouldUseTwoColumnLayout(widthMm: number, heightMm: number): boo
 export type LegacyRow = { nome?: string; name?: string; grammi?: number; grams?: number; resa?: number; eurKg?: number };
 export type LegacyAdditive = { categoria?: string; nomeSpecifico?: string };
 export type LegacyComponent = { nome?: string; name?: string; pz_uv?: number; pzUV?: number; ingredienti?: LegacyRow[]; rows?: LegacyRow[]; additiveRows?: LegacyAdditive[] };
+// eslint-disable-next-line react-refresh/only-export-components
 export function readComponenti(d: ArchiveData): LegacyComponent[] {
     const raw = d as unknown as { componenti?: unknown; components?: unknown };
     if (Array.isArray(raw.componenti)) return raw.componenti as LegacyComponent[];
     if (Array.isArray(raw.components)) return raw.components as LegacyComponent[];
     return [];
 }
+// eslint-disable-next-line react-refresh/only-export-components
 export function readRows(sc: LegacyComponent): LegacyRow[] {
     if (Array.isArray(sc.ingredienti)) return sc.ingredienti;
     if (Array.isArray(sc.rows)) return sc.rows;
@@ -170,6 +177,7 @@ export function readRows(sc: LegacyComponent): LegacyRow[] {
 // solo su una riga invece che in tabella.
 // UE: Art. 34(2) Reg. 1169/2011 — "Dove lo spazio non lo consente, la dichiarazione figura in
 // formato lineare" — stesso set di nutrienti sempre mostrati in TabUE.tsx (non gli opzionali).
+// eslint-disable-next-line react-refresh/only-export-components
 export function buildEULinear(p: CalcResult): string {
     return [
         `Energia: ${rUE_energy(p.energyKj)} kJ / ${rUE_energy(p.energyKcal)} kcal`,
@@ -185,6 +193,7 @@ export function buildEULinear(p: CalcResult): string {
 // Australia: Standard 1.2.8 FSANZ — packaging con superficie <100cm² non richiede il pannello
 // NIP formale, gli stessi nutrienti possono essere dichiarati senza il box. Stesso set/ordine
 // di TabAustralia.tsx.
+// eslint-disable-next-line react-refresh/only-export-components
 export function buildAULinear(p: CalcResult): string {
     return [
         `Energy: ${rAU_kj(p.energyKj)} kJ (${rAU_kcal(p.energyKcal)} Cal)`,
@@ -200,6 +209,7 @@ export function buildAULinear(p: CalcResult): string {
 // Gulf/GSO: GSO 2233/2012 adotta Codex CAC/GL 2-1985 (principio analogo, testo della clausola
 // small-package non verificato con la stessa certezza di UE/AU — vedi nota nel report). Stesso
 // set/ordine di TabArabi.tsx.
+// eslint-disable-next-line react-refresh/only-export-components
 export function buildArabiLinear(p: CalcResult): string {
     return [
         `Calories: ${rArabi_energy(p.energyKcal)}`,
@@ -221,12 +231,14 @@ export function buildArabiLinear(p: CalcResult): string {
 // gruppi regex e la label letterale non compare mai nel testo ingredienti (B-e), quindi
 // il match falliva sempre per SOLFITI. matchWord isola la parola pulita. Pura, nessuno
 // stato di componente: a livello di modulo per essere testabile in isolamento.
+// eslint-disable-next-line react-refresh/only-export-components
 export function matchWord(label: string): string {
     return label.replace(/\s*\(.*$/, '').trim();
 }
 
 // Evidenziazione MAIUSCOLO allergeni nel nome ingrediente: euristica per
 // match di sottostringa — bozza da rivedere manualmente, non output finale.
+// eslint-disable-next-line react-refresh/only-export-components
 export function highlightAllergens(nome: string): string {
     let out = nome;
     for (const { label } of ALLERGEN_FIELDS) {
@@ -389,6 +401,7 @@ const defaults: LabelData = {
 // FIBRE e SODIO volutamente assenti: l'allegato non ha un'indicazione generica per le fibre
 // (solo per fonti specifiche come fibra di avena/frumento/orzo/segale, non tracciate qui) né
 // per il sodio (coerente: è un nutriente da ridurre, non un "fonte di" da promuovere).
+// eslint-disable-next-line react-refresh/only-export-components
 export const HEALTH_CLAIMS_432_2012: { claim: string; texts: string[] }[] = [
     {
         claim: 'RICCO DI CALCIO', texts: [
@@ -516,6 +529,7 @@ for (const nutrient of ['CALCIO', 'FERRO', 'POTASSIO', 'PROTEINE', 'FOSFORO', 'M
 // nutrizionaleCalcEngine.ts (protetto, 8/16 già implementati lì, mai toccato qui). Modulo
 // separato lato Etichette come indicato nel report gap-analysis 2026-08-24. AR minerali:
 // stessi valori di Reg. 1169/2011 All. XIII già usati per selectedOptionals in questo file.
+// eslint-disable-next-line react-refresh/only-export-components
 export function calcAdditionalClaims(p: CalcResult, isLiquid: boolean): string[] {
     const claims: string[] = [];
     if (p.grassi <= 0.5) claims.push('SENZA GRASSI');
@@ -541,6 +555,7 @@ export function calcAdditionalClaims(p: CalcResult, isLiquid: boolean): string[]
 // Bug noto (AUDIT.md B1): l'engine protetto etichetta il claim sodio come "SODIO", ma il
 // Reg. 1924/2006 ammette la dicitura in "SALE" — non tocchiamo l'engine, rietichettiamo qui
 // in display, così anche l'archivio salvato da ora in poi ha la dicitura corretta.
+// eslint-disable-next-line react-refresh/only-export-components
 export function relabelClaim(c: string): string {
     return c === 'A BASSO CONTENUTO DI SODIO' ? 'A BASSO CONTENUTO DI SALE' : c;
 }
@@ -637,6 +652,7 @@ function CodeCanvas({ type, value, scale, pxPerMm }: { type: 'qr' | 'barcode' | 
     useEffect(() => {
         const canvas = canvasRef.current;
         if (!canvas || !value) return;
+        // eslint-disable-next-line react-hooks/set-state-in-effect -- reset error before async barcode render
         setError('');
         if (type === 'qr') {
             // Nessun vincolo GS1 stringente per QR (a differenza di EAN-13/CODE128) — scala

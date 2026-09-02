@@ -202,7 +202,7 @@ export function RintracciabilitaCalc() {
     const [guideOpen, setGuideOpen] = useLocalStorage<boolean>('costi_guide_open', true);
     const toggleGuide = () => setGuideOpen(prev => !prev);
 
-    const set = (field: keyof CostiData, val: any) => setData(p => ({ ...p, [field]: val }));
+    const set = (field: keyof CostiData, val: CostiData[keyof CostiData]) => setData(p => ({ ...p, [field]: val }));
 
     // Ingredient ops
     const updateIng = (id: string, field: keyof Ingredient, val: string) =>
@@ -241,8 +241,8 @@ export function RintracciabilitaCalc() {
         if (currentName) { doSaveWithName(currentName); return; }
         setPromptOpen(true);
     };
-    const handleLoad = (item: any) => {
-        setData({ ...DEFAULT, ...(item.data as CostiData) });
+    const handleLoad = (item: { id: string; name: string; date: string; data: CostiData }) => {
+        setData({ ...DEFAULT, ...item.data });
         setCurrentId(item.id); setCurrentName(item.name);
         setIsArchiveOpen(false);
     };

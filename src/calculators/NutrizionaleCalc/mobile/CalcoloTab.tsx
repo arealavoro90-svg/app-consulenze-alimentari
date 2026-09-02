@@ -503,16 +503,17 @@ export function CalcoloTab({
     onAddRow, onRemoveRow, onUpdateRow,
     onAddAdditiveRow, onRemoveAdditiveRow, onUpdateAdditiveRow,
     onOpenSmartImport,
-    onOpenArchive,
+    onOpenArchive: _onOpenArchive,
     onNewRecipe,
     onOpenCustomIngredient,
     onOpenBrowseDB,
-    hasExcelImport,
+    hasExcelImport: _hasExcelImport,
     calcResult,
 }: Props) {
     const hasIngredients = components.some(c => c.rows.length > 0);
     const denominazioneRef = useRef<HTMLInputElement>(null);
     const [showLiquid, setShowLiquid] = useState(!!form.specificGravity);
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- sync liquid section when specificGravity is set externally (e.g. archive load)
     useEffect(() => { if (form.specificGravity) setShowLiquid(true); }, [form.specificGravity]);
 
     return (

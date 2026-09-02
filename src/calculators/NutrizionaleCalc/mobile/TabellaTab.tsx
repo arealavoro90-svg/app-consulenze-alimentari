@@ -155,8 +155,9 @@ function ServingSection({ title, fields, form, onChange, open, onToggle }: {
 }
 
 // ─── Component ────────────────────────────────────────────────────────────────
-export function TabellaTab({ calcResult, form, onChange, onSave, hasIngredients, presentAllergens = [], crossAllergens = [], initialRegion }: Props) {
+export function TabellaTab({ calcResult, form, onChange, onSave, hasIngredients, presentAllergens: _presentAllergens = [], crossAllergens: _crossAllergens = [], initialRegion }: Props) {
     const [selectedRegion, setSelectedRegion] = useState<Region | null>(initialRegion ?? null);
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- sync region when archive is loaded externally
     useEffect(() => { if (initialRegion) setSelectedRegion(initialRegion); }, [initialRegion]);
     const [notice, setNotice] = useState<{ type: 'success' | 'error'; msg: string } | null>(null);
 

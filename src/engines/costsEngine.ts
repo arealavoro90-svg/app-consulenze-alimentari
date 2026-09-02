@@ -39,7 +39,6 @@ export interface CostInput {
 }
 
 export function calculateProductionCost(input: CostInput): CostResult {
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { productName: _productName, batchSizeKg, ingredients, overheadPercent = 15 } = input;
 
     const breakdown: IngredientCostBreakdown[] = ingredients.map((ing) => {

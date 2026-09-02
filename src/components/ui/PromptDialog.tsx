@@ -28,6 +28,7 @@ export function PromptDialog({
     // Ripristina il valore di default e mette il focus quando il dialog si apre
     useEffect(() => {
         if (open) {
+            // eslint-disable-next-line react-hooks/set-state-in-effect -- sync value when dialog opens
             setValue(defaultValue);
             const t = setTimeout(() => inputRef.current?.focus(), 80);
             return () => clearTimeout(t);

@@ -36,6 +36,7 @@ import {
 
 // ponytail: scaleResult imported for use in sub-tabs (TabellaTab etc.)
 export type { DBIngredient, CalcResult, RecipeRow, AdditiveRow, Component };
+// eslint-disable-next-line react-refresh/only-export-components
 export { ZERO_CALC, calcNutrients, scaleResult, ALLERGEN_FIELDS, CROSS_FIELDS };
 
 // ─── Component (multi-componente) ────────────────────────────────────────────
@@ -47,6 +48,7 @@ export interface MobileComponent {
     additiveRows: AdditiveRow[];
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function makeComponent(): MobileComponent {
     return {
         id: String(Date.now() + Math.random()),
@@ -92,6 +94,7 @@ export interface MobileNutForm {
     specificGravity: string;
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const EMPTY_FORM: MobileNutForm = {
     denominazione: '', porzione_g: '100', pesoFinito_g: '',
     ue_porzione: '', ue_confezione: '', ue_pezzo: '',
@@ -105,6 +108,7 @@ export const EMPTY_FORM: MobileNutForm = {
 // ─── normalizeCalcResult — migrazione archivio legacy ────────────────────────
 // ponytail: old archive entries (nut_mobile_v2) miss vitK/vitB5/rame/manganese/selenio/iodio;
 // spread over ZERO_CALC fills gaps with 0. Drop when archive is fully migrated.
+// eslint-disable-next-line react-refresh/only-export-components
 export function normalizeCalcResult(r: Partial<CalcResult>): CalcResult {
     return { ...ZERO_CALC, ...r };
 }
@@ -400,14 +404,14 @@ export function NutrizionaleCalcMobile() {
 
     const hasIngredients = components.some(c => c.rows.length > 0);
 
-    // Redirect se non autenticato
-    if (!user) { navigate('/login'); return null; }
-
-    const tabIndex = TAB_ORDER.indexOf(activeTab);
-
     // ── Swipe laterale ────────────────────────────────────────────────────────
     const swipeStartX = useRef<number | null>(null);
     const swipeStartY = useRef<number | null>(null);
+
+    // Redirect se non autenticato (after all hooks)
+    if (!user) { navigate('/login'); return null; }
+
+    const tabIndex = TAB_ORDER.indexOf(activeTab);
     const SWIPE_THRESHOLD = 50;
 
     const handleTouchStart = (e: React.TouchEvent) => {

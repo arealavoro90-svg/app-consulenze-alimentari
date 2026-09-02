@@ -14,6 +14,7 @@ export interface MergedIngredient {
     resa: number;
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function buildMergedIngredients(components: MobileComponent[]): MergedIngredient[] {
     const map = new Map<string, MergedIngredient>();
     for (const comp of components) {

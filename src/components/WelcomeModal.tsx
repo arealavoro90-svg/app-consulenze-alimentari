@@ -13,6 +13,7 @@ interface WelcomeModalProps {
     slides?: Slide[];
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const NUTRIZIONALE_SLIDES: Slide[] = [
     {
         icon: <Layers size={28} strokeWidth={1.5} />,
@@ -95,6 +96,7 @@ export const NUTRIZIONALE_SLIDES: Slide[] = [
     },
 ];
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const ETICHETTE_SLIDES: Slide[] = [
     {
         icon: <Layers size={28} strokeWidth={1.5} />,

@@ -21,6 +21,7 @@ export function useMobile(): boolean {
             clearTimeout(timer);
             timer = setTimeout(() => setIsMobile(e.matches), RESIZE_DEBOUNCE_MS);
         };
+        // eslint-disable-next-line react-hooks/set-state-in-effect -- sync on mount to avoid flicker
         setIsMobile(mq.matches);
 
         mq.addEventListener('change', handler);

@@ -118,7 +118,7 @@ export function useLocalStorageSync<T>(key: string, initialValue: T) {
  * Usage:
  * useLocalStorageJSON('preferences', { theme: 'dark', language: 'it' });
  */
-export function useLocalStorageJSON<T extends Record<string, any>>(
+export function useLocalStorageJSON<T extends Record<string, unknown>>(
     key: string,
     initialValue: T
 ): [T, (update: Partial<T>) => void] {

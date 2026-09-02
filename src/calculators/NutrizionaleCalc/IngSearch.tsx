@@ -73,6 +73,7 @@ export function IngSearch({ onAdd, db, loading, error, onRetry }: { onAdd: (ing:
 
     useEffect(() => {
         const found = searchDB(q, db);
+        // eslint-disable-next-line react-hooks/set-state-in-effect -- sync search results on query change
         setRes(found);
         setSelectedIdx(-1);
         const shouldOpen = found.length > 0 && q.trim().length >= 2;

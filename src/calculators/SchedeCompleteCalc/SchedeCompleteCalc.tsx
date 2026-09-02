@@ -122,8 +122,8 @@ export function SchedeCompleteCalc() {
         alert("Scheda salvata con successo nell'archivio!");
     };
 
-    const handleLoad = (item: any) => {
-        setData(item.data as SchedaCompleta);
+    const handleLoad = (item: { id: string; name: string; date: string; data: SchedaCompleta }) => {
+        setData(item.data);
         setCurrentId(item.id);
         setCurrentName(item.name);
         setIsArchiveOpen(false);
@@ -293,7 +293,7 @@ export function SchedeCompleteCalc() {
                             {([['uvPesoNettoG','Peso netto nominale (g)'], ['uvLmm','Lunghezza (mm)'], ['uvLargmm','Larghezza (mm)'], ['uvHmm','Altezza (mm)'], ['uvPesoImb','Peso imballo (g)'], ['uvEan','Codice EAN']] as const).map(([f, lbl]) => (
                                 <div key={f} className="form-field" style={{ marginBottom: 0 }}>
                                     <label className="form-label" style={{ fontSize: 11 }}>{lbl}</label>
-                                    <input className="form-input" type={f === 'uvEan' ? 'text' : 'number'} value={(data as any)[f]} onChange={e => set(f, e.target.value)} />
+                                    <input className="form-input" type={f === 'uvEan' ? 'text' : 'number'} value={(data as unknown as Record<string, string>)[f]} onChange={e => set(f, e.target.value)} />
                                 </div>
                             ))}
                             <div className="form-field" style={{ marginBottom: 0 }}>
@@ -312,7 +312,7 @@ export function SchedeCompleteCalc() {
                             {([['ctNUV','N° UV per cartone'],['ctLmm','Lun. mm'],['ctLargmm','Larg. mm'],['ctHmm','H mm'],['ctPesoVuoto','Peso vuoto (g)']] as const).map(([f,lbl]) => (
                                 <div key={f} className="form-field" style={{ marginBottom: 0 }}>
                                     <label className="form-label" style={{ fontSize: 11 }}>{lbl}</label>
-                                    <input className="form-input" type="number" value={(data as any)[f]} onChange={e => set(f, e.target.value)} />
+                                    <input className="form-input" type="number" value={(data as unknown as Record<string, string>)[f]} onChange={e => set(f, e.target.value)} />
                                 </div>
                             ))}
                             <div className="form-field" style={{ marginBottom: 0 }}>
@@ -331,7 +331,7 @@ export function SchedeCompleteCalc() {
                             {([['bancStrato','N° cartoni per strato'],['bancStrati','N° strati']] as const).map(([f,lbl]) => (
                                 <div key={f} className="form-field" style={{ marginBottom: 0 }}>
                                     <label className="form-label" style={{ fontSize: 11 }}>{lbl}</label>
-                                    <input className="form-input" type="number" value={(data as any)[f]} onChange={e => set(f, e.target.value)} />
+                                    <input className="form-input" type="number" value={(data as unknown as Record<string, string>)[f]} onChange={e => set(f, e.target.value)} />
                                 </div>
                             ))}
                             {(() => {
@@ -364,7 +364,7 @@ export function SchedeCompleteCalc() {
                             {([['prodRagione','Ragione sociale e sede'],['prodTel','Telefono'],['prodEmail','Email'],['prodSito','Sito web']] as const).map(([f,lbl]) => (
                                 <div key={f} className="form-field" style={{ marginBottom: 0 }}>
                                     <label className="form-label" style={{ fontSize: 11 }}>{lbl}</label>
-                                    <input className="form-input" type="text" value={(data as any)[f]} onChange={e => set(f, e.target.value)} />
+                                    <input className="form-input" type="text" value={(data as unknown as Record<string, string>)[f]} onChange={e => set(f, e.target.value)} />
                                 </div>
                             ))}
                         </div>

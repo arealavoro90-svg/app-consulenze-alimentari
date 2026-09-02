@@ -108,18 +108,18 @@ export function SchedaProcessoCalc() {
     }, [data.componenti, nConf, pesoNettoG, kgTotali]);
 
     // Set helpers
-    const setField = (field: keyof SchedaData, val: any) => setData(p => ({ ...p, [field]: val }));
+    const setField = (field: keyof SchedaData, val: SchedaData[keyof SchedaData]) => setData(p => ({ ...p, [field]: val }));
 
     // Componente ops
     const addComp = () => { if (data.componenti.length < 4) setData(p => ({ ...p, componenti: [...p.componenti, mkComp()] })); };
     const removeComp = (id: string) => setField('componenti', data.componenti.filter(c => c.id !== id));
-    const updateComp = (id: string, field: keyof ComponenteFabbisogno, val: any) =>
+    const updateComp = (id: string, field: keyof ComponenteFabbisogno, val: ComponenteFabbisogno[keyof ComponenteFabbisogno]) =>
         setField('componenti', data.componenti.map(c => c.id !== id ? c : { ...c, [field]: val }));
     const addIng = (compId: string) =>
         setField('componenti', data.componenti.map(c => c.id !== compId ? c : { ...c, ingredienti: [...c.ingredienti, mkIng()] }));
     const removeIng = (compId: string, ingId: string) =>
         setField('componenti', data.componenti.map(c => c.id !== compId ? c : { ...c, ingredienti: c.ingredienti.filter(i => i.id !== ingId) }));
-    const updateIng = (compId: string, ingId: string, field: keyof IngredienteFabb, val: any) =>
+    const updateIng = (compId: string, ingId: string, field: keyof IngredienteFabb, val: IngredienteFabb[keyof IngredienteFabb]) =>
         setField('componenti', data.componenti.map(c => c.id !== compId ? c : {
             ...c, ingredienti: c.ingredienti.map(i => i.id !== ingId ? i : {
                 ...i, [field]: ['gRicetta', 'fattoreCalo'].includes(field) ? g(val) : val
@@ -129,7 +129,7 @@ export function SchedaProcessoCalc() {
     // Fase ops
     const addFase = () => setField('fasi', [...data.fasi, mkFase()]);
     const removeFase = (id: string) => setField('fasi', data.fasi.filter(f => f.id !== id));
-    const updateFase = (id: string, field: keyof FaseLavorazione, val: any) =>
+    const updateFase = (id: string, field: keyof FaseLavorazione, val: FaseLavorazione[keyof FaseLavorazione]) =>
         setField('fasi', data.fasi.map(f => f.id !== id ? f : { ...f, [field]: val }));
     const addParam = (faseId: string) =>
         setField('fasi', data.fasi.map(f => f.id !== faseId ? f : { ...f, parametri: [...f.parametri, mkParam()] }));
@@ -158,8 +158,8 @@ export function SchedaProcessoCalc() {
         if (currentName) { doSaveWithName(currentName); return; }
         setPromptOpen(true);
     };
-    const handleLoad = (item: any) => {
-        setData({ ...DEFAULT, ...(item.data as SchedaData) });
+    const handleLoad = (item: { id: string; name: string; date: string; data: SchedaData }) => {
+        setData({ ...DEFAULT, ...item.data });
         setCurrentId(item.id); setCurrentName(item.name);
         setIsArchiveOpen(false);
     };
@@ -362,7 +362,7 @@ export function SchedaProcessoCalc() {
                     ] as const).map(([field, label, type, placeholder]) => (
                         <div key={field} className="form-field" style={{ marginBottom: 0 }}>
                             <label className="form-label">{label}</label>
-                            <input className="form-input" type={type} value={(data as any)[field]} onChange={e => setField(field as keyof SchedaData, e.target.value)} placeholder={placeholder} />
+                            <input className="form-input" type={type} value={(data as unknown as Record<string, string>)[field]} onChange={e => setField(field as keyof SchedaData, e.target.value)} placeholder={placeholder} />
                         </div>
                     ))}
                 </div>

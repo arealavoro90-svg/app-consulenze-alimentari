@@ -220,6 +220,7 @@ export function BrowseIngredientsModal({ onClose, db, onEditIngredient }: Props)
         return list;
     }, [db, search, soloPersonali]);
 
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- reset expansion when filter changes
     useEffect(() => { setExpandedIdx(null); }, [search, soloPersonali]);
 
     function toggleExpand(idx: number) {

@@ -225,8 +225,8 @@ export function TrattamentoTermicoCalc() {
         alert('Salvato nell\'archivio!');
     };
 
-    const handleLoad = (item: any) => {
-        const d = item.data as F0ArchiveData;
+    const handleLoad = (item: { id: string; name: string; date: string; data: F0ArchiveData }) => {
+        const d = item.data;
         setMode(d.mode || 'sterilizzazione');
         setProduct(d.product || { prodotto: '', formato: '', dataProduzioneInput: '', lotto: '', tmc: '' });
         setMicroorg(d.microorg || STERILIZZAZIONE_MICROORG);
@@ -346,6 +346,7 @@ export function TrattamentoTermicoCalc() {
 
         // Results summary box
         const esito = isAdequate ? '✓ OBIETTIVO RAGGIUNTO' : '✗ OBIETTIVO NON RAGGIUNTO';
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any -- jsPDF setFillColor accepts array but types expect numbers
         doc.setFillColor(isAdequate ? [230, 250, 235] as any : [255, 235, 235] as any);
         doc.roundedRect(MARGIN, y, CW, 26, 3, 3, 'F');
         doc.setFont('helvetica', 'bold'); doc.setFontSize(9); doc.setTextColor(12, 19, 38);
@@ -404,6 +405,7 @@ export function TrattamentoTermicoCalc() {
         }
 
         // Footer
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any -- jsPDF internal API not typed
         const pCount = (doc as any).internal.getNumberOfPages();
         for (let p = 1; p <= pCount; p++) {
             doc.setPage(p);
@@ -885,8 +887,8 @@ export function TrattamentoTermicoCalc() {
                                 tick={{ fontSize: 11 }}
                             />
                             <Tooltip
-                                formatter={(v: any) => [(Number(v) || 0).toFixed(4) + ' min', 'F₀ progressivo']}
-                                labelFormatter={(l: any) => `Tempo: ${l} min`}
+                                formatter={(v: unknown) => [(Number(v) || 0).toFixed(4) + ' min', 'F₀ progressivo']}
+                                labelFormatter={(l: unknown) => `Tempo: ${l} min`}
                                 contentStyle={{ fontSize: 12, borderRadius: 8 }}
                             />
                             <Legend wrapperStyle={{ fontSize: 12 }} />

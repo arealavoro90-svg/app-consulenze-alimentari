@@ -29,6 +29,7 @@ export function useIngredientsDB(errorMessage = 'Impossibile caricare il databas
             .catch(err => { console.error('Error loading DB:', err); setLoadingDB(false); setDbError(errorMessage); });
     }, [errorMessage]);
 
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- loadDB sets loading state on mount; this is the correct pattern for data fetching
     useEffect(() => { loadDB(); }, [loadDB]);
 
     return { db, setDb, loadingDB, dbError, loadDB };

@@ -86,7 +86,7 @@ function cleanIngredientName(text: string): string {
     .toLowerCase()
     .replace(/\d+\/\d+|\d+[.,]\d+|\d+/g, '')
     .replace(UNIT_RE, '')
-    .replace(/[,;:()\[\]]/g, ' ')
+    .replace(/[,;:()[\]]/g, ' ')
     .split(/\s+/)
     .filter(t => t.length > 1 && !STOP.has(t))
     .join(' ')

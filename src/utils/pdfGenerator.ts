@@ -137,7 +137,7 @@ export function generatePDFReport(data: PDFReportData): void {
     doc.setFontSize(60);
     doc.text('AEA', 50, 180, { angle: 35 });
 
-    const safeTool = data.toolName.replace(/[^\w\sÀ-ÿ\-]/g, '').trim().replace(/\s+/g, '_');
+    const safeTool = data.toolName.replace(/[^\w\sÀ-ÿ-]/g, '').trim().replace(/\s+/g, '_');
     const filename = `AEA_${safeTool}_${data.date.replace(/\//g, '-')}.pdf`;
     doc.save(filename);
 }
