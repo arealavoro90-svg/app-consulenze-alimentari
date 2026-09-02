@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
 import {
     Home, Salad, Tag, Wine, Package,
-    Thermometer, FileText, Settings2,
+    Thermometer, FileText, Settings2, MoreHorizontal, X,
 } from 'lucide-react';
 import { useAuth } from '../auth/AuthContext';
 import { ConfirmDialog } from './ui/ConfirmDialog';
@@ -30,6 +30,9 @@ const TAB_LABELS: Record<ToolId, string> = {
     'excel-import':        'Excel',
 };
 
+// Max tool tabs visibili in barra prima di collassare in drawer
+const MAX_VISIBLE_TABS = 3;
+
 interface MobileShellProps {
     pageLabel?: string;
     insideTool?: boolean;
@@ -39,6 +42,7 @@ export function MobileShell({ pageLabel = 'Dashboard', insideTool = false }: Mob
     const { user, logout } = useAuth();
     const navigate = useNavigate();
     const [logoutOpen, setLogoutOpen] = useState(false);
+    const [drawerOpen, setDrawerOpen] = useState(false);
 
     const handleLogout = () => { logout(); navigate('/login'); };
 
@@ -52,6 +56,10 @@ export function MobileShell({ pageLabel = 'Dashboard', insideTool = false }: Mob
         label: TAB_LABELS[toolId],
         key: toolId,
     }));
+
+    const visibleTabs = toolTabs.slice(0, MAX_VISIBLE_TABS);
+    const overflowTabs = toolTabs.slice(MAX_VISIBLE_TABS);
+    const hasOverflow = overflowTabs.length > 0;
 
     return (
         <>
@@ -111,6 +119,7 @@ export function MobileShell({ pageLabel = 'Dashboard', insideTool = false }: Mob
 
             {!insideTool && (
             <nav className="m-tabbar" aria-label="Navigazione principale">
+                {/* Home always first */}
                 <NavLink
                     to="/dashboard"
                     end
@@ -131,7 +140,8 @@ export function MobileShell({ pageLabel = 'Dashboard', insideTool = false }: Mob
                     )}
                 </NavLink>
 
-                {toolTabs.map(tab => (
+                {/* First MAX_VISIBLE_TABS tools */}
+                {visibleTabs.map(tab => (
                     <NavLink
                         key={tab.key}
                         to={tab.to}
@@ -152,9 +162,74 @@ export function MobileShell({ pageLabel = 'Dashboard', insideTool = false }: Mob
                         )}
                     </NavLink>
                 ))}
+
+                {/* "Altri" button — only when overflow exists */}
+                {hasOverflow && (
+                    <button
+                        type="button"
+                        className={`m-tabbar__item${drawerOpen ? ' m-tabbar__item--active' : ''}`}
+                        onClick={() => setDrawerOpen(o => !o)}
+                        aria-label="Altri strumenti"
+                        aria-expanded={drawerOpen}
+                        aria-haspopup="dialog"
+                    >
+                        <div className={`m-tabbar__dot${drawerOpen ? ' m-tabbar__dot--active' : ''}`} />
+                        <div className={`m-tabbar__icon${drawerOpen ? ' m-tabbar__icon--active' : ''}`}>
+                            <MoreHorizontal size={20} />
+                        </div>
+                        <span className={`m-tabbar__label${drawerOpen ? ' m-tabbar__label--active' : ''}`}>
+                            Altri
+                        </span>
+                    </button>
+                )}
             </nav>
             )}
         </div>
+
+        {/* ── Overflow tool drawer ── */}
+        {drawerOpen && !insideTool && (
+            <>
+                {/* Backdrop */}
+                <div
+                    className="m-drawer-backdrop"
+                    onClick={() => setDrawerOpen(false)}
+                    aria-hidden="true"
+                />
+                {/* Sheet */}
+                <div
+                    className="m-drawer"
+                    role="dialog"
+                    aria-modal="true"
+                    aria-label="Altri strumenti"
+                >
+                    <div className="m-drawer__header">
+                        <span className="m-drawer__title">Altri strumenti</span>
+                        <button
+                            type="button"
+                            className="m-drawer__close"
+                            onClick={() => setDrawerOpen(false)}
+                            aria-label="Chiudi"
+                        >
+                            <X size={18} />
+                        </button>
+                    </div>
+                    <div className="m-drawer__list">
+                        {overflowTabs.map(tab => (
+                            <button
+                                key={tab.key}
+                                type="button"
+                                className="m-drawer__item"
+                                onClick={() => { navigate(tab.to); setDrawerOpen(false); }}
+                            >
+                                <span className="m-drawer__item-icon">{tab.icon}</span>
+                                <span className="m-drawer__item-label">{tab.label}</span>
+                            </button>
+                        ))}
+                    </div>
+                </div>
+            </>
+        )}
+
         <ConfirmDialog
             open={logoutOpen}
             title="Esci dall'account"
