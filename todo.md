@@ -5,6 +5,35 @@
 
 ---
 
+## 🔴 IN CORSO — audit tool Nutrizionale + Etichette (2026-09-03)
+
+> **Leggere `AUDIT-2026-09-03.md` prima di riprendere.** Contiene 22 finding con ID stabili
+> (N1…N9, E1…E7, T1…T3, D1…D3), stato voce per voce, file:riga, motivazione e verifica.
+
+Branch di lavoro: **`fix/audit-2026-09-03`** (17 commit, `main` intatto, mai deployato).
+Stato: **20/22 chiusi**, suite 186/186, `tsc -b` pulito, lint 0 errori.
+
+### Prossimi passi, in ordine
+- [ ] **Merge + deploy del branch** — tutto frontend, indipendente da D3, deployabile subito.
+- [ ] **D3** 🔴 — il backend Django **non ha campi allergene**: modello, 6 migrazioni, serializer e
+      import ne sono privi. Oggi innocuo perché l'API risponde 401 e l'app ricade sul JSON statico,
+      ma **scatta al primo login cliente reale**: etichette senza allergeni, in silenzio.
+      **Da chiudere PRIMA di creare account clienti veri.** Decisione di schema aperta nel file
+      (32 campi piatti vs `JSONField` esposto piatto — proposta: il secondo).
+      Serve Django in esecuzione in locale per la verifica end-to-end.
+- [ ] **D1 alla fonte** — 4 celle colonna `HO` nell'Excel (righe 331, 485, 625, 824). Nell'app è già
+      corretto e c'è un test di guardia, ma senza questo rientra alla prossima rigenerazione.
+- [ ] **D2** — 9 prodotti "senza glutine" con `GLUTINE` marcato presente: serve la scheda tecnica del
+      fornitore per stabilire presente vs tracce. Liste ingredienti complete nel file.
+
+### ⚠️ Trappola nota
+**Non rigenerare `ingredientsDB.json` dall'Excel alla cieca.** Sul campo `nome` combaciano solo
+342 voci su 1065 (l'Excel tiene la dichiarazione completa dove l'app tiene il nome breve):
+rinominerebbe ~700 ingredienti e spaccherebbe tutte le ricette archiviate, che li referenziano
+per nome. Inoltre `scripts/extractIngredients_new.cjs:5` punta a un percorso Excel non più esistente.
+
+---
+
 ## MOB-PARITY — Parità Desktop/Mobile NutrizionaleCalc
 ### Fase 5 — Session Bridge desktop↔mobile (COMPLETATA — 2026-05-30)
 - [x] **MOB-P5-1** — sessionBridge.ts: persistenza stato in localStorage (`nut_session_draft`)
