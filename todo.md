@@ -67,9 +67,11 @@ Obiettivo: NutrizionaleCalcMobile = NutrizionaleCalc al 100%.
 
 ## BUG — Da correggere (viola CLAUDE.md)
 
-- [ ] **BUG-1** — Sostituire `prompt()` / `alert()` / `confirm()` nativi con pattern
-      UI coerenti (modale inline o notifica). Impatta tutti i calcolatori + ArchiveModal
-      + SavedTablesModal. Refactor trasversale — procedere un calcolatore alla volta.
+- [x] **BUG-1** — Sostituire `prompt()` / `alert()` / `confirm()` nativi con pattern
+      UI coerenti (modale inline o notifica). Completato 2026-09-03:
+      TrattamentoTermicoCalc + EtichetteViniCalc migrati a PromptDialog/ConfirmDialog/toast.
+      EtichetteCalc + NutrizionaleCalc erano già migrati. ArchiveModal/SavedTablesModal
+      non usano native dialog. Nessun residuo rimasto nel codebase.
 
 ---
 

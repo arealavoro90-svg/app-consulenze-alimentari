@@ -9,6 +9,9 @@ import { useAuth } from '../../auth/AuthContext';
 import { useArchive } from '../../hooks/useArchive';
 import { useLocalStorage } from '../../hooks/useLocalStorage';
 import { ArchiveModal } from '../../components/ArchiveModal';
+import { useToast } from '../../components/ui/Toast';
+import { ConfirmDialog } from '../../components/ui/ConfirmDialog';
+import { PromptDialog } from '../../components/ui/PromptDialog';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -171,6 +174,14 @@ export function TrattamentoTermicoCalc() {
     const [isArchiveOpen, setIsArchiveOpen] = useState(false);
     const [currentId, setCurrentId] = useState<string | undefined>(undefined);
     const [currentName, setCurrentName] = useState('');
+    const toast = useToast();
+    const [promptOpen, setPromptOpen] = useState(false);
+    const [confirmState, setConfirmState] = useState<{
+        open: boolean; title: string; message: string; variant?: 'danger' | 'warning' | 'info';
+        confirmLabel?: string; onConfirm: () => void;
+    }>({ open: false, title: '', message: '', onConfirm: () => {} });
+    const openConfirm = (opts: Omit<typeof confirmState, 'open'>) => setConfirmState({ ...opts, open: true });
+    const closeConfirm = () => setConfirmState(prev => ({ ...prev, open: false }));
 
     // Chart ref for PDF export
     const chartRef = useRef<HTMLDivElement>(null);
@@ -216,13 +227,17 @@ export function TrattamentoTermicoCalc() {
         setRows(prev => prev.filter(r => r.id !== id));
     };
 
-    const handleSave = async () => {
-        const name = currentName || prompt('Nome per questo calcolo F0:', `${product.prodotto || 'F0'} — ${new Date().toLocaleDateString('it-IT')}`);
-        if (!name) return;
-        const id = await saveItem(name, { mode, product, microorg, annotazioni, oraInizio, oraFine, rows }, currentId);
+    const doSaveWithName = async (nameToSave: string) => {
+        if (!nameToSave) return;
+        const id = await saveItem(nameToSave, { mode, product, microorg, annotazioni, oraInizio, oraFine, rows }, currentId);
         setCurrentId(id);
-        setCurrentName(name);
-        alert('Salvato nell\'archivio!');
+        setCurrentName(nameToSave);
+        toast.success("Calcolo salvato nell'archivio!");
+    };
+
+    const handleSave = () => {
+        if (currentName) { void doSaveWithName(currentName); return; }
+        setPromptOpen(true);
     };
 
     const handleLoad = (item: { id: string; name: string; date: string; data: F0ArchiveData }) => {
@@ -240,16 +255,24 @@ export function TrattamentoTermicoCalc() {
     };
 
     const handleNew = () => {
-        if (!confirm('Iniziare un nuovo calcolo? I dati non salvati andranno persi.')) return;
-        setMode('sterilizzazione');
-        setProduct({ prodotto: '', formato: '', dataProduzioneInput: '', lotto: '', tmc: '' });
-        setMicroorg(STERILIZZAZIONE_MICROORG);
-        setAnnotazioni('');
-        setOraInizio('');
-        setOraFine('');
-        setRows([makeEmptyRow()]);
-        setCurrentId(undefined);
-        setCurrentName('');
+        openConfirm({
+            title: 'Nuovo calcolo',
+            message: 'Iniziare un nuovo calcolo? I dati non salvati andranno persi.',
+            variant: 'warning',
+            confirmLabel: 'Continua',
+            onConfirm: () => {
+                closeConfirm();
+                setMode('sterilizzazione');
+                setProduct({ prodotto: '', formato: '', dataProduzioneInput: '', lotto: '', tmc: '' });
+                setMicroorg(STERILIZZAZIONE_MICROORG);
+                setAnnotazioni('');
+                setOraInizio('');
+                setOraFine('');
+                setRows([makeEmptyRow()]);
+                setCurrentId(undefined);
+                setCurrentName('');
+            },
+        });
     };
 
     // ── PDF Export ───────────────────────────────────────────────────────────
@@ -916,6 +939,23 @@ export function TrattamentoTermicoCalc() {
                     </div>
                 )}
             </div>
+            <ConfirmDialog
+                open={confirmState.open}
+                title={confirmState.title}
+                message={confirmState.message}
+                variant={confirmState.variant}
+                confirmLabel={confirmState.confirmLabel}
+                onConfirm={confirmState.onConfirm}
+                onCancel={closeConfirm}
+            />
+            <PromptDialog
+                open={promptOpen}
+                title="Nome per questo calcolo F0"
+                defaultValue={`${product.prodotto || 'F0'} — ${new Date().toLocaleDateString('it-IT')}`}
+                confirmLabel="Salva"
+                onConfirm={(name) => { setPromptOpen(false); void doSaveWithName(name); }}
+                onCancel={() => setPromptOpen(false)}
+            />
         </div>
     );
 }

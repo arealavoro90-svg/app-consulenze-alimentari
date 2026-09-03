@@ -319,6 +319,8 @@ interface LabelData {
     codeType: 'none' | 'qr' | 'barcode' | 'ean13';
     codeValue: string;
     codeScale: number;
+    codePosX: number;
+    codePosY: number;
     // Retro etichetta — opzionale, solo se il fronte non basta (Art. 13(5) Reg. 1169/2011:
     // denominazione e peso netto restano SEMPRE sul fronte, non spostabili). Dimensioni fisiche
     // indipendenti dal fronte (spesso uguali, ma il retro può essere più grande per la tabella).
@@ -378,6 +380,8 @@ const defaults: LabelData = {
     codeType: 'none',
     codeValue: '',
     codeScale: 100,
+    codePosX: 85,
+    codePosY: 88,
     hasBackLabel: false,
     backWidthMm: '100',
     backHeightMm: '150',
@@ -1273,6 +1277,50 @@ export function EtichetteCalc() {
     // l'immagine esportata corrisponde esattamente alle dimensioni mm impostate.
     const labelPreviewRef = useRef<HTMLDivElement>(null);
     const labelBackPreviewRef = useRef<HTMLDivElement>(null);
+    const textContainerRef = useRef<HTMLDivElement>(null);
+    const dragRef = useRef<{
+        field: 'logo' | 'code';
+        containerRect: DOMRect;
+        startClientX: number;
+        startClientY: number;
+        startPosX: number;
+        startPosY: number;
+    } | null>(null);
+
+    function handleDragStart(e: React.MouseEvent, field: 'logo' | 'code', curPosX: number, curPosY: number) {
+        const container = textContainerRef.current;
+        if (!container) return;
+        e.preventDefault();
+        const rect = container.getBoundingClientRect();
+        dragRef.current = { field, containerRect: rect, startClientX: e.clientX, startClientY: e.clientY, startPosX: curPosX, startPosY: curPosY };
+        document.body.style.userSelect = 'none';
+        document.body.style.cursor = 'grabbing';
+
+        function onMove(ev: MouseEvent) {
+            const d = dragRef.current;
+            if (!d) return;
+            const dx = ((ev.clientX - d.startClientX) / d.containerRect.width) * 100;
+            const dy = ((ev.clientY - d.startClientY) / d.containerRect.height) * 100;
+            const x = Math.max(2, Math.min(98, d.startPosX + dx));
+            const y = Math.max(2, Math.min(98, d.startPosY + dy));
+            setData(prev => d.field === 'logo'
+                ? { ...prev, logoPosX: x, logoPosY: y }
+                : { ...prev, codePosX: x, codePosY: y }
+            );
+        }
+
+        function onUp() {
+            dragRef.current = null;
+            document.body.style.userSelect = '';
+            document.body.style.cursor = '';
+            document.removeEventListener('mousemove', onMove);
+            document.removeEventListener('mouseup', onUp);
+        }
+
+        document.addEventListener('mousemove', onMove);
+        document.addEventListener('mouseup', onUp);
+    }
+
     const [exportingLabel, setExportingLabel] = useState<'front' | 'back' | null>(null);
     const PRINT_DPI = 300;
     const mmToPx = (mm: number, dpi: number) => (mm * dpi) / 25.4;
@@ -1497,10 +1545,6 @@ export function EtichetteCalc() {
     const isCodeTooSmallBack = data.codeType !== 'qr' && backRenderedWidthPx > 0 && codeMetricsBack.symbolWidthPx > backRenderedWidthPx;
     const showCodeFront = onFront('code') && data.codeType !== 'none' && !!data.codeValue;
     const showCodeBack = onBack('code') && data.codeType !== 'none' && !!data.codeValue;
-    // Framework responsive 2026-08-25 — Opzione A: su etichette strette il barcode condivide la
-    // riga con peso/lotto invece di avere una riga centrata tutta sua (che lo farebbe sembrare
-    // ancora più dominante). Solo un layout diverso, non tocca la dimensione legale del codice.
-    const shareBarcodeRowFront = showCodeFront && shouldShareBarcodeRow(codeMetricsFront.symbolWidthPx, labelRenderedWidthPx);
     const shareBarcodeRowBack = showCodeBack && shouldShareBarcodeRow(codeMetricsBack.symbolWidthPx, backRenderedWidthPx);
     // Opzione B — formati orizzontali larghi: corpo testo e tabella+imballi si affiancano invece
     // di impilarsi, per non sprecare la larghezza extra (stessa gerarchia, solo due colonne).
@@ -2336,7 +2380,7 @@ export function EtichetteCalc() {
                                     {/* FRONTE etichetta — testo/logo/sfondo, riempie lo spazio disponibile nel
                                         riquadro fisico sopra (flex, non più il proprio aspect-ratio). minWidth:0
                                         serve solo in modalità riga (useTwoColumnFront), innocuo in colonna. */}
-                                    <div style={{
+                                    <div ref={textContainerRef} style={{
                                         position: 'relative',
                                         width: '100%',
                                         flex: useTwoColumnFront ? '1 1 55%' : '1 1 auto',
@@ -2348,18 +2392,23 @@ export function EtichetteCalc() {
                                         overflow: 'hidden',
                                         display: 'flex', flexDirection: 'column',
                                     }}>
-                                        {/* Logo posizionato in modo assoluto */}
+                                        {/* Logo — draggabile direttamente sull'etichetta */}
                                         {data.logoUrl && (
-                                            <div style={{
-                                                position: 'absolute',
-                                                left: `${data.logoPosX}%`,
-                                                top: `${data.logoPosY}%`,
-                                                transform: `translate(-50%, -10%)`, // Centra rispetto alla posizione X
-                                                zIndex: 10,
-                                                width: `${40 * fontScale * (data.logoScale / 100)}mm`,
-                                                maxWidth: '90%',
-                                                textAlign: 'center'
-                                            }}>
+                                            <div
+                                                style={{
+                                                    position: 'absolute',
+                                                    left: `${data.logoPosX}%`,
+                                                    top: `${data.logoPosY}%`,
+                                                    transform: `translate(-50%, -10%)`,
+                                                    zIndex: 10,
+                                                    width: `${40 * fontScale * (data.logoScale / 100)}mm`,
+                                                    maxWidth: '90%',
+                                                    textAlign: 'center',
+                                                    cursor: 'grab',
+                                                }}
+                                                onMouseDown={(e) => handleDragStart(e, 'logo', data.logoPosX, data.logoPosY)}
+                                            >
+                                                <div data-html2canvas-ignore="true" style={{ position: 'absolute', inset: 0, border: '1.5px dashed rgba(99,102,241,0.55)', borderRadius: 3, pointerEvents: 'none' }} />
                                                 <img
                                                     src={data.logoUrl}
                                                     alt="Logo"
@@ -2445,7 +2494,7 @@ export function EtichetteCalc() {
                                                 borderTop: `1px solid ${data.theme === 'dark' ? '#777' : '#ccc'}`,
                                                 paddingTop: `${8 * fontScale}px`,
                                                 display: 'grid',
-                                                gridTemplateColumns: shareBarcodeRowFront ? '1fr 1fr auto' : '1fr 1fr',
+                                                gridTemplateColumns: '1fr 1fr',
                                                 gap: `${8 * fontScale}px`,
                                                 alignItems: 'center',
                                                 fontSize: `${10 * fontScale}px`
@@ -2466,20 +2515,7 @@ export function EtichetteCalc() {
                                                     {onFront('lotDate') && data.lotNumber && <><strong>Lotto:</strong> {data.lotNumber}<br /></>}
                                                     {onFront('lotDate') && data.bestBefore && <strong>{data.bestBefore}</strong>}
                                                 </div>
-                                                {/* Barcode qui SOLO se condivide riga (etichetta stretta, share col
-                                                    peso/lotto invece di dominare una riga tutta sua — framework
-                                                    responsive 2026-08-25). Altrimenti resta sotto, riga propria. */}
-                                                {shareBarcodeRowFront && data.codeType !== 'none' && (
-                                                    <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-                                                        <CodeCanvas type={data.codeType} value={data.codeValue} scale={data.codeScale} pxPerMm={pxPerMmFront} />
-                                                    </div>
-                                                )}
                                             </div>
-                                            {showCodeFront && !shareBarcodeRowFront && data.codeType !== 'none' && (
-                                                <div style={{ display: 'flex', justifyContent: 'center', marginTop: `${6 * fontScale}px` }}>
-                                                    <CodeCanvas type={data.codeType} value={data.codeValue} scale={data.codeScale} pxPerMm={pxPerMmFront} />
-                                                </div>
-                                            )}
                                         </div>
                                     </div>
                                     {/* Contenuto aggiuntivo fronte — tabella nutrizionale + raccolta differenziata imballi,
@@ -2499,6 +2535,23 @@ export function EtichetteCalc() {
                                             {onFront('imballi') && data.imballi.length > 0 && renderImballiList()}
                                         </div>
                                     )}
+                                        {/* Barcode — draggabile direttamente sull'etichetta */}
+                                        {showCodeFront && data.codeType !== 'none' && (
+                                            <div
+                                                style={{
+                                                    position: 'absolute',
+                                                    left: `${data.codePosX}%`,
+                                                    top: `${data.codePosY}%`,
+                                                    transform: 'translate(-50%, -50%)',
+                                                    cursor: 'grab',
+                                                    zIndex: 9,
+                                                }}
+                                                onMouseDown={(e) => handleDragStart(e, 'code', data.codePosX, data.codePosY)}
+                                            >
+                                                <div data-html2canvas-ignore="true" style={{ position: 'absolute', inset: 0, border: '1.5px dashed rgba(99,102,241,0.55)', borderRadius: 3, pointerEvents: 'none' }} />
+                                                <CodeCanvas type={data.codeType} value={data.codeValue} scale={data.codeScale} pxPerMm={pxPerMmFront} />
+                                            </div>
+                                        )}
                                 </div>
                                 </div>
                         {labelRenderedWidthPx > 0 && (
