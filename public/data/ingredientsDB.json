@@ -9843,7 +9843,6 @@
     "vitB6": 0.46,
     "vitB9": 66.8,
     "vitB12": 0,
-    "all_grano": "1",
     "categoria": "ingrediente"
   },
   {
@@ -14236,7 +14235,6 @@
     "vitB1": 0.6,
     "vitB3": 4.4,
     "vitB9": 24,
-    "all_grano": "1",
     "categoria": "ingrediente"
   },
   {
@@ -18253,7 +18251,6 @@
     "sale": 0.21,
     "vitA_eq": 0,
     "all_glutine": "1",
-    "all_grano": "1",
     "categoria": "semilavorato"
   },
   {
@@ -23884,7 +23881,6 @@
     "vitB6": 0.46,
     "vitB9": 66.8,
     "vitB12": 0,
-    "all_grano": "1",
     "categoria": "semilavorato"
   },
   {
