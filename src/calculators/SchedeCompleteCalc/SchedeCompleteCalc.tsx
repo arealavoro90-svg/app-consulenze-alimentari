@@ -1,9 +1,10 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useAuth } from '../../auth/AuthContext';
 import { generatePDFReport } from '../../utils/pdfGenerator';
 import { useArchive } from '../../hooks/useArchive';
 import { useLocalStorage } from '../../hooks/useLocalStorage';
 import { ArchiveModal } from '../../components/ArchiveModal';
+import type { ArchiveData } from '../NutrizionaleCalc/NutrizionaleCalc';
 
 function Guide({ storageKey, title, steps, notes }: { storageKey: string; title: string; steps: { n: number; icon: string; title: string; desc: string; badge: string }[]; notes: string[] }) {
     const [open, setOpen] = useLocalStorage<boolean>(storageKey, true);
@@ -59,6 +60,9 @@ interface SchedaCompleta {
     bancStrato: string; bancStrati: string;
     // Produttore
     prodRagione: string; prodTel: string; prodEmail: string; prodSito: string;
+    // Ingredienti (manuale o da ricetta collegata)
+    ingredienti: string;
+    recipeId: string; // empty string = nessuna ricetta
     // Scheda processo
     processSteps: string[];
     criticalPoints: string;
@@ -77,6 +81,7 @@ const defaults: SchedaCompleta = {
     ctDescrizione: '', ctNUV: '', ctLmm: '', ctLargmm: '', ctHmm: '', ctPesoVuoto: '',
     bancStrato: '', bancStrati: '',
     prodRagione: '', prodTel: '', prodEmail: '', prodSito: '',
+    ingredienti: '', recipeId: '',
     processSteps: ['', '', '', ''], criticalPoints: '',
     costPerKg: '', batchSize: '', packagingCost: '', laborCost: '', sellPrice: '',
 };
@@ -91,6 +96,57 @@ export function SchedeCompleteCalc() {
     const [isArchiveOpen, setIsArchiveOpen] = useState(false);
     const [currentId, setCurrentId] = useState<string | undefined>(undefined);
     const [currentName, setCurrentName] = useState('');
+    const [saveMsg, setSaveMsg] = useState<string | null>(null);
+    const [showConfirmNew, setShowConfirmNew] = useState(false);
+
+    // NutrizionaleCalc archive — per collegare ricetta alla scheda tecnica
+    const { items: recipeItems } = useArchive<ArchiveData>('aea_archive_nutrizionale', 'nutrizionale-v3');
+
+    const linkedRecipe = useMemo(
+        () => data.recipeId ? recipeItems.find(r => r.id === data.recipeId) : null,
+        [data.recipeId, recipeItems]
+    );
+
+    // Ingredienti auto-generati dalla ricetta collegata
+    const autoIngredients = useMemo(() => {
+        if (!linkedRecipe) return '';
+        const recipe = linkedRecipe.data;
+        const pesoFinito = recipe.peso_finito_pz || 100;
+        const allIngr: { nome: string; grammi: number }[] = [];
+        for (const comp of recipe.componenti) {
+            const pz = comp.pz_uv || 1;
+            for (const ing of comp.ingredienti) {
+                const g = (ing.grammi || 0) * pz;
+                const found = allIngr.find(i => i.nome === ing.nome);
+                if (found) found.grammi += g;
+                else allIngr.push({ nome: ing.nome, grammi: g });
+            }
+        }
+        allIngr.sort((a, b) => b.grammi - a.grammi);
+        return allIngr.map(ing => {
+            const pct = (ing.grammi / pesoFinito) * 100;
+            return pct >= 2 ? `${ing.nome} (${pct.toFixed(0)}%)` : ing.nome;
+        }).join(', ');
+    }, [linkedRecipe]);
+
+    // Costo materie prime auto dalla ricetta collegata (€/kg)
+    const autoRawCostPerKg = useMemo(() => {
+        if (!linkedRecipe) return null;
+        const recipe = linkedRecipe.data;
+        const pesoFinito = recipe.peso_finito_pz || 0;
+        if (!pesoFinito) return null;
+        let totalCostEur = 0;
+        for (const comp of recipe.componenti) {
+            const pz = comp.pz_uv || 1;
+            for (const ing of comp.ingredienti) {
+                if (ing.eurKg) totalCostEur += (ing.grammi || 0) * pz * ing.eurKg / 1000;
+            }
+            for (const add of (comp.additiveRows ?? [])) {
+                if (add.eurKg) totalCostEur += (add.grams || 0) * pz * add.eurKg / 1000;
+            }
+        }
+        return (totalCostEur / pesoFinito * 1000).toFixed(2);
+    }, [linkedRecipe]);
 
     const set = (field: keyof SchedaCompleta, val: string | boolean) =>
         setData((prev) => ({ ...prev, [field]: val }));
@@ -113,13 +169,12 @@ export function SchedeCompleteCalc() {
     const margin = sell > 0 && totalCostKg > 0 ? ((sell - totalCostKg) / sell) * 100 : 0;
 
     const handleSave = async () => {
-        const nameToSave = currentName || data.productName || prompt("Inserisci un nome per la scheda: ", 'Scheda ' + new Date().toLocaleDateString());
-        if (!nameToSave) return; // User cancelled
-
+        const nameToSave = currentName || data.productName || ('Scheda ' + new Date().toLocaleDateString('it-IT'));
         const id = await saveItem(nameToSave, data, currentId);
         setCurrentId(id);
         setCurrentName(nameToSave);
-        alert("Scheda salvata con successo nell'archivio!");
+        setSaveMsg('Scheda salvata!');
+        setTimeout(() => setSaveMsg(null), 3000);
     };
 
     const handleLoad = (item: { id: string; name: string; date: string; data: SchedaCompleta }) => {
@@ -131,8 +186,17 @@ export function SchedeCompleteCalc() {
 
     const handleNew = () => {
         if (data.productName || data.description) {
-            if (!confirm('Vuoi iniziare una nuova scheda? I dati non salvati andranno persi.')) return;
+            setShowConfirmNew(true);
+            return;
         }
+        setData(defaults);
+        setCurrentId(undefined);
+        setCurrentName('');
+        setActiveTab('tecnica');
+    };
+
+    const confirmNew = () => {
+        setShowConfirmNew(false);
         setData(defaults);
         setCurrentId(undefined);
         setCurrentName('');
@@ -151,6 +215,7 @@ export function SchedeCompleteCalc() {
             inputs: [
                 { label: 'Prodotto', value: data.productName || '—' },
                 { label: 'Categoria', value: data.category || '—' },
+                { label: 'Ingredienti', value: (linkedRecipe ? autoIngredients : data.ingredienti) || '—' },
                 { label: 'Shelf life', value: data.shelfLife || '—' },
                 { label: 'T conservazione', value: data.storageTemp || '—' },
                 { label: 'Imballaggio', value: data.packaging || '—' },
@@ -191,6 +256,21 @@ export function SchedeCompleteCalc() {
                 />
             )}
 
+            {saveMsg && (
+                <div className="alert alert-success" style={{ marginBottom: 12 }}>✓ {saveMsg}</div>
+            )}
+            {showConfirmNew && (
+                <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <div className="card" style={{ maxWidth: 400, width: '90%', padding: 24 }}>
+                        <p style={{ marginBottom: 16, fontWeight: 600 }}>Vuoi iniziare una nuova scheda?</p>
+                        <p style={{ marginBottom: 20, fontSize: 13, color: 'var(--color-text-muted)' }}>I dati non salvati andranno persi.</p>
+                        <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+                            <button className="btn btn-outline" onClick={() => setShowConfirmNew(false)}>Annulla</button>
+                            <button className="btn btn-accent" onClick={confirmNew}>Nuova scheda</button>
+                        </div>
+                    </div>
+                </div>
+            )}
             <div className="page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 16 }}>
                 <div>
                     <h1>📋 Schede Complete</h1>
@@ -264,6 +344,29 @@ export function SchedeCompleteCalc() {
                             <textarea rows={3} value={data.description} onChange={(e) => set('description', e.target.value)}
                                 placeholder="Descrizione organolettica, aspetto, colore, odore, sapore..."
                                 style={{ width: '100%', background: 'var(--color-bg-input)', border: '1.5px solid var(--color-border)', borderRadius: 6, color: 'var(--color-text)', padding: '10px 14px', fontFamily: 'inherit', fontSize: 13, resize: 'vertical', outline: 'none' }} />
+                        </div>
+                        <div className="form-field">
+                            <label>Collega ricetta (dal tool Valori Nutrizionali)</label>
+                            <select className="form-input" value={data.recipeId} onChange={e => set('recipeId', e.target.value)}>
+                                <option value="">— Nessuna ricetta collegata —</option>
+                                {recipeItems.map(r => (
+                                    <option key={r.id} value={r.id}>{r.name}</option>
+                                ))}
+                            </select>
+                            {recipeItems.length === 0 && (
+                                <div style={{ fontSize: 11, color: 'var(--color-text-muted)', marginTop: 4 }}>Salva prima una ricetta nel tool "Valori Nutrizionali" per collegarla.</div>
+                            )}
+                        </div>
+                        <div className="form-field">
+                            <label>Elenco ingredienti {linkedRecipe ? <span style={{ fontWeight: 400, fontSize: 11, color: 'var(--color-accent)' }}>(auto da ricetta — modifica disabilitata)</span> : ''}</label>
+                            <textarea
+                                rows={3}
+                                value={linkedRecipe ? autoIngredients : data.ingredienti}
+                                onChange={linkedRecipe ? undefined : (e) => set('ingredienti', e.target.value)}
+                                readOnly={!!linkedRecipe}
+                                placeholder="es. Peperoni (60%), olio di oliva extravergine, sale, aceto di vino bianco"
+                                style={{ width: '100%', background: linkedRecipe ? '#f5f5f5' : 'var(--color-bg-input)', border: '1.5px solid var(--color-border)', borderRadius: 6, color: 'var(--color-text)', padding: '10px 14px', fontFamily: 'inherit', fontSize: 13, resize: 'vertical', outline: 'none' }}
+                            />
                         </div>
                         <div className="form-field">
                             <label>Certificazioni / standard qualità</label>
@@ -427,6 +530,12 @@ export function SchedeCompleteCalc() {
                         <div className="form-field">
                             <label>Costo materie prime (€/kg)</label>
                             <input type="number" min={0} step={0.01} value={data.costPerKg} onChange={(e) => set('costPerKg', e.target.value)} placeholder="es. 1.20" />
+                            {autoRawCostPerKg && !data.costPerKg && (
+                                <div style={{ marginTop: 6, fontSize: 12, color: 'var(--color-accent)' }}>
+                                    💡 Dalla ricetta collegata: <strong>€ {autoRawCostPerKg}/kg</strong>
+                                    <button className="btn btn-outline" style={{ marginLeft: 8, fontSize: 11, padding: '2px 10px' }} onClick={() => set('costPerKg', autoRawCostPerKg)}>Usa</button>
+                                </div>
+                            )}
                         </div>
                         <div className="form-field">
                             <label>Dimensione lotto (kg)</label>

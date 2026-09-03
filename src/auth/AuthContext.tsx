@@ -15,12 +15,29 @@ interface AuthContextType {
 const CACHE_KEY  = 'aea_user';
 const AuthContext = createContext<AuthContextType | null>(null);
 
+// Dev-only mock — attivo solo quando VITE_DEV_MOCK_AUTH=true in .env.local
+// Non viene mai incluso nei bundle di produzione (import.meta.env.DEV = false in build).
+const DEV_MOCK_ENABLED =
+    import.meta.env.DEV && import.meta.env.VITE_DEV_MOCK_AUTH === 'true';
+
+const DEV_MOCK_USER: User = {
+    id: 'dev-1',
+    email: 'dev@aea.local',
+    password: '',
+    name: 'Dev Admin',
+    company: 'AEA Dev',
+    role: 'admin',
+    purchasedTools: [
+        'nutrizionale', 'etichette', 'etichette-vini',
+        'rintracciabilita', 'trattamento-termico',
+        'schede-complete', 'scheda-processo', 'excel-import',
+    ],
+};
+
 export function AuthProvider({ children }: { children: ReactNode }) {
-    /**
-     * Restore istantaneo dalla cache localStorage per evitare flash bianco.
-     * Il token viene verificato in background nell'useEffect.
-     */
     const [user, setUser] = useState<User | null>(() => {
+        // In mock mode: sempre loggato, nessuna chiamata backend
+        if (DEV_MOCK_ENABLED) return DEV_MOCK_USER;
         const cached = localStorage.getItem(CACHE_KEY);
         if (cached) {
             try { return JSON.parse(cached) as User; } catch { /* cache corrotta */ }
@@ -28,13 +45,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return null;
     });
 
-    /**
-     * Verifica la sessione al mount chiamando /api/auth/me/ — il token vive solo nel
-     * cookie httpOnly (S5), mai in localStorage, quindi va sempre verificato via rete,
-     * mai dedotto da uno storage locale che dal login via cookie non viene più scritto.
-     * Se apiMe() fallisce (cookie assente/scaduto) → logout silenzioso.
-     */
     useEffect(() => {
+        // In mock mode: skip verifica backend
+        if (DEV_MOCK_ENABLED) return;
         apiMe()
             .then((freshUser) => {
                 setUser(freshUser);
@@ -48,6 +61,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }, []);
 
     const login = async (email: string, password: string): Promise<boolean> => {
+        if (DEV_MOCK_ENABLED) {
+            // Qualsiasi credenziale funziona in dev mock
+            void email; void password;
+            setUser(DEV_MOCK_USER);
+            return true;
+        }
         try {
             const loggedUser = await apiLogin(email, password);
             setUser(loggedUser);

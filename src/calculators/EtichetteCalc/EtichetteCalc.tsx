@@ -1,8 +1,8 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import {
     Plus, Archive, BookOpen, Save, Sparkles, ImageDown,
-    RefreshCw, X, Image, Building2, CheckCircle2, AlertTriangle, FileText,
+    RefreshCw, X, Image, Building2, CheckCircle2, AlertTriangle, FileText, Eye, ChevronDown,
 } from 'lucide-react';
 import QRCode from 'qrcode';
 import JsBarcode from 'jsbarcode';
@@ -710,11 +710,110 @@ function CodeCanvas({ type, value, scale, pxPerMm }: { type: 'qr' | 'barcode' | 
     );
 }
 
+function CollapsibleSection({
+    title,
+    defaultOpen = true,
+    storageKey,
+    children,
+    subtitle,
+}: {
+    title: string | ReactNode;
+    defaultOpen?: boolean;
+    storageKey: string;
+    children: ReactNode;
+    subtitle?: string;
+}) {
+    const [open, setOpen] = useState(() => {
+        try {
+            const stored = localStorage.getItem(`et_sec_${storageKey}`);
+            return stored !== null ? stored === '1' : defaultOpen;
+        } catch { return defaultOpen; }
+    });
+
+    const toggle = () => {
+        setOpen(v => {
+            const next = !v;
+            try { localStorage.setItem(`et_sec_${storageKey}`, next ? '1' : '0'); } catch { }
+            return next;
+        });
+    };
+
+    return (
+        <div className="card" style={{ marginBottom: 16 }}>
+            <button
+                type="button"
+                onClick={toggle}
+                style={{
+                    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                    width: '100%', background: 'none', border: 'none', padding: 0,
+                    cursor: 'pointer', textAlign: 'left',
+                    marginBottom: open ? 16 : 0,
+                }}
+            >
+                <div>
+                    <h3 style={{ fontWeight: 700, margin: 0 }}>{title}</h3>
+                    {subtitle && <p className="hint" style={{ margin: '2px 0 0', fontSize: 11 }}>{subtitle}</p>}
+                </div>
+                <ChevronDown size={16} style={{ flexShrink: 0, marginLeft: 8, transform: open ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
+            </button>
+            {open && <div>{children}</div>}
+        </div>
+    );
+}
+
+function SubSection({
+    title,
+    defaultOpen = true,
+    storageKey,
+    children,
+}: {
+    title: string;
+    defaultOpen?: boolean;
+    storageKey: string;
+    children: ReactNode;
+}) {
+    const [open, setOpen] = useState(() => {
+        try {
+            const stored = localStorage.getItem(`et_sub_${storageKey}`);
+            return stored !== null ? stored === '1' : defaultOpen;
+        } catch { return defaultOpen; }
+    });
+
+    const toggle = () => {
+        setOpen(v => {
+            const next = !v;
+            try { localStorage.setItem(`et_sub_${storageKey}`, next ? '1' : '0'); } catch { }
+            return next;
+        });
+    };
+
+    return (
+        <div style={{ borderTop: '1px solid var(--color-border)', marginTop: 16, paddingTop: 12 }}>
+            <button
+                type="button"
+                onClick={toggle}
+                style={{
+                    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                    width: '100%', background: 'none', border: 'none', padding: 0,
+                    cursor: 'pointer', textAlign: 'left',
+                    marginBottom: open ? 12 : 0,
+                }}
+            >
+                <span style={{ fontWeight: 600, fontSize: 13 }}>{title}</span>
+                <ChevronDown size={14} style={{ flexShrink: 0, marginLeft: 8, transform: open ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
+            </button>
+            {open && <div>{children}</div>}
+        </div>
+    );
+}
+
 export function EtichetteCalc() {
     const { user } = useAuth();
     const isMobile = useMobile();
     const [data, setData] = useState<LabelData>(defaults);
     const [leftTab, setLeftTab] = useState<'dati' | 'grafica'>('dati');
+    const [mobileTab, setMobileTab] = useState<'dati' | 'anteprima'>('dati');
+    const mobilePanelIndex = mobileTab === 'dati' ? 0 : 1;
 
     // Archive state
     const { items: savedLabels, saveItem, deleteItem } = useArchive<LabelData>('aea_archive_etichette', 'etichette');
@@ -748,10 +847,27 @@ export function EtichetteCalc() {
     // dall'archivio al link/cambio ricetta, mai snapshot statico salvato qui.
     const { db, loadingDB, dbError } = useIngredientsDB();
     const { items: nutritionalRecipes } = useArchive<ArchiveData>('nutrizionale-v3');
-    const [nationTab, setNationTab] = useState<NationTab>('UE');
+    // Auto-fit: formato tabella scelto automaticamente in base a superficie e spazio disponibile.
+    const [autoLabelMode, setAutoLabelMode] = useState<'completa' | 'semplificata' | 'solo_energia'>('completa');
+    // Scala aggiuntiva di emergenza quando anche solo_energia non entra (0.45–1.0).
+    const [contentFitScale, setContentFitScale] = useState(1.0);
+    // Override manuale utente (null = auto).
+    const [forceMode, setForceMode] = useState<'completa' | 'semplificata' | 'solo_energia' | null>(null);
 
     const linkedRecipe: ArchiveItem<ArchiveData> | undefined =
         nutritionalRecipes.find(r => r.id === data.recipeId);
+
+    // Auto-link: se l'utente arriva dal tool nutrizionale senza ricetta collegata, collega l'ultima salvata.
+    useEffect(() => {
+        if (data.recipeId || isDirty || nutritionalRecipes.length === 0) return;
+        try {
+            const raw = localStorage.getItem('aea_last_recipe');
+            if (!raw) return;
+            const { id } = JSON.parse(raw) as { id: string; name: string };
+            if (nutritionalRecipes.some(r => r.id === id)) set('recipeId', id);
+        } catch { /* noop */ }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [nutritionalRecipes]);
 
     // Ricostruzione locale ArchiveData → Component[] (stesso schema di
     // NutrizionaleCalc.handleLoad, riscritta qui — nessun modulo condiviso:
@@ -1257,7 +1373,7 @@ export function EtichetteCalc() {
     // portandolo a sforare/uscire dal campo visivo (bug reale 2026-08-25). Sotto la soglia di
     // clamping è algebricamente identica alla vecchia formula baseDim/100 — zero regressioni
     // sui formati che già funzionavano.
-    const fontScale = visualFontScale(labelRenderedWidthPx, labelRenderedHeightPx, baseDim);
+    const fontScale = visualFontScale(labelRenderedWidthPx, labelRenderedHeightPx, baseDim) * contentFitScale;
     // Soglia leggibilità e esenzioni modulate sulla superficie maggiore dell'etichetta
     // (Art. 13(2)+All.IV: 0,9mm invece di 1,2mm se <80cm²; All.V p.18: dichiarazione
     // nutrizionale non obbligatoria se <25cm²; Art.16(2): quasi tutto facoltativo se <10cm²,
@@ -1276,6 +1392,27 @@ export function EtichetteCalc() {
     // nascondendo l'overflow invece di segnalarlo.
     const contentHeightMm = mmPerPx > 0 ? labelScrollHeightPx * mmPerPx : 0;
     const isFrontHeightOverflowing = contentHeightMm > Number(data.heightMm) * 1.02;
+
+    // Auto-fit: formato tabella in base a superficie (Art. 34 Reg. 1169/2011) e overflow.
+    const areaBasedMode: 'completa' | 'semplificata' | 'solo_energia' =
+        frontSurfaceCm2 < 10 ? 'solo_energia' : frontSurfaceCm2 < 80 ? 'semplificata' : 'completa';
+    const activeLabelMode = forceMode ?? autoLabelMode;
+
+    // Ref per leggere valori aggiornati nell'effetto di cascata senza aggiungere deps instabili.
+    const autoLabelModeRef = useRef(autoLabelMode);
+    autoLabelModeRef.current = autoLabelMode;
+    const forceModeRef = useRef(forceMode);
+    forceModeRef.current = forceMode;
+
+    // Reset formato quando cambiano le dimensioni etichetta.
+    useEffect(() => {
+        const area = (Number(data.widthMm) * Number(data.heightMm)) / 100;
+        if (!forceModeRef.current) {
+            setAutoLabelMode(area < 10 ? 'solo_energia' : area < 80 ? 'semplificata' : 'completa');
+        }
+        setContentFitScale(1.0);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [data.widthMm, data.heightMm]);
 
     // Stesso controllo applicato al retro (se attivo): il corpo testo obbligatorio sposta lì
     // resta comunque soggetto all'Art. 13(2) — la leggibilità va garantita su entrambi i lati.
@@ -1310,63 +1447,39 @@ export function EtichetteCalc() {
     const backContentHeightMm = backMmPerPx > 0 ? backScrollHeightPx * backMmPerPx : 0;
     const isBackHeightOverflowing = data.hasBackLabel && backContentHeightMm > Number(data.backHeightMm) * 1.02;
 
-    // Selezione automatica del formato tabella nutrizionale per farla rientrare nell'altezza
-    // impostata: 0 = tabella piena, via via più compatto. USA/Canada hanno già 3 varianti
-    // testate (verticale/orizzontale/lineare); UE/Australia/Arabi hanno tabella + un formato
-    // lineare nuovo (Art. 34(2) Reg. 1169/2011 per UE; stesso principio per AU/Arabi).
-    // Ratchet in una direzione sola: scende di formato, non risale da sola nella sessione.
-    const NATION_MAX_STEP: Record<NationTab, number> = { UE: 1, USA: 2, Canada: 2, Australia: 1, Arabi: 1 };
-    const [nutritionFormatStep, setNutritionFormatStep] = useState<Partial<Record<NationTab, number>>>({});
-    // Vero solo quando siamo già al formato più compatto disponibile per il mercato E continua a
-    // sforare: a differenza di nutritionFormatStep (che scala automaticamente), qui non c'è più
-    // nulla da ridurre via formato — serve intervento umano (etichetta più grande o retro).
-    const [nutritionOverflowsAtMax, setNutritionOverflowsAtMax] = useState<Partial<Record<NationTab, boolean>>>({});
-    // Specchio sincrono di nutritionFormatStep: measure() è la stessa closure per tutta la vita
-    // dell'effetto (le deps non includono nutritionFormatStep), quindi leggere lo state React
-    // dentro measure() darebbe un valore stantio dopo il primo salto di formato. Il ref è sempre
-    // aggiornato nello stesso punto in cui si decide il nuovo step.
-    const nutritionFormatStepRef = useRef<Partial<Record<NationTab, number>>>({});
     const nutritionMeasureRef = useRef<HTMLDivElement>(null);
+    const [isNutritionTableOversized, setIsNutritionTableOversized] = useState(false);
     useEffect(() => {
-        if (!per100) return;
+        if (!per100) { setIsNutritionTableOversized(false); return; }
         const el = nutritionMeasureRef.current;
         if (!el) return;
         const measure = () => {
             if (mmPerPx <= 0 || labelRenderedWidthPx <= 0) return;
-            // Sia larghezza che altezza: le tabelle ufficiali hanno larghezza fissa in px
-            // (es. TabUSA 740px) e non si adattano da sole a un'etichetta stretta — senza il
-            // controllo larghezza sforavano lateralmente restando sul formato pieno.
-            const heightBudgetMm = Number(data.heightMm) * 0.55; // euristica: la tabella non dovrebbe occupare oltre metà circa dell'etichetta
-            const overflowsHeight = (el.scrollHeight * mmPerPx) > heightBudgetMm;
-            const overflowsWidth = el.scrollWidth > labelRenderedWidthPx + 2;
-            const maxStep = NATION_MAX_STEP[nationTab] ?? 0;
-            const current = Math.min(nutritionFormatStepRef.current[nationTab] ?? 0, maxStep);
-            // Salta dritto al formato più compatto (non +1 alla volta): se verticale e
-            // orizzontale hanno la stessa larghezza (caso reale, USA/Canada), passare da
-            // uno all'altro non cambia le dimensioni renderizzate — ResizeObserver non
-            // rileva alcun cambiamento e il passo successivo non scatta mai, restando
-            // bloccato a metà con la tabella ancora fuori misura (bug trovato 2026-08-25).
-            const nextStep = (overflowsHeight || overflowsWidth) && current < maxStep ? maxStep : current;
-            if (nextStep !== nutritionFormatStepRef.current[nationTab]) {
-                nutritionFormatStepRef.current = { ...nutritionFormatStepRef.current, [nationTab]: nextStep };
-                setNutritionFormatStep(prev => ({ ...prev, [nationTab]: nextStep }));
-            }
-            const flag = shouldFlagNutritionOverflow(nextStep, maxStep, overflowsHeight, overflowsWidth);
-            setNutritionOverflowsAtMax(prev => (prev[nationTab] === flag ? prev : { ...prev, [nationTab]: flag }));
+            const heightBudgetMm = Number(data.heightMm) * 0.55;
+            const overflows = (el.scrollHeight * mmPerPx) > heightBudgetMm || el.scrollWidth > labelRenderedWidthPx + 2;
+            setIsNutritionTableOversized(overflows);
         };
         const ro = new ResizeObserver(measure);
         ro.observe(el);
         measure();
         return () => ro.disconnect();
-    }, [per100, nationTab, mmPerPx, data.heightMm, labelRenderedWidthPx]);
-    const isNutritionTableOversized = !!nutritionOverflowsAtMax[nationTab];
-    // 21 CFR 101.9(j)(13)(i)(A): sotto 12 sq in (~77,4cm²) di superficie disponibile per
-    // l'etichettatura, la FDA ammette di omettere la Nutrition Facts indicando indirizzo/telefono
-    // per richiederla — unica alternativa oltre a tabulare/lineare compatto. Nessuna soglia
-    // equivalente verificata con fonte primaria per Canada/UE/Australia/Arabi: per quei mercati
-    // il banner resta generico (aumenta etichetta o sposta sul retro), senza citare un numero.
-    const FDA_SMALL_PACKAGE_CM2 = 12 * 6.4516;
-    const canCiteFdaSmallPackage = nationTab === 'USA' && frontSurfaceCm2 > 0 && frontSurfaceCm2 < FDA_SMALL_PACKAGE_CM2;
+    }, [per100, activeLabelMode, mmPerPx, data.heightMm, labelRenderedWidthPx]);
+
+    // Cascata automatica: completa → semplificata → solo_energia.
+    // Usa isNutritionTableOversized (da nutritionMeasureRef.scrollHeight) come segnale.
+    // forceMode è in deps così se l'utente torna ad Auto con tabella già oversized,
+    // l'effetto si ri-esegue e la cascata parte (isNutritionTableOversized non cambierebbe da solo).
+    useEffect(() => {
+        if (!isNutritionTableOversized || forceMode !== null) return;
+        const mode = autoLabelModeRef.current;
+        if (mode === 'completa') {
+            setAutoLabelMode('semplificata');
+        } else if (mode === 'semplificata') {
+            setAutoLabelMode('solo_energia');
+        }
+        // solo_energia è una sola riga → non può eccedere il 55% di nessuna etichetta ragionevole
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [isNutritionTableOversized, forceMode]);
 
     // px/mm reale del riquadro (inverso di mmPerPx) — fallback a CSS_PX_PER_MM (1:1 fisico)
     // prima che il ResizeObserver misuri, stesso criterio di visualFontScale.
@@ -1413,7 +1526,7 @@ export function EtichetteCalc() {
             <div key={leftTab} className="expert-tab-content animate-fade-up" style={{ flex: 1, overflowY: 'auto', padding: 14 }}>
                 {leftTab === 'dati' && (
                     <>
-                        <div className="card" style={{ marginBottom: 20 }}>
+                        <CollapsibleSection title="Ricetta collegata" storageKey="ricetta" defaultOpen={true}>
                         {!linkedRecipe && !isDirty ? (
                             <div className="et-hero">
                                 <div className="et-hero-icon"><Sparkles size={22} color="#fff" /></div>
@@ -1525,14 +1638,14 @@ export function EtichetteCalc() {
                                 </button>
                             </>
                         )}
-                    </div>
+                        </CollapsibleSection>
 
-                        <div className="card">
-                            <h3 style={{ fontWeight: 700, marginBottom: 4, display: 'flex', alignItems: 'center' }}>
-                                Scheda etichetta
-                                <InfoTooltip text="Identificativi del documento di lavoro trasmesso a grafico/tipografia (non compaiono sull'etichetta stampata) — utili per tracciare le revisioni nel tempo." />
-                            </h3>
-                            <p className="hint" style={{ marginTop: 0, marginBottom: 12 }}>Facoltativi, compaiono solo nella "Scheda per grafico" (PDF).</p>
+                        <CollapsibleSection
+                            title={<>Scheda etichetta <InfoTooltip text="Identificativi del documento di lavoro trasmesso a grafico/tipografia (non compaiono sull'etichetta stampata) — utili per tracciare le revisioni nel tempo." /></>}
+                            storageKey="scheda"
+                            defaultOpen={false}
+                            subtitle={'Facoltativi, compaiono solo nella "Scheda per grafico" (PDF).'}
+                        >
                             <div className="form-row">
                                 <div className="form-field">
                                     <label htmlFor="et-scheda-codice">Codice scheda</label>
@@ -1547,10 +1660,9 @@ export function EtichetteCalc() {
                                     <input id="et-scheda-data" type="date" value={data.schedaDataRevisione} onChange={(e) => set('schedaDataRevisione', e.target.value)} />
                                 </div>
                             </div>
-                        </div>
+                        </CollapsibleSection>
 
-                        <div className="card">
-                            <h3 style={{ fontWeight: 700, marginBottom: 20 }}>Dati del Prodotto</h3>
+                        <CollapsibleSection title="Dati del Prodotto" storageKey="dati-prodotto" defaultOpen={true}>
 
                         <div className="form-field">
                             <label htmlFor="et-nome">Denominazione del prodotto *</label>
@@ -1664,6 +1776,7 @@ export function EtichetteCalc() {
                             </div>
                         </div>
 
+                        <SubSection title="Elenco ingredienti" storageKey="ingredienti" defaultOpen={true}>
                         <div className="form-field">
                             <label htmlFor="et-ingredienti" style={{ display: 'flex', alignItems: 'center' }}>
                                 Elenco ingredienti * (in ordine decrescente di peso)
@@ -1716,8 +1829,10 @@ export function EtichetteCalc() {
                                 </div>
                             </div>
                         </div>
+                        </SubSection>
 
-                        {allClaims.length > 0 && (
+                        <SubSection title="Claims nutrizionali" storageKey="claims" defaultOpen={true}>
+                        {allClaims.length > 0 ? (
                             <div className="form-field">
                                 <label style={{ display: 'flex', alignItems: 'center' }}>
                                     Claims nutrizionali (Reg. 1924/2006) — seleziona quelli applicabili
@@ -1749,8 +1864,12 @@ export function EtichetteCalc() {
                                     </div>
                                 ))}
                             </div>
+                        ) : (
+                            <p className="hint">Nessun claim disponibile — collega una ricetta con valori nutrizionali calcolati.</p>
                         )}
+                        </SubSection>
 
+                        <SubSection title="Conservazione e scadenza" storageKey="conservazione" defaultOpen={true}>
                         <div className="form-field">
                             <label htmlFor="et-conservazione">Modalità di conservazione</label>
                             <input id="et-conservazione" type="text" value={data.storageConditions} onChange={(e) => set('storageConditions', e.target.value)} placeholder="es. Conservare in luogo fresco e asciutto" />
@@ -1796,7 +1915,9 @@ export function EtichetteCalc() {
                                 <ValidationError type="info" message="TMC con giorno e mese: il lotto non è obbligatorio per legge (Dir. 2011/91/UE Art. 1(3)) — resta consigliato per rintracciabilità interna." />
                             )}
                         </div>
+                        </SubSection>
 
+                        <SubSection title="Raccolta differenziata imballi" storageKey="raccolta" defaultOpen={true}>
                         <div className="form-field">
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
                                 <label style={{ margin: 0, display: 'flex', alignItems: 'center' }}>
@@ -1835,15 +1956,19 @@ export function EtichetteCalc() {
                             ))}
                             {data.imballi.length > 0 && <span className="hint">Codice materiale suggerito dall'elenco (Decisione 97/129/CE) — scegli dal menu per compilare in automatico la raccolta corretta. Dicitura fissa in etichetta: "Verifica le disposizioni del tuo Comune".</span>}
                         </div>
+                        </SubSection>
 
-                        {per100 && (
+                        </CollapsibleSection>
+
+                        <CollapsibleSection title="Tabella nutrizionale" storageKey="tabella-nutrizionale" defaultOpen={true}>
+                        {per100 ? (
                             <div className="form-field">
                                 <label style={{ display: 'flex', alignItems: 'flex-start', gap: 8, fontSize: 12, fontWeight: 400, cursor: 'pointer', width: '100%' }}>
                                     <input type="checkbox" style={{ flexShrink: 0, width: 16, height: 16, marginTop: 2 }} checked={data.showNutritionTable}
                                         onChange={(e) => set('showNutritionTable', e.target.checked)} />
                                     <span>Mostra tabella valori nutrizionali in etichetta</span>
                                 </label>
-                                {data.showNutritionTable && nationTab === 'UE' && linkedRecipe?.data.serving_sizes?.UE?.porzione && (
+                                {data.showNutritionTable && activeLabelMode === 'completa' && linkedRecipe?.data.serving_sizes?.UE?.porzione && (
                                     <label style={{ display: 'flex', alignItems: 'flex-start', gap: 8, fontSize: 12, fontWeight: 400, cursor: 'pointer', width: '100%', marginTop: 8 }}>
                                         <input type="checkbox" style={{ flexShrink: 0, width: 16, height: 16, marginTop: 2 }} checked={data.showPerServing}
                                             onChange={(e) => set('showPerServing', e.target.checked)} />
@@ -1854,18 +1979,17 @@ export function EtichetteCalc() {
                                     </label>
                                 )}
                             </div>
+                        ) : (
+                            <p className="hint">Collega una ricetta calcolata per abilitare la tabella nutrizionale.</p>
                         )}
-                        </div>
+                        </CollapsibleSection>
 
-                        <div className="card">
-                            <h3 style={{ fontWeight: 700, marginBottom: 4, display: 'flex', alignItems: 'center' }}>
-                                Fronte / Retro etichetta
-                                <InfoTooltip text="Per legge (Art. 13(5) Reg. 1169/2011) denominazione e peso netto devono restare sempre nello stesso campo visivo — per questo non sono spostabili. Usa il retro solo se il fronte non ha spazio per tutto il resto." />
-                            </h3>
-                            <p className="hint" style={{ marginTop: 0, marginBottom: 12 }}>
-                                Di norma tutto sta sul fronte. Se lo spazio non basta, attiva un retro e sposta lì
-                                solo i campi che ti servono.
-                            </p>
+                        <CollapsibleSection
+                            title={<>Fronte / Retro etichetta <InfoTooltip text="Per legge (Art. 13(5) Reg. 1169/2011) denominazione e peso netto devono restare sempre nello stesso campo visivo — per questo non sono spostabili. Usa il retro solo se il fronte non ha spazio per tutto il resto." /></>}
+                            storageKey="fronte-retro"
+                            defaultOpen={false}
+                            subtitle="Di norma tutto sta sul fronte. Se lo spazio non basta, attiva un retro e sposta lì solo i campi che ti servono."
+                        >
                             <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, fontWeight: 600, cursor: 'pointer', marginBottom: 12 }}>
                                 <input type="checkbox" style={{ width: 16, height: 16 }} checked={data.hasBackLabel}
                                     onChange={(e) => {
@@ -1909,7 +2033,7 @@ export function EtichetteCalc() {
                                     </div>
                                 </>
                             )}
-                        </div>
+                        </CollapsibleSection>
                     </>
                 )}
 
@@ -2030,65 +2154,38 @@ export function EtichetteCalc() {
         </>
     );
 
-    // Tabella nutrizionale e lista imballi — condivise fra fronte e retro (qualunque lato le
-    // ospiti), unica sorgente per evitare di duplicare il markup dei 5 componenti Tab*.
-    // full=true forza sempre la tabella piena (usata dalla "Scheda per grafico", non vincolata
-    // a spazio fisico). measure=true collega il ref di misurazione altezza (solo l'istanza sul
-    // fronte guida la selezione automatica del formato — vedi effect sopra).
+    // Tabella nutrizionale EU — Reg. 1169/2011.
+    // full=true forza completa (usata dalla scheda per grafico). measure=true collega il ref.
     const renderNutritionTable = (opts: { full?: boolean; measure?: boolean } = {}) => {
-        const step = opts.full ? 0 : Math.min(nutritionFormatStep[nationTab] ?? 0, NATION_MAX_STEP[nationTab]);
-        const usaSubTab = step === 0 ? 'verticale' : step === 1 ? 'orizzontale' : 'lineare';
+        const mode = opts.full ? 'completa' : activeLabelMode;
         return (
             <div>
-                {/* Il selettore mercato NON vive più qui (era dentro il riquadro fisico
-                    fronte/retro, stipato nell'anteprima anche se già escluso dall'export via
-                    print-ignore — bug di impaginazione reale, analisi 2026-08-25): ora è un
-                    controllo editor unico, sopra i box, in `rightPanel`. */}
-                {/* NIENTE transform:scale() qui — le tabelle ufficiali (TabUSA/TabArabi) usano
-                    WebkitTextStroke + flex annidati, e html2canvas calcola male i bounding box
-                    dei figli flex dentro un antenato trasformato: testo ed etichette sparivano
-                    nell'export (PNG/PDF), pur essendo corretti a schermo. Il fit reale viene solo
-                    dallo step di formato sotto (DOM vero, nessun trucco CSS, sicuro per l'export). */}
                 <div ref={opts.measure ? nutritionMeasureRef : undefined} style={{ overflowX: 'auto' }}>
-                    {nationTab === 'UE' && per100 && (
-                        step === 0 ? (
-                            <TabUE p={per100} ue={linkedRecipe?.data.serving_sizes?.UE ?? {}}
-                                specificGravity={specificGravityVal}
-                                selectedOptionals={autoSelectedOptionals} showOptionals={true}
-                                activeSubTab="100g" />
-                        ) : <div>{buildEULinear(per100)}</div>
+                    {per100 && mode === 'completa' && (
+                        <TabUE p={per100} ue={linkedRecipe?.data.serving_sizes?.UE ?? {}}
+                            specificGravity={specificGravityVal}
+                            selectedOptionals={autoSelectedOptionals} showOptionals={true}
+                            activeSubTab="100g" />
                     )}
-                    {/* Art. 33 — porzione, SEMPRE aggiuntiva alla 100g sopra, mai da sola */}
-                    {nationTab === 'UE' && per100 && data.showPerServing && linkedRecipe?.data.serving_sizes?.UE?.porzione && (
+                    {/* Art. 33 — porzione aggiuntiva, solo in modalità completa */}
+                    {per100 && mode === 'completa' && data.showPerServing && linkedRecipe?.data.serving_sizes?.UE?.porzione && (
                         <div style={{ marginTop: 8 }}>
                             <div style={{ fontSize: 10, fontWeight: 700, opacity: 0.6, marginBottom: 4 }}>PER PORZIONE (facoltativo, Art. 33)</div>
-                            {step === 0 ? (
-                                <TabUE p={per100} ue={linkedRecipe.data.serving_sizes.UE}
-                                    specificGravity={specificGravityVal}
-                                    selectedOptionals={autoSelectedOptionals} showOptionals={true}
-                                    activeSubTab="porzione" />
-                            ) : <div>{buildEULinear(scaleResult(per100, linkedRecipe.data.serving_sizes.UE.porzione!))}</div>}
+                            <TabUE p={per100} ue={linkedRecipe.data.serving_sizes.UE}
+                                specificGravity={specificGravityVal}
+                                selectedOptionals={autoSelectedOptionals} showOptionals={true}
+                                activeSubTab="porzione" />
                         </div>
                     )}
-                    {nationTab === 'USA' && per100 && (
-                        <TabUSA p={per100} usa={linkedRecipe?.data.serving_sizes?.USA ?? {}}
-                            specificGravity={specificGravityVal}
-                            servingRef="serving" measure="g" subTab={usaSubTab} />
+                    {/* Art. 34(2) — formato lineare semplificato */}
+                    {per100 && mode === 'semplificata' && (
+                        <div style={{ fontSize: 11 }}>{buildEULinear(per100)}</div>
                     )}
-                    {nationTab === 'Canada' && per100 && (
-                        <TabCanada p={per100} ca={linkedRecipe?.data.serving_sizes?.Canada ?? {}}
-                            servingRef="serving" measure="g" subTab={usaSubTab} />
-                    )}
-                    {nationTab === 'Australia' && per100 && (
-                        step === 0 ? (
-                            <TabAustralia p={per100} au={linkedRecipe?.data.serving_sizes?.Australia ?? {}} />
-                        ) : <div>{buildAULinear(per100)}</div>
-                    )}
-                    {nationTab === 'Arabi' && per100 && (
-                        step === 0 ? (
-                            <TabArabi p={per100} arabi={linkedRecipe?.data.serving_sizes?.Arabi ?? {}}
-                                servingRef="serving" measure="g" specificGravity={specificGravityVal} />
-                        ) : <div>{buildArabiLinear(per100)}</div>
+                    {/* Art. 34(3) — solo energia (superficie < 10 cm²) */}
+                    {per100 && mode === 'solo_energia' && (
+                        <div style={{ fontSize: 11, fontWeight: 600 }}>
+                            Energia: {Math.round(per100.energyKj)} kJ / {Math.round(per100.energyKcal)} kcal
+                        </div>
                     )}
                 </div>
             </div>
@@ -2178,13 +2275,28 @@ export function EtichetteCalc() {
                 )}
             </div>
             {per100 && data.showNutritionTable && (
-                <div className="nation-tab-bar" style={{ display: 'flex', gap: 6, flexWrap: 'wrap', padding: '2px 0 10px' }}>
-                    {(['UE', 'USA', 'Canada', 'Australia', 'Arabi'] as NationTab[]).map(t => (
-                        <button key={t} type="button"
-                            className={`btn nation-tab-btn ${nationTab === t ? 'btn-accent' : 'btn-outline'}`}
-                            onClick={() => setNationTab(t)}
-                        >{t}</button>
-                    ))}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '4px 0 10px', flexWrap: 'wrap' }}>
+                    <div style={{
+                        display: 'flex', alignItems: 'center', gap: 5, fontSize: 11, padding: '3px 8px', borderRadius: 4,
+                        background: activeLabelMode !== areaBasedMode ? 'rgba(230,126,34,0.12)' : 'rgba(0,163,108,0.08)',
+                        color: activeLabelMode !== areaBasedMode ? '#b7791f' : 'var(--color-accent)',
+                    }}>
+                        <InfoTooltip text={`Art. 34 Reg. 1169/2011 — superficie: ${frontSurfaceCm2.toFixed(1)} cm². Completa (>80cm²), Semplificata (10–80cm²), Solo energia (<10cm²).${contentFitScale < 1 ? ` Scala testo applicata: ${Math.round(contentFitScale * 100)}%` : ''}`} />
+                        Tabella: <strong>{activeLabelMode === 'completa' ? 'Completa' : activeLabelMode === 'semplificata' ? 'Semplificata' : 'Solo energia'}</strong>
+                        {forceMode ? ' (forzato)' : ' (auto)'}
+                        {contentFitScale < 0.99 && <span style={{ marginLeft: 4, opacity: 0.7 }}>· scala {Math.round(contentFitScale * 100)}%</span>}
+                    </div>
+                    <select
+                        value={forceMode ?? ''}
+                        onChange={e => setForceMode((e.target.value || null) as typeof forceMode)}
+                        style={{ fontSize: 11, padding: '2px 6px', borderRadius: 4, border: '1px solid var(--color-border)', background: 'var(--color-bg-input)', color: 'var(--color-text)' }}
+                        title="Forza formato tabella (sovrascrive la selezione automatica)"
+                    >
+                        <option value="">Auto</option>
+                        <option value="completa">Forza: Completa</option>
+                        <option value="semplificata">Forza: Semplificata</option>
+                        <option value="solo_energia">Forza: Solo energia</option>
+                    </select>
                 </div>
             )}
             <div className="table-scroll-area">
@@ -2424,10 +2536,8 @@ export function EtichetteCalc() {
                                 padding: '6px 10px', borderRadius: 6, fontSize: 11,
                                 background: 'rgba(230,126,34,0.12)', color: '#b7791f',
                             }}>
-                                <AlertTriangle size={13} /> Tabella valori nutrizionali {nationTab} troppo grande anche nel formato più compatto disponibile — nell'export viene tagliata ai bordi dell'etichetta. {canCiteFdaSmallPackage
-                                    ? `Sotto i 12 sq in (~77cm²) la FDA (21 CFR 101.9(j)(13)(i)(A)) ammette di indicare indirizzo/telefono al posto della tabella; in alternativa aumenta le dimensioni dell'etichetta o sposta la tabella sul retro.`
-                                    : `Aumenta le dimensioni dell'etichetta, sposta la tabella sul retro (se non già lì) o stampa i valori nutrizionali su un'etichetta aggiuntiva dedicata.`}
-                                <InfoTooltip text="La tabella nutrizionale ha già scalato al formato più compatto previsto per questo mercato (lineare per USA/Canada, lineare Art. 34(2) per UE/AU/Arabi) — non c'è ulteriore riduzione automatica possibile senza compromettere la leggibilità (Art. 13(2) Reg. 1169/2011)." />
+                                <AlertTriangle size={13} /> Tabella nutrizionale troppo grande per lo spazio disponibile — nell'export viene tagliata. Prova il formato Semplificata o Solo energia, oppure aumenta le dimensioni dell'etichetta / sposta la tabella sul retro.
+                                <InfoTooltip text="Formato Semplificata = lineare (Art. 34(2) Reg. 1169/2011). Solo energia = solo valore energetico per superfici < 10 cm² (Art. 34(3)). Se anche Solo energia non basta, aumenta l'etichetta o usa un etichetta aggiuntiva dedicata." />
                             </div>
                         )}
                         {isCodeTooSmallFront && (
@@ -2810,24 +2920,57 @@ export function EtichetteCalc() {
                 document.getElementById('topbar-mode-toggle-slot') ?? document.body
             )}
 
-            <div className="calc-outer-shell" style={{ display: 'flex', flexDirection: 'column', height: isMobile ? 'auto' : 'calc(100vh - var(--topbar-height, 56px))' }}>
-                {isMobile && (
-                    // MobileShell non espone topbar-title-slot/topbar-mode-toggle-slot (header statico,
-                    // vedi MobileShell.tsx) — niente portal qui, azioni in riga visibile nel flusso.
-                    <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', padding: '10px 14px', borderBottom: '1px solid var(--color-border)', background: 'white' }}>
-                        <button type="button" className="btn btn-outline" style={{ display: 'flex', alignItems: 'center', gap: 6 }} onClick={handleNew}><Plus size={13} /> Nuovo</button>
-                        <button type="button" className="btn btn-outline" style={{ display: 'flex', alignItems: 'center', gap: 6 }} onClick={() => setIsArchiveOpen(true)}><Archive size={13} /> Archivio ({savedLabels.length})</button>
-                        <button type="button" className="btn btn-outline" style={{ display: 'flex', alignItems: 'center', gap: 6 }} onClick={() => setShowWelcome(true)} aria-label="Apri guida rapida"><BookOpen size={13} /> Guida</button>
-                        <button type="button" className="btn btn-accent" style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: 6 }} onClick={handleSave}>
+            {isMobile ? (
+                /* ── Layout mobile: slide a 2 pannelli + bottom tabbar ── */
+                <div className="m-slide-wrapper">
+                    {/* Barra azioni compatta in cima */}
+                    <div style={{ display: 'flex', gap: 8, padding: '8px 12px', borderBottom: '1px solid var(--color-border)', background: 'white', flexShrink: 0, flexWrap: 'wrap' }}>
+                        <button type="button" className="btn btn-outline" style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 12 }} onClick={handleNew}><Plus size={12} /> Nuovo</button>
+                        <button type="button" className="btn btn-outline" style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 12 }} onClick={() => setIsArchiveOpen(true)}><Archive size={12} /> Archivio ({savedLabels.length})</button>
+                        <button type="button" className="btn btn-outline" style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 12 }} onClick={() => setShowWelcome(true)} aria-label="Apri guida rapida"><BookOpen size={12} /> Guida</button>
+                        <button type="button" className="btn btn-accent" style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: 5, fontSize: 12, marginLeft: 'auto' }} onClick={handleSave}>
                             {isDirty && (
-                                <span aria-hidden="true" style={{ position: 'absolute', top: -3, right: -3, width: 9, height: 9, borderRadius: '50%', background: '#fff', boxShadow: '0 0 0 2px var(--color-orange, #ff7e2e)' }} />
+                                <span aria-hidden="true" style={{ position: 'absolute', top: -3, right: -3, width: 8, height: 8, borderRadius: '50%', background: '#fff', boxShadow: '0 0 0 2px var(--color-orange, #ff7e2e)' }} />
                             )}
-                            <Save size={13} /> {currentId ? 'Salva Modifiche' : 'Salva'}
+                            <Save size={12} /> {currentId ? 'Salva' : 'Salva'}
                         </button>
                     </div>
-                )}
-                <SplitShell left={leftPanel} right={rightPanel} />
-            </div>
+                    {/* Slide container */}
+                    <div className="m-slide-container">
+                        <div className="m-slide-track" style={{ width: '200%', transform: `translateX(-${mobilePanelIndex * 50}%)` }}>
+                            <div className="m-slide-panel" style={{ width: '50%' }}>{leftPanel}</div>
+                            <div className="m-slide-panel" style={{ width: '50%' }}>{rightPanel}</div>
+                        </div>
+                    </div>
+                    {/* Bottom section tabbar */}
+                    <nav className="m-section-tabbar" role="tablist" aria-label="Sezioni etichetta">
+                        {([
+                            { id: 'dati', label: 'Dati', icon: <FileText size={22} /> },
+                            { id: 'anteprima', label: 'Anteprima', icon: <Eye size={22} /> },
+                        ] as { id: 'dati' | 'anteprima'; label: string; icon: ReactNode }[]).map(tab => {
+                            const isActive = mobileTab === tab.id;
+                            return (
+                                <button
+                                    key={tab.id}
+                                    type="button"
+                                    role="tab"
+                                    aria-selected={isActive}
+                                    className={`m-section-tabbar__item${isActive ? ' m-section-tabbar__item--active' : ''}`}
+                                    onClick={() => setMobileTab(tab.id)}
+                                >
+                                    <span className="m-section-tabbar__icon">{tab.icon}</span>
+                                    <span className="m-section-tabbar__label">{tab.label}</span>
+                                </button>
+                            );
+                        })}
+                    </nav>
+                </div>
+            ) : (
+                /* ── Layout desktop: SplitShell standard ── */
+                <div className="calc-outer-shell" style={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - var(--topbar-height, 56px))' }}>
+                    <SplitShell left={leftPanel} right={rightPanel} />
+                </div>
+            )}
         </>
     );
 }

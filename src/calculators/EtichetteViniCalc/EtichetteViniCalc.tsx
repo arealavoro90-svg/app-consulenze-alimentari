@@ -5,6 +5,7 @@ import { useAuth } from '../../auth/AuthContext';
 import { useArchive } from '../../hooks/useArchive';
 import { useLocalStorage } from '../../hooks/useLocalStorage';
 import { ArchiveModal } from '../../components/ArchiveModal';
+import { ValidationError } from '../../components/ValidationError';
 import { calculateWineNutrition, calculateCarbohydratesGL, type WineAnalysis } from '../../engines/wineEngine';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -614,11 +615,20 @@ export function EtichetteViniCalc() {
                             <span style={{ fontSize: 13, fontWeight: 600 }}>Contiene:</span>
                             <input className="form-input" type="text" value={label.allergenici} onChange={e => setL('allergenici', e.target.value)} placeholder="es. SOLFITI" style={{ flex: 1 }} />
                         </div>
-                        <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, cursor: 'pointer', marginBottom: label.tracce ? 8 : 0 }}>
+                        {/* Reg. UE 2021/2117 (in vigore dal 8/12/2023): i solfiti devono essere
+                            sempre dichiarati in etichetta su tutti i vini — non esiste soglia
+                            sotto la quale l'obbligo decade per i vini (a differenza degli alimenti
+                            dove la soglia è >10 mg/kg). Warn se l'utente li rimuove. */}
+                        <ValidationError
+                            type="warning"
+                            visible={!label.allergenici.toLowerCase().includes('solfiti')}
+                            message="SOLFITI obbligatorio per legge su tutti i vini (Reg. UE 2021/2117). Aggiungi 'SOLFITI' al campo Contiene."
+                        />
+                        <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, cursor: 'pointer', marginBottom: label.tracce ? 8 : 0, marginTop: 8 }}>
                             <input type="checkbox" checked={label.tracce} onChange={e => setL('tracce', e.target.checked)} />
                             Può contenere tracce di:
                         </label>
-                        {label.tracce && <input className="form-input" type="text" value={label.tracceSpecifiche} onChange={e => setL('tracceSpecifiche', e.target.value)} placeholder="es. latte, uova" />}
+                        {label.tracce && <input className="form-input" type="text" value={label.tracceSpecifiche} onChange={e => setL('tracceSpecifiche', e.target.value)} placeholder="es. latte, uova (agenti chiarificanti)" />}
                     </LabelRow>
 
                     <LabelRow label="Lotto — Volume nominale — Titolo alcolometrico" badge={<Badge text="obbligatorio" color="orange" />}>
