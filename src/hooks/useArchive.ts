@@ -88,24 +88,28 @@ export function useArchive<T>(storageKey: string, tool?: string) {
     const saveItem = useCallback(
         async (name: string, data: T, existingId?: string): Promise<string> => {
             if (useBackend && tool) {
-                const numericId = existingId ? parseInt(existingId, 10) : NaN;
-                const backendItem = isNaN(numericId)
-                    ? await createArchive(tool, name, data)
-                    : await updateArchive(numericId, name, data);
+                try {
+                    const numericId = existingId ? parseInt(existingId, 10) : NaN;
+                    const backendItem = isNaN(numericId)
+                        ? await createArchive(tool, name, data)
+                        : await updateArchive(numericId, name, data);
 
-                const mapped: ArchiveItem<T> = {
-                    id: String(backendItem.id),
-                    name: backendItem.name,
-                    date: backendItem.created_at,
-                    data: backendItem.data as T,
-                };
+                    const mapped: ArchiveItem<T> = {
+                        id: String(backendItem.id),
+                        name: backendItem.name,
+                        date: backendItem.created_at,
+                        data: backendItem.data as T,
+                    };
 
-                setItems((prev) =>
-                    isNaN(numericId)
-                        ? [mapped, ...prev]
-                        : prev.map((it) => (it.id === existingId ? mapped : it))
-                );
-                return mapped.id;
+                    setItems((prev) =>
+                        isNaN(numericId)
+                            ? [mapped, ...prev]
+                            : prev.map((it) => (it.id === existingId ? mapped : it))
+                    );
+                    return mapped.id;
+                } catch {
+                    // Backend non disponibile — fallback a localStorage.
+                }
             }
 
             // localStorage path (legacy o non autenticato).
@@ -133,11 +137,11 @@ export function useArchive<T>(storageKey: string, tool?: string) {
     const deleteItem = useCallback(
         async (id: string): Promise<void> => {
             if (useBackend) {
-                await deleteArchive(parseInt(id, 10));
+                try { await deleteArchive(parseInt(id, 10)); } catch { /* fallback locale */ }
             }
             setItems((prev) => {
                 const updated = prev.filter((t) => t.id !== id);
-                if (!useBackend) writeLocal(storageKey, updated);
+                writeLocal(storageKey, updated);
                 return updated;
             });
         },

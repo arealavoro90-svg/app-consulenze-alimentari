@@ -550,28 +550,34 @@ export function NutrizionaleCalc() {
     }, [totGrammiXpzuv]);
 
     // Archive save/load
-    const handleSave = () => {
+    const handleSave = async () => {
         const name = productName || 'Ricetta';
         const existing = archiveItems.find(i => i.name === name);
         const snap = JSON.stringify(draftData);
-        saveItem(name, {
-            nome_prodotto: productName,
-            componenti: components.map(c => ({
-                nome: c.name,
-                pz_uv: c.pzUV,
-                ingredienti: c.rows.map(r => ({ nome: r.ing.nome, grammi: r.grams, resa: r.resa, eurKg: r.eurKg })),
-                additiveRows: c.additiveRows,
-            })),
-            additivi: additiveChips.map(a => a.nome),
-            peso_finito_pz: fw,
-            specificGravity: specificGravity || undefined,
-            kcal_100g: per100display.energyKcal,
-            region: activeTab,
-            serving_sizes: { UE: ue, USA: usa, Canada: ca, Australia: au, Arabi: arabi }
-        }, existing?.id);
-        clearDraft();
-        lastSavedRef.current = snap;
-        setIsDirty(false);
+        try {
+            const savedId = await saveItem(name, {
+                nome_prodotto: productName,
+                componenti: components.map(c => ({
+                    nome: c.name,
+                    pz_uv: c.pzUV,
+                    ingredienti: c.rows.map(r => ({ nome: r.ing.nome, grammi: r.grams, resa: r.resa, eurKg: r.eurKg })),
+                    additiveRows: c.additiveRows,
+                })),
+                additivi: additiveChips.map(a => a.nome),
+                peso_finito_pz: fw,
+                specificGravity: specificGravity || undefined,
+                kcal_100g: per100display.energyKcal,
+                region: activeTab,
+                serving_sizes: { UE: ue, USA: usa, Canada: ca, Australia: au, Arabi: arabi }
+            }, existing?.id);
+            try { localStorage.setItem('aea_last_recipe', JSON.stringify({ id: savedId, name })); } catch { /* noop */ }
+            clearDraft();
+            lastSavedRef.current = snap;
+            setIsDirty(false);
+            toast.success('Ricetta salvata.');
+        } catch {
+            toast.error('Errore nel salvataggio — riprova.');
+        }
     };
 
     const handleLoad = (item: typeof archiveItems[0]) => {

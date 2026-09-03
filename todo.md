@@ -67,9 +67,11 @@ Obiettivo: NutrizionaleCalcMobile = NutrizionaleCalc al 100%.
 
 ## BUG — Da correggere (viola CLAUDE.md)
 
-- [ ] **BUG-1** — Sostituire `prompt()` / `alert()` / `confirm()` nativi con pattern
-      UI coerenti (modale inline o notifica). Impatta tutti i calcolatori + ArchiveModal
-      + SavedTablesModal. Refactor trasversale — procedere un calcolatore alla volta.
+- [x] **BUG-1** — Sostituire `prompt()` / `alert()` / `confirm()` nativi con pattern
+      UI coerenti (modale inline o notifica). Completato 2026-09-03:
+      TrattamentoTermicoCalc + EtichetteViniCalc migrati a PromptDialog/ConfirmDialog/toast.
+      EtichetteCalc + NutrizionaleCalc erano già migrati. ArchiveModal/SavedTablesModal
+      non usano native dialog. Nessun residuo rimasto nel codebase.
 
 ---
 
@@ -95,10 +97,9 @@ Obiettivo: NutrizionaleCalcMobile = NutrizionaleCalc al 100%.
       sui file condivisi Tab{Canada,Australia,Arabi}.tsx (sorgente normativa = versione
       desktop, come deciso). Inline desktop rimosse (~476 righe), snapshot di guardia
       in TabIntl.test.tsx. Prop `full`/`setSubTab` eliminate (header mobile era dead code).
-- [ ] **DOC-1** — CLAUDE.md e skill nutritional-calc descrivono `nutritionalEngine.ts`
-      e `localizationModule.ts` come canonici ma sono CODICE MORTO (nessun import runtime).
-      Engine vivo: `nutrizionaleCalcEngine.calcNutrients`; arrotondamenti dentro i Tab.
-      Decidere: aggiornare doc + eliminare i file morti, o riattivarli.
+- [x] **DOC-1** — Aggiornati CLAUDE.md e skill nutritional-calc (2026-09-03): rimossi
+      riferimenti a `nutritionalEngine.ts` e `localizationModule.ts` (già non esistono
+      nel filesystem). Engine canonico documentato correttamente.
 
 ---
 
@@ -264,9 +265,6 @@ Obiettivo: NutrizionaleCalcMobile = NutrizionaleCalc al 100%.
       diretto (`127.0.0.1:8000/...`), altrimenti il cookie va sul dominio sbagliato.
       `npx tsc -b` pulito, 166/166 test verdi.
 
-- [ ] **GUIDA-1** — Modificare la guida del tool nutrizionale (il modal "Guida rapida"
-      / onboarding a 3 passi in NutrizionaleCalc.tsx). Dettagli di cosa cambiare da
-      raccogliere a inizio sessione — richiesto 2026-07-17, non ancora scoperto cosa.
 
 ---
 
@@ -290,6 +288,22 @@ Obiettivo: NutrizionaleCalcMobile = NutrizionaleCalc al 100%.
       problemi di caricamento reali.
 
 - [ ] **A11Y-1** — Accessibilità base: aria-labels, navigazione da tastiera.
+
+---
+
+## SYNC INGREDIENTI — Database ufficiali
+
+- [x] **SYNC-CREA-1** — `sync_crea` management command (2026-09-03): scraper CREA/BDA
+      alimentinutrizione.it, ~900 alimenti 19 categorie. Migrazione `0006_add_crea_fields`.
+      Bug fix `_find_by_name`: esclude CREA già sync dal partial match.
+- [x] **SYNC-CREA-2** — Sync completo in produzione (2026-09-03): 900 alimenti su Neon.
+      Cron mensile GitHub Actions (`sync_ingredients.yml`): ogni 1° del mese 03:00 UTC.
+- [x] **SYNC-USDA-3** — USDA sync in produzione (2026-09-03): 338 ingredienti abbinati.
+      `USDA_API_KEY` + `DATABASE_URL` + `SECRET_KEY` come GitHub Secrets. Automatico.
+- [x] **SYNC-JSON** — `ingredientsDB.json` reimportato in produzione (2026-09-03):
+      322 nuovi + 743 aggiornati. Totale DB: **2.286 ingredienti**.
+- [ ] **SYNC-CNF** — Canada CNF (Canadian Nutrient File): API REST gratuita, `sync_cnf.py` da scrivere.
+- [ ] **SYNC-AUSNUT** — Australia AUSNUT 2011-13: CSV da FSANZ, `import_ausnut.py` da scrivere.
 
 ---
 

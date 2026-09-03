@@ -46,7 +46,8 @@ export async function importFromExcel(file: File, db: DBIngredient[]): Promise<E
     if (!totalCell?.v || totalCell.v === 0) continue;
 
     const headerCell = ws[XLSX.utils.encode_cell({ r: 11, c: compCol })];
-    const compName = String(headerCell?.v ?? `Componente ${ci + 1}`).replace('Ricetta ', '');
+    const rawCompName = String(headerCell?.v ?? '').replace('Ricetta ', '').trim();
+    const compName = rawCompName || `Componente ${ci + 1}`;
 
     const pzCell = ws[XLSX.utils.encode_cell({ r: 11, c: compCol + PZ_COL_OFFSET })];
     const pzUV = typeof pzCell?.v === 'number' && pzCell.v > 0 ? pzCell.v : undefined;

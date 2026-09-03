@@ -25,8 +25,8 @@
 - Standard: EU Reg 1169/2011 — non cambiare fattori energetici senza fonte normativa
 - Precisione interna: 10.000x → arrotondamento regionale gestito inline nei componenti `Tab*.tsx` (`TabUE`, `TabUSA`, `TabCanada`, `TabAustralia`, `TabArabi`)
 - Engine canonico: `src/engines/nutrizionaleCalcEngine.ts` (`calcNutrients`, `scaleResult`, `calcClaims`) — unico usato a runtime
-- `src/engines/nutritionalEngine.ts` **rimosso** (2026-07-30): 0 importer confermati, mai collegato al calcolo reale
-- `src/logic/localizationModule.ts` è **codice morto** (era importato solo da `nutritionalEngine.ts`, ora rimosso): non è canonico, non impatta i calcolatori a runtime — non modificarlo pensando che serva, valutarne la rimozione a parte
+- Arrotondamento regionale: inline nei componenti `Tab*.tsx`, NON in un modulo separato
+- `src/engines/nutritionalEngine.ts` e `src/logic/localizationModule.ts` **rimossi** — non esistono, non cercarli
 - Ogni modifica a `src/engines/` richiede `npm test` verde prima del completamento
 
 ### Trattamento termico (thermalEngine.ts)

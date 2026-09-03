@@ -5,7 +5,11 @@ import { useAuth } from '../../auth/AuthContext';
 import { useArchive } from '../../hooks/useArchive';
 import { useLocalStorage } from '../../hooks/useLocalStorage';
 import { ArchiveModal } from '../../components/ArchiveModal';
+import { ValidationError } from '../../components/ValidationError';
 import { calculateWineNutrition, calculateCarbohydratesGL, type WineAnalysis } from '../../engines/wineEngine';
+import { useToast } from '../../components/ui/Toast';
+import { ConfirmDialog } from '../../components/ui/ConfirmDialog';
+import { PromptDialog } from '../../components/ui/PromptDialog';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -209,6 +213,14 @@ export function EtichetteViniCalc() {
     const [isArchiveOpen, setIsArchiveOpen] = useState(false);
     const [currentId, setCurrentId] = useState<string | undefined>(undefined);
     const [currentName, setCurrentName] = useState('');
+    const toast = useToast();
+    const [promptOpen, setPromptOpen] = useState(false);
+    const [confirmState, setConfirmState] = useState<{
+        open: boolean; title: string; message: string; variant?: 'danger' | 'warning' | 'info';
+        confirmLabel?: string; onConfirm: () => void;
+    }>({ open: false, title: '', message: '', onConfirm: () => {} });
+    const openConfirm = (opts: Omit<typeof confirmState, 'open'>) => setConfirmState({ ...opts, open: true });
+    const closeConfirm = () => setConfirmState(prev => ({ ...prev, open: false }));
 
     // Refs
     const previewRef = useRef<HTMLDivElement>(null);
@@ -239,13 +251,17 @@ export function EtichetteViniCalc() {
     };
     const removeImballaggio = (id: string) => setL('imballaggi', label.imballaggi.filter(i => i.id !== id));
 
-    const handleSave = async () => {
-        const name = currentName || prompt('Nome per questa etichetta:', `${label.nomeCommerciale || 'Etichetta'} — ${new Date().toLocaleDateString('it-IT')}`);
-        if (!name) return;
-        const id = await saveItem(name, { analytical, label }, currentId);
+    const doSaveWithName = async (nameToSave: string) => {
+        if (!nameToSave) return;
+        const id = await saveItem(nameToSave, { analytical, label }, currentId);
         setCurrentId(id);
-        setCurrentName(name);
-        alert('Salvato nell\'archivio!');
+        setCurrentName(nameToSave);
+        toast.success("Etichetta salvata nell'archivio!");
+    };
+
+    const handleSave = () => {
+        if (currentName) { void doSaveWithName(currentName); return; }
+        setPromptOpen(true);
     };
 
     const handleLoad = (item: { id: string; name: string; date: string; data: ViniArchiveData }) => {
@@ -258,11 +274,19 @@ export function EtichetteViniCalc() {
     };
 
     const handleNew = () => {
-        if (!confirm('Iniziare una nuova etichetta? I dati non salvati andranno persi.')) return;
-        setAnalytical(defaultAnalytical);
-        setLabel(defaultLabel);
-        setCurrentId(undefined);
-        setCurrentName('');
+        openConfirm({
+            title: 'Nuova etichetta',
+            message: 'Iniziare una nuova etichetta? I dati non salvati andranno persi.',
+            variant: 'warning',
+            confirmLabel: 'Continua',
+            onConfirm: () => {
+                closeConfirm();
+                setAnalytical(defaultAnalytical);
+                setLabel(defaultLabel);
+                setCurrentId(undefined);
+                setCurrentName('');
+            },
+        });
     };
 
     const handlePDF = () => {
@@ -351,7 +375,7 @@ export function EtichetteViniCalc() {
             const a = document.createElement('a');
             a.download = `etichetta_vino_${(label.nomeCommerciale || 'vino').replace(/\s+/g, '_').toLowerCase()}.png`;
             a.href = url; a.click();
-        } catch { alert('Errore esportazione PNG'); }
+        } catch { toast.error('Errore esportazione PNG'); }
     };
 
     // ── Guide steps ──────────────────────────────────────────────────────────
@@ -614,11 +638,20 @@ export function EtichetteViniCalc() {
                             <span style={{ fontSize: 13, fontWeight: 600 }}>Contiene:</span>
                             <input className="form-input" type="text" value={label.allergenici} onChange={e => setL('allergenici', e.target.value)} placeholder="es. SOLFITI" style={{ flex: 1 }} />
                         </div>
-                        <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, cursor: 'pointer', marginBottom: label.tracce ? 8 : 0 }}>
+                        {/* Reg. UE 2021/2117 (in vigore dal 8/12/2023): i solfiti devono essere
+                            sempre dichiarati in etichetta su tutti i vini — non esiste soglia
+                            sotto la quale l'obbligo decade per i vini (a differenza degli alimenti
+                            dove la soglia è >10 mg/kg). Warn se l'utente li rimuove. */}
+                        <ValidationError
+                            type="warning"
+                            visible={!label.allergenici.toLowerCase().includes('solfiti')}
+                            message="SOLFITI obbligatorio per legge su tutti i vini (Reg. UE 2021/2117). Aggiungi 'SOLFITI' al campo Contiene."
+                        />
+                        <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, cursor: 'pointer', marginBottom: label.tracce ? 8 : 0, marginTop: 8 }}>
                             <input type="checkbox" checked={label.tracce} onChange={e => setL('tracce', e.target.checked)} />
                             Può contenere tracce di:
                         </label>
-                        {label.tracce && <input className="form-input" type="text" value={label.tracceSpecifiche} onChange={e => setL('tracceSpecifiche', e.target.value)} placeholder="es. latte, uova" />}
+                        {label.tracce && <input className="form-input" type="text" value={label.tracceSpecifiche} onChange={e => setL('tracceSpecifiche', e.target.value)} placeholder="es. latte, uova (agenti chiarificanti)" />}
                     </LabelRow>
 
                     <LabelRow label="Lotto — Volume nominale — Titolo alcolometrico" badge={<Badge text="obbligatorio" color="orange" />}>
@@ -730,6 +763,23 @@ export function EtichetteViniCalc() {
                     <div style={{ marginTop: 10, fontSize: 12, color: 'var(--color-text-muted)' }}>Il PNG viene esportato a 3x risoluzione, pronto per il grafico. Salvare prima il calcolo con il pulsante "Salva" in cima.</div>
                 </div>
             )}
+            <ConfirmDialog
+                open={confirmState.open}
+                title={confirmState.title}
+                message={confirmState.message}
+                variant={confirmState.variant}
+                confirmLabel={confirmState.confirmLabel}
+                onConfirm={confirmState.onConfirm}
+                onCancel={closeConfirm}
+            />
+            <PromptDialog
+                open={promptOpen}
+                title="Nome per questa etichetta"
+                defaultValue={`${label.nomeCommerciale || 'Etichetta'} — ${new Date().toLocaleDateString('it-IT')}`}
+                confirmLabel="Salva"
+                onConfirm={(name) => { setPromptOpen(false); void doSaveWithName(name); }}
+                onCancel={() => setPromptOpen(false)}
+            />
         </div>
     );
 }

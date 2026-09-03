@@ -38,19 +38,14 @@ interface Props {
 }
 
 // ─── Sub-component: single recipe row ────────────────────────────────────────
-// Stesso markup/classi della riga ingrediente desktop (.ing-row-compact + espandibile
-// €/kg + Resa in .ing-field-group) — replica visiva richiesta esplicitamente.
-function RecipeRowItem({ row, compId, isLast, onRemove, onUpdate }: {
+// Mockup-exact: nome | qty-input | g | delete. Nessun chevron/expand.
+function RecipeRowItem({ row, compId, onRemove, onUpdate }: {
     row: RecipeRow;
     compId: string;
-    isLast: boolean;
     onRemove: (compId: string, rowId: string) => void;
     onUpdate: (compId: string, rowId: string, patch: Partial<RecipeRow>) => void;
 }) {
     const [gramsRaw, setGramsRaw] = useState(String(row.grams));
-    const [resaRaw, setResaRaw] = useState(String(row.resa));
-    const [eurRaw, setEurRaw] = useState(String(row.eurKg));
-    const [expanded, setExpanded] = useState(false);
     const [gramsError, setGramsError] = useState<string | undefined>(undefined);
 
     const handleGrams = (v: string) => {
@@ -60,121 +55,30 @@ function RecipeRowItem({ row, compId, isLast, onRemove, onUpdate }: {
         setGramsError(result.isValid ? undefined : result.error);
         if (!isNaN(num) && num >= 0) onUpdate(compId, row.id, { grams: num });
     };
-    const handleResa = (v: string) => {
-        setResaRaw(v);
-        const num = parseDecimalIT(v);
-        if (!isNaN(num) && num >= 0 && num <= 100) onUpdate(compId, row.id, { resa: num });
-    };
-    const handleEur = (v: string) => {
-        setEurRaw(v);
-        const num = parseDecimalIT(v);
-        if (!isNaN(num) && num >= 0) onUpdate(compId, row.id, { eurKg: num });
-    };
 
     return (
-        <div style={{ borderBottom: isLast && !expanded ? 'none' : '1px solid var(--color-border)' }}>
-            {/* Compact row */}
-            <div className="ing-row-compact">
-                <button
-                    type="button"
-                    onClick={() => setExpanded(e => !e)}
-                    style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 2, color: 'var(--color-text-muted)', flexShrink: 0, display: 'flex', alignItems: 'center' }}
-                    title={expanded ? 'Comprimi' : 'Espandi €/kg e Resa dopo cottura (%)'}
-                    aria-label="Espandi dettagli"
-                >
-                    <ChevronDown size={12} style={{ transform: expanded ? 'rotate(0deg)' : 'rotate(-90deg)', transition: 'transform 0.15s' }} />
-                </button>
-                <div className="ing-row-name">
-                    <div className="ing-row-name-label">{(row.ing.nome || '').trim()}</div>
-                    {row.ing.kcal != null && (
-                        <div className="ing-row-kcal">{row.ing.kcal} kcal/100g</div>
-                    )}
-                </div>
-                <div className="ing-row-grams">
-                    <input
-                        type="number"
-                        inputMode="decimal"
-                        min="0"
-                        step="1"
-                        className="form-input ing-input"
-                        style={{ textAlign: 'right' }}
-                        value={gramsRaw}
-                        onChange={e => handleGrams(e.target.value)}
-                        aria-label={`Grammi di ${(row.ing.nome || '').trim()}`}
-                    />
-                    <span style={{ fontSize: 12, color: 'var(--color-text-muted)' }}>g</span>
-                </div>
-                <button
-                    type="button"
-                    onClick={() => onRemove(compId, row.id)}
-                    className="ing-delete-btn"
-                    title="Rimuovi ingrediente"
-                    aria-label={`Rimuovi ${(row.ing.nome || '').trim()}`}
-                >
-                    <Trash2 size={12} />
-                </button>
-            </div>
-            <ValidationError message={gramsError} visible={!!gramsError} />
-
-            {/* Expandable detail: €/kg e Resa % — stesso layout desktop */}
-            {expanded && (
-                <div style={{ borderTop: '1px solid var(--color-border)', padding: '8px 10px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, background: 'var(--color-surface)' }}>
-                    <div className="ing-field-group">
-                        <div className="ing-field-header">
-                            <label className="ing-field-label" htmlFor={`eur-${row.id}`}>€/kg<InfoTooltip text="Costo dell'ingrediente per kg, IVA esclusa. Usato per il calcolo del costo ricetta." /></label>
-                        </div>
-                        <input
-                            id={`eur-${row.id}`}
-                            type="number"
-                            inputMode="decimal"
-                            min="0"
-                            step="0.01"
-                            placeholder="0"
-                            value={eurRaw}
-                            onChange={e => handleEur(e.target.value)}
-                            className="form-input ing-input"
-                        />
-                    </div>
-                    <div className="ing-field-group">
-                        <div className="ing-field-header">
-                            <label className="ing-field-label" htmlFor={`resa-${row.id}`}>Resa dopo cottura (%)<InfoTooltip text="Percentuale di peso rimanente dopo cottura/lavorazione. Es. 70 = perde il 30% del peso." /></label>
-                        </div>
-                        <input
-                            id={`resa-${row.id}`}
-                            type="number"
-                            inputMode="decimal"
-                            min="0"
-                            max="100"
-                            step="1"
-                            value={resaRaw}
-                            onChange={e => handleResa(e.target.value)}
-                            className="form-input ing-input"
-                        />
-                    </div>
-                    {(row.ing.alcol ?? 0) > 0 && (
-                        <label style={{ gridColumn: '1 / -1', display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer', fontSize: 12, color: 'var(--color-text)' }}>
-                            <input
-                                type="checkbox"
-                                checked={row.postCottura ?? false}
-                                onChange={() => onUpdate(compId, row.id, { postCottura: !row.postCottura })}
-                                style={{ width: 14, height: 14, cursor: 'pointer', accentColor: 'var(--m-orange, #ff7e2e)' }}
-                            />
-                            <span>Post-cottura <span style={{ color: 'var(--color-text-muted)' }}>(alcol non evapora)</span></span>
-                        </label>
-                    )}
-                    {(row.ing.acqua ?? 0) > 90 && (
-                        <label style={{ gridColumn: '1 / -1', display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer', fontSize: 12, color: 'var(--color-text)' }}>
-                            <input
-                                type="checkbox"
-                                checked={row.acquaAggiunta ?? false}
-                                onChange={() => onUpdate(compId, row.id, { acquaAggiunta: !row.acquaAggiunta })}
-                                style={{ width: 14, height: 14, cursor: 'pointer', accentColor: 'var(--m-orange, #ff7e2e)' }}
-                            />
-                            <span>Acqua aggiunta <span style={{ color: 'var(--color-text-muted)' }}>(evapora dopo alcol)</span></span>
-                        </label>
-                    )}
-                </div>
-            )}
+        <div className="m-ing-row">
+            <span className="m-ing-name">{(row.ing.nome || '').trim()}</span>
+            <input
+                className="m-ing-qty"
+                type="number"
+                inputMode="decimal"
+                min="0"
+                step="1"
+                value={gramsRaw}
+                onChange={e => handleGrams(e.target.value)}
+                aria-label={`Grammi di ${(row.ing.nome || '').trim()}`}
+            />
+            <span className="m-ing-unit">g</span>
+            <button
+                type="button"
+                className="m-ing-del"
+                onClick={() => onRemove(compId, row.id)}
+                aria-label={`Rimuovi ${(row.ing.nome || '').trim()}`}
+            >
+                <Trash2 size={13} />
+            </button>
+            {gramsError && <ValidationError message={gramsError} visible />}
         </div>
     );
 }
@@ -370,37 +274,26 @@ function ComponentCard({
     return (
         <>
             <div className="m-comp-card">
-                {/* Card header — tappabile per collassare */}
+                {/* Card header — badge C{n} + nome editabile inline + collapse */}
                 <div
                     className="m-comp-card__header"
-                    role="button"
-                    tabIndex={0}
-                    aria-expanded={!collapsed}
-                    aria-label={`${collapsed ? 'Espandi' : 'Comprimi'} componente ${index + 1}`}
-                    style={{
-                        borderBottom: collapsed ? 'none' : '1px solid var(--m-border)',
-                        cursor: 'pointer',
-                        userSelect: 'none',
-                    }}
-                    onClick={() => setCollapsed(c => !c)}
-                    onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setCollapsed(c => !c); } }}
+                    style={{ borderBottom: collapsed ? 'none' : '1px solid var(--m-border)' }}
                 >
-                    <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--m-orange, #ff7e2e)', flexShrink: 0 }}>
+                    <span style={{ fontSize: 10, fontWeight: 700, color: 'var(--m-orange, #ff7e2e)', background: 'rgba(255,126,46,0.12)', borderRadius: 4, padding: '2px 6px', flexShrink: 0 }}>
                         C{index + 1}
                     </span>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--m-text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                            {comp.name || `Componente ${index + 1}`}
-                        </div>
-                        {collapsed && comp.rows.length > 0 && (
-                            <div style={{ fontSize: 12, color: 'var(--m-text-muted)' }}>
-                                {comp.rows.length} ingredienti · {totalGrams.toFixed(0)} g
-                            </div>
-                        )}
-                    </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}
-                        onClick={e => e.stopPropagation()}
-                    >
+                    {/* Nome editabile direttamente nell'header */}
+                    <input
+                        className="m-input"
+                        type="text"
+                        placeholder={`Componente ${index + 1}`}
+                        aria-label={`Nome componente ${index + 1}`}
+                        value={comp.name}
+                        onChange={e => onUpdateName(comp.id, e.target.value)}
+                        style={{ flex: 1, fontSize: 13, fontWeight: 600, border: 'none', background: 'transparent', padding: '0 4px', outline: 'none', minWidth: 0 }}
+                        autoComplete="off"
+                    />
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
                         {!isOnly && (
                             <button
                                 type="button"
@@ -411,49 +304,42 @@ function ComponentCard({
                                 <Trash2 size={14} />
                             </button>
                         )}
-                        <ChevronDown size={14} style={{
-                            color: 'var(--m-text-muted)',
-                            transform: collapsed ? 'rotate(0deg)' : 'rotate(180deg)',
-                            transition: 'transform 0.2s',
-                        }} />
+                        <button
+                            type="button"
+                            onClick={() => setCollapsed(c => !c)}
+                            style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 2, display: 'flex', alignItems: 'center' }}
+                            aria-label={collapsed ? 'Espandi' : 'Comprimi'}
+                            aria-expanded={!collapsed}
+                        >
+                            <ChevronDown size={14} style={{
+                                color: 'var(--m-text-muted)',
+                                transform: collapsed ? 'rotate(0deg)' : 'rotate(180deg)',
+                                transition: 'transform 0.2s',
+                            }} />
+                        </button>
                     </div>
                 </div>
 
                 {/* Card body — collassabile */}
                 {!collapsed && <div className="m-comp-card__body">
-                    {/* Nome e pz/UV — mostrati nel body quando espanso */}
-                    <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
-                        <input
-                            className="m-input"
-                            type="text"
-                            placeholder={`Nome componente ${index + 1}`}
-                            aria-label={`Nome componente ${index + 1}`}
-                            value={comp.name}
-                            onChange={e => onUpdateName(comp.id, e.target.value)}
-                            style={{ flex: 1, fontSize: 13, fontWeight: 600 }}
-                            autoComplete="off"
-                            onClick={e => e.stopPropagation()}
-                        />
-                        {!isOnly && (
-                            <div style={{ display: 'flex', alignItems: 'center', gap: 4, flexShrink: 0 }}>
-                                <span style={{ fontSize: 12, color: 'var(--m-text-muted)' }}>pz/UV</span>
-                                <input
-                                    className="m-input m-input--num"
-                                    type="number"
-                                    inputMode="decimal"
-                                    min="1"
-                                    step="1"
-                                    value={pzRaw}
-                                    aria-label="Pezzi per unità di vendita"
-                                    onChange={e => handlePzUV(e.target.value)}
-                                    style={{ width: 46, textAlign: 'right', fontSize: 12 }}
-                                    onClick={e => e.stopPropagation()}
-                                />
-                            </div>
-                        )}
-                    </div>
-                    {/* Ricerca ingredienti — stesso componente IngSearch del desktop */}
-                    <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--color-text-muted)', marginBottom: 4, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Cerca e aggiungi ingrediente dal database</div>
+                    {!isOnly && (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginBottom: 8 }}>
+                            <span style={{ fontSize: 12, color: 'var(--m-text-muted)' }}>Pezzi/UV</span>
+                            <input
+                                className="m-input m-input--num"
+                                type="number"
+                                inputMode="decimal"
+                                min="1"
+                                step="1"
+                                value={pzRaw}
+                                aria-label="Pezzi per unità di vendita"
+                                onChange={e => handlePzUV(e.target.value)}
+                                style={{ width: 52, textAlign: 'right', fontSize: 13 }}
+                            />
+                        </div>
+                    )}
+                    {/* Ricerca ingredienti */}
+                    <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--color-text-muted)', marginBottom: 4, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Cerca e aggiungi ingrediente</div>
                     <IngSearch onAdd={(ing) => onAddRow(comp.id, ing)} db={db} loading={loadingDB} error={dbError} onRetry={onRetryDB} />
 
                     {comp.rows.length === 0 ? (
@@ -464,12 +350,11 @@ function ComponentCard({
                         <>
                             {/* Contenitore bordato unico, come la lista ingredienti desktop */}
                             <div style={{ border: '1px solid var(--color-border)', borderRadius: 'var(--radius-md)', overflow: 'hidden', marginBottom: 6 }}>
-                                {comp.rows.map((row, rowIdx) => (
+                                {comp.rows.map((row, _rowIdx) => (
                                     <RecipeRowItem
                                         key={row.id}
                                         row={row}
                                         compId={comp.id}
-                                        isLast={rowIdx === comp.rows.length - 1}
                                         onRemove={onRemoveRow}
                                         onUpdate={onUpdateRow}
                                     />
@@ -518,48 +403,87 @@ export function CalcoloTab({
 
     return (
         <>
-        <div style={{ paddingTop: 12, paddingBottom: 0 }}>
+        <div style={{ padding: '12px 12px 0' }}>
 
-            {/* Sezione: Prodotto */}
-            <div className="m-section">
-                <div className="m-section__header" style={{ cursor: 'default' }}>
-                    <div className="m-section__line" />
-                    <span className="m-section__title">Prodotto</span>
-                    <div className="m-section__line" />
-                </div>
-                <div style={{ padding: '0 16px 8px' }}>
+            {/* ── Azioni rapide ── */}
+            <div style={{ display: 'flex', gap: 8, marginBottom: 10 }}>
+                <button
+                    type="button"
+                    onClick={onNewRecipe}
+                    style={{
+                        flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+                        padding: '9px 14px', borderRadius: 10, border: 'none',
+                        background: 'linear-gradient(135deg, #ff7e2e, #dd5c0c)',
+                        color: '#fff', fontWeight: 700, fontSize: 13,
+                        cursor: 'pointer', boxShadow: '0 3px 10px rgba(255,126,46,0.25)',
+                    }}
+                >
+                    <RotateCcw size={14} /> Nuova ricetta
+                </button>
+                {(!hasIngredients && !form.denominazione.trim()) && (
                     <button
                         type="button"
-                        onClick={onNewRecipe}
+                        onClick={onOpenSmartImport}
                         style={{
-                            width: '100%',
-                            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
-                            padding: '10px 14px', borderRadius: 10, border: 'none',
-                            background: 'linear-gradient(135deg, #ff7e2e, #dd5c0c)',
+                            flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+                            padding: '9px 14px', borderRadius: 10, border: 'none',
+                            background: 'linear-gradient(135deg, #7c3aed, #5b21b6)',
                             color: '#fff', fontWeight: 700, fontSize: 13,
-                            cursor: 'pointer', boxShadow: '0 3px 10px rgba(255,126,46,0.3)',
+                            cursor: 'pointer', boxShadow: '0 3px 10px rgba(124,58,237,0.25)',
                         }}
                     >
-                        <RotateCcw size={14} /> Nuova ricetta
+                        <Sparkles size={14} /> Importa
                     </button>
+                )}
+            </div>
+
+            {/* ── Card: Nome prodotto ── */}
+            <div className="m-card" style={{ marginBottom: 10 }}>
+                <div className="m-card__body">
+                    <label className="m-label" style={{ display: 'flex', alignItems: 'center', gap: 4, marginBottom: 5 }}>
+                        Nome prodotto *
+                    </label>
+                    <input
+                        ref={denominazioneRef}
+                        className="m-input"
+                        type="text"
+                        placeholder="Es. Pasta fresca all'uovo"
+                        value={form.denominazione}
+                        onChange={e => onChange({ denominazione: e.target.value })}
+                        autoComplete="off"
+                        style={{ fontSize: 15, fontWeight: 600 }}
+                    />
                 </div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                    <div className="m-field">
-                        <label className="m-label">Denominazione</label>
-                        <input
-                            ref={denominazioneRef}
-                            className="m-input"
-                            type="text"
-                            placeholder="Es. Mozzarella di Bufala"
-                            value={form.denominazione}
-                            onChange={e => onChange({ denominazione: e.target.value })}
-                            autoComplete="off"
-                        />
-                    </div>
+            </div>
+
+            {/* ── Card: Informazioni prodotto ── */}
+            <div className="m-card" style={{ marginBottom: 10 }}>
+                <div className="m-card__header">
+                    <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--m-text)' }}>Informazioni prodotto</span>
+                </div>
+                <div className="m-card__body" style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                     <div style={{ display: 'flex', gap: 8 }}>
-                        <div className="m-field" style={{ flex: 1 }}>
-                            <label className="m-label">Porzione (g)</label>
-                            <span style={{ fontSize: 10, color: 'var(--m-text-faint)', display: 'block', marginBottom: 4 }}>Per la colonna "per porzione" in etichetta</span>
+                        <div style={{ flex: 1 }}>
+                            <label className="m-label" style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                                Peso finito (g) <InfoTooltip text="Peso del prodotto dopo cottura/lavorazione." />
+                            </label>
+                            <input
+                                className="m-input m-input--num"
+                                type="number"
+                                inputMode="decimal"
+                                min="0"
+                                step="0.1"
+                                placeholder="—"
+                                value={form.pesoFinito_g}
+                                onChange={e => onChange({ pesoFinito_g: e.target.value })}
+                            />
+                            <span style={{ fontSize: 10, color: 'var(--m-text-faint)', display: 'block', marginTop: 2 }}>es. 100g cruda → 220g cotta</span>
+                            {(() => { const r = form.pesoFinito_g !== '' ? validateFinishedWeight(parseDecimalIT(String(form.pesoFinito_g))) : null; return <ValidationError message={r?.error} visible={!!(r && !r.isValid)} />; })()}
+                        </div>
+                        <div style={{ flex: 1 }}>
+                            <label className="m-label">
+                                Porzione (g) <InfoTooltip text="Per la colonna 'per porzione' in etichetta." />
+                            </label>
                             <input
                                 className="m-input m-input--num"
                                 type="number"
@@ -571,33 +495,29 @@ export function CalcoloTab({
                                 onChange={e => onChange({ porzione_g: e.target.value })}
                             />
                         </div>
-                        <div className="m-field" style={{ flex: 1 }}>
-                            <label className="m-label">Peso finito (g) <span style={{ fontWeight: 400, opacity: 0.6 }}>opz.</span><InfoTooltip text="Peso del prodotto finito dopo cottura/lavorazione in grammi" /></label>
-                            <span style={{ fontSize: 10, color: 'var(--m-text-faint)', display: 'block', marginBottom: 4 }}>Peso dopo cottura/lavorazione (calcola /100g)</span>
-                            <input
-                                className="m-input m-input--num"
-                                type="number"
-                                inputMode="decimal"
-                                min="0"
-                                step="0.1"
-                                placeholder="—"
-                                value={form.pesoFinito_g}
-                                onChange={e => onChange({ pesoFinito_g: e.target.value })}
-                            />
-                            {(() => { const r = form.pesoFinito_g !== '' ? validateFinishedWeight(parseDecimalIT(String(form.pesoFinito_g))) : null; return <ValidationError message={r?.error} visible={!!(r && !r.isValid)} />; })()}
-                        </div>
                     </div>
-                    <div>
-                        <label style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer', marginBottom: showLiquid ? 6 : 0 }}>
-                            <input
-                                type="checkbox"
-                                checked={showLiquid}
-                                onChange={e => { setShowLiquid(e.target.checked); if (!e.target.checked) onChange({ specificGravity: '' }); }}
-                                style={{ width: 14, height: 14, cursor: 'pointer', accentColor: 'var(--m-orange, #ff7e2e)' }}
-                            />
-                            <span className="m-label" style={{ marginBottom: 0 }}>Prodotto liquido (peso specifico g/ml)<InfoTooltip text="Peso specifico per prodotti liquidi (g/ml). Lascia vuoto per prodotti solidi." /></span>
+                    {/* Toggle prodotto liquido */}
+                    <div style={{
+                        display: 'flex', alignItems: 'center', gap: 10,
+                        padding: '8px 10px',
+                        background: 'rgba(255,126,46,0.04)',
+                        border: '1px solid rgba(255,126,46,0.15)',
+                        borderRadius: 8,
+                    }}>
+                        <input
+                            type="checkbox"
+                            id="m-liquid-toggle"
+                            checked={showLiquid}
+                            onChange={e => { setShowLiquid(e.target.checked); if (!e.target.checked) onChange({ specificGravity: '' }); }}
+                            style={{ width: 16, height: 16, cursor: 'pointer', accentColor: 'var(--m-orange, #ff7e2e)', flexShrink: 0 }}
+                        />
+                        <label htmlFor="m-liquid-toggle" style={{ fontSize: 13, fontWeight: 500, cursor: 'pointer', flex: 1 }}>
+                            Prodotto liquido <InfoTooltip text="Peso specifico per prodotti liquidi (g/ml). Valori espressi su 100 ml." />
                         </label>
-                        {showLiquid && (
+                    </div>
+                    {showLiquid && (
+                        <div>
+                            <label className="m-label">Peso specifico (g/ml)</label>
                             <input
                                 className="m-input m-input--num"
                                 type="number"
@@ -608,53 +528,27 @@ export function CalcoloTab({
                                 value={form.specificGravity}
                                 onChange={e => onChange({ specificGravity: e.target.value })}
                             />
-                        )}
-                    </div>
+                        </div>
+                    )}
                 </div>
             </div>
 
-            {/* Sezione: Componenti + Ingredienti */}
-            <div className="m-section">
-                <div className="m-section__header" style={{ cursor: 'default' }}>
-                    <div className="m-section__line" />
-                    <span className="m-section__title">Ingredienti</span>
-                    <div className="m-section__line" />
-                </div>
+            {/* ── Sezione: Ingredienti ── */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, margin: '6px 0 8px' }}>
+                <div style={{ flex: 1, height: 1, background: 'var(--color-border)' }} />
+                <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--color-text-muted)' }}>Ingredienti</span>
+                <div style={{ flex: 1, height: 1, background: 'var(--color-border)' }} />
+            </div>
 
-                {/* Database ingredienti — stesse azioni del menu "Database" desktop */}
-                <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
-                    <button type="button" className="btn btn-outline" style={{ fontSize: 12, padding: '5px 14px', flex: 1, justifyContent: 'center' }} onClick={onOpenCustomIngredient}>
-                        <Plus size={13} /> Nuovo ingrediente
-                    </button>
-                    <button type="button" className="btn btn-outline" style={{ fontSize: 12, padding: '5px 14px', flex: 1, justifyContent: 'center' }} onClick={onOpenBrowseDB}>
-                        <BookOpen size={13} /> Sfoglia database
-                    </button>
-                </div>
-
-                {/* Import strip — visibile solo su ricetta vuota, scompare quando inizia compilazione */}
-                {(!hasIngredients && !form.denominazione.trim()) && (
-                    <button
-                        type="button"
-                        onClick={onOpenSmartImport}
-                        style={{
-                            width: '100%',
-                            display: 'flex', alignItems: 'center', gap: 8,
-                            padding: '10px 14px',
-                            marginBottom: 10,
-                            borderRadius: 10,
-                            border: 'none',
-                            background: 'linear-gradient(135deg, #ff7e2e, #dd5c0c)',
-                            color: '#fff',
-                            fontWeight: 700, fontSize: 13,
-                            cursor: 'pointer',
-                            boxShadow: '0 3px 10px rgba(255,126,46,0.3)',
-                        }}
-                    >
-                        <Sparkles size={15} />
-                        <span style={{ flex: 1, textAlign: 'left' }}>Importa ricetta</span>
-                        <span style={{ fontSize: 12, opacity: 0.85 }}>✨</span>
-                    </button>
-                )}
+            {/* Azioni database ingredienti */}
+            <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
+                <button type="button" className="btn btn-outline" style={{ fontSize: 12, padding: '5px 14px', flex: 1, justifyContent: 'center' }} onClick={onOpenCustomIngredient}>
+                    <Plus size={13} /> Nuovo ingrediente
+                </button>
+                <button type="button" className="btn btn-outline" style={{ fontSize: 12, padding: '5px 14px', flex: 1, justifyContent: 'center' }} onClick={onOpenBrowseDB}>
+                    <BookOpen size={13} /> Sfoglia database
+                </button>
+            </div>
 
                 {dbError ? (
                     <div style={{
@@ -714,7 +608,6 @@ export function CalcoloTab({
                         )}
                     </>
                 )}
-            </div>
 
         </div>
         {/* Mini-riepilogo live — visibile solo quando ci sono ingredienti */}
