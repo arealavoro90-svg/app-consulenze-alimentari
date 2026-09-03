@@ -382,7 +382,10 @@ const defaults: LabelData = {
     storageConditions: '',
     bestBefore: '',
     lotNumber: '',
-    countryOrigin: 'Italia',
+    // AUDIT E5 — era 'Italia' di default: una dichiarazione d'origine che l'utente non
+    // ha scelto finiva in anteprima e negli export. L'origine è obbligatoria solo nei
+    // casi dell'Art. 26 e va dichiarata consapevolmente: si parte vuoti.
+    countryOrigin: '',
     drainedWeight: '',
     alcoholPercent: '',
     consumptionInstructions: '',
@@ -3368,7 +3371,12 @@ export function EtichetteCalc() {
                         {([
                             { id: 'dati',      label: 'Dati',      icon: <FileText size={21} /> },
                             { id: 'anteprima', label: 'Anteprima', icon: <Eye size={21} /> },
-                            { id: 'grafica',   label: 'Grafica',   icon: <ImageDown size={21} /> },
+                            // AUDIT E6 — si chiamava "Grafica" come il tab in cima al pannello
+                            // Dati, ma contiene tutt'altro: questo è l'export (Report PDF,
+                            // fronte/retro per stampa, scheda per grafico), quello sono
+                            // dimensioni, sfondo e logo. Due nomi uguali per due contenuti
+                            // diversi, uno sopra l'altro nella stessa schermata.
+                            { id: 'grafica',   label: 'Export',    icon: <ImageDown size={21} /> },
                             { id: 'archivio',  label: 'Archivio',  icon: <Archive size={21} /> },
                         ] as { id: 'dati' | 'anteprima' | 'grafica' | 'archivio'; label: string; icon: ReactNode }[]).map(tab => {
                             const isActive = mobileTab === tab.id;

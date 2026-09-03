@@ -1109,7 +1109,10 @@ export function NutrizionaleCalc() {
                     {productName ? (
                         <span style={{ color: 'var(--color-orange)' }}>{productName}</span>
                     ) : (
-                        <span style={{ color: 'var(--color-text)' }}>Calcolatore Ricette</span>
+                        // AUDIT N9 — lo stesso tool si chiamava "Calcolatore Ricette" qui,
+                        // "Tabelle Nutrizionali" nell'header mobile (AppShell) e nella
+                        // griglia strumenti. Allineato al nome prevalente.
+                        <span style={{ color: 'var(--color-text)' }}>Tabelle Nutrizionali</span>
                     )}
                 </div>,
                 document.getElementById('topbar-title-slot') ?? document.body

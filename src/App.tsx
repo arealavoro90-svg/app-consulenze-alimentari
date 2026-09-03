@@ -40,12 +40,27 @@ function NutrizionaleCalcEntry() {
     return isMobile ? <NutrizionaleCalcMobile /> : <NutrizionaleCalc />;
 }
 
+function ToolLoading() {
+    return (
+        <div role="status" aria-live="polite" style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            minHeight: '60vh', gap: 10,
+            color: 'var(--color-text-muted)', fontSize: 13,
+        }}>
+            Caricamento strumento…
+        </div>
+    );
+}
+
 export default function App() {
   return (
     <ErrorBoundary>
     <AuthProvider>
       <BrowserRouter>
-        <Suspense fallback={null}>
+        {/* AUDIT N9 — `fallback={null}` lasciava la pagina completamente bianca mentre
+            il chunk del tool veniva scaricato: su connessione lenta sembra un crash.
+            Un indicatore minimo basta: nessuna dipendenza, nessun layout shift. */}
+        <Suspense fallback={<ToolLoading />}>
           <Routes>
             <Route path="/login" element={<LoginPage />} />
             <Route
