@@ -1,6 +1,6 @@
 ---
 name: nutritional-calc
-description: Regole e workflow per i calcoli nutrizionali AEA (EU Reg 1169/2011). Usare quando si tocca nutritionalEngine, nutrizionaleCalcEngine, localizationModule, NutrizionaleCalc (desktop/mobile) o si calcolano/verificano valori nutrizionali di una ricetta. I calcoli attuali FUNZIONANO — obiettivo primario è non introdurre regressioni.
+description: Regole e workflow per i calcoli nutrizionali AEA (EU Reg 1169/2011). Usare quando si tocca nutrizionaleCalcEngine, NutrizionaleCalc (desktop/mobile) o si calcolano/verificano valori nutrizionali di una ricetta. I calcoli attuali FUNZIONANO — obiettivo primario è non introdurre regressioni.
 ---
 
 # Calcoli nutrizionali — AEA
@@ -18,14 +18,17 @@ I calcoli nutrizionali sono il fulcro dell'app e sono verificati. Prima di quals
 
 | File | Ruolo | Cautela |
 |---|---|---|
-| `src/engines/nutritionalEngine.ts` | Fattori energetici, claim, soglie | Fattori EU 1169/2011: intoccabili senza fonte normativa |
-| `src/engines/nutrizionaleCalcEngine.ts` | Calcolo ricetta (test: `nutrizionaleCalcEngine.test.ts`) | Test obbligatori |
-| `src/logic/localizationModule.ts` | Arrotondamento regionale EU/USA/CA/AU/Arabi | Impatta TUTTI i calcolatori: sempre proporre prima |
+| `src/engines/nutrizionaleCalcEngine.ts` | Calcolo ricetta, claim, soglie (`calcNutrients`, `scaleResult`, `calcClaims`) | Test obbligatori — unico engine a runtime |
 | `public/data/ingredientsDB.json` | DB ingredienti (~668KB) | Mai modificare a mano |
+
+> **File rimossi (non esistono più):**
+> - `src/engines/nutritionalEngine.ts` — rimosso 2026-07-30, 0 importer
+> - `src/logic/localizationModule.ts` — rimosso, era importato solo da nutritionalEngine
+> L'arrotondamento regionale è ora inline nei componenti `Tab*.tsx`.
 
 ## Invarianti di calcolo
 
-- Precisione interna: **10.000x** (interi scalati), arrotondamento solo in output via `localizationModule.ts`.
+- Precisione interna: **10.000x** (interi scalati), arrotondamento inline nei Tab (EU/USA/CA/AU/Arabi).
 - Fattori energetici EU Reg 1169/2011 (kcal/g): grassi 9, carboidrati 4, proteine 4, fibre 2, polioli 2.4, alcol 7.
 
 ## Workflow: calcolo valori per 100g di ricetta

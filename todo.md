@@ -97,10 +97,9 @@ Obiettivo: NutrizionaleCalcMobile = NutrizionaleCalc al 100%.
       sui file condivisi Tab{Canada,Australia,Arabi}.tsx (sorgente normativa = versione
       desktop, come deciso). Inline desktop rimosse (~476 righe), snapshot di guardia
       in TabIntl.test.tsx. Prop `full`/`setSubTab` eliminate (header mobile era dead code).
-- [ ] **DOC-1** — CLAUDE.md e skill nutritional-calc descrivono `nutritionalEngine.ts`
-      e `localizationModule.ts` come canonici ma sono CODICE MORTO (nessun import runtime).
-      Engine vivo: `nutrizionaleCalcEngine.calcNutrients`; arrotondamenti dentro i Tab.
-      Decidere: aggiornare doc + eliminare i file morti, o riattivarli.
+- [x] **DOC-1** — Aggiornati CLAUDE.md e skill nutritional-calc (2026-09-03): rimossi
+      riferimenti a `nutritionalEngine.ts` e `localizationModule.ts` (già non esistono
+      nel filesystem). Engine canonico documentato correttamente.
 
 ---
 
@@ -266,9 +265,6 @@ Obiettivo: NutrizionaleCalcMobile = NutrizionaleCalc al 100%.
       diretto (`127.0.0.1:8000/...`), altrimenti il cookie va sul dominio sbagliato.
       `npx tsc -b` pulito, 166/166 test verdi.
 
-- [ ] **GUIDA-1** — Modificare la guida del tool nutrizionale (il modal "Guida rapida"
-      / onboarding a 3 passi in NutrizionaleCalc.tsx). Dettagli di cosa cambiare da
-      raccogliere a inizio sessione — richiesto 2026-07-17, non ancora scoperto cosa.
 
 ---
 
