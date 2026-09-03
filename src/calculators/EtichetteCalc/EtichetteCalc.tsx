@@ -796,52 +796,6 @@ function CollapsibleSection({
     );
 }
 
-function SubSection({
-    title,
-    defaultOpen = true,
-    storageKey,
-    children,
-}: {
-    title: string;
-    defaultOpen?: boolean;
-    storageKey: string;
-    children: ReactNode;
-}) {
-    const [open, setOpen] = useState(() => {
-        try {
-            const stored = localStorage.getItem(`et_sub_${storageKey}`);
-            return stored !== null ? stored === '1' : defaultOpen;
-        } catch { return defaultOpen; }
-    });
-
-    const toggle = () => {
-        setOpen(v => {
-            const next = !v;
-            try { localStorage.setItem(`et_sub_${storageKey}`, next ? '1' : '0'); } catch { /* noop */ }
-            return next;
-        });
-    };
-
-    return (
-        <div style={{ borderTop: '1px solid var(--color-border)', marginTop: 16, paddingTop: 12 }}>
-            <button
-                type="button"
-                onClick={toggle}
-                style={{
-                    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                    width: '100%', background: 'none', border: 'none', padding: 0,
-                    cursor: 'pointer', textAlign: 'left',
-                    marginBottom: open ? 12 : 0,
-                }}
-            >
-                <span style={{ fontWeight: 600, fontSize: 13 }}>{title}</span>
-                <ChevronDown size={14} style={{ flexShrink: 0, marginLeft: 8, transform: open ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
-            </button>
-            {open && <div>{children}</div>}
-        </div>
-    );
-}
-
 export function EtichetteCalc() {
     const { user } = useAuth();
     const isMobile = useMobile();
@@ -2879,14 +2833,22 @@ export function EtichetteCalc() {
                                 <InfoTooltip text={`Soglia ${MIN_READABLE_MM}mm — All. IV Reg. 1169/2011: 0,9mm sotto gli 80cm² di superficie, 1,2mm sopra. La norma misura l'altezza della x, non il corpo carattere: qui è ricavata dal corpo (≈${bodyFontSizeMm.toFixed(2)}mm) col rapporto di Arial, 1062/2048. La superficie usata è quella dell'etichetta, non dell'imballaggio: se l'imballaggio supera gli 80cm² la soglia applicabile è 1,2mm. Stima diagnostica, non sostituisce una verifica di stampa.`} />
                             </div>
                         )}
+                        {/* AUDIT E3 — le esenzioni per superficie della norma si misurano sulla
+                            superficie maggiore dell'IMBALLAGGIO, non su quella dell'etichetta:
+                            un'etichetta 40×30 su una scatola grande NON dà diritto all'esenzione.
+                            Finché non esiste un campo per la superficie dell'imballaggio, questi
+                            due avvisi sono presentati come condizionali da verificare, non come
+                            esenzioni accertate (erano verdi con spunta: sembravano un via libera). */}
                         {isNutritionDeclarationExempt && (
-                            <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 6, padding: '6px 10px', borderRadius: 6, fontSize: 11, background: 'rgba(0,163,108,0.08)', color: 'var(--color-accent)' }}>
-                                <CheckCircle2 size={13} /> Superficie ≈{frontSurfaceCm2.toFixed(0)}cm² &lt;25cm²: dichiarazione nutrizionale non obbligatoria (All. V p.18 Reg. 1169/2011) — puoi ometterla.
+                            <div style={{ display: 'flex', alignItems: 'flex-start', gap: 6, marginTop: 6, padding: '6px 10px', borderRadius: 6, fontSize: 11, background: 'rgba(230,126,34,0.12)', color: '#b7791f' }}>
+                                <AlertTriangle size={13} style={{ flexShrink: 0, marginTop: 2 }} />
+                                <span>Etichetta ≈{frontSurfaceCm2.toFixed(0)}cm². <strong>Se anche la superficie maggiore dell&apos;imballaggio</strong> sta sotto i 25cm², la dichiarazione nutrizionale non è obbligatoria (All. V p.18 Reg. 1169/2011). Qui è confrontata la misura dell&apos;etichetta, non dell&apos;imballaggio: verificalo prima di ometterla.</span>
                             </div>
                         )}
                         {isMostFieldsExempt && (
-                            <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 6, padding: '6px 10px', borderRadius: 6, fontSize: 11, background: 'rgba(0,163,108,0.08)', color: 'var(--color-accent)' }}>
-                                <CheckCircle2 size={13} /> Superficie ≈{frontSurfaceCm2.toFixed(0)}cm² &lt;10cm²: solo denominazione, allergeni, quantità netta e TMC restano obbligatori (Art. 16(2) Reg. 1169/2011) — il resto è facoltativo.
+                            <div style={{ display: 'flex', alignItems: 'flex-start', gap: 6, marginTop: 6, padding: '6px 10px', borderRadius: 6, fontSize: 11, background: 'rgba(230,126,34,0.12)', color: '#b7791f' }}>
+                                <AlertTriangle size={13} style={{ flexShrink: 0, marginTop: 2 }} />
+                                <span>Etichetta ≈{frontSurfaceCm2.toFixed(0)}cm². <strong>Se anche la superficie maggiore dell&apos;imballaggio</strong> sta sotto i 10cm², restano obbligatori solo denominazione, allergeni, quantità netta e TMC (Art. 16(2) Reg. 1169/2011). Qui è confrontata la misura dell&apos;etichetta, non dell&apos;imballaggio: verificalo prima di omettere gli altri campi.</span>
                             </div>
                         )}
                         {isFrontHeightOverflowing && (
