@@ -12,6 +12,7 @@ import {
     EAN13_BAR_MODULES, EAN13_QUIET_MODULES, EAN13_HEIGHT_MM, EAN13_TRUNCATED_MIN_HEIGHT_MM,
     shouldShareBarcodeRow, BARCODE_SHARED_ROW_THRESHOLD,
     shouldUseTwoColumnLayout, HORIZONTAL_TWO_COLUMN_ASPECT_THRESHOLD,
+    xHeightMm, ARIAL_X_HEIGHT_RATIO,
 } from './EtichetteCalc';
 import { ALLERGEN_FIELDS, CROSS_FIELDS } from '../NutrizionaleCalc/shared/constants';
 import { calcClaims, ZERO_CALC, type CalcResult } from '../../engines/nutrizionaleCalcEngine';
@@ -326,5 +327,32 @@ describe('Framework impaginazione responsive quadrata/verticale/orizzontale (ric
     it('le soglie sono costanti esportate, non magic number sparsi nel JSX', () => {
         expect(BARCODE_SHARED_ROW_THRESHOLD).toBe(0.55);
         expect(HORIZONTAL_TWO_COLUMN_ASPECT_THRESHOLD).toBe(1.25);
+    });
+});
+
+// ─── E1: leggibilità misurata sull'altezza della x (All. IV Reg. 1169/2011) ──────
+describe('E1 — altezza della x vs corpo carattere', () => {
+    it('il rapporto è quello reale di Arial (1062 unità su em 2048)', () => {
+        expect(ARIAL_X_HEIGHT_RATIO).toBeCloseTo(0.5186, 4);
+    });
+
+    it('l\'altezza della x è circa metà del corpo, non il corpo stesso', () => {
+        expect(xHeightMm(2)).toBeCloseTo(1.037, 3);
+        expect(xHeightMm(0)).toBe(0);
+    });
+
+    it('un corpo appena sopra 1,2mm NON è conforme: la sua altezza della x sta sotto soglia', () => {
+        // Il bug: 1,25mm di corpo veniva dichiarato "leggibile" contro la soglia 1,2mm,
+        // ma l'altezza della x reale è ~0,65mm — meno della metà del minimo.
+        const corpoMm = 1.25;
+        expect(corpoMm).toBeGreaterThanOrEqual(1.2);          // vecchio confronto: passava
+        expect(xHeightMm(corpoMm)).toBeLessThan(1.2);          // nuovo confronto: non passa
+        expect(xHeightMm(corpoMm)).toBeLessThan(0.9);          // nemmeno la soglia ridotta
+    });
+
+    it('per rispettare 1,2mm di altezza della x serve un corpo di ~2,31mm', () => {
+        const corpoMinimo = 1.2 / ARIAL_X_HEIGHT_RATIO;
+        expect(corpoMinimo).toBeCloseTo(2.314, 3);
+        expect(xHeightMm(corpoMinimo)).toBeCloseTo(1.2, 6);
     });
 });

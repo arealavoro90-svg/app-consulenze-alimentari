@@ -153,6 +153,19 @@ export function shouldUseTwoColumnLayout(widthMm: number, heightMm: number): boo
     return heightMm > 0 && (widthMm / heightMm) > HORIZONTAL_TWO_COLUMN_ASPECT_THRESHOLD;
 }
 
+// AUDIT E1 — All. IV Reg. 1169/2011 misura la leggibilità sull'**altezza della x**, non sul
+// corpo carattere. Il controllo confrontava direttamente il corpo con 1,2mm (0,9mm sotto gli
+// 80cm²), sovrastimando la leggibilità di circa il doppio: un corpo di 0,95mm veniva
+// dichiarato "leggibile" con un'altezza della x reale di ~0,49mm, cioè non conforme.
+// Entrambe le anteprime (fronte `Arial, sans-serif` e retro, stessa famiglia) usano Arial,
+// la cui altezza della x vale 1062 unità su un em di 2048 → 0,5186. Il rapporto è quindi una
+// costante del font, non una stima: se un giorno l'anteprima cambia famiglia, va ricalcolato.
+export const ARIAL_X_HEIGHT_RATIO = 1062 / 2048;
+// eslint-disable-next-line react-refresh/only-export-components
+export function xHeightMm(fontSizeMm: number): number {
+    return fontSizeMm * ARIAL_X_HEIGHT_RATIO;
+}
+
 // Ricette salvate prima della rinomina campi IT (nutrizionale-v3 può contenere entrambi gli
 // schemi in localStorage) non hanno `componenti`/`ingredienti` — stessa tolleranza di
 // NutrizionaleCalc.tsx:589-598 per la stessa chiave archivio, riscritta qui in sola lettura.
@@ -1621,7 +1634,8 @@ export function EtichetteCalc() {
     const MIN_READABLE_MM = frontSurfaceCm2 < 80 ? 0.9 : 1.2;
     const mmPerPx = labelRenderedWidthPx > 0 ? Number(data.widthMm) / labelRenderedWidthPx : 0;
     const bodyFontSizeMm = mmPerPx * (11 * fontScale);
-    const isBodyTextReadable = bodyFontSizeMm >= MIN_READABLE_MM;
+    const bodyXHeightMm = xHeightMm(bodyFontSizeMm);
+    const isBodyTextReadable = bodyXHeightMm >= MIN_READABLE_MM;
     // Il rapporto mm/px è uniforme in entrambi gli assi (nessuno stretch indipendente in X/Y
     // nel contenitore) — stesso mmPerPx converte correttamente anche l'altezza renderizzata.
     // contentHeightMm ora usa scrollHeight (contenuto vero, anche la parte tagliata) — con
@@ -1678,7 +1692,8 @@ export function EtichetteCalc() {
     const BACK_MIN_READABLE_MM = backSurfaceCm2 < 80 ? 0.9 : 1.2;
     const backMmPerPx = backRenderedWidthPx > 0 ? Number(data.backWidthMm) / backRenderedWidthPx : 0;
     const backBodyFontSizeMm = backMmPerPx * (11 * backFontScale);
-    const isBackBodyTextReadable = backBodyFontSizeMm >= BACK_MIN_READABLE_MM;
+    const backBodyXHeightMm = xHeightMm(backBodyFontSizeMm);
+    const isBackBodyTextReadable = backBodyXHeightMm >= BACK_MIN_READABLE_MM;
     // scrollHeight (vero, anche tagliato) invece di contentRect.height (ora fissa a
     // backHeightMm per l'aspect-ratio sul contenitore) — stesso motivo del fronte.
     const backContentHeightMm = backMmPerPx > 0 ? backScrollHeightPx * backMmPerPx : 0;
@@ -2858,10 +2873,10 @@ export function EtichetteCalc() {
                                 background: isBodyTextReadable ? 'rgba(0,163,108,0.08)' : 'rgba(230,126,34,0.12)',
                                 color: isBodyTextReadable ? 'var(--color-accent)' : '#b7791f',
                             }}>
-                                {isBodyTextReadable ? <CheckCircle2 size={13} /> : <AlertTriangle size={13} />} Corpo testo (fronte) ≈ {bodyFontSizeMm.toFixed(2)}mm — {isBodyTextReadable
-                                    ? 'leggibile secondo Reg. UE 1169/2011'
-                                    : `sotto la soglia minima leggibile (${MIN_READABLE_MM}mm): aumenta le dimensioni etichetta o riduci il testo`}
-                                <InfoTooltip text={`Soglia ${MIN_READABLE_MM}mm — All. IV Reg. 1169/2011: 0,9mm sotto gli 80cm² di superficie, 1,2mm sopra. Stima diagnostica sul corpo carattere, non sostituisce una verifica di stampa.`} />
+                                {isBodyTextReadable ? <CheckCircle2 size={13} /> : <AlertTriangle size={13} />} Altezza della x (fronte) ≈ {bodyXHeightMm.toFixed(2)}mm — {isBodyTextReadable
+                                    ? `≥ soglia ${MIN_READABLE_MM}mm All. IV Reg. UE 1169/2011`
+                                    : `sotto la soglia minima (${MIN_READABLE_MM}mm): aumenta le dimensioni etichetta o riduci il testo`}
+                                <InfoTooltip text={`Soglia ${MIN_READABLE_MM}mm — All. IV Reg. 1169/2011: 0,9mm sotto gli 80cm² di superficie, 1,2mm sopra. La norma misura l'altezza della x, non il corpo carattere: qui è ricavata dal corpo (≈${bodyFontSizeMm.toFixed(2)}mm) col rapporto di Arial, 1062/2048. La superficie usata è quella dell'etichetta, non dell'imballaggio: se l'imballaggio supera gli 80cm² la soglia applicabile è 1,2mm. Stima diagnostica, non sostituisce una verifica di stampa.`} />
                             </div>
                         )}
                         {isNutritionDeclarationExempt && (
@@ -3005,9 +3020,9 @@ export function EtichetteCalc() {
                                     background: isBackBodyTextReadable ? 'rgba(0,163,108,0.08)' : 'rgba(230,126,34,0.12)',
                                     color: isBackBodyTextReadable ? 'var(--color-accent)' : '#b7791f',
                                 }}>
-                                    {isBackBodyTextReadable ? <CheckCircle2 size={13} /> : <AlertTriangle size={13} />} Corpo testo (retro) ≈ {backBodyFontSizeMm.toFixed(2)}mm — {isBackBodyTextReadable
-                                        ? 'leggibile secondo Reg. UE 1169/2011'
-                                        : `sotto la soglia minima leggibile (${BACK_MIN_READABLE_MM}mm): aumenta le dimensioni del retro o riduci il testo`}
+                                    {isBackBodyTextReadable ? <CheckCircle2 size={13} /> : <AlertTriangle size={13} />} Altezza della x (retro) ≈ {backBodyXHeightMm.toFixed(2)}mm — {isBackBodyTextReadable
+                                        ? `≥ soglia ${BACK_MIN_READABLE_MM}mm All. IV Reg. UE 1169/2011`
+                                        : `sotto la soglia minima (${BACK_MIN_READABLE_MM}mm): aumenta le dimensioni del retro o riduci il testo`}
                                 </div>
                             )}
                             {isBackHeightOverflowing && (
