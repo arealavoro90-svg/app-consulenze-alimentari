@@ -206,6 +206,20 @@ export function scaleResult(r: CalcResult, grams: number): CalcResult {
  * @param isLiquid - true per liquidi (soglie zuccheri/grassi dimezzate)
  */
 export function calcClaims(r: CalcResult, isLiquid = false): string[] {
+    // ─── Ricetta vuota: nessun claim ────────────────────────────────────────
+    // Senza ingredienti ogni valore è 0 e le soglie "≤" dei claim "a basso
+    // contenuto di" risultano soddisfatte: l'app suggerirebbe SODIO/ZUCCHERI/
+    // GRASSI su un prodotto che non esiste. Il guard controlla tutti e soli i
+    // campi che questa funzione legge: se nessuno è valorizzato non c'è alcuna
+    // base per un claim. Nessun ingrediente reale del DB azzera l'intero set
+    // (anche l'acqua ha sodio 4mg e calcio 7,13mg), quindi lo stato tutto-zero
+    // identifica la ricetta vuota senza sopprimere claim legittimi.
+    const noClaimInput =
+        r.fibre === 0 && r.energyKcal === 0 && r.proteine === 0 &&
+        r.calcio === 0 && r.ferro === 0 && r.potassio === 0 &&
+        r.sodio_mg === 0 && r.zuccheri === 0 && r.grassi === 0;
+    if (noClaimInput) return [];
+
     const claims: string[] = [];
 
     // ─── Fibre: FONTE ≥3g, RICCO ≥6g ────────────────────────────────────────

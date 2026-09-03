@@ -246,6 +246,22 @@ describe('calcClaims', () => {
         expect(claims).not.toContain('FONTE DI PROTEINE');
         expect(claims).not.toContain('AD ALTO CONTENUTO DI PROTEINE');
     });
+
+    // ─── N1: ricetta vuota ───────────────────────────────────────────────────
+    it('ricetta vuota (tutti i valori a 0) → nessun claim', () => {
+        // Senza il guard le soglie "≤" produrrebbero SODIO + ZUCCHERI + GRASSI
+        // su un prodotto inesistente (AUDIT-2026-09-03 N1).
+        expect(calcClaims(ZERO_CALC)).toEqual([]);
+        expect(calcClaims(ZERO_CALC, true)).toEqual([]);
+    });
+    it('un solo valore valorizzato → i claim "a basso contenuto" restano attivi', () => {
+        // Il guard non deve sopprimere i claim di un prodotto reale povero di
+        // tutto tranne un nutriente.
+        const claims = calcClaims({ ...ZERO_CALC, proteine: 5 });
+        expect(claims).toContain('A BASSO CONTENUTO DI SODIO');
+        expect(claims).toContain('A BASSO CONTENUTO DI ZUCCHERI');
+        expect(claims).toContain('A BASSO CONTENUTO DI GRASSI');
+    });
 });
 
 // ─── calcQuid ───────────────────────────────────────────────────────────────
