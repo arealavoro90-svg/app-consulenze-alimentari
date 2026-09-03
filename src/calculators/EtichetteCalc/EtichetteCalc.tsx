@@ -1201,15 +1201,55 @@ export function EtichetteCalc() {
         }
     };
 
+    // Superficie e esenzioni per superficie — calcolate qui (e non più sotto, insieme a
+    // MIN_READABLE_MM) perché servono a `requiredFields`: quali menzioni siano davvero
+    // obbligatorie dipende dalla superficie. Art. 16(2): sotto i 10cm² restano dovute solo
+    // denominazione, allergeni, quantità netta e TMC. All. V p.18: sotto i 25cm² la
+    // dichiarazione nutrizionale non è obbligatoria.
+    // ⚠️ AUDIT E3: la norma parla della superficie maggiore dell'IMBALLAGGIO, qui si usa
+    // quella dell'etichetta — vedi AUDIT-2026-09-03.md, per ora l'avviso è dichiarato come
+    // stima nei messaggi in anteprima.
+    const frontSurfaceCm2 = (Number(data.widthMm) * Number(data.heightMm)) / 100;
+    const isNutritionDeclarationExempt = frontSurfaceCm2 > 0 && frontSurfaceCm2 < 25;
+    const isMostFieldsExempt = frontSurfaceCm2 > 0 && frontSurfaceCm2 < 10;
+
+    // ─── Menzioni obbligatorie — Art. 9(1) Reg. 1169/2011 ────────────────────
+    // AUDIT E2: prima il controllo copriva solo 4 campi (a, e, h, b) e mostrava
+    // "Tutti i campi obbligatori compilati" su etichette prive di TMC, lotto e
+    // dichiarazione nutrizionale, abilitando comunque gli export.
+    // Le lettere c/d/i/j/k dell'Art. 9(1) restano fuori dal blocco perché sono
+    // condizionali al prodotto (allergeni, QUID, origine, istruzioni d'uso, titolo
+    // alcolometrico) e l'app non ha modo di stabilire se il caso si applica: renderle
+    // bloccanti produrrebbe falsi impedimenti. La lettera g (conservazione) è
+    // condizionale allo stesso modo ed è trattata sotto come avviso, non come blocco.
+    const isLotRequired = !(tmcGranularity === 'giorno' && !!data.bestBefore);
+    const hasNutritionDeclaration = !!per100 && data.showNutritionTable;
+
     const requiredFields: { id: string; label: string; ok: boolean }[] = [
         { id: 'et-nome', label: 'Denominazione del prodotto', ok: !!data.productName },
         { id: 'et-produttore', label: 'Produttore / Responsabile', ok: !!data.producer },
         { id: 'et-peso-netto', label: 'Quantità netta', ok: !!data.netWeight },
-        { id: 'et-ingredienti', label: 'Elenco ingredienti', ok: !!data.ingredients },
+        { id: 'et-scadenza', label: 'TMC / data di scadenza', ok: !!data.bestBefore },
+        // Art. 16(2): sotto i 10cm² l'elenco ingredienti non è dovuto.
+        ...(isMostFieldsExempt ? [] : [
+            { id: 'et-ingredienti', label: 'Elenco ingredienti', ok: !!data.ingredients },
+        ]),
+        // Dir. 2011/91/UE Art. 1(3): il lotto non serve se il TMC riporta giorno e mese.
+        ...(isLotRequired ? [
+            { id: 'et-lotto', label: 'Numero di lotto', ok: !!data.lotNumber },
+        ] : []),
+        // Art. 9(1)(l), con le esenzioni All. V p.18 (<25cm²) e Art. 16(2) (<10cm²).
+        ...(isNutritionDeclarationExempt || isMostFieldsExempt ? [] : [
+            { id: 'et-tabella-nutrizionale', label: 'Dichiarazione nutrizionale', ok: hasNutritionDeclaration },
+        ]),
     ];
     const missingFieldDefs = requiredFields.filter(f => !f.ok);
     const missingFields = missingFieldDefs.map(f => f.label);
     const isComplete = missingFields.length === 0;
+
+    // Art. 9(1)(g) + Art. 25: condizionale al prodotto — l'app non può stabilire se serve,
+    // quindi avvisa senza bloccare l'export.
+    const showStorageHint = isComplete && !data.storageConditions;
 
     // Mappa campo → storageKey della CollapsibleSection che lo contiene.
     // Aggiornare se si sposta un campo in una sezione diversa.
@@ -1218,6 +1258,10 @@ export function EtichetteCalc() {
         'et-produttore': 'dati-prodotto',
         'et-peso-netto': 'dati-prodotto',
         'et-ingredienti': 'ingredienti',
+        'et-scadenza': 'conservazione',
+        'et-lotto': 'conservazione',
+        'et-conservazione': 'conservazione',
+        'et-tabella-nutrizionale': 'tabella-nutrizionale',
     };
 
     const focusField = useCallback((id: string) => {
@@ -1571,14 +1615,10 @@ export function EtichetteCalc() {
     // clamping è algebricamente identica alla vecchia formula baseDim/100 — zero regressioni
     // sui formati che già funzionavano.
     const fontScale = visualFontScale(labelRenderedWidthPx, labelRenderedHeightPx, baseDim) * contentFitScale;
-    // Soglia leggibilità e esenzioni modulate sulla superficie maggiore dell'etichetta
-    // (Art. 13(2)+All.IV: 0,9mm invece di 1,2mm se <80cm²; All.V p.18: dichiarazione
-    // nutrizionale non obbligatoria se <25cm²; Art.16(2): quasi tutto facoltativo se <10cm²,
-    // restano solo denominazione/allergeni/quantità netta/TMC).
-    const frontSurfaceCm2 = (Number(data.widthMm) * Number(data.heightMm)) / 100;
+    // Soglia leggibilità modulata sulla superficie (Art. 13(2)+All.IV: 0,9mm invece di
+    // 1,2mm se <80cm²). `frontSurfaceCm2` e le due esenzioni per superficie sono ora
+    // definite più in alto, insieme a `requiredFields`, che ne ha bisogno.
     const MIN_READABLE_MM = frontSurfaceCm2 < 80 ? 0.9 : 1.2;
-    const isNutritionDeclarationExempt = frontSurfaceCm2 > 0 && frontSurfaceCm2 < 25;
-    const isMostFieldsExempt = frontSurfaceCm2 > 0 && frontSurfaceCm2 < 10;
     const mmPerPx = labelRenderedWidthPx > 0 ? Number(data.widthMm) / labelRenderedWidthPx : 0;
     const bodyFontSizeMm = mmPerPx * (11 * fontScale);
     const isBodyTextReadable = bodyFontSizeMm >= MIN_READABLE_MM;
@@ -2165,7 +2205,7 @@ export function EtichetteCalc() {
                         {per100 ? (
                             <div className="form-field">
                                 <label style={{ display: 'flex', alignItems: 'flex-start', gap: 8, fontSize: 12, fontWeight: 400, cursor: 'pointer', width: '100%' }}>
-                                    <input type="checkbox" style={{ flexShrink: 0, width: 16, height: 16, marginTop: 2 }} checked={data.showNutritionTable}
+                                    <input id="et-tabella-nutrizionale" type="checkbox" style={{ flexShrink: 0, width: 16, height: 16, marginTop: 2 }} checked={data.showNutritionTable}
                                         onChange={(e) => set('showNutritionTable', e.target.checked)} />
                                     <span>Mostra tabella valori nutrizionali in etichetta</span>
                                 </label>
@@ -2490,9 +2530,24 @@ export function EtichetteCalc() {
             <div className="table-panel-header">
                 <div className="table-panel-header-title">Anteprima Etichetta</div>
                 {isComplete ? (
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '2px 0 8px', fontSize: 12, color: 'var(--color-accent)' }}>
-                        <CheckCircle2 size={14} /> Tutti i campi obbligatori compilati
-                    </div>
+                    <>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 6, paddingTop: 2, fontSize: 12, color: 'var(--color-accent)' }}>
+                            <CheckCircle2 size={14} /> Menzioni obbligatorie compilate
+                        </div>
+                        {/* Il claim di completezza va circoscritto a ciò che l'app può davvero
+                            verificare: le menzioni condizionali dell'Art. 9(1) dipendono dal
+                            prodotto e restano responsabilità di chi compila. */}
+                        <div style={{ fontSize: 11, color: 'var(--color-text-muted)', padding: '2px 0 8px' }}>
+                            Restano da verificare a mano le menzioni condizionali: allergeni, QUID, origine, istruzioni d&apos;uso, titolo alcolometrico.
+                        </div>
+                        {showStorageHint && (
+                            <button type="button" onClick={() => focusField('et-conservazione')}
+                                style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '2px 0 8px', fontSize: 11, color: '#b7791f', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit', textAlign: 'left' }}>
+                                <AlertTriangle size={12} style={{ flexShrink: 0 }} />
+                                Modalità di conservazione non indicate: obbligatorie se il prodotto è deperibile (Art. 9(1)(g) + Art. 25).
+                            </button>
+                        )}
+                    </>
                 ) : (
                     <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 6, padding: '2px 0 8px' }}>
                         <span style={{ fontSize: 12, color: 'var(--color-text-muted)' }}>Mancano:</span>
