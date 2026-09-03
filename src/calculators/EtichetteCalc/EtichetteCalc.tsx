@@ -313,6 +313,12 @@ interface LabelData {
     consumptionInstructions: string;
     widthMm: string;
     heightMm: string;
+    // AUDIT E3 — superficie maggiore dell'IMBALLAGGIO in cm². Le soglie del Reg. 1169/2011
+    // (1,2 vs 0,9mm All. IV; esenzione nutrizionale <25cm² All. V p.18; esenzione quasi
+    // totale <10cm² Art. 16(2)) si misurano su questa, non sulla superficie dell'etichetta.
+    // Facoltativo: se vuoto si ricade sulla misura dell'etichetta, come prima, con avviso.
+    // Le etichette archiviate prima di questo campo non ce l'hanno — `?? ''` in lettura.
+    packageSurfaceCm2?: string;
     bgImageUrl: string;
     logoUrl: string;
     theme: 'light' | 'dark';
@@ -390,6 +396,7 @@ const defaults: LabelData = {
     alcoholPercent: '',
     consumptionInstructions: '',
     widthMm: '100',
+    packageSurfaceCm2: '',
     heightMm: '150',
     bgImageUrl: '',
     logoUrl: '',
@@ -1172,10 +1179,13 @@ export function EtichetteCalc() {
     // obbligatorie dipende dalla superficie. Art. 16(2): sotto i 10cm² restano dovute solo
     // denominazione, allergeni, quantità netta e TMC. All. V p.18: sotto i 25cm² la
     // dichiarazione nutrizionale non è obbligatoria.
-    // ⚠️ AUDIT E3: la norma parla della superficie maggiore dell'IMBALLAGGIO, qui si usa
-    // quella dell'etichetta — vedi AUDIT-2026-09-03.md, per ora l'avviso è dichiarato come
-    // stima nei messaggi in anteprima.
-    const frontSurfaceCm2 = (Number(data.widthMm) * Number(data.heightMm)) / 100;
+    // AUDIT E3 — la norma misura queste soglie sulla superficie maggiore dell'IMBALLAGGIO.
+    // Se l'utente l'ha dichiarata si usa quella; altrimenti si ricade sulla superficie
+    // dell'etichetta (comportamento storico) e i messaggi lo dichiarano apertamente.
+    const labelSurfaceCm2 = (Number(data.widthMm) * Number(data.heightMm)) / 100;
+    const declaredPackageSurfaceCm2 = Number(data.packageSurfaceCm2 ?? '') || 0;
+    const usesPackageSurface = declaredPackageSurfaceCm2 > 0;
+    const frontSurfaceCm2 = usesPackageSurface ? declaredPackageSurfaceCm2 : labelSurfaceCm2;
     const isNutritionDeclarationExempt = frontSurfaceCm2 > 0 && frontSurfaceCm2 < 25;
     const isMostFieldsExempt = frontSurfaceCm2 > 0 && frontSurfaceCm2 < 10;
 
@@ -2261,6 +2271,23 @@ export function EtichetteCalc() {
                             </div>
                         </div>
 
+                        {/* AUDIT E3 — le soglie del Reg. 1169/2011 si misurano sulla superficie
+                            maggiore dell'imballaggio, non dell'etichetta. Campo facoltativo:
+                            se vuoto si ricade sulla misura dell'etichetta, come prima. */}
+                        <div className="form-field">
+                            <label htmlFor="et-package-surface" style={{ display: 'flex', alignItems: 'center' }}>
+                                Superficie maggiore dell&apos;imballaggio (cm²)
+                                <InfoTooltip text="La faccia più grande della confezione su cui è applicata l'etichetta. Reg. 1169/2011 misura su questa — non sull'etichetta — la soglia di leggibilità (1,2mm sopra gli 80cm², 0,9mm sotto), l'esenzione dalla dichiarazione nutrizionale (<25cm², All. V p.18) e quella dell'Art. 16(2) (<10cm²). Lasciandolo vuoto l'app usa la superficie dell'etichetta, che per un'etichetta piccola su una confezione grande porta a esenzioni inesistenti." />
+                            </label>
+                            <input id="et-package-surface" type="number" min="0" step="0.1"
+                                value={data.packageSurfaceCm2 ?? ''}
+                                onChange={(e) => set('packageSurfaceCm2', e.target.value)}
+                                placeholder={`facoltativo — senza, si usa l'etichetta (≈${labelSurfaceCm2.toFixed(0)} cm²)`} />
+                            {!usesPackageSurface && (
+                                <ValidationError type="info" message={`Soglie calcolate sulla superficie dell'etichetta (≈${labelSurfaceCm2.toFixed(0)} cm²). Se l'imballaggio è più grande, compila questo campo: cambia la soglia di leggibilità e le esenzioni.`} />
+                            )}
+                        </div>
+
                         <div style={{ borderTop: '1px solid var(--color-border)', paddingTop: 20, marginTop: 10 }}>
                             <div className="form-field">
                                 <label htmlFor="et-bg-img" style={{ display: 'flex', alignItems: 'center', gap: 6 }}><Image size={14} /> Immagine di Sfondo</label>
@@ -2829,7 +2856,7 @@ export function EtichetteCalc() {
                                 {isBodyTextReadable ? <CheckCircle2 size={13} /> : <AlertTriangle size={13} />} Altezza della x (fronte) ≈ {bodyXHeightMm.toFixed(2)}mm — {isBodyTextReadable
                                     ? `≥ soglia ${MIN_READABLE_MM}mm All. IV Reg. UE 1169/2011`
                                     : `sotto la soglia minima (${MIN_READABLE_MM}mm): aumenta le dimensioni etichetta o riduci il testo`}
-                                <InfoTooltip text={`Soglia ${MIN_READABLE_MM}mm — All. IV Reg. 1169/2011: 0,9mm sotto gli 80cm² di superficie, 1,2mm sopra. La norma misura l'altezza della x, non il corpo carattere: qui è ricavata dal corpo (≈${bodyFontSizeMm.toFixed(2)}mm) col rapporto di Arial, 1062/2048. La superficie usata è quella dell'etichetta, non dell'imballaggio: se l'imballaggio supera gli 80cm² la soglia applicabile è 1,2mm. Stima diagnostica, non sostituisce una verifica di stampa.`} />
+                                <InfoTooltip text={`Soglia ${MIN_READABLE_MM}mm — All. IV Reg. 1169/2011: 0,9mm sotto gli 80cm² di superficie, 1,2mm sopra. La norma misura l'altezza della x, non il corpo carattere: qui è ricavata dal corpo (≈${bodyFontSizeMm.toFixed(2)}mm) col rapporto di Arial, 1062/2048. Superficie usata: ${usesPackageSurface ? `imballaggio dichiarato, ≈${frontSurfaceCm2.toFixed(0)}cm²` : `etichetta, ≈${frontSurfaceCm2.toFixed(0)}cm² — dichiara la superficie dell'imballaggio nella scheda Grafica per la soglia corretta`}. Stima diagnostica, non sostituisce una verifica di stampa.`} />
                             </div>
                         )}
                         {/* AUDIT E3 — le esenzioni per superficie della norma si misurano sulla
@@ -2841,13 +2868,17 @@ export function EtichetteCalc() {
                         {isNutritionDeclarationExempt && (
                             <div style={{ display: 'flex', alignItems: 'flex-start', gap: 6, marginTop: 6, padding: '6px 10px', borderRadius: 6, fontSize: 11, background: 'rgba(230,126,34,0.12)', color: '#b7791f' }}>
                                 <AlertTriangle size={13} style={{ flexShrink: 0, marginTop: 2 }} />
-                                <span>Etichetta ≈{frontSurfaceCm2.toFixed(0)}cm². <strong>Se anche la superficie maggiore dell&apos;imballaggio</strong> sta sotto i 25cm², la dichiarazione nutrizionale non è obbligatoria (All. V p.18 Reg. 1169/2011). Qui è confrontata la misura dell&apos;etichetta, non dell&apos;imballaggio: verificalo prima di ometterla.</span>
+                                <span>{usesPackageSurface
+                                    ? <>Imballaggio ≈{frontSurfaceCm2.toFixed(0)}cm² &lt;25cm²: dichiarazione nutrizionale non obbligatoria (All. V p.18 Reg. 1169/2011).</>
+                                    : <>Etichetta ≈{frontSurfaceCm2.toFixed(0)}cm². <strong>Se anche la superficie maggiore dell&apos;imballaggio</strong> sta sotto i 25cm², la dichiarazione nutrizionale non è obbligatoria (All. V p.18 Reg. 1169/2011). Qui è confrontata la misura dell&apos;etichetta: dichiara la superficie dell&apos;imballaggio nella scheda Grafica prima di ometterla.</>}</span>
                             </div>
                         )}
                         {isMostFieldsExempt && (
                             <div style={{ display: 'flex', alignItems: 'flex-start', gap: 6, marginTop: 6, padding: '6px 10px', borderRadius: 6, fontSize: 11, background: 'rgba(230,126,34,0.12)', color: '#b7791f' }}>
                                 <AlertTriangle size={13} style={{ flexShrink: 0, marginTop: 2 }} />
-                                <span>Etichetta ≈{frontSurfaceCm2.toFixed(0)}cm². <strong>Se anche la superficie maggiore dell&apos;imballaggio</strong> sta sotto i 10cm², restano obbligatori solo denominazione, allergeni, quantità netta e TMC (Art. 16(2) Reg. 1169/2011). Qui è confrontata la misura dell&apos;etichetta, non dell&apos;imballaggio: verificalo prima di omettere gli altri campi.</span>
+                                <span>{usesPackageSurface
+                                    ? <>Imballaggio ≈{frontSurfaceCm2.toFixed(0)}cm² &lt;10cm²: restano obbligatori solo denominazione, allergeni, quantità netta e TMC (Art. 16(2) Reg. 1169/2011).</>
+                                    : <>Etichetta ≈{frontSurfaceCm2.toFixed(0)}cm². <strong>Se anche la superficie maggiore dell&apos;imballaggio</strong> sta sotto i 10cm², restano obbligatori solo denominazione, allergeni, quantità netta e TMC (Art. 16(2) Reg. 1169/2011). Qui è confrontata la misura dell&apos;etichetta: dichiara la superficie dell&apos;imballaggio nella scheda Grafica prima di omettere gli altri campi.</>}</span>
                             </div>
                         )}
                         {isFrontHeightOverflowing && (
