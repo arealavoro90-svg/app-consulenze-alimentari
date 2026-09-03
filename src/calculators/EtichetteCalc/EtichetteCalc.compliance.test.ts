@@ -14,7 +14,7 @@ import {
     shouldUseTwoColumnLayout, HORIZONTAL_TWO_COLUMN_ASPECT_THRESHOLD,
     xHeightMm, ARIAL_X_HEIGHT_RATIO,
 } from './EtichetteCalc';
-import { ALLERGEN_FIELDS, CROSS_FIELDS, ALLERGEN_PARENT, collectAllergenLabels } from '../NutrizionaleCalc/shared/constants';
+import { ALLERGEN_FIELDS, CROSS_FIELDS, ALLERGEN_PARENT, collectAllergenLabels, fmtQuantita } from '../NutrizionaleCalc/shared/constants';
 import { calcClaims, ZERO_CALC, type CalcResult, type DBIngredient } from '../../engines/nutrizionaleCalcEngine';
 import { PACKAGING_MATERIALS } from './packagingMaterials';
 import type { ArchiveData } from '../NutrizionaleCalc/NutrizionaleCalc';
@@ -368,6 +368,30 @@ describe('Framework impaginazione responsive quadrata/verticale/orizzontale (ric
     it('le soglie sono costanti esportate, non magic number sparsi nel JSX', () => {
         expect(BARCODE_SHARED_ROW_THRESHOLD).toBe(0.55);
         expect(HORIZONTAL_TWO_COLUMN_ASPECT_THRESHOLD).toBe(1.25);
+    });
+});
+
+// ─── N7: formattazione quantità nel Riepilogo ───────────────────────────────────
+describe('N7 — fmtQuantita', () => {
+    it('non produce più "100,000" per il valore 100', () => {
+        expect(fmtQuantita(100)).toBe('100');
+    });
+
+    it('mantiene i decimali significativi, fino a 3', () => {
+        expect(fmtQuantita(12.5)).toBe('12,5');
+        expect(fmtQuantita(0.125)).toBe('0,125');
+        expect(fmtQuantita(33.333333)).toBe('33,333');
+    });
+
+    it('zero resta "0", non stringa vuota', () => {
+        expect(fmtQuantita(0)).toBe('0');
+    });
+
+    it('non tronca gli zeri interni né quelli di un intero tondo', () => {
+        // Il rischio della regex: "1000.000" non deve diventare "1".
+        expect(fmtQuantita(1000)).toBe('1000');
+        expect(fmtQuantita(10.5)).toBe('10,5');
+        expect(fmtQuantita(100.05)).toBe('100,05');
     });
 });
 

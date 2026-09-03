@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Scale, Euro, ArrowRight } from 'lucide-react';
 import type { MobileComponent } from '../NutrizionaleCalcMobile';
 import { calcQuid } from '../../../engines/nutrizionaleCalcEngine';
+import { fmtQuantita } from '../shared/constants';
 
 const isAcqua = (nome: string) => (nome || '').trim().toLowerCase() === 'acqua';
 
@@ -50,7 +51,8 @@ interface Props {
 
 type RTab = 'q' | 'c';
 
-const fmt3 = (v: number) => v.toFixed(3).replace('.', ',');
+// AUDIT N7 — definizione unica in shared/constants.ts.
+const fmt3 = fmtQuantita;
 const fmt2 = (v: number) => v.toFixed(2).replace('.', ',');
 const fmtC = (v: number) => v > 0 ? v.toFixed(3).replace('.', ',') : '—';
 

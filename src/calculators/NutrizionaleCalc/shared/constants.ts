@@ -28,6 +28,22 @@ export const CROSS_FIELDS: { key: keyof DBIngredient; label: string }[] = [
     { key: 'cross_lupini', label: 'LUPINI' }, { key: 'cross_molluschi', label: 'MOLLUSCHI' },
 ];
 
+/**
+ * AUDIT N7 — formattazione di grammi/percentuali nel Riepilogo.
+ *
+ * Prima: `v.toFixed(3).replace('.', ',')` → 100 diventava "100,000", che con la
+ * virgola come separatore decimale si legge "centomila". Stessa precisione (3
+ * decimali), ma senza zeri finali:
+ *   100    → "100"      12.5   → "12,5"      0.125 → "0,125"      0 → "0"
+ *
+ * Era duplicata identica in NutrizionaleCalc.tsx e mobile/RiepilogoTab.tsx.
+ * Gli importi in € NON usano questa funzione: per una colonna di soldi i decimali
+ * fissi sono più leggibili.
+ */
+export function fmtQuantita(v: number): string {
+    return v.toFixed(3).replace(/\.?0+$/, '').replace('.', ',') || '0';
+}
+
 // ─── AUDIT E4 — gruppi All. II vs voci di dettaglio del DB ────────────────────
 // L'All. II del Reg. 1169/2011 elenca 14 GRUPPI. Due voci del DB sono in realtà
 // membri di un gruppo, non gruppi a sé:

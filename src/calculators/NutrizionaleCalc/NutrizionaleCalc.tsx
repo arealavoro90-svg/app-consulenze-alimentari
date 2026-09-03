@@ -43,7 +43,7 @@ import {
     type DBIngredient, type RecipeRow, type AdditiveRow, type Component,
     calcNutrients, scaleResult, calcClaims, calcQuid,
 } from '../../engines/nutrizionaleCalcEngine';
-import { ALLERGEN_FIELDS, CROSS_FIELDS, ADDITIVI_CATEGORIE, ADDITIVI_SPECIFICI, collectAllergenLabels } from './shared/constants';
+import { ALLERGEN_FIELDS, CROSS_FIELDS, ADDITIVI_CATEGORIE, ADDITIVI_SPECIFICI, collectAllergenLabels, fmtQuantita } from './shared/constants';
 import { writeBridge, readBridge, buildDesktopDraft } from './sessionBridge';
 import { InfoTooltip } from './InfoTooltip';
 import { TabCanada } from './TabCanada';
@@ -1420,8 +1420,12 @@ export function NutrizionaleCalc() {
             {/* ── Prodotto / Pesi ── */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 12 }}>
                 <div>
-                    <label style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--color-text-muted)', display: 'block', marginBottom: 4 }} htmlFor="nut-product-name">Nome prodotto *</label>
-                    <input id="nut-product-name" type="text" placeholder="Es. Pasta fresca all'uovo (obbligatorio per scaricare)" value={productName}
+                    <label style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--color-text-muted)', display: 'block', marginBottom: 4 }} htmlFor="nut-product-name">Nome prodotto</label>
+                    {/* AUDIT N6 — diceva "(obbligatorio per scaricare)" ma nessun controllo lo
+                        imponeva: il PNG usciva come "tabella - …". Il nome non compare dentro
+                        la tabella ufficiale (i Tab* ricevono solo i valori), serve per il nome
+                        file e per l'archivio: la copy ora dice quello che fa davvero. */}
+                    <input id="nut-product-name" type="text" placeholder="Es. Pasta fresca all'uovo — usato per nome file e archivio" value={productName}
                         onChange={e => setProductName(e.target.value)} className="field-input"
                         style={{ fontWeight: 600, fontSize: 16, width: '100%', padding: '8px 10px' }} />
                 </div>
@@ -1763,7 +1767,10 @@ export function NutrizionaleCalc() {
                     }
                 }
                 const totCostoKg = pesoFinitoPzCalc > 0 && totCostoUV > 0 ? totCostoUV / (pesoFinitoPzCalc / 1000) : 0;
-                const fmt3 = (v: number) => v.toFixed(3).replace('.', ',');
+                // AUDIT N7 — fmtQuantita vive in shared/constants.ts (era duplicata qui e
+                // in mobile/RiepilogoTab.tsx). I costi restano a 3 decimali fissi: per una
+                // colonna di importi i decimali costanti sono più leggibili.
+                const fmt3 = fmtQuantita;
                 const fmt2 = (v: number) => v.toFixed(2).replace('.', ',');
                 const fmtC = (v: number) => v > 0 ? v.toFixed(3).replace('.', ',') : '—';
                 return (
