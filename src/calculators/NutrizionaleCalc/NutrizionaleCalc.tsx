@@ -6,8 +6,8 @@ import {
     Save, FolderOpen, Plus, Database, Archive,
     ClipboardList, Scale, Euro,
     AlertTriangle, SlidersHorizontal,
-    Trash2, X, BookOpen, ChevronDown,
-    Salad, Globe, ImageDown, Sparkles, FileSpreadsheet, Search, RotateCcw,
+    Trash2, BookOpen, ChevronDown,
+    Salad, Globe, ImageDown, Sparkles, FileSpreadsheet,
 } from 'lucide-react';
 import { useAuth } from '../../auth/AuthContext';
 import { SmartImportModal } from './SmartImportModal';
@@ -20,6 +20,7 @@ import { useLocalStorage } from '../../hooks/useLocalStorage';
 import { useAutosave } from '../../hooks/useAutosave';
 import { useIngredientsDB } from '../../hooks/useIngredientsDB';
 import { WelcomeModal } from '../../components/WelcomeModal';
+import { ArchiveModal } from '../../components/ArchiveModal';
 import { ValidationError } from '../../components/ValidationError';
 import {
     validatePositiveNumber,
@@ -103,7 +104,7 @@ export function NutrizionaleCalc() {
     const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({}); // Track validation errors
     // const [fwErrorMsg, setFwErrorMsg] = useState('');
     const [archiveOpen, setArchiveOpen] = useState(false);
-    const [archiveSearch, setArchiveSearch] = useState('');
+
     const [showCustomModal, setShowCustomModal] = useState(false);
     const [showBrowseModal, setShowBrowseModal] = useState(false);
     const [showSmartImport, setShowSmartImport] = useState(false);
@@ -1243,76 +1244,21 @@ export function NutrizionaleCalc() {
                     onNeverShow={() => { setWelcomeSeen(true); setShowWelcome(false); }}
                 />
             )}
-            {/* Archive modal */}
             {archiveOpen && (
-                <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <div className="card" style={{ width: '90%', maxWidth: 520, maxHeight: '80vh', display: 'flex', flexDirection: 'column' }}>
-                        {/* Header */}
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12, flexShrink: 0 }}>
-                            <h3 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: 7 }}><FolderOpen size={16} /> Archivio Ricette</h3>
-                            <button className="btn btn-outline" onClick={() => { setArchiveOpen(false); setArchiveSearch(''); }} title="Chiudi" style={{ display: 'flex', alignItems: 'center', padding: '4px 8px' }}><X size={14} /></button>
-                        </div>
-                        {/* Search */}
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12, flexShrink: 0, background: 'var(--color-bg)', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-md)', padding: '6px 10px' }}>
-                            <Search size={14} style={{ color: 'var(--color-text-muted)', flexShrink: 0 }} />
-                            <input
-                                type="search"
-                                placeholder="Cerca prodotto…"
-                                value={archiveSearch}
-                                onChange={e => setArchiveSearch(e.target.value)}
-                                autoComplete="off"
-                                style={{ border: 'none', outline: 'none', background: 'transparent', fontSize: 13, flex: 1, color: 'var(--color-text)' }}
-                            />
-                        </div>
-                        {/* List */}
-                        <div style={{ overflowY: 'auto', flex: 1 }}>
-                            {(() => {
-                                const q = archiveSearch.trim().toLowerCase();
-                                const filtered = q ? archiveItems.filter(i => i.name.toLowerCase().includes(q)) : archiveItems;
-                                if (filtered.length === 0) return (
-                                    <div style={{ textAlign: 'center', padding: '32px 20px', color: 'var(--color-text-muted)' }}>
-                                        <Archive size={36} style={{ opacity: 0.25, marginBottom: 12 }} />
-                                        <div style={{ fontWeight: 600, fontSize: 14, color: 'var(--color-text)', marginBottom: 6 }}>
-                                            {archiveItems.length === 0 ? 'Nessuna ricetta salvata' : 'Nessun risultato'}
-                                        </div>
-                                        <div style={{ fontSize: 13, lineHeight: 1.5 }}>
-                                            {archiveItems.length === 0 ? 'Compila una ricetta e usa "Salva in archivio" per trovarla qui.' : 'Prova con un termine diverso.'}
-                                        </div>
-                                    </div>
-                                );
-                                return filtered.map(item => {
-                                    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- legacy archive shape
-                                    const d = item.data as any;
-                                    const title = d.nome_prodotto || d.productName || item.name || 'Ricetta Senza Nome';
-                                    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- legacy archive shape
-                                    const ingCount = (d.componenti || d.components || []).reduce((s: number, c: any) => s + (c.ingredienti || c.rows || []).length, 0);
-                                    return (
-                                        <div key={item.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', borderBottom: '1px solid var(--color-border)' }}>
-                                            <div>
-                                                <div style={{ fontWeight: 600 }}>{title}</div>
-                                                <div style={{ fontSize: 12, color: 'var(--color-text-muted)' }}>{new Date(item.date).toLocaleDateString('it-IT')} · {ingCount} ingredienti</div>
-                                            </div>
-                                            <div style={{ display: 'flex', gap: 8 }}>
-                                                <button className="btn btn-primary" style={{ fontSize: 12, padding: '4px 10px' }} onClick={() => handleLoad(item)}>Carica</button>
-                                                <button className="btn btn-outline" style={{ fontSize: 12, padding: '4px 10px', color: '#e53e3e', display: 'flex', alignItems: 'center', gap: 5 }} onClick={() => openConfirm({ title: 'Eliminare ricetta', message: `Vuoi eliminare "${title}"? L'azione è irreversibile.`, variant: 'danger', confirmLabel: 'Elimina', onConfirm: () => { closeConfirm(); deleteItem(item.id); } })}><Trash2 size={12} /> Elimina</button>
-                                            </div>
-                                        </div>
-                                    );
-                                });
-                            })()}
-                        </div>
-                        {/* Footer: nuova ricetta */}
-                        <div style={{ borderTop: '1px solid var(--color-border)', paddingTop: 12, marginTop: 12, flexShrink: 0 }}>
-                            <button
-                                className="btn btn-outline"
-                                style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}
-                                onClick={() => { setArchiveOpen(false); setArchiveSearch(''); handleNew(); }}
-                            >
-                                <RotateCcw size={13} /> Nuova ricetta
-                            </button>
-                        </div>
-                    </div>
-                </div>
+                <ArchiveModal
+                    items={archiveItems}
+                    onClose={() => setArchiveOpen(false)}
+                    onLoad={(item) => { handleLoad(item); setArchiveOpen(false); }}
+                    onDelete={deleteItem}
+                    renderItemDetails={(d) => {
+                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                        const data = d as any;
+                        const nome = (data.nome_prodotto || data.productName || '') as string;
+                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                        const ingCount = ((data.componenti || data.components || []) as any[]).reduce((s: number, c: any) => s + ((c.ingredienti || c.rows || []) as any[]).length, 0);
+                        return <><strong>{nome || '—'}</strong>{ingCount > 0 ? ` · ${ingCount} ingredienti` : ''}</>;
+                    }}
+                />
             )}
 
             <div className="calc-outer-shell" style={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - var(--topbar-height, 56px))' }}>
