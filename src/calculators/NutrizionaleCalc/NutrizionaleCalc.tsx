@@ -43,7 +43,7 @@ import {
     type DBIngredient, type RecipeRow, type AdditiveRow, type Component,
     calcNutrients, scaleResult, calcClaims, calcQuid,
 } from '../../engines/nutrizionaleCalcEngine';
-import { ALLERGEN_FIELDS, CROSS_FIELDS, ADDITIVI_CATEGORIE, ADDITIVI_SPECIFICI } from './shared/constants';
+import { ALLERGEN_FIELDS, CROSS_FIELDS, ADDITIVI_CATEGORIE, ADDITIVI_SPECIFICI, collectAllergenLabels } from './shared/constants';
 import { writeBridge, readBridge, buildDesktopDraft } from './sessionBridge';
 import { InfoTooltip } from './InfoTooltip';
 import { TabCanada } from './TabCanada';
@@ -357,18 +357,14 @@ export function NutrizionaleCalc() {
     }, [per100g, specificGravity]);
 
     // Allergens
-    const presentAllergens = useMemo(() => {
-        const set = new Set<string>();
-        allRows.forEach(({ ing }) => ALLERGEN_FIELDS.forEach(({ key, label }) => { if (ing[key]) set.add(label); }));
-        return [...set];
-    }, [allRows]);
-    const crossAllergens = useMemo(() => {
-        const set = new Set<string>();
-        allRows.forEach(({ ing }) => CROSS_FIELDS.forEach(({ key, label }) => {
-            if (ing[key] && !presentAllergens.includes(label)) set.add(label);
-        }));
-        return [...set];
-    }, [allRows, presentAllergens]);
+    const presentAllergens = useMemo(
+        () => collectAllergenLabels(allRows.map(r => r.ing), ALLERGEN_FIELDS),
+        [allRows],
+    );
+    const crossAllergens = useMemo(
+        () => collectAllergenLabels(allRows.map(r => r.ing), CROSS_FIELDS, presentAllergens),
+        [allRows, presentAllergens],
+    );
 
 
     // Component modifiers

@@ -25,7 +25,7 @@ import {
     type DBIngredient, type Component, type CalcResult,
     calcNutrients, calcClaims, calcQuid,
 } from '../../engines/nutrizionaleCalcEngine';
-import { ALLERGEN_FIELDS, CROSS_FIELDS } from '../NutrizionaleCalc/shared/constants';
+import { ALLERGEN_FIELDS, CROSS_FIELDS, collectAllergenLabels } from '../NutrizionaleCalc/shared/constants';
 import type { ArchiveData } from '../NutrizionaleCalc/NutrizionaleCalc';
 import { TabUE, DEFAULT_OPTIONALS, type SelectedOptionals, rUE_energy, rUE_macro, rUE_sat, rUE_sale } from '../NutrizionaleCalc/TabUE';
 import { rAU_kj, rAU_kcal, rAU_g1, rAU_mg, rArabi_energy, rArabi_g, rArabi_mg } from '../../utils/nutritionalRounding';
@@ -986,18 +986,14 @@ export function EtichetteCalc() {
         () => loadedComponents.flatMap(c => c.rows.map(r => ({ ing: r.ing }))),
         [loadedComponents]
     );
-    const presentAllergens = useMemo(() => {
-        const set2 = new Set<string>();
-        allRowsForAllergens.forEach(({ ing }) => ALLERGEN_FIELDS.forEach(({ key, label }) => { if (ing[key]) set2.add(label); }));
-        return [...set2];
-    }, [allRowsForAllergens]);
-    const crossAllergensList = useMemo(() => {
-        const set2 = new Set<string>();
-        allRowsForAllergens.forEach(({ ing }) => CROSS_FIELDS.forEach(({ key, label }) => {
-            if (ing[key] && !presentAllergens.includes(label)) set2.add(label);
-        }));
-        return [...set2];
-    }, [allRowsForAllergens, presentAllergens]);
+    const presentAllergens = useMemo(
+        () => collectAllergenLabels(allRowsForAllergens.map(r => r.ing), ALLERGEN_FIELDS),
+        [allRowsForAllergens],
+    );
+    const crossAllergensList = useMemo(
+        () => collectAllergenLabels(allRowsForAllergens.map(r => r.ing), CROSS_FIELDS, presentAllergens),
+        [allRowsForAllergens, presentAllergens],
+    );
     // M2 — unione fornitore (calcolato) + stabilimento utente (selezione manuale in
     // data.facilityAllergens), come fa l'Excel (`e. UE!T22 = CONCAT(T24:DB26)`). Mai un
     // allergene già dichiarato "presente" (sarebbe ridondante/fuorviante come traccia).

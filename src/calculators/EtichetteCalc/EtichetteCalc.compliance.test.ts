@@ -14,8 +14,8 @@ import {
     shouldUseTwoColumnLayout, HORIZONTAL_TWO_COLUMN_ASPECT_THRESHOLD,
     xHeightMm, ARIAL_X_HEIGHT_RATIO,
 } from './EtichetteCalc';
-import { ALLERGEN_FIELDS, CROSS_FIELDS } from '../NutrizionaleCalc/shared/constants';
-import { calcClaims, ZERO_CALC, type CalcResult } from '../../engines/nutrizionaleCalcEngine';
+import { ALLERGEN_FIELDS, CROSS_FIELDS, ALLERGEN_PARENT, collectAllergenLabels } from '../NutrizionaleCalc/shared/constants';
+import { calcClaims, ZERO_CALC, type CalcResult, type DBIngredient } from '../../engines/nutrizionaleCalcEngine';
 import { PACKAGING_MATERIALS } from './packagingMaterials';
 import type { ArchiveData } from '../NutrizionaleCalc/NutrizionaleCalc';
 
@@ -28,6 +28,47 @@ describe('Reg. (UE) 1169/2011 Art. 21 + All. II — 14 allergeni obbligatori', (
             'all_sesamo', 'all_solfiti', 'all_lupini', 'all_molluschi',
         ];
         for (const k of obbligatori) expect(keys, `manca ${k}`).toContain(k);
+    });
+
+    // ─── E4: voci di dettaglio che trascinano il gruppo All. II ──────────────
+    it('un ingrediente con solo all_grano dichiara anche il gruppo GLUTINE (All. II punto 1)', () => {
+        // Il caso reale: 85 voci su 1065 del DB valorizzano all_grano senza all_glutine.
+        // Prima del fix l'etichetta mostrava solo "GRANO" e ometteva il gruppo obbligatorio.
+        const ing = { nome: 'farina di grano', all_grano: 'SI' } as unknown as DBIngredient;
+        const labels = collectAllergenLabels([ing], ALLERGEN_FIELDS);
+        expect(labels).toContain('GLUTINE');
+        expect(labels).toContain('GRANO'); // il dettaglio resta: indicare il cereale è utile
+    });
+
+    it('un ingrediente con solo all_anacardi dichiara anche FRUTTA A GUSCIO (All. II punto 8)', () => {
+        const ing = { nome: 'anacardi tostati', all_anacardi: 'SI' } as unknown as DBIngredient;
+        const labels = collectAllergenLabels([ing], ALLERGEN_FIELDS);
+        expect(labels).toContain('FRUTTA A GUSCIO');
+        expect(labels).toContain('ANACARDI');
+    });
+
+    it('nessun gruppo inventato per gli allergeni che sono già gruppi di primo livello', () => {
+        const ing = { nome: 'latte', all_latte: 'SI' } as unknown as DBIngredient;
+        expect(collectAllergenLabels([ing], ALLERGEN_FIELDS)).toEqual(['LATTE']);
+    });
+
+    it('le tracce non ripetono un allergene già presente, né il suo gruppo', () => {
+        // GLUTINE già presente come allergene → la traccia cross_grano non deve
+        // riproporre GLUTINE fra le tracce (sarebbe ridondante e fuorviante).
+        const ing = { nome: 'x', cross_grano: 'SI' } as unknown as DBIngredient;
+        const tracce = collectAllergenLabels([ing], CROSS_FIELDS, ['GLUTINE']);
+        expect(tracce).toContain('GRANO');
+        expect(tracce).not.toContain('GLUTINE');
+    });
+
+    it('la mappa dei gruppi copre solo i due casi noti, non introduce gerarchie arbitrarie', () => {
+        expect(Object.keys(ALLERGEN_PARENT).sort()).toEqual(['ANACARDI', 'GRANO']);
+    });
+
+    it('il modal ingrediente personale espone gli stessi campi del DB (incluso il grano)', () => {
+        // Le liste del modal erano ricopiate a mano e avevano perso all_grano/cross_grano.
+        expect(ALLERGEN_FIELDS.map(f => f.key)).toContain('all_grano');
+        expect(CROSS_FIELDS.map(f => f.key)).toContain('cross_grano');
     });
 
     it('highlightAllergens evidenzia sedano/senape/sesamo in MAIUSCOLO (Art. 21: distinguibili dal resto)', () => {
