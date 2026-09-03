@@ -20,8 +20,7 @@ exports[`TabArabi — snapshot rendering > confezione in tazze, liquido (ml) 1`]
         <div
           style="font-size: 18px; font-weight: 400;"
         >
-          8,3
-           servings per container
+          8,3 servings per container
         </div>
         <div
           style="display: flex; justify-content: space-between; align-items: baseline;"
@@ -295,8 +294,7 @@ exports[`TabArabi — snapshot rendering > serving in grammi 1`] = `
         <div
           style="font-size: 18px; font-weight: 400;"
         >
-          8,3
-           servings per container
+          8,3 servings per container
         </div>
         <div
           style="display: flex; justify-content: space-between; align-items: baseline;"
@@ -877,10 +875,154 @@ exports[`TabAustralia — snapshot rendering > senza serving — messaggio place
           <tbody>
             <tr>
               <td
+                style="font-size: 12px; font-weight: 700; color: rgb(0, 0, 0); padding: 8px 10px 2px;"
+              >
+                Energy
+              </td>
+              <td
+                style="font-size: 12px; font-weight: 700; color: rgb(0, 0, 0); padding: 8px 10px 2px; white-space: nowrap;"
+              />
+              <td
+                style="font-size: 12px; font-weight: 700; color: rgb(0, 0, 0); padding: 8px 10px 2px;"
+              />
+              <td
+                style="font-size: 12px; font-weight: 700; color: rgb(0, 0, 0); padding: 8px 10px 2px; white-space: nowrap;"
+              >
+                1063 kJ (254 Cal)
+              </td>
+            </tr>
+            <tr>
+              <td
+                style="font-size: 12px; font-weight: 700; color: rgb(0, 0, 0); padding: 2px 10px;"
+              >
+                Protein
+              </td>
+              <td
+                style="font-size: 12px; font-weight: 700; color: rgb(0, 0, 0); padding: 2px 10px;"
+              />
+              <td
+                style="font-size: 12px; font-weight: 700; color: rgb(0, 0, 0); padding: 2px 10px;"
+              />
+              <td
+                style="font-size: 12px; font-weight: 700; color: rgb(0, 0, 0); padding: 2px 10px;"
+              >
+                18.3 g
+              </td>
+            </tr>
+            <tr>
+              <td
+                style="font-size: 12px; font-weight: 700; color: rgb(0, 0, 0); padding: 2px 10px;"
+              >
+                Fat, total
+              </td>
+              <td
+                style="font-size: 12px; font-weight: 700; color: rgb(0, 0, 0); padding: 2px 10px;"
+              />
+              <td
+                style="font-size: 12px; font-weight: 700; color: rgb(0, 0, 0); padding: 2px 10px;"
+              />
+              <td
+                style="font-size: 12px; font-weight: 700; color: rgb(0, 0, 0); padding: 2px 10px;"
+              >
+                19.5 g
+              </td>
+            </tr>
+            <tr>
+              <td
+                style="font-size: 12px; font-weight: 700; color: rgb(0, 0, 0); padding: 2px 10px 2px 22px;"
+              >
+                - saturated
+              </td>
+              <td
+                style="font-size: 12px; font-weight: 700; color: rgb(0, 0, 0); padding: 2px 10px;"
+              />
+              <td
+                style="font-size: 12px; font-weight: 700; color: rgb(0, 0, 0); padding: 2px 10px;"
+              />
+              <td
+                style="font-size: 12px; font-weight: 700; color: rgb(0, 0, 0); padding: 2px 10px;"
+              >
+                13.2 g
+              </td>
+            </tr>
+            <tr>
+              <td
+                style="font-size: 12px; font-weight: 700; color: rgb(0, 0, 0); padding: 2px 10px;"
+              >
+                Carbohydrate
+              </td>
+              <td
+                style="font-size: 12px; font-weight: 700; color: rgb(0, 0, 0); padding: 2px 10px;"
+              />
+              <td
+                style="font-size: 12px; font-weight: 700; color: rgb(0, 0, 0); padding: 2px 10px;"
+              />
+              <td
+                style="font-size: 12px; font-weight: 700; color: rgb(0, 0, 0); padding: 2px 10px;"
+              >
+                2.1 g
+              </td>
+            </tr>
+            <tr>
+              <td
+                style="font-size: 12px; font-weight: 700; color: rgb(0, 0, 0); padding: 2px 10px 2px 22px;"
+              >
+                - sugars
+              </td>
+              <td
+                style="font-size: 12px; font-weight: 700; color: rgb(0, 0, 0); padding: 2px 10px;"
+              />
+              <td
+                style="font-size: 12px; font-weight: 700; color: rgb(0, 0, 0); padding: 2px 10px;"
+              />
+              <td
+                style="font-size: 12px; font-weight: 700; color: rgb(0, 0, 0); padding: 2px 10px;"
+              >
+                2.1 g
+              </td>
+            </tr>
+            <tr>
+              <td
+                style="font-size: 12px; font-weight: 700; color: rgb(0, 0, 0); padding: 2px 10px;"
+              >
+                Dietary fibre
+              </td>
+              <td
+                style="font-size: 12px; font-weight: 700; color: rgb(0, 0, 0); padding: 2px 10px;"
+              />
+              <td
+                style="font-size: 12px; font-weight: 700; color: rgb(0, 0, 0); padding: 2px 10px;"
+              />
+              <td
+                style="font-size: 12px; font-weight: 700; color: rgb(0, 0, 0); padding: 2px 10px;"
+              >
+                less than 1 g
+              </td>
+            </tr>
+            <tr>
+              <td
+                style="font-size: 12px; font-weight: 700; color: rgb(0, 0, 0); padding: 2px 10px;"
+              >
+                Sodium
+              </td>
+              <td
+                style="font-size: 12px; font-weight: 700; color: rgb(0, 0, 0); padding: 2px 10px;"
+              />
+              <td
+                style="font-size: 12px; font-weight: 700; color: rgb(0, 0, 0); padding: 2px 10px;"
+              />
+              <td
+                style="font-size: 12px; font-weight: 700; color: rgb(0, 0, 0); padding: 2px 10px;"
+              >
+                330 mg
+              </td>
+            </tr>
+            <tr>
+              <td
                 colspan="4"
                 style="padding: 2px 10px; font-size: 12px; font-weight: 700; color: rgb(136, 136, 136);"
               >
-                Inserire il valore serving size sopra per calcolare le quantità per porzione.
+                Inserire il valore serving size sopra per compilare le colonne per porzione.
               </td>
             </tr>
           </tbody>

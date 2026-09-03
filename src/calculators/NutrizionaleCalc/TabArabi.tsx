@@ -117,7 +117,7 @@ export function TabArabi({ p, arabi, servingRef, measure, specificGravity }: {
 
                     {/* Servings per container */}
                     <div style={{ fontSize: 18, fontWeight: 400 }}>
-                        {si.servingsPerContainer} servings per container
+                        {`${si.servingsPerContainer} serving${si.servingsPerContainer === '1' ? '' : 's'} per container`}
                     </div>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
                         <span style={{ fontSize: 16, fontWeight: 900, WebkitTextStroke: '0.4px #000' }}>Serving size</span>
