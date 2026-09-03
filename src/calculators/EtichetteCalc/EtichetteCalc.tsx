@@ -23,15 +23,11 @@ import { InfoTooltip } from '../NutrizionaleCalc/InfoTooltip';
 import { SplitShell } from '../NutrizionaleCalc/SplitShell';
 import {
     type DBIngredient, type Component, type CalcResult,
-    calcNutrients, calcClaims, calcQuid, scaleResult,
+    calcNutrients, calcClaims, calcQuid,
 } from '../../engines/nutrizionaleCalcEngine';
 import { ALLERGEN_FIELDS, CROSS_FIELDS } from '../NutrizionaleCalc/shared/constants';
-import type { ArchiveData, NationTab } from '../NutrizionaleCalc/NutrizionaleCalc';
+import type { ArchiveData } from '../NutrizionaleCalc/NutrizionaleCalc';
 import { TabUE, DEFAULT_OPTIONALS, type SelectedOptionals, rUE_energy, rUE_macro, rUE_sat, rUE_sale } from '../NutrizionaleCalc/TabUE';
-import { TabUSA } from '../NutrizionaleCalc/TabUSA';
-import { TabCanada } from '../NutrizionaleCalc/TabCanada';
-import { TabAustralia } from '../NutrizionaleCalc/TabAustralia';
-import { TabArabi } from '../NutrizionaleCalc/TabArabi';
 import { rAU_kj, rAU_kcal, rAU_g1, rAU_mg, rArabi_energy, rArabi_g, rArabi_mg } from '../../utils/nutritionalRounding';
 import { PACKAGING_MATERIALS } from './packagingMaterials';
 
@@ -733,7 +729,7 @@ function CollapsibleSection({
     const toggle = () => {
         setOpen(v => {
             const next = !v;
-            try { localStorage.setItem(`et_sec_${storageKey}`, next ? '1' : '0'); } catch { }
+            try { localStorage.setItem(`et_sec_${storageKey}`, next ? '1' : '0'); } catch { /* noop */ }
             return next;
         });
     };
@@ -782,7 +778,7 @@ function SubSection({
     const toggle = () => {
         setOpen(v => {
             const next = !v;
-            try { localStorage.setItem(`et_sub_${storageKey}`, next ? '1' : '0'); } catch { }
+            try { localStorage.setItem(`et_sub_${storageKey}`, next ? '1' : '0'); } catch { /* noop */ }
             return next;
         });
     };
@@ -812,8 +808,11 @@ export function EtichetteCalc() {
     const isMobile = useMobile();
     const [data, setData] = useState<LabelData>(defaults);
     const [leftTab, setLeftTab] = useState<'dati' | 'grafica'>('dati');
-    const [mobileTab, setMobileTab] = useState<'dati' | 'anteprima'>('dati');
-    const mobilePanelIndex = mobileTab === 'dati' ? 0 : 1;
+    const [mobileTab, setMobileTab] = useState<'dati' | 'anteprima' | 'grafica' | 'archivio'>('dati');
+    const MOB_TAB_ORDER: Array<'dati' | 'anteprima' | 'grafica' | 'archivio'> = ['dati', 'anteprima', 'grafica', 'archivio'];
+    const mobTabIndex = MOB_TAB_ORDER.indexOf(mobileTab);
+    const swipeStartX = useRef<number | null>(null);
+    const swipeStartY = useRef<number | null>(null);
 
     // Archive state
     const { items: savedLabels, saveItem, deleteItem } = useArchive<LabelData>('aea_archive_etichette', 'etichette');
@@ -1469,17 +1468,21 @@ export function EtichetteCalc() {
     // Usa isNutritionTableOversized (da nutritionMeasureRef.scrollHeight) come segnale.
     // forceMode è in deps così se l'utente torna ad Auto con tabella già oversized,
     // l'effetto si ri-esegue e la cascata parte (isNutritionTableOversized non cambierebbe da solo).
+    // frontSurfaceCm2 limita il downgrade normativo: solo_energia lecita solo <10cm² (Art. 34(3)).
+    // NOTA: React StrictMode in dev esegue gli effetti due volte — questo guard impedisce che
+    // il secondo fire porti semplificata→solo_energia su etichette grandi (>10cm²).
     useEffect(() => {
         if (!isNutritionTableOversized || forceMode !== null) return;
         const mode = autoLabelModeRef.current;
         if (mode === 'completa') {
             setAutoLabelMode('semplificata');
-        } else if (mode === 'semplificata') {
+        } else if (mode === 'semplificata' && frontSurfaceCm2 < 10) {
+            // solo_energia lecita solo per superficie < 10cm² (Art. 34(3) Reg. 1169/2011)
             setAutoLabelMode('solo_energia');
         }
-        // solo_energia è una sola riga → non può eccedere il 55% di nessuna etichetta ragionevole
+        // semplificata è il minimo consentito per superficie >= 10cm²
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [isNutritionTableOversized, forceMode]);
+    }, [isNutritionTableOversized, forceMode, frontSurfaceCm2]);
 
     // px/mm reale del riquadro (inverso di mmPerPx) — fallback a CSS_PX_PER_MM (1:1 fisico)
     // prima che il ResizeObserver misuri, stesso criterio di visualFontScale.
@@ -2921,12 +2924,11 @@ export function EtichetteCalc() {
             )}
 
             {isMobile ? (
-                /* ── Layout mobile: slide a 2 pannelli + bottom tabbar ── */
+                /* ── Layout mobile: slide a 4 pannelli + bottom tabbar (pattern NutrizionaleCalcMobile) ── */
                 <div className="m-slide-wrapper">
                     {/* Barra azioni compatta in cima */}
                     <div style={{ display: 'flex', gap: 8, padding: '8px 12px', borderBottom: '1px solid var(--color-border)', background: 'white', flexShrink: 0, flexWrap: 'wrap' }}>
                         <button type="button" className="btn btn-outline" style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 12 }} onClick={handleNew}><Plus size={12} /> Nuovo</button>
-                        <button type="button" className="btn btn-outline" style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 12 }} onClick={() => setIsArchiveOpen(true)}><Archive size={12} /> Archivio ({savedLabels.length})</button>
                         <button type="button" className="btn btn-outline" style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 12 }} onClick={() => setShowWelcome(true)} aria-label="Apri guida rapida"><BookOpen size={12} /> Guida</button>
                         <button type="button" className="btn btn-accent" style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: 5, fontSize: 12, marginLeft: 'auto' }} onClick={handleSave}>
                             {isDirty && (
@@ -2935,19 +2937,114 @@ export function EtichetteCalc() {
                             <Save size={12} /> {currentId ? 'Salva' : 'Salva'}
                         </button>
                     </div>
-                    {/* Slide container */}
-                    <div className="m-slide-container">
-                        <div className="m-slide-track" style={{ width: '200%', transform: `translateX(-${mobilePanelIndex * 50}%)` }}>
-                            <div className="m-slide-panel" style={{ width: '50%' }}>{leftPanel}</div>
-                            <div className="m-slide-panel" style={{ width: '50%' }}>{rightPanel}</div>
+                    {/* Slide container con swipe */}
+                    <div
+                        className="m-slide-container"
+                        onTouchStart={(e) => {
+                            swipeStartX.current = e.touches[0].clientX;
+                            swipeStartY.current = e.touches[0].clientY;
+                        }}
+                        onTouchEnd={(e) => {
+                            if (swipeStartX.current === null || swipeStartY.current === null) return;
+                            const dx = swipeStartX.current - e.changedTouches[0].clientX;
+                            const dy = swipeStartY.current - e.changedTouches[0].clientY;
+                            swipeStartX.current = null;
+                            swipeStartY.current = null;
+                            if (Math.abs(dx) < 50 || Math.abs(dy) > Math.abs(dx)) return;
+                            const next = dx > 0
+                                ? Math.min(mobTabIndex + 1, MOB_TAB_ORDER.length - 1)
+                                : Math.max(mobTabIndex - 1, 0);
+                            if (next !== mobTabIndex) setMobileTab(MOB_TAB_ORDER[next]);
+                        }}
+                    >
+                        <div className="m-slide-track" style={{ width: '400%', transform: `translateX(-${mobTabIndex * 25}%)` }}>
+                            {/* Panel 0: Dati */}
+                            <div className="m-slide-panel" style={{ width: '25%' }}>{leftPanel}</div>
+                            {/* Panel 1: Anteprima */}
+                            <div className="m-slide-panel" style={{ width: '25%' }}>{rightPanel}</div>
+                            {/* Panel 2: Grafica — export touch-friendly */}
+                            <div className="m-slide-panel" style={{ width: '25%' }}>
+                                <div className="table-panel-inner">
+                                    <div className="table-panel-header">
+                                        <div className="table-panel-header-title">Grafica &amp; Export</div>
+                                    </div>
+                                    <div style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: 12, overflowY: 'auto', flex: 1 }}>
+                                        {!isComplete && (
+                                            <div style={{ fontSize: 13, color: 'var(--color-text-muted)', padding: '8px 0' }}>
+                                                Completa i campi obbligatori per abilitare l'export.
+                                            </div>
+                                        )}
+                                        <button type="button" className="btn btn-outline" disabled={!isComplete} onClick={handlePDF}
+                                            style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, padding: '14px', fontSize: 14 }}
+                                            title={isComplete ? 'Riepilogo dati per consulente/archivio' : `Campi mancanti: ${missingFields.join(', ')}`}
+                                        ><FileText size={18} /> Report PDF</button>
+                                        <button type="button" className="btn btn-accent" disabled={!isComplete || exportingLabel !== null} onClick={handleExportFront}
+                                            style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, padding: '14px', fontSize: 14 }}
+                                        ><ImageDown size={18} /> {exportingLabel === 'front' ? 'Esportazione…' : 'Fronte per stampa'}</button>
+                                        {data.hasBackLabel && (
+                                            <button type="button" className="btn btn-accent" disabled={!isComplete || exportingLabel !== null} onClick={handleExportBack}
+                                                style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, padding: '14px', fontSize: 14 }}
+                                            ><ImageDown size={18} /> {exportingLabel === 'back' ? 'Esportazione…' : 'Retro per stampa'}</button>
+                                        )}
+                                        <button type="button" className="btn btn-outline" disabled={!isComplete || exportingScheda} onClick={handleSchedaPDF}
+                                            style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, padding: '14px', fontSize: 14 }}
+                                        ><FileText size={18} /> {exportingScheda ? 'Esportazione…' : 'Scheda per grafico'}</button>
+                                    </div>
+                                </div>
+                            </div>
+                            {/* Panel 3: Archivio */}
+                            <div className="m-slide-panel" style={{ width: '25%' }}>
+                                <div className="table-panel-inner">
+                                    <div className="table-panel-header">
+                                        <div className="table-panel-header-title">Archivio ({savedLabels.length})</div>
+                                    </div>
+                                    <div style={{ overflowY: 'auto', flex: 1, padding: '8px 12px' }}>
+                                        {savedLabels.length === 0 ? (
+                                            <div style={{ padding: '24px', textAlign: 'center', color: 'var(--color-text-muted)', fontSize: 14 }}>
+                                                Nessuna etichetta salvata
+                                            </div>
+                                        ) : (
+                                            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                                                {savedLabels.map(item => (
+                                                    <div key={item.id} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 12px', background: 'var(--color-bg-elevated, #f8f9fa)', borderRadius: 8, border: item.id === currentId ? '2px solid var(--color-accent)' : '1px solid var(--color-border)' }}>
+                                                        <div style={{ flex: 1, minWidth: 0 }}>
+                                                            <div style={{ fontWeight: 600, fontSize: 14, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.name}</div>
+                                                            <div style={{ fontSize: 12, color: 'var(--color-text-muted)' }}>{new Date(item.date).toLocaleDateString('it-IT')}</div>
+                                                        </div>
+                                                        <button type="button" className="btn btn-outline" style={{ fontSize: 12, padding: '5px 10px', flexShrink: 0 }}
+                                                            onClick={() => { handleLoad(item); setMobileTab('dati'); }}
+                                                        >Carica</button>
+                                                        <button type="button" className="btn btn-outline" style={{ fontSize: 12, padding: '5px 10px', flexShrink: 0, color: 'var(--color-error, #dc2626)' }}
+                                                            onClick={() => openConfirm({
+                                                                title: 'Elimina etichetta',
+                                                                message: `Eliminare "${item.name}"?`,
+                                                                variant: 'danger',
+                                                                confirmLabel: 'Elimina',
+                                                                onConfirm: () => { closeConfirm(); deleteItem(item.id); },
+                                                            })}
+                                                        >✕</button>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )}
+                                    </div>
+                                    <div style={{ padding: '12px', borderTop: '1px solid var(--color-border)', flexShrink: 0 }}>
+                                        <button type="button" className="btn btn-outline" style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }} onClick={handleNew}>
+                                            <Plus size={14} /> Nuova etichetta
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
-                    {/* Bottom section tabbar */}
+                    {/* Bottom section tabbar — 4 tab */}
                     <nav className="m-section-tabbar" role="tablist" aria-label="Sezioni etichetta">
                         {([
-                            { id: 'dati', label: 'Dati', icon: <FileText size={22} /> },
-                            { id: 'anteprima', label: 'Anteprima', icon: <Eye size={22} /> },
-                        ] as { id: 'dati' | 'anteprima'; label: string; icon: ReactNode }[]).map(tab => {
+                            { id: 'dati',      label: 'Dati',      icon: <FileText size={21} /> },
+                            { id: 'anteprima', label: 'Anteprima', icon: <Eye size={21} /> },
+                            { id: 'grafica',   label: 'Grafica',   icon: <ImageDown size={21} /> },
+                            { id: 'archivio',  label: 'Archivio',  icon: <Archive size={21} /> },
+                        ] as { id: 'dati' | 'anteprima' | 'grafica' | 'archivio'; label: string; icon: ReactNode }[]).map(tab => {
                             const isActive = mobileTab === tab.id;
                             return (
                                 <button

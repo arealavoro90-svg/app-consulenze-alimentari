@@ -350,7 +350,7 @@ function ComponentCard({
                         <>
                             {/* Contenitore bordato unico, come la lista ingredienti desktop */}
                             <div style={{ border: '1px solid var(--color-border)', borderRadius: 'var(--radius-md)', overflow: 'hidden', marginBottom: 6 }}>
-                                {comp.rows.map((row, rowIdx) => (
+                                {comp.rows.map((row, _rowIdx) => (
                                     <RecipeRowItem
                                         key={row.id}
                                         row={row}
