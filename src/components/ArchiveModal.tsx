@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Archive, X, Search, Calendar, Trash2 } from 'lucide-react';
 import type { ArchiveItem } from '../hooks/useArchive';
 import { ConfirmDialog } from './ui/ConfirmDialog';
 
@@ -31,16 +32,22 @@ export function ArchiveModal<T>({
             }}>
                 <div className="card" style={{ width: '100%', maxWidth: 'min(600px, calc(100vw - 32px))', maxHeight: '85vh', display: 'flex', flexDirection: 'column' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-                        <h2 style={{ margin: 0 }}>📂 Archivio</h2>
-                        <button className="btn btn-outline" onClick={onClose} style={{ padding: '6px 12px' }}>✕ Chiudi</button>
+                        <h2 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
+                            <Archive size={20} /> Archivio
+                        </h2>
+                        <button className="btn btn-outline" onClick={onClose} style={{ padding: '6px 12px', display: 'flex', alignItems: 'center', gap: 6 }}>
+                            <X size={14} /> Chiudi
+                        </button>
                     </div>
 
-                    <div className="form-field" style={{ marginBottom: 20 }}>
+                    <div className="form-field" style={{ marginBottom: 20, position: 'relative' }}>
+                        <Search size={14} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: 'var(--color-text-muted)', pointerEvents: 'none' }} />
                         <input
                             type="text"
-                            placeholder="🔍 Cerca per nome..."
+                            placeholder="Cerca per nome..."
                             value={search}
                             onChange={(e) => setSearch(e.target.value)}
+                            style={{ paddingLeft: 32 }}
                         />
                     </div>
 
@@ -66,8 +73,9 @@ export function ArchiveModal<T>({
                                                     <span style={{ marginLeft: 8, fontSize: 10, background: 'var(--color-accent)', color: 'white', padding: '2px 6px', borderRadius: 4 }}>ATTUALE</span>
                                                 )}
                                             </div>
-                                            <div style={{ fontSize: 12, color: 'var(--color-text-muted)', marginTop: 4, marginBottom: renderItemDetails ? 8 : 0 }}>
-                                                🗓️ {new Date(item.date).toLocaleDateString('it-IT', { hour: '2-digit', minute: '2-digit' })}
+                                            <div style={{ fontSize: 12, color: 'var(--color-text-muted)', marginTop: 4, marginBottom: renderItemDetails ? 8 : 0, display: 'flex', alignItems: 'center', gap: 4 }}>
+                                                <Calendar size={11} />
+                                                {new Date(item.date).toLocaleDateString('it-IT', { hour: '2-digit', minute: '2-digit' })}
                                             </div>
                                             {renderItemDetails && (
                                                 <div style={{ fontSize: 12, color: 'var(--color-text-muted)' }}>
@@ -85,10 +93,10 @@ export function ArchiveModal<T>({
                                             </button>
                                             <button
                                                 className="btn btn-danger"
-                                                style={{ padding: '6px 12px', fontSize: 12 }}
+                                                style={{ padding: '6px 12px', fontSize: 12, display: 'flex', alignItems: 'center' }}
                                                 onClick={() => setPendingDelete({ id: item.id, name: item.name || 'Senza Nome' })}
                                             >
-                                                🗑️
+                                                <Trash2 size={14} />
                                             </button>
                                         </div>
                                     </div>

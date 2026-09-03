@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { useEffect, useMemo, useRef, useState, useCallback, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import {
     Plus, Archive, BookOpen, Save, Sparkles, ImageDown,
@@ -34,6 +34,13 @@ import { PACKAGING_MATERIALS } from './packagingMaterials';
 /** Placeholder discreto per campo vuoto nell'anteprima live (mai più gated da un bottone). */
 function ph(val: string, placeholder: string) {
     return val ? val : <span style={{ opacity: 0.45, fontStyle: 'italic' }}>{placeholder}</span>;
+}
+
+/** Se il valore è un numero puro (es. "400"), appende l'unità (es. "400 g"). Invariante altrimenti. */
+function appendUnit(value: string, unit: string): string {
+    const t = value.trim();
+    if (t && /^\d+([.,]\d+)?$/.test(t)) return `${t} ${unit}`;
+    return value;
 }
 
 // La tabella nutrizionale scende di formato (pieno→compatto) fino a NATION_MAX_STEP, ma se anche
@@ -321,6 +328,12 @@ interface LabelData {
     codeScale: number;
     codePosX: number;
     codePosY: number;
+    // QR aggiuntivo — può coesistere con barcode/ean13
+    qrEnabled: boolean;
+    qrValue: string;
+    qrScale: number;
+    qrPosX: number;
+    qrPosY: number;
     // Retro etichetta — opzionale, solo se il fronte non basta (Art. 13(5) Reg. 1169/2011:
     // denominazione e peso netto restano SEMPRE sul fronte, non spostabili). Dimensioni fisiche
     // indipendenti dal fronte (spesso uguali, ma il retro può essere più grande per la tabella).
@@ -382,6 +395,11 @@ const defaults: LabelData = {
     codeScale: 100,
     codePosX: 85,
     codePosY: 88,
+    qrEnabled: false,
+    qrValue: '',
+    qrScale: 100,
+    qrPosX: 15,
+    qrPosY: 88,
     hasBackLabel: false,
     backWidthMm: '100',
     backHeightMm: '150',
@@ -635,76 +653,78 @@ function SliderControl({ label, value, min, max, onChange, unit = '%' }: { label
  * (html2canvas cattura solo il bounding box del contenitore, non lo scroll orizzontale).
  */
 /**
- * Disegna QR code, barcode Code128 o EAN-13 su un canvas — usato in anteprima ed export.
- * `pxPerMm` è il rapporto px/mm REALE del riquadro etichetta che lo ospita (via ResizeObserver
- * nel componente padre): il canvas era prima dimensionato solo dallo slider `scale` in px
- * arbitrari, scollegato dalla dimensione fisica reale del box — su formati piccoli restava più
- * grande del contenitore e veniva tagliato dall'overflow:hidden dell'antenato (bug reale
- * 2026-08-25). Per EAN-13/CODE128 la dimensione rispetta comunque il floor di magnificazione
- * GS1 (80%) — vedi `barcodeMetrics` — quindi può restare più grande del box invece di sforare
- * sotto la soglia di leggibilità: il chiamante mostra un banner in quel caso, il canvas non lo
- * fa da solo.
+ * Renderizza QR code, barcode Code128 o EAN-13.
+ * - QR → canvas (QRCode.toCanvas API nativa)
+ * - EAN-13 / Code128 → SVG vettoriale (JsBarcode su <svg>): la scala avviene ridimensionando
+ *   il viewBox/width/height del SVG intero, NON il parametro `width` di JsBarcode che allarga
+ *   le singole barre distorcendo il simbolo. Risultato: fedele alle spec GS1, nessuna perdita
+ *   di definizione nell'export perché SVG è risoluzione-indipendente.
  */
 function CodeCanvas({ type, value, scale, pxPerMm }: { type: 'qr' | 'barcode' | 'ean13'; value: string; scale: number; pxPerMm: number }) {
+    const svgRef = useRef<SVGSVGElement>(null);
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const [error, setError] = useState('');
 
+    // QR: canvas
     useEffect(() => {
+        if (type !== 'qr') return;
         const canvas = canvasRef.current;
         if (!canvas || !value) return;
-        // eslint-disable-next-line react-hooks/set-state-in-effect -- reset error before async barcode render
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setError('');
-        if (type === 'qr') {
-            // Nessun vincolo GS1 stringente per QR (a differenza di EAN-13/CODE128) — scala
-            // liberamente coi mm reali, lato nominale 20mm a scale=100.
-            const sidePx = Math.round(20 * (scale / 100) * pxPerMm);
-            QRCode.toCanvas(canvas, value, { width: sidePx, margin: 0 })
-                .catch(() => setError('Valore non valido per QR'));
-        } else if (type === 'ean13') {
-            if (!/^\d{12,13}$/.test(value)) {
-                setError('EAN-13 richiede 12 o 13 cifre numeriche');
-                return;
+        const sidePx = Math.round(20 * (scale / 100) * pxPerMm);
+        QRCode.toCanvas(canvas, value, { width: sidePx, margin: 0 })
+            .catch(() => setError('Valore non valido per QR'));
+    }, [type, value, scale, pxPerMm]);
+
+    // EAN-13 / Code128: SVG — renderizza con width=1 (1px per modulo base) per avere le
+    // proporzioni native del simbolo, poi imposta viewBox da quelle dimensioni e sovrascrive
+    // width/height con i px target calcolati da barcodeMetrics. Scaling uniforme sull'intero
+    // simbolo, senza toccare la larghezza delle singole barre.
+    useEffect(() => {
+        if (type === 'qr') return;
+        const svg = svgRef.current;
+        if (!svg || !value) return;
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        setError('');
+        if (type === 'ean13' && !/^\d{12,13}$/.test(value)) {
+            setError('EAN-13 richiede 12 o 13 cifre numeriche');
+            return;
+        }
+        const m = barcodeMetrics(scale, pxPerMm);
+        try {
+            JsBarcode(svg, value, {
+                format: type === 'ean13' ? 'EAN13' : 'CODE128',
+                width: 1,
+                height: 50,
+                displayValue: true,
+                fontSize: 9,
+                textMargin: 2,
+                marginTop: 0,
+                marginBottom: 2,
+                marginLeft: type === 'ean13' ? 11 : 2,
+                marginRight: type === 'ean13' ? 7 : 2,
+                background: '#fff',
+                lineColor: '#000',
+            });
+            const nW = parseFloat(svg.getAttribute('width') || '0');
+            const nH = parseFloat(svg.getAttribute('height') || '0');
+            if (nW > 0 && nH > 0) {
+                svg.setAttribute('viewBox', `0 0 ${nW} ${nH}`);
+                svg.setAttribute('width', String(Math.round(m.symbolWidthPx)));
+                // height proporzionale all'aspect ratio naturale del SVG — così il resize
+                // tramite maniglia scala l'intero simbolo uniformemente, non solo la larghezza.
+                svg.setAttribute('height', String(Math.round(m.symbolWidthPx * nH / nW)));
             }
-            const m = barcodeMetrics(scale, pxPerMm);
-            try {
-                JsBarcode(canvas, value, {
-                    format: 'EAN13',
-                    width: m.modulePx,
-                    height: m.barHeightPx,
-                    displayValue: true,
-                    fontSize: 9,
-                    marginTop: 0,
-                    marginBottom: 0,
-                    marginLeft: 11 * m.modulePx,
-                    marginRight: 7 * m.modulePx,
-                });
-            } catch {
-                setError('Codice EAN-13 non valido (check digit errato)');
-            }
-        } else {
-            const m = barcodeMetrics(scale, pxPerMm);
-            try {
-                JsBarcode(canvas, value, {
-                    format: 'CODE128',
-                    width: m.modulePx,
-                    height: m.barHeightPx,
-                    displayValue: true,
-                    fontSize: 9,
-                    marginTop: 0,
-                    marginBottom: 0,
-                    marginLeft: 11 * m.modulePx,
-                    marginRight: 7 * m.modulePx,
-                });
-            } catch {
-                setError('Valore non valido per barcode');
-            }
+        } catch {
+            setError(type === 'ean13' ? 'Codice EAN-13 non valido (check digit errato)' : 'Valore non valido per barcode');
         }
     }, [type, value, scale, pxPerMm]);
 
     if (!value) return null;
     return (
         <div style={{ display: 'inline-block' }}>
-            <canvas ref={canvasRef} />
+            {type === 'qr' ? <canvas ref={canvasRef} /> : <svg ref={svgRef} />}
             {error && <div style={{ fontSize: 9, color: '#c53030' }}>{error}</div>}
         </div>
     );
@@ -730,6 +750,17 @@ function CollapsibleSection({
         } catch { return defaultOpen; }
     });
 
+    useEffect(() => {
+        const handler = (e: Event) => {
+            if ((e as CustomEvent<{ storageKey: string }>).detail?.storageKey === storageKey) {
+                setOpen(true);
+                try { localStorage.setItem(`et_sec_${storageKey}`, '1'); } catch { /* noop */ }
+            }
+        };
+        document.addEventListener('openEtichetteSection', handler);
+        return () => document.removeEventListener('openEtichetteSection', handler);
+    }, [storageKey]);
+
     const toggle = () => {
         setOpen(v => {
             const next = !v;
@@ -739,24 +770,15 @@ function CollapsibleSection({
     };
 
     return (
-        <div className="card" style={{ marginBottom: 16 }}>
-            <button
-                type="button"
-                onClick={toggle}
-                style={{
-                    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                    width: '100%', background: 'none', border: 'none', padding: 0,
-                    cursor: 'pointer', textAlign: 'left',
-                    marginBottom: open ? 16 : 0,
-                }}
-            >
-                <div>
-                    <h3 style={{ fontWeight: 700, margin: 0 }}>{title}</h3>
+        <div className="comp-card" style={{ marginBottom: 10 }}>
+            <div className="comp-card-header" onClick={toggle}>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                    <h3 className="comp-card-title" style={{ margin: 0 }}>{title}</h3>
                     {subtitle && <p className="hint" style={{ margin: '2px 0 0', fontSize: 11 }}>{subtitle}</p>}
                 </div>
-                <ChevronDown size={16} style={{ flexShrink: 0, marginLeft: 8, transform: open ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
-            </button>
-            {open && <div>{children}</div>}
+                <ChevronDown size={14} style={{ flexShrink: 0, marginLeft: 8, transform: open ? 'rotate(0deg)' : 'rotate(-90deg)', transition: 'transform 0.2s', color: 'var(--color-text-muted)', pointerEvents: 'none' }} />
+            </div>
+            {open && <div className="comp-card-body">{children}</div>}
         </div>
     );
 }
@@ -861,6 +883,13 @@ export function EtichetteCalc() {
         nutritionalRecipes.find(r => r.id === data.recipeId);
 
     // Auto-link: se l'utente arriva dal tool nutrizionale senza ricetta collegata, collega l'ultima salvata.
+    useEffect(() => {
+        const el = ingredientsElemRef.current;
+        if (!el) return;
+        el.style.height = 'auto';
+        el.style.height = `${el.scrollHeight}px`;
+    }, [data.ingredients]);
+
     useEffect(() => {
         if (data.recipeId || isDirty || nutritionalRecipes.length === 0) return;
         try {
@@ -1182,16 +1211,29 @@ export function EtichetteCalc() {
     const missingFields = missingFieldDefs.map(f => f.label);
     const isComplete = missingFields.length === 0;
 
-    const focusField = (id: string) => {
+    // Mappa campo → storageKey della CollapsibleSection che lo contiene.
+    // Aggiornare se si sposta un campo in una sezione diversa.
+    const FIELD_SECTION: Record<string, string> = {
+        'et-nome': 'dati-prodotto',
+        'et-produttore': 'dati-prodotto',
+        'et-peso-netto': 'dati-prodotto',
+        'et-ingredienti': 'ingredienti',
+    };
+
+    const focusField = useCallback((id: string) => {
         setLeftTab('dati');
-        // setTimeout invece di requestAnimationFrame: rAF non scatta su tab in background,
-        // setTimeout(0) sì (dopo il render del cambio tab).
+        const sectionKey = FIELD_SECTION[id];
+        if (sectionKey) {
+            document.dispatchEvent(new CustomEvent('openEtichetteSection', { detail: { storageKey: sectionKey } }));
+        }
+        // 60ms: lascia tempo a React di re-renderare la sezione aperta prima di scrollare.
         setTimeout(() => {
             const el = document.getElementById(id);
             el?.focus();
             el?.scrollIntoView({ block: 'center', behavior: 'smooth' });
-        }, 0);
-    };
+        }, 60);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
     const doSaveWithName = async (nameToSave: string) => {
         if (!nameToSave) return;
@@ -1275,11 +1317,20 @@ export function EtichetteCalc() {
     // o importazione diretta in software di stampa etichette) — scala calcolata sul
     // rapporto tra larghezza renderizzata a schermo e larghezza fisica a 300dpi, così
     // l'immagine esportata corrisponde esattamente alle dimensioni mm impostate.
+    // ref-callback: aggiusta altezza al montaggio (quando sezione collassata si apre)
+    // + useEffect aggiusta quando data.ingredients cambia mentre la sezione è già aperta.
+    const ingredientsElemRef = useRef<HTMLTextAreaElement | null>(null);
+    const ingredientsTextareaRef = useCallback((el: HTMLTextAreaElement | null) => {
+        ingredientsElemRef.current = el;
+        if (!el) return;
+        el.style.height = 'auto';
+        el.style.height = `${el.scrollHeight}px`;
+    }, []);
     const labelPreviewRef = useRef<HTMLDivElement>(null);
     const labelBackPreviewRef = useRef<HTMLDivElement>(null);
     const textContainerRef = useRef<HTMLDivElement>(null);
     const dragRef = useRef<{
-        field: 'logo' | 'code';
+        field: 'logo' | 'code' | 'qr';
         containerRect: DOMRect;
         startClientX: number;
         startClientY: number;
@@ -1287,8 +1338,11 @@ export function EtichetteCalc() {
         startPosY: number;
     } | null>(null);
 
-    function handleDragStart(e: React.MouseEvent, field: 'logo' | 'code', curPosX: number, curPosY: number) {
-        const container = textContainerRef.current;
+    function handleDragStart(e: React.MouseEvent, field: 'logo' | 'code' | 'qr', curPosX: number, curPosY: number) {
+        // labelPreviewRef è il contenitore con position:relative che fa da riferimento per tutti
+        // gli elementi draggabili (logo, barcode, qr) — usare textContainerRef era sbagliato perché
+        // il barcode è figlio di labelPreviewRef, non di textContainerRef.
+        const container = labelPreviewRef.current;
         if (!container) return;
         e.preventDefault();
         const rect = container.getBoundingClientRect();
@@ -1305,7 +1359,9 @@ export function EtichetteCalc() {
             const y = Math.max(2, Math.min(98, d.startPosY + dy));
             setData(prev => d.field === 'logo'
                 ? { ...prev, logoPosX: x, logoPosY: y }
-                : { ...prev, codePosX: x, codePosY: y }
+                : d.field === 'qr'
+                    ? { ...prev, qrPosX: x, qrPosY: y }
+                    : { ...prev, codePosX: x, codePosY: y }
             );
         }
 
@@ -1321,9 +1377,103 @@ export function EtichetteCalc() {
         document.addEventListener('mouseup', onUp);
     }
 
+    // Resize diretto sull'elemento nell'anteprima — trascina la maniglia d'angolo per scalare
+    // l'intero simbolo proporzionalmente. Rimpiazza lo slider percentuale nel pannello form.
+    const resizeRef = useRef<{
+        target: 'code' | 'qr';
+        startX: number;
+        initialScale: number;
+        initialWidthPx: number;
+        sign: number; // +1 angoli destra, -1 angoli sinistra
+    } | null>(null);
+
+    function handleResizeStart(
+        e: React.MouseEvent,
+        target: 'code' | 'qr',
+        corner: 'tl' | 'tr' | 'bl' | 'br',
+        initialScale: number,
+        initialWidthPx: number,
+    ) {
+        e.preventDefault();
+        e.stopPropagation();
+        const sign = (corner === 'tr' || corner === 'br') ? 1 : -1;
+        const cursorMap = { tl: 'nw-resize', tr: 'ne-resize', bl: 'sw-resize', br: 'se-resize' };
+        document.body.style.cursor = cursorMap[corner];
+        document.body.style.userSelect = 'none';
+        resizeRef.current = { target, startX: e.clientX, initialScale, initialWidthPx, sign };
+
+        function onMove(ev: MouseEvent) {
+            const r = resizeRef.current;
+            if (!r || r.initialWidthPx <= 0) return;
+            const dx = (ev.clientX - r.startX) * r.sign;
+            const ratio = (r.initialWidthPx + dx) / r.initialWidthPx;
+            if (r.target === 'code') {
+                const newScale = Math.max(BARCODE_MIN_MAGNIFICATION * 100, Math.min(BARCODE_MAX_MAGNIFICATION * 100, r.initialScale * ratio));
+                setData(prev => ({ ...prev, codeScale: newScale }));
+            } else {
+                const newScale = Math.max(20, Math.min(500, r.initialScale * ratio));
+                setData(prev => ({ ...prev, qrScale: newScale }));
+            }
+        }
+
+        function onUp() {
+            resizeRef.current = null;
+            document.body.style.cursor = '';
+            document.body.style.userSelect = '';
+            document.removeEventListener('mousemove', onMove);
+            document.removeEventListener('mouseup', onUp);
+        }
+
+        document.addEventListener('mousemove', onMove);
+        document.addEventListener('mouseup', onUp);
+    }
+
     const [exportingLabel, setExportingLabel] = useState<'front' | 'back' | null>(null);
     const PRINT_DPI = 300;
     const mmToPx = (mm: number, dpi: number) => (mm * dpi) / 25.4;
+
+    // Inietta il chunk pHYs in un PNG base64 per impostare il DPI fisico corretto.
+    // Senza questo i software di impaginazione (Illustrator, Affinity, InDesign) aprono il PNG
+    // a 72/96dpi e riportano dimensioni fisiche errate rispetto ai mm impostati nell'etichetta.
+    // Il chunk pHYs va subito dopo IHDR (offset 33 fisso in ogni PNG valido).
+    function pngCrc32(data: Uint8Array): number {
+        const tbl = new Uint32Array(256);
+        for (let i = 0; i < 256; i++) {
+            let c = i;
+            for (let j = 0; j < 8; j++) c = (c & 1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1);
+            tbl[i] = c;
+        }
+        let crc = 0xFFFFFFFF;
+        for (const b of data) crc = tbl[(crc ^ b) & 0xFF] ^ (crc >>> 8);
+        return (crc ^ 0xFFFFFFFF) >>> 0;
+    }
+
+    function injectPngDpi(dataUrl: string, dpi: number): string {
+        const base64 = dataUrl.split(',')[1];
+        const binary = atob(base64);
+        const src = new Uint8Array(binary.length);
+        for (let i = 0; i < binary.length; i++) src[i] = binary.charCodeAt(i);
+
+        const ppm = Math.round(dpi * 39.3701); // pixel per metro
+        const phys = new Uint8Array(21);        // 4(len)+4(type)+9(data)+4(crc)
+        const dv = new DataView(phys.buffer);
+        dv.setUint32(0, 9);
+        phys[4] = 0x70; phys[5] = 0x48; phys[6] = 0x59; phys[7] = 0x73; // 'pHYs'
+        dv.setUint32(8, ppm);
+        dv.setUint32(12, ppm);
+        phys[16] = 1; // unità = metro
+        dv.setUint32(17, pngCrc32(phys.slice(4, 17)));
+
+        const IHDR_END = 33; // 8 firma + 25 IHDR = sempre 33
+        const out = new Uint8Array(src.length + 21);
+        out.set(src.slice(0, IHDR_END));
+        out.set(phys, IHDR_END);
+        out.set(src.slice(IHDR_END), IHDR_END + 21);
+
+        let str = '';
+        for (let i = 0; i < out.length; i++) str += String.fromCharCode(out[i]);
+        return 'data:image/png;base64,' + btoa(str);
+    }
 
     // Esporta un lato (fronte o retro) come PNG a dimensione fisica reale — usata da entrambi
     // i bottoni, unica differenza è quale ref/dimensioni/suffisso passare.
@@ -1349,9 +1499,9 @@ export function EtichetteCalc() {
             const fileName = `${(data.productName || 'etichetta').replace(/[^a-z0-9]+/gi, '_').toLowerCase()}_${suffix}.png`;
             const link = document.createElement('a');
             link.download = fileName;
-            link.href = canvas.toDataURL('image/png');
+            link.href = injectPngDpi(canvas.toDataURL('image/png'), PRINT_DPI);
             link.click();
-            toast.success(`Etichetta ${face === 'front' ? 'fronte' : 'retro'} esportata — dimensione reale, pronta per software di stampa.`);
+            toast.success(`Etichetta ${face === 'front' ? 'fronte' : 'retro'} esportata — ${PRINT_DPI}dpi, dimensioni fisiche corrette per software di stampa.`);
         } catch {
             toast.error("Errore durante l'esportazione dell'etichetta.");
         } finally {
@@ -1775,13 +1925,15 @@ export function EtichetteCalc() {
                         <div className="form-row">
                             <div className="form-field">
                                 <label htmlFor="et-peso-netto">Quantità netta *</label>
-                                <input id="et-peso-netto" type="text" value={data.netWeight} onChange={(e) => set('netWeight', e.target.value)} placeholder="es. 400 g" />
+                                <input id="et-peso-netto" type="text" value={data.netWeight} onChange={(e) => set('netWeight', e.target.value)} onBlur={(e) => set('netWeight', appendUnit(e.target.value, 'g'))} placeholder="es. 400 g" />
                                 {data.additionalNetWeights.map((v, i) => (
                                     <div key={i} style={{ display: 'flex', gap: 6, marginTop: 6 }}>
                                         <input type="text" value={v.netWeight} placeholder="es. 250 g" aria-label={`Quantità netta aggiuntiva ${i + 1}`}
-                                            onChange={(e) => set('additionalNetWeights', data.additionalNetWeights.map((x, xi) => xi !== i ? x : { ...x, netWeight: e.target.value }))} />
+                                            onChange={(e) => set('additionalNetWeights', data.additionalNetWeights.map((x, xi) => xi !== i ? x : { ...x, netWeight: e.target.value }))}
+                                            onBlur={(e) => set('additionalNetWeights', data.additionalNetWeights.map((x, xi) => xi !== i ? x : { ...x, netWeight: appendUnit(e.target.value, 'g') }))} />
                                         <input type="text" value={v.drainedWeight} placeholder="sgocciolato (facoltativo)" aria-label={`Peso sgocciolato aggiuntivo ${i + 1}`}
-                                            onChange={(e) => set('additionalNetWeights', data.additionalNetWeights.map((x, xi) => xi !== i ? x : { ...x, drainedWeight: e.target.value }))} />
+                                            onChange={(e) => set('additionalNetWeights', data.additionalNetWeights.map((x, xi) => xi !== i ? x : { ...x, drainedWeight: e.target.value }))}
+                                            onBlur={(e) => set('additionalNetWeights', data.additionalNetWeights.map((x, xi) => xi !== i ? x : { ...x, drainedWeight: appendUnit(e.target.value, 'g') }))} />
                                         <button type="button" className="btn btn-outline" aria-label={`Rimuovi formato ${i + 1}`}
                                             onClick={() => set('additionalNetWeights', data.additionalNetWeights.filter((_, xi) => xi !== i))}><X size={13} /></button>
                                     </div>
@@ -1809,33 +1961,37 @@ export function EtichetteCalc() {
                                     Peso sgocciolato
                                     <InfoTooltip text="Obbligatorio quando il prodotto è immerso in un liquido di governo (acqua, olio, salamoia, sciroppo...) — es. tonno in olio, olive in salamoia. Lascia vuoto se non applicabile." />
                                 </label>
-                                <input id="et-sgocciolato" type="text" value={data.drainedWeight} onChange={(e) => set('drainedWeight', e.target.value)} placeholder="es. 240 g (se in liquido di governo)" />
+                                <input id="et-sgocciolato" type="text" value={data.drainedWeight} onChange={(e) => set('drainedWeight', e.target.value)} onBlur={(e) => set('drainedWeight', appendUnit(e.target.value, 'g'))} placeholder="es. 240 g (se in liquido di governo)" />
                             </div>
                             <div className="form-field">
                                 <label htmlFor="et-alcol" style={{ display: 'flex', alignItems: 'center' }}>
                                     Titolo alcolometrico
                                     <InfoTooltip text="Obbligatorio per legge se il prodotto supera 1,2% vol di alcol (Art. 9(1)(k) Reg. 1169/2011). Lascia vuoto per prodotti non alcolici." />
                                 </label>
-                                <input id="et-alcol" type="text" value={data.alcoholPercent} onChange={(e) => set('alcoholPercent', e.target.value)} placeholder="es. 12% vol" />
+                                <input id="et-alcol" type="text" value={data.alcoholPercent} onChange={(e) => set('alcoholPercent', e.target.value)} onBlur={(e) => set('alcoholPercent', appendUnit(e.target.value, '% vol'))} placeholder="es. 12% vol" />
                                 {Number(String(data.alcoholPercent).replace(',', '.').replace(/[^\d.]/g, '')) > 1.2 && (
                                     <ValidationError type="info" message="Sopra 1,2% vol il titolo alcolometrico è obbligatorio in etichetta — verrà incluso nell'anteprima." />
                                 )}
                             </div>
                         </div>
 
-                        <SubSection title="Elenco ingredienti" storageKey="ingredienti" defaultOpen={true}>
+                        </CollapsibleSection>
+
+                        <CollapsibleSection title="Ingredienti ed allergeni" storageKey="ingredienti" defaultOpen={true}>
                         <div className="form-field">
                             <label htmlFor="et-ingredienti" style={{ display: 'flex', alignItems: 'center' }}>
                                 Elenco ingredienti * (in ordine decrescente di peso)
                                 <InfoTooltip text="Il QUID (QUantitative Ingredient Declaration) è la percentuale degli ingredienti evidenziati in denominazione o immagine, obbligatoria quando rilevante. Con una ricetta collegata viene calcolato automaticamente." />
                             </label>
                             <textarea
+                                ref={ingredientsTextareaRef}
                                 id="et-ingredienti"
                                 rows={3}
                                 value={data.ingredients}
                                 onChange={(e) => set('ingredients', e.target.value)}
                                 placeholder="es. Pomodori 85%, succo di pomodoro, sale marino"
                                 className="et-textarea"
+                                style={{ overflowY: 'hidden', resize: 'none' }}
                             />
                             <span className="hint">Gli allergeni devono essere evidenziati (es. in MAIUSCOLO o corsivo)</span>
                             {allergenIssues.length > 0 && (
@@ -1876,9 +2032,9 @@ export function EtichetteCalc() {
                                 </div>
                             </div>
                         </div>
-                        </SubSection>
+                        </CollapsibleSection>
 
-                        <SubSection title="Claims nutrizionali" storageKey="claims" defaultOpen={true}>
+                        <CollapsibleSection title="Claims nutrizionali" storageKey="claims" defaultOpen={true}>
                         {allClaims.length > 0 ? (
                             <div className="form-field">
                                 <label style={{ display: 'flex', alignItems: 'center' }}>
@@ -1914,9 +2070,9 @@ export function EtichetteCalc() {
                         ) : (
                             <p className="hint">Nessun claim disponibile — collega una ricetta con valori nutrizionali calcolati.</p>
                         )}
-                        </SubSection>
+                        </CollapsibleSection>
 
-                        <SubSection title="Conservazione e scadenza" storageKey="conservazione" defaultOpen={true}>
+                        <CollapsibleSection title="Conservazione e scadenza" storageKey="conservazione" defaultOpen={true}>
                         <div className="form-field">
                             <label htmlFor="et-conservazione">Modalità di conservazione</label>
                             <input id="et-conservazione" type="text" value={data.storageConditions} onChange={(e) => set('storageConditions', e.target.value)} placeholder="es. Conservare in luogo fresco e asciutto" />
@@ -1962,9 +2118,9 @@ export function EtichetteCalc() {
                                 <ValidationError type="info" message="TMC con giorno e mese: il lotto non è obbligatorio per legge (Dir. 2011/91/UE Art. 1(3)) — resta consigliato per rintracciabilità interna." />
                             )}
                         </div>
-                        </SubSection>
+                        </CollapsibleSection>
 
-                        <SubSection title="Raccolta differenziata imballi" storageKey="raccolta" defaultOpen={true}>
+                        <CollapsibleSection title="Raccolta differenziata imballi" storageKey="raccolta" defaultOpen={true}>
                         <div className="form-field">
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
                                 <label style={{ margin: 0, display: 'flex', alignItems: 'center' }}>
@@ -2003,8 +2159,6 @@ export function EtichetteCalc() {
                             ))}
                             {data.imballi.length > 0 && <span className="hint">Codice materiale suggerito dall'elenco (Decisione 97/129/CE) — scegli dal menu per compilare in automatico la raccolta corretta. Dicitura fissa in etichetta: "Verifica le disposizioni del tuo Comune".</span>}
                         </div>
-                        </SubSection>
-
                         </CollapsibleSection>
 
                         <CollapsibleSection title="Tabella nutrizionale" storageKey="tabella-nutrizionale" defaultOpen={true}>
@@ -2163,7 +2317,37 @@ export function EtichetteCalc() {
                                             <ValidationError type="warning" message="Servono 12 o 13 cifre numeriche per un EAN-13 valido." />
                                         )}
                                     </div>
-                                    <SliderControl label="Dimensione codice" value={data.codeScale} min={50} max={200} onChange={(v) => set('codeScale', v)} />
+                                </>
+                            )}
+                        </div>
+
+                        {/* QR aggiuntivo — può coesistere con barcode/ean13 */}
+                        <div style={{ borderTop: '1px solid var(--color-border)', paddingTop: 20, marginTop: 10 }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
+                                <input
+                                    id="et-qr-enabled"
+                                    type="checkbox"
+                                    checked={data.qrEnabled}
+                                    onChange={(e) => set('qrEnabled', e.target.checked)}
+                                    style={{ width: 16, height: 16, cursor: 'pointer' }}
+                                />
+                                <label htmlFor="et-qr-enabled" style={{ cursor: 'pointer', fontWeight: 600 }}>
+                                    QR aggiuntivo
+                                    <InfoTooltip text="Aggiunge un QR code separato sull'etichetta, posizionabile liberamente. Può coesistere con barcode o EAN-13 — utile per link a scheda prodotto, sito o info extra." />
+                                </label>
+                            </div>
+                            {data.qrEnabled && (
+                                <>
+                                    <div className="form-field">
+                                        <label htmlFor="et-qr-value">Contenuto QR (link o testo)</label>
+                                        <input
+                                            id="et-qr-value"
+                                            type="text"
+                                            value={data.qrValue}
+                                            onChange={(e) => set('qrValue', e.target.value)}
+                                            placeholder="es. https://tuosito.it/prodotto"
+                                        />
+                                    </div>
                                 </>
                             )}
                         </div>
@@ -2370,6 +2554,11 @@ export function EtichetteCalc() {
                                         boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
                                         border: '1px solid #ccc',
                                         overflow: 'hidden',
+                                        // position:relative necessario: barcode e qr sono figli con
+                                        // position:absolute e devono posizionarsi rispetto a questo
+                                        // riquadro fisico (non a un antenato esterno) — senza di questo
+                                        // il drag e l'export html2canvas non funzionavano correttamente.
+                                        position: 'relative',
                                         display: 'flex',
                                         // Opzione B (framework responsive 2026-08-25): su formati orizzontali
                                         // larghi (aspect ratio > soglia) testo e tabella+imballi si affiancano
@@ -2535,7 +2724,7 @@ export function EtichetteCalc() {
                                             {onFront('imballi') && data.imballi.length > 0 && renderImballiList()}
                                         </div>
                                     )}
-                                        {/* Barcode — draggabile direttamente sull'etichetta */}
+                                        {/* Barcode — draggabile + maniglia resize angolo */}
                                         {showCodeFront && data.codeType !== 'none' && (
                                             <div
                                                 style={{
@@ -2550,6 +2739,59 @@ export function EtichetteCalc() {
                                             >
                                                 <div data-html2canvas-ignore="true" style={{ position: 'absolute', inset: 0, border: '1.5px dashed rgba(99,102,241,0.55)', borderRadius: 3, pointerEvents: 'none' }} />
                                                 <CodeCanvas type={data.codeType} value={data.codeValue} scale={data.codeScale} pxPerMm={pxPerMmFront} />
+                                                {/* 4 maniglie resize — una per angolo */}
+                                                {(['tl','tr','bl','br'] as const).map(corner => (
+                                                    <div key={corner} data-html2canvas-ignore="true"
+                                                        style={{
+                                                            position: 'absolute',
+                                                            ...(corner.includes('t') ? { top: -5 } : { bottom: -5 }),
+                                                            ...(corner.includes('l') ? { left: -5 } : { right: -5 }),
+                                                            width: 11, height: 11,
+                                                            background: 'rgba(99,102,241,0.9)',
+                                                            border: '2px solid #fff',
+                                                            borderRadius: 2,
+                                                            cursor: `${corner[0] === 't' ? 'n' : 's'}${corner[1] === 'l' ? 'w' : 'e'}-resize`,
+                                                            zIndex: 11,
+                                                            boxShadow: '0 1px 3px rgba(0,0,0,0.3)',
+                                                        }}
+                                                        onMouseDown={(e) => handleResizeStart(e, 'code', corner, data.codeScale, codeMetricsFront.symbolWidthPx)}
+                                                    />
+                                                ))}
+                                            </div>
+                                        )}
+                                        {/* QR aggiuntivo — indipendente dal barcode, draggabile + resize */}
+                                        {data.qrEnabled && !!data.qrValue && onFront('code') && (
+                                            <div
+                                                style={{
+                                                    position: 'absolute',
+                                                    left: `${data.qrPosX}%`,
+                                                    top: `${data.qrPosY}%`,
+                                                    transform: 'translate(-50%, -50%)',
+                                                    cursor: 'grab',
+                                                    zIndex: 9,
+                                                }}
+                                                onMouseDown={(e) => handleDragStart(e, 'qr', data.qrPosX, data.qrPosY)}
+                                            >
+                                                <div data-html2canvas-ignore="true" style={{ position: 'absolute', inset: 0, border: '1.5px dashed rgba(16,185,129,0.6)', borderRadius: 3, pointerEvents: 'none' }} />
+                                                <CodeCanvas type="qr" value={data.qrValue} scale={data.qrScale} pxPerMm={pxPerMmFront} />
+                                                {/* 4 maniglie resize QR */}
+                                                {(['tl','tr','bl','br'] as const).map(corner => (
+                                                    <div key={corner} data-html2canvas-ignore="true"
+                                                        style={{
+                                                            position: 'absolute',
+                                                            ...(corner.includes('t') ? { top: -5 } : { bottom: -5 }),
+                                                            ...(corner.includes('l') ? { left: -5 } : { right: -5 }),
+                                                            width: 11, height: 11,
+                                                            background: 'rgba(16,185,129,0.9)',
+                                                            border: '2px solid #fff',
+                                                            borderRadius: 2,
+                                                            cursor: `${corner[0] === 't' ? 'n' : 's'}${corner[1] === 'l' ? 'w' : 'e'}-resize`,
+                                                            zIndex: 11,
+                                                            boxShadow: '0 1px 3px rgba(0,0,0,0.3)',
+                                                        }}
+                                                        onMouseDown={(e) => handleResizeStart(e, 'qr', corner, data.qrScale, Math.round(20 * (data.qrScale / 100) * pxPerMmFront))}
+                                                    />
+                                                ))}
                                             </div>
                                         )}
                                 </div>
@@ -2799,10 +3041,13 @@ export function EtichetteCalc() {
                             {data.otherWarnings && <div style={{ fontSize: 11 }}>{data.otherWarnings}</div>}
                             <div style={{ fontSize: 11, color: '#555' }}>Scheda etichetta — documento di lavoro per grafico/tipografia</div>
                         </div>
-                        <div style={{ fontSize: 10, color: '#555', textAlign: 'right' }}>
-                            {data.schedaCodice && <div>Codice scheda: <strong>{data.schedaCodice}</strong></div>}
-                            {data.schedaRevisione && <div>Revisione: <strong>{data.schedaRevisione}</strong></div>}
-                            {data.schedaDataRevisione && <div>Data: <strong>{data.schedaDataRevisione}</strong></div>}
+                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 8 }}>
+                            <img src="/aea-logo.png" alt="AEA Consulenze Alimentari" style={{ height: 48, objectFit: 'contain' }} />
+                            <div style={{ fontSize: 10, color: '#555', textAlign: 'right' }}>
+                                {data.schedaCodice && <div>Codice scheda: <strong>{data.schedaCodice}</strong></div>}
+                                {data.schedaRevisione && <div>Revisione: <strong>{data.schedaRevisione}</strong></div>}
+                                {data.schedaDataRevisione && <div>Data: <strong>{data.schedaDataRevisione}</strong></div>}
+                            </div>
                         </div>
                     </div>
 

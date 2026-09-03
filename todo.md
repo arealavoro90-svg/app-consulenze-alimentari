@@ -291,6 +291,22 @@ Obiettivo: NutrizionaleCalcMobile = NutrizionaleCalc al 100%.
 
 ---
 
+## SYNC INGREDIENTI — Database ufficiali
+
+- [x] **SYNC-CREA-1** — `sync_crea` management command (2026-09-03): scraper CREA/BDA
+      alimentinutrizione.it, ~900 alimenti 19 categorie. Migrazione `0006_add_crea_fields`.
+      Bug fix `_find_by_name`: esclude CREA già sync dal partial match.
+- [x] **SYNC-CREA-2** — Sync completo in produzione (2026-09-03): 900 alimenti su Neon.
+      Cron mensile GitHub Actions (`sync_ingredients.yml`): ogni 1° del mese 03:00 UTC.
+- [x] **SYNC-USDA-3** — USDA sync in produzione (2026-09-03): 338 ingredienti abbinati.
+      `USDA_API_KEY` + `DATABASE_URL` + `SECRET_KEY` come GitHub Secrets. Automatico.
+- [x] **SYNC-JSON** — `ingredientsDB.json` reimportato in produzione (2026-09-03):
+      322 nuovi + 743 aggiornati. Totale DB: **2.286 ingredienti**.
+- [ ] **SYNC-CNF** — Canada CNF (Canadian Nutrient File): API REST gratuita, `sync_cnf.py` da scrivere.
+- [ ] **SYNC-AUSNUT** — Australia AUSNUT 2011-13: CSV da FSANZ, `import_ausnut.py` da scrivere.
+
+---
+
 ## COMPLETATI
 
 - [x] **S0** — Backend Django collegato al frontend in produzione (2026-07-29). `VITE_API_URL`
