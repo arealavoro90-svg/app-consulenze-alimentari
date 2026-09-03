@@ -45,7 +45,12 @@ function writeLocal<T>(storageKey: string, items: ArchiveItem<T>[]): void {
  */
 export function useArchive<T>(storageKey: string, tool?: string) {
     const { isAuthenticated } = useAuth();
-    const useBackend = !!tool && isAuthenticated;
+    // AUDIT T3 — in mock auth l'utente è finto e non esiste alcuna sessione: ogni chiamata
+    // all'archivio remoto è garantita fallire con 401 e ricadere su localStorage. Saltarla
+    // porta allo stesso risultato senza round-trip inutili né errori in console che
+    // sembrano guasti. Fuori dal mock il comportamento è invariato, fallback 401 incluso.
+    const mockAuth = import.meta.env.DEV && import.meta.env.VITE_DEV_MOCK_AUTH === 'true';
+    const useBackend = !!tool && isAuthenticated && !mockAuth;
 
     const [items, setItems] = useState<ArchiveItem<T>[]>([]);
     const [loading, setLoading] = useState(false);
