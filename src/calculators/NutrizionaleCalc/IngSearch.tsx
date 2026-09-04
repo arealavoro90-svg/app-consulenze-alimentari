@@ -11,14 +11,23 @@ import type { DBIngredient } from '../../engines/nutrizionaleCalcEngine';
 function n(v: unknown): number { const num = Number(v); return isNaN(num) ? 0 : num; }
 
 // ─── Search ───────────────────────────────────────────────────────────────────
+// AUDIT N5 — prima il filtro era `nome.includes(query)` sulla stringa intera: bastava
+// che le parole fossero in ordine diverso o separate da altro testo perché il risultato
+// sparisse. Caso reale: "farina di frumento" restituiva 0 risultati mentre il DB contiene
+// 8 voci con "frumento" (es. "amido di frumento", "crusca di frumento").
+// Ora ogni parola della query deve comparire in nome o etichetta, in qualsiasi ordine.
+// Resta un match per sottostringa, non fuzzy: nessuna tolleranza ai refusi, ma nemmeno
+// risultati a sorpresa in un menu a tendina. Il ranking sotto è invariato.
 function searchDB(q: string, db: DBIngredient[]): DBIngredient[] {
     if (!q || q.trim().length < 2) return [];
     const query = q.toLowerCase().trim();
+    const words = query.split(/\s+/).filter(Boolean);
     return db
         .filter(ing => {
             const nome = (ing.nome || '').trim().toLowerCase();
             const etichetta = (ing.etichetta || '').toLowerCase();
-            return nome.includes(query) || etichetta.includes(query);
+            const haystack = `${nome} ${etichetta}`;
+            return words.every(w => haystack.includes(w));
         })
         .sort((a, b) => {
             const nomeA = (a.nome || '').trim().toLowerCase();

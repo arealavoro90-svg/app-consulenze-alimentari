@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Outlet, useLocation } from 'react-router-dom';
+import { Outlet, useLocation, Link } from 'react-router-dom';
 import { Sidebar } from './Sidebar';
 import { MobileShell } from './MobileShell';
 import { useMobile } from '../hooks/useMobile';
@@ -52,7 +52,7 @@ export function AppShell() {
                             <AlignJustify size={18} />
                         </button>
                         <div id="topbar-title-slot" className="topbar-title-portal" />
-                        <span className="topbar-breadcrumb-parent topbar-breadcrumb-fallback">Strumenti</span>
+                        <Link to="/dashboard" className="topbar-breadcrumb-parent topbar-breadcrumb-fallback">Strumenti</Link>
                         <span className="topbar-breadcrumb-sep topbar-breadcrumb-fallback">/</span>
                         <span className="topbar-breadcrumb-current topbar-breadcrumb-fallback">{pageLabel}</span>
                     </div>

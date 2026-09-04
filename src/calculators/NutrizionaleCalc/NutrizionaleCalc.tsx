@@ -23,6 +23,7 @@ import { WelcomeModal } from '../../components/WelcomeModal';
 import { ArchiveModal } from '../../components/ArchiveModal';
 import { ValidationError } from '../../components/ValidationError';
 import {
+    parseDecimalIT,
     validatePositiveNumber,
     validatePercentage,
     validateFinishedWeight,
@@ -43,7 +44,7 @@ import {
     type DBIngredient, type RecipeRow, type AdditiveRow, type Component,
     calcNutrients, scaleResult, calcClaims, calcQuid,
 } from '../../engines/nutrizionaleCalcEngine';
-import { ALLERGEN_FIELDS, CROSS_FIELDS, ADDITIVI_CATEGORIE, ADDITIVI_SPECIFICI } from './shared/constants';
+import { ALLERGEN_FIELDS, CROSS_FIELDS, ADDITIVI_CATEGORIE, ADDITIVI_SPECIFICI, collectAllergenLabels, fmtQuantita } from './shared/constants';
 import { writeBridge, readBridge, buildDesktopDraft } from './sessionBridge';
 import { InfoTooltip } from './InfoTooltip';
 import { TabCanada } from './TabCanada';
@@ -357,18 +358,14 @@ export function NutrizionaleCalc() {
     }, [per100g, specificGravity]);
 
     // Allergens
-    const presentAllergens = useMemo(() => {
-        const set = new Set<string>();
-        allRows.forEach(({ ing }) => ALLERGEN_FIELDS.forEach(({ key, label }) => { if (ing[key]) set.add(label); }));
-        return [...set];
-    }, [allRows]);
-    const crossAllergens = useMemo(() => {
-        const set = new Set<string>();
-        allRows.forEach(({ ing }) => CROSS_FIELDS.forEach(({ key, label }) => {
-            if (ing[key] && !presentAllergens.includes(label)) set.add(label);
-        }));
-        return [...set];
-    }, [allRows, presentAllergens]);
+    const presentAllergens = useMemo(
+        () => collectAllergenLabels(allRows.map(r => r.ing), ALLERGEN_FIELDS),
+        [allRows],
+    );
+    const crossAllergens = useMemo(
+        () => collectAllergenLabels(allRows.map(r => r.ing), CROSS_FIELDS, presentAllergens),
+        [allRows, presentAllergens],
+    );
 
 
     // Component modifiers
@@ -1009,8 +1006,8 @@ export function NutrizionaleCalc() {
                                 return (
                                     <div key={k} className="field">
                                         <label className="field-label" htmlFor={`portion-ue-${k}`} title={fullLabels[i]}>{shortLabels[i]}</label>
-                                        <input id={`portion-ue-${k}`} type="number" min={0} placeholder="—" value={ue[k] || ''}
-                                            onChange={e => setUE(prev => ({ ...prev, [k]: parseFloat(e.target.value) || undefined }))}
+                                        <input id={`portion-ue-${k}`} type="text" inputMode="decimal" placeholder="—" value={ue[k] || ''}
+                                            onChange={e => setUE(prev => ({ ...prev, [k]: parseDecimalIT(e.target.value) || undefined }))}
                                             className="field-input" />
                                     </div>
                                 );
@@ -1027,8 +1024,8 @@ export function NutrizionaleCalc() {
                                 return (
                                     <div key={k} className="field">
                                         <label className="field-label" htmlFor={`portion-au-${k}`} title={fullLabels[i]}>{shortLabels[i]}</label>
-                                        <input id={`portion-au-${k}`} type="number" min={0} placeholder="—" value={au[k] || ''}
-                                            onChange={e => setAU(prev => ({ ...prev, [k]: parseFloat(e.target.value) || undefined }))}
+                                        <input id={`portion-au-${k}`} type="text" inputMode="decimal" placeholder="—" value={au[k] || ''}
+                                            onChange={e => setAU(prev => ({ ...prev, [k]: parseDecimalIT(e.target.value) || undefined }))}
                                             className="field-input" />
                                     </div>
                                 );
@@ -1046,14 +1043,14 @@ export function NutrizionaleCalc() {
                                 <div role="group" aria-label="Riferimento" style={{ display: 'contents' }}>
                                     <div className="field">
                                         <label className="field-label" htmlFor="portion-serving" title="Serving size (g/ml)">Serving</label>
-                                        <input id="portion-serving" type="number" min={0} placeholder="—" value={vals.serving || ''}
-                                            onChange={e => setFn(prev => ({ ...prev, serving: parseFloat(e.target.value) || undefined }))}
+                                        <input id="portion-serving" type="text" inputMode="decimal" placeholder="—" value={vals.serving || ''}
+                                            onChange={e => setFn(prev => ({ ...prev, serving: parseDecimalIT(e.target.value) || undefined }))}
                                             className="field-input" />
                                     </div>
                                     <div className="field">
                                         <label className="field-label" htmlFor="portion-confezione" title="Confezione (g/ml)">Confez.</label>
-                                        <input id="portion-confezione" type="number" min={0} placeholder="—" value={vals.confezione || ''}
-                                            onChange={e => setFn(prev => ({ ...prev, confezione: parseFloat(e.target.value) || undefined }))}
+                                        <input id="portion-confezione" type="text" inputMode="decimal" placeholder="—" value={vals.confezione || ''}
+                                            onChange={e => setFn(prev => ({ ...prev, confezione: parseDecimalIT(e.target.value) || undefined }))}
                                             className="field-input" />
                                     </div>
                                 </div>
@@ -1064,20 +1061,20 @@ export function NutrizionaleCalc() {
                                     <div className="field">
                                         <label className="field-label" htmlFor="portion-cup" title={`1 Cup = ${cupMl}ml → (g)`}>Cup</label>
                                         <InfoTooltip text={`Una cup è un contenitore fisico standard da ${cupMl}ml. Inserisci il peso in grammi di una cup piena del tuo prodotto. Es: 1 cup di farina = 120g, 1 cup di riso = 185g, 1 cup di liquido = ~${cupMl}g.`} />
-                                        <input id="portion-cup" type="number" min={0} placeholder="—" value={vals.cup || ''}
-                                            onChange={e => setFn(prev => ({ ...prev, cup: parseFloat(e.target.value) || undefined }))}
+                                        <input id="portion-cup" type="text" inputMode="decimal" placeholder="—" value={vals.cup || ''}
+                                            onChange={e => setFn(prev => ({ ...prev, cup: parseDecimalIT(e.target.value) || undefined }))}
                                             className="field-input" />
                                     </div>
                                     <div className="field">
                                         <label className="field-label" htmlFor="portion-cucchiaio" title="1 Cucchiaio = 15ml → (g)">Cucch.</label>
-                                        <input id="portion-cucchiaio" type="number" min={0} placeholder="—" value={vals.cucchiaio || ''}
-                                            onChange={e => setFn(prev => ({ ...prev, cucchiaio: parseFloat(e.target.value) || undefined }))}
+                                        <input id="portion-cucchiaio" type="text" inputMode="decimal" placeholder="—" value={vals.cucchiaio || ''}
+                                            onChange={e => setFn(prev => ({ ...prev, cucchiaio: parseDecimalIT(e.target.value) || undefined }))}
                                             className="field-input" />
                                     </div>
                                     <div className="field">
                                         <label className="field-label" htmlFor="portion-pezzo" title="Pezzo (g)">Pezzo</label>
-                                        <input id="portion-pezzo" type="number" min={0} placeholder="—" value={vals.pezzo || ''}
-                                            onChange={e => setFn(prev => ({ ...prev, pezzo: parseFloat(e.target.value) || undefined }))}
+                                        <input id="portion-pezzo" type="text" inputMode="decimal" placeholder="—" value={vals.pezzo || ''}
+                                            onChange={e => setFn(prev => ({ ...prev, pezzo: parseDecimalIT(e.target.value) || undefined }))}
                                             className="field-input" />
                                     </div>
                                 </div>
@@ -1113,7 +1110,10 @@ export function NutrizionaleCalc() {
                     {productName ? (
                         <span style={{ color: 'var(--color-orange)' }}>{productName}</span>
                     ) : (
-                        <span style={{ color: 'var(--color-text)' }}>Calcolatore Ricette</span>
+                        // AUDIT N9 — lo stesso tool si chiamava "Calcolatore Ricette" qui,
+                        // "Tabelle Nutrizionali" nell'header mobile (AppShell) e nella
+                        // griglia strumenti. Allineato al nome prevalente.
+                        <span style={{ color: 'var(--color-text)' }}>Tabelle Nutrizionali</span>
                     )}
                 </div>,
                 document.getElementById('topbar-title-slot') ?? document.body
@@ -1424,8 +1424,12 @@ export function NutrizionaleCalc() {
             {/* ── Prodotto / Pesi ── */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 12 }}>
                 <div>
-                    <label style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--color-text-muted)', display: 'block', marginBottom: 4 }} htmlFor="nut-product-name">Nome prodotto *</label>
-                    <input id="nut-product-name" type="text" placeholder="Es. Pasta fresca all'uovo (obbligatorio per scaricare)" value={productName}
+                    <label style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--color-text-muted)', display: 'block', marginBottom: 4 }} htmlFor="nut-product-name">Nome prodotto</label>
+                    {/* AUDIT N6 — diceva "(obbligatorio per scaricare)" ma nessun controllo lo
+                        imponeva: il PNG usciva come "tabella - …". Il nome non compare dentro
+                        la tabella ufficiale (i Tab* ricevono solo i valori), serve per il nome
+                        file e per l'archivio: la copy ora dice quello che fa davvero. */}
+                    <input id="nut-product-name" type="text" placeholder="Es. Pasta fresca all'uovo — usato per nome file e archivio" value={productName}
                         onChange={e => setProductName(e.target.value)} className="field-input"
                         style={{ fontWeight: 600, fontSize: 16, width: '100%', padding: '8px 10px' }} />
                 </div>
@@ -1573,6 +1577,8 @@ export function NutrizionaleCalc() {
                                                 const val = (!raw || isNaN(v) || v < 0) ? 0 : v;
                                                 setGramsRaw(prev => ({ ...prev, [rowKey]: String(val) }));
                                                 updateGrams(comp.id, row.id, val);
+                                                const vr = validateIngredientQuantity(val, row.ing.nome);
+                                                setFieldErrors(prev => ({ ...prev, [`${rowKey}-grams`]: vr.isValid ? '' : (vr.error ?? '') }));
                                             }}
                                         />
                                         <span style={{ fontSize: 12, color: 'var(--color-text-muted)' }}>g</span>
@@ -1767,7 +1773,10 @@ export function NutrizionaleCalc() {
                     }
                 }
                 const totCostoKg = pesoFinitoPzCalc > 0 && totCostoUV > 0 ? totCostoUV / (pesoFinitoPzCalc / 1000) : 0;
-                const fmt3 = (v: number) => v.toFixed(3).replace('.', ',');
+                // AUDIT N7 — fmtQuantita vive in shared/constants.ts (era duplicata qui e
+                // in mobile/RiepilogoTab.tsx). I costi restano a 3 decimali fissi: per una
+                // colonna di importi i decimali costanti sono più leggibili.
+                const fmt3 = fmtQuantita;
                 const fmt2 = (v: number) => v.toFixed(2).replace('.', ',');
                 const fmtC = (v: number) => v > 0 ? v.toFixed(3).replace('.', ',') : '—';
                 return (

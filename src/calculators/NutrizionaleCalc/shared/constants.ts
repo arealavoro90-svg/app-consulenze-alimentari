@@ -28,6 +28,68 @@ export const CROSS_FIELDS: { key: keyof DBIngredient; label: string }[] = [
     { key: 'cross_lupini', label: 'LUPINI' }, { key: 'cross_molluschi', label: 'MOLLUSCHI' },
 ];
 
+/**
+ * AUDIT N7 — formattazione di grammi/percentuali nel Riepilogo.
+ *
+ * Prima: `v.toFixed(3).replace('.', ',')` → 100 diventava "100,000", che con la
+ * virgola come separatore decimale si legge "centomila". Stessa precisione (3
+ * decimali), ma senza zeri finali:
+ *   100    → "100"      12.5   → "12,5"      0.125 → "0,125"      0 → "0"
+ *
+ * Era duplicata identica in NutrizionaleCalc.tsx e mobile/RiepilogoTab.tsx.
+ * Gli importi in € NON usano questa funzione: per una colonna di soldi i decimali
+ * fissi sono più leggibili.
+ */
+export function fmtQuantita(v: number): string {
+    return v.toFixed(3).replace(/\.?0+$/, '').replace('.', ',') || '0';
+}
+
+// ─── AUDIT E4 — gruppi All. II vs voci di dettaglio del DB ────────────────────
+// L'All. II del Reg. 1169/2011 elenca 14 GRUPPI. Due voci del DB sono in realtà
+// membri di un gruppo, non gruppi a sé:
+//   • punto 1  — "cereali contenenti glutine, vale a dire: grano, segale, orzo,
+//                 avena, farro, kamut": il GRANO sta dentro il gruppo GLUTINE;
+//   • punto 8  — "frutta a guscio, vale a dire: mandorle, nocciole, noci,
+//                 anacardi, …": gli ANACARDI stanno dentro FRUTTA A GUSCIO.
+// Nel DB (1065 voci) 85 ingredienti valorizzano `all_grano` SENZA `all_glutine`:
+// prima di questa mappa quegli ingredienti producevano solo il chip "GRANO" e
+// l'etichetta ometteva il gruppo allergene obbligatorio.
+// La voce di dettaglio NON viene sostituita — resta, perché indicare il cereale
+// specifico è informazione utile e conforme — ma trascina sempre con sé il gruppo.
+export const ALLERGEN_PARENT: Record<string, string> = {
+    'GRANO': 'GLUTINE',
+    'ANACARDI': 'FRUTTA A GUSCIO',
+};
+
+/**
+ * Raccoglie le etichette allergene di un insieme di ingredienti, aggiungendo
+ * sempre il gruppo All. II di appartenenza (vedi ALLERGEN_PARENT).
+ *
+ * Unico punto in cui vive questa regola: desktop, mobile ed Etichette la
+ * chiamano tutti da qui, così non può divergere fra i tre tree.
+ *
+ * @param exclude etichette da non includere — usato per le tracce (CROSS_FIELDS),
+ *                che non vanno ripetute se l'allergene è già presente come tale.
+ *                Il filtro si applica anche al gruppo derivato.
+ */
+export function collectAllergenLabels(
+    ingredients: readonly DBIngredient[],
+    fields: readonly { key: keyof DBIngredient; label: string }[],
+    exclude: readonly string[] = [],
+): string[] {
+    const out = new Set<string>();
+    for (const ing of ingredients) {
+        for (const { key, label } of fields) {
+            if (!ing[key]) continue;
+            const parent = ALLERGEN_PARENT[label];
+            for (const l of parent ? [label, parent] : [label]) {
+                if (!exclude.includes(l)) out.add(l);
+            }
+        }
+    }
+    return [...out];
+}
+
 export const ADDITIVI_CATEGORIE = [
     'addensante','agente di rivestimento','agente di trattamento della farina',
     'agente lievitante','antiagglomerante','antiossidante','conservante',

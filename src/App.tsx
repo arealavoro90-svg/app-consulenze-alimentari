@@ -40,12 +40,37 @@ function NutrizionaleCalcEntry() {
     return isMobile ? <NutrizionaleCalcMobile /> : <NutrizionaleCalc />;
 }
 
+function ToolLoading() {
+    return (
+        <div role="status" aria-live="polite" style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            minHeight: '60vh', gap: 10,
+            color: 'var(--color-text-muted)', fontSize: 13,
+        }}>
+            <svg
+                className="animate-spin"
+                width="18" height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                aria-hidden="true"
+            >
+                <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" strokeOpacity="0.25" />
+                <path d="M12 2a10 10 0 0 1 10 10" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
+            </svg>
+            Caricamento strumento…
+        </div>
+    );
+}
+
 export default function App() {
   return (
     <ErrorBoundary>
     <AuthProvider>
       <BrowserRouter>
-        <Suspense fallback={null}>
+        {/* AUDIT N9 — `fallback={null}` lasciava la pagina completamente bianca mentre
+            il chunk del tool veniva scaricato: su connessione lenta sembra un crash.
+            Un indicatore minimo basta: nessuna dipendenza, nessun layout shift. */}
+        <Suspense fallback={<ToolLoading />}>
           <Routes>
             <Route path="/login" element={<LoginPage />} />
             <Route

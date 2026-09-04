@@ -222,7 +222,7 @@ function VertLayout({ d, si, addedSugarsG, addedSugarsPct, rows, vitamins }:
 
             {/* Servings per container */}
             <div style={{ fontSize: 14, fontWeight: 400, paddingBottom: 2, wordSpacing: '5px' }}>
-                {si.servingsPerContainer} servings per container
+                {`${si.servingsPerContainer} serving${si.servingsPerContainer === '1' ? '' : 's'} per container`}
             </div>
 
             {/* Serving size */}
@@ -388,7 +388,7 @@ function HorizLayout({ d, si, addedSugarsG, addedSugarsPct, rows, vitamins, meas
                         borderBottom: '1px solid #000', paddingBottom: 1, marginBottom: 1,
                     }}>Facts</div>
                     <div style={{ fontSize: 11, marginBottom: 1, wordSpacing: '4px' }}>
-                        {si.servingsPerContainer} servings per container
+                        {`${si.servingsPerContainer} serving${si.servingsPerContainer === '1' ? '' : 's'} per container`}
                     </div>
                     <div style={{ fontSize: 11, fontWeight: 900, WebkitTextStroke: '0.3px black' }}>{si.sizeLabel}</div>
                     <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, fontWeight: 900, WebkitTextStroke: '0.3px black' }}>

@@ -109,7 +109,7 @@ export function calcNutrients(components: Component[], pesoFinitoVal: number): C
         const pzUV = c.pzUV || 1;
         for (const r of c.rows) {
             const g_raw = r.grams / pzUV;
-            const g_cooked = g_raw * ((r.resa ?? 100) / 100); // ponytail: resa applicata solo al denominatore; nutrienti restano su g_raw (valori DB sono per 100g crudi)
+            const g_cooked = g_raw * (((r.resa && r.resa > 0) ? r.resa : 100) / 100); // ponytail: resa applicata solo al denominatore; nutrienti restano su g_raw (valori DB sono per 100g crudi)
             peso_totale_pz += g_cooked;
             g_per_pz_list.push({ ing: r.ing, g: g_raw, postCottura: r.postCottura, acquaAggiunta: r.acquaAggiunta });
         }
@@ -206,11 +206,26 @@ export function scaleResult(r: CalcResult, grams: number): CalcResult {
  * @param isLiquid - true per liquidi (soglie zuccheri/grassi dimezzate)
  */
 export function calcClaims(r: CalcResult, isLiquid = false): string[] {
+    // ─── Ricetta vuota: nessun claim ────────────────────────────────────────
+    // Senza ingredienti ogni valore è 0 e le soglie "≤" dei claim "a basso
+    // contenuto di" risultano soddisfatte: l'app suggerirebbe SODIO/ZUCCHERI/
+    // GRASSI su un prodotto che non esiste. Il guard controlla tutti e soli i
+    // campi che questa funzione legge: se nessuno è valorizzato non c'è alcuna
+    // base per un claim. Nessun ingrediente reale del DB azzera l'intero set
+    // (anche l'acqua ha sodio 4mg e calcio 7,13mg), quindi lo stato tutto-zero
+    // identifica la ricetta vuota senza sopprimere claim legittimi.
+    const noClaimInput =
+        r.fibre === 0 && r.energyKcal === 0 && r.proteine === 0 &&
+        r.calcio === 0 && r.ferro === 0 && r.potassio === 0 &&
+        r.sodio_mg === 0 && r.zuccheri === 0 && r.grassi === 0;
+    if (noClaimInput) return [];
+
     const claims: string[] = [];
 
-    // ─── Fibre: FONTE ≥3g, RICCO ≥6g ────────────────────────────────────────
-    if (r.fibre >= 6)       claims.push('RICCO DI FIBRE');
-    else if (r.fibre >= 3)  claims.push('FONTE DI FIBRE');
+    // ─── Fibre: FONTE ≥3g/100g o ≥1.5g/100kcal; RICCO ≥6g/100g o ≥3g/100kcal ─
+    const kcal100 = r.energyKcal / 100;
+    if (r.fibre >= 6 || (r.energyKcal > 0 && r.fibre >= 3.0 * kcal100))       claims.push('RICCO DI FIBRE');
+    else if (r.fibre >= 3 || (r.energyKcal > 0 && r.fibre >= 1.5 * kcal100))  claims.push('FONTE DI FIBRE');
 
     // ─── Proteine: % energia — FONTE ≥12%, AD ALTO CONTENUTO ≥20% ───────────
     if (r.energyKcal > 0) {

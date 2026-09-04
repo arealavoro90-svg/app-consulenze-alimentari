@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState, useCallback, type ReactNode } fro
 import { createPortal } from 'react-dom';
 import {
     Plus, Archive, BookOpen, Save, Sparkles, ImageDown,
-    RefreshCw, X, Image, Building2, CheckCircle2, AlertTriangle, FileText, Eye, ChevronDown,
+    RefreshCw, X, Image, Building2, CheckCircle2, AlertTriangle, FileText, Eye,
 } from 'lucide-react';
 import QRCode from 'qrcode';
 import JsBarcode from 'jsbarcode';
@@ -15,6 +15,7 @@ import { useIngredientsDB } from '../../hooks/useIngredientsDB';
 import { useLocalStorage } from '../../hooks/useLocalStorage';
 import { ArchiveModal } from '../../components/ArchiveModal';
 import { ConfirmDialog } from '../../components/ui/ConfirmDialog';
+import { CollapsibleSection } from '../../components/ui/CollapsibleSection';
 import { PromptDialog } from '../../components/ui/PromptDialog';
 import { useToast } from '../../components/ui/Toast';
 import { WelcomeModal, ETICHETTE_SLIDES } from '../../components/WelcomeModal';
@@ -25,7 +26,7 @@ import {
     type DBIngredient, type Component, type CalcResult,
     calcNutrients, calcClaims, calcQuid,
 } from '../../engines/nutrizionaleCalcEngine';
-import { ALLERGEN_FIELDS, CROSS_FIELDS } from '../NutrizionaleCalc/shared/constants';
+import { ALLERGEN_FIELDS, CROSS_FIELDS, collectAllergenLabels } from '../NutrizionaleCalc/shared/constants';
 import type { ArchiveData } from '../NutrizionaleCalc/NutrizionaleCalc';
 import { TabUE, DEFAULT_OPTIONALS, type SelectedOptionals, rUE_energy, rUE_macro, rUE_sat, rUE_sale } from '../NutrizionaleCalc/TabUE';
 import { rAU_kj, rAU_kcal, rAU_g1, rAU_mg, rArabi_energy, rArabi_g, rArabi_mg } from '../../utils/nutritionalRounding';
@@ -151,6 +152,19 @@ export const HORIZONTAL_TWO_COLUMN_ASPECT_THRESHOLD = 1.25;
 // eslint-disable-next-line react-refresh/only-export-components
 export function shouldUseTwoColumnLayout(widthMm: number, heightMm: number): boolean {
     return heightMm > 0 && (widthMm / heightMm) > HORIZONTAL_TWO_COLUMN_ASPECT_THRESHOLD;
+}
+
+// AUDIT E1 — All. IV Reg. 1169/2011 misura la leggibilità sull'**altezza della x**, non sul
+// corpo carattere. Il controllo confrontava direttamente il corpo con 1,2mm (0,9mm sotto gli
+// 80cm²), sovrastimando la leggibilità di circa il doppio: un corpo di 0,95mm veniva
+// dichiarato "leggibile" con un'altezza della x reale di ~0,49mm, cioè non conforme.
+// Entrambe le anteprime (fronte `Arial, sans-serif` e retro, stessa famiglia) usano Arial,
+// la cui altezza della x vale 1062 unità su un em di 2048 → 0,5186. Il rapporto è quindi una
+// costante del font, non una stima: se un giorno l'anteprima cambia famiglia, va ricalcolato.
+export const ARIAL_X_HEIGHT_RATIO = 1062 / 2048;
+// eslint-disable-next-line react-refresh/only-export-components
+export function xHeightMm(fontSizeMm: number): number {
+    return fontSizeMm * ARIAL_X_HEIGHT_RATIO;
 }
 
 // Ricette salvate prima della rinomina campi IT (nutrizionale-v3 può contenere entrambi gli
@@ -300,6 +314,12 @@ interface LabelData {
     consumptionInstructions: string;
     widthMm: string;
     heightMm: string;
+    // AUDIT E3 — superficie maggiore dell'IMBALLAGGIO in cm². Le soglie del Reg. 1169/2011
+    // (1,2 vs 0,9mm All. IV; esenzione nutrizionale <25cm² All. V p.18; esenzione quasi
+    // totale <10cm² Art. 16(2)) si misurano su questa, non sulla superficie dell'etichetta.
+    // Facoltativo: se vuoto si ricade sulla misura dell'etichetta, come prima, con avviso.
+    // Le etichette archiviate prima di questo campo non ce l'hanno — `?? ''` in lettura.
+    packageSurfaceCm2?: string;
     bgImageUrl: string;
     logoUrl: string;
     theme: 'light' | 'dark';
@@ -369,11 +389,15 @@ const defaults: LabelData = {
     storageConditions: '',
     bestBefore: '',
     lotNumber: '',
-    countryOrigin: 'Italia',
+    // AUDIT E5 — era 'Italia' di default: una dichiarazione d'origine che l'utente non
+    // ha scelto finiva in anteprima e negli export. L'origine è obbligatoria solo nei
+    // casi dell'Art. 26 e va dichiarata consapevolmente: si parte vuoti.
+    countryOrigin: '',
     drainedWeight: '',
     alcoholPercent: '',
     consumptionInstructions: '',
     widthMm: '100',
+    packageSurfaceCm2: '',
     heightMm: '150',
     bgImageUrl: '',
     logoUrl: '',
@@ -550,10 +574,11 @@ for (const nutrient of ['CALCIO', 'FERRO', 'POTASSIO', 'PROTEINE', 'FOSFORO', 'M
 // eslint-disable-next-line react-refresh/only-export-components
 export function calcAdditionalClaims(p: CalcResult, isLiquid: boolean): string[] {
     const claims: string[] = [];
-    if (p.grassi <= 0.5) claims.push('SENZA GRASSI');
-    if (p.saturi <= (isLiquid ? 0.75 : 1.5)) claims.push('A BASSO CONTENUTO DI GRASSI SATURI');
-    if (p.saturi <= 0.1) claims.push('SENZA GRASSI SATURI');
-    if (p.zuccheri <= 0.5) claims.push('SENZA ZUCCHERI');
+    if (p.grassi < 0.5) claims.push('SENZA GRASSI');
+    if ((p.saturi + (p.trans ?? 0)) <= (isLiquid ? 0.75 : 1.5)) claims.push('A BASSO CONTENUTO DI GRASSI SATURI');
+    if ((p.saturi + (p.trans ?? 0)) <= 0.1) claims.push('SENZA GRASSI SATURI');
+    if (p.zuccheri < 0.5) claims.push('SENZA ZUCCHERI');
+    if (p.sodio_mg < 5) claims.push('SENZA SODIO/SALE');
     const microAR: { field: keyof CalcResult; label: string; ar: number }[] = [
         { field: 'fosforo', label: 'FOSFORO', ar: 700 },
         { field: 'magnesio', label: 'MAGNESIO', ar: 375 },
@@ -730,105 +755,6 @@ function CodeCanvas({ type, value, scale, pxPerMm }: { type: 'qr' | 'barcode' | 
     );
 }
 
-function CollapsibleSection({
-    title,
-    defaultOpen = true,
-    storageKey,
-    children,
-    subtitle,
-}: {
-    title: string | ReactNode;
-    defaultOpen?: boolean;
-    storageKey: string;
-    children: ReactNode;
-    subtitle?: string;
-}) {
-    const [open, setOpen] = useState(() => {
-        try {
-            const stored = localStorage.getItem(`et_sec_${storageKey}`);
-            return stored !== null ? stored === '1' : defaultOpen;
-        } catch { return defaultOpen; }
-    });
-
-    useEffect(() => {
-        const handler = (e: Event) => {
-            if ((e as CustomEvent<{ storageKey: string }>).detail?.storageKey === storageKey) {
-                setOpen(true);
-                try { localStorage.setItem(`et_sec_${storageKey}`, '1'); } catch { /* noop */ }
-            }
-        };
-        document.addEventListener('openEtichetteSection', handler);
-        return () => document.removeEventListener('openEtichetteSection', handler);
-    }, [storageKey]);
-
-    const toggle = () => {
-        setOpen(v => {
-            const next = !v;
-            try { localStorage.setItem(`et_sec_${storageKey}`, next ? '1' : '0'); } catch { /* noop */ }
-            return next;
-        });
-    };
-
-    return (
-        <div className="comp-card" style={{ marginBottom: 10 }}>
-            <div className="comp-card-header" onClick={toggle}>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                    <h3 className="comp-card-title" style={{ margin: 0 }}>{title}</h3>
-                    {subtitle && <p className="hint" style={{ margin: '2px 0 0', fontSize: 11 }}>{subtitle}</p>}
-                </div>
-                <ChevronDown size={14} style={{ flexShrink: 0, marginLeft: 8, transform: open ? 'rotate(0deg)' : 'rotate(-90deg)', transition: 'transform 0.2s', color: 'var(--color-text-muted)', pointerEvents: 'none' }} />
-            </div>
-            {open && <div className="comp-card-body">{children}</div>}
-        </div>
-    );
-}
-
-function SubSection({
-    title,
-    defaultOpen = true,
-    storageKey,
-    children,
-}: {
-    title: string;
-    defaultOpen?: boolean;
-    storageKey: string;
-    children: ReactNode;
-}) {
-    const [open, setOpen] = useState(() => {
-        try {
-            const stored = localStorage.getItem(`et_sub_${storageKey}`);
-            return stored !== null ? stored === '1' : defaultOpen;
-        } catch { return defaultOpen; }
-    });
-
-    const toggle = () => {
-        setOpen(v => {
-            const next = !v;
-            try { localStorage.setItem(`et_sub_${storageKey}`, next ? '1' : '0'); } catch { /* noop */ }
-            return next;
-        });
-    };
-
-    return (
-        <div style={{ borderTop: '1px solid var(--color-border)', marginTop: 16, paddingTop: 12 }}>
-            <button
-                type="button"
-                onClick={toggle}
-                style={{
-                    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                    width: '100%', background: 'none', border: 'none', padding: 0,
-                    cursor: 'pointer', textAlign: 'left',
-                    marginBottom: open ? 12 : 0,
-                }}
-            >
-                <span style={{ fontWeight: 600, fontSize: 13 }}>{title}</span>
-                <ChevronDown size={14} style={{ flexShrink: 0, marginLeft: 8, transform: open ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
-            </button>
-            {open && <div>{children}</div>}
-        </div>
-    );
-}
-
 export function EtichetteCalc() {
     const { user } = useAuth();
     const isMobile = useMobile();
@@ -1000,7 +926,7 @@ export function EtichetteCalc() {
         vitC: { field: 'vitC', ar: 80 }, vitB1: { field: 'vitB1', ar: 1.1 },
         vitB2: { field: 'vitB2', ar: 1.4 }, vitB3: { field: 'vitB3', ar: 16 },
         vitB5: { field: 'vitB5', ar: 6 }, vitB6: { field: 'vitB6', ar: 1.4 },
-        vitB9: { field: 'vitB9', ar: 200 }, vitB12: { field: 'vitB12', ar: 2.4 },
+        vitB9: { field: 'vitB9', ar: 200 }, vitB12: { field: 'vitB12', ar: 2.5 },
     };
     const autoSelectedOptionals: SelectedOptionals = useMemo(() => {
         if (!per100) return DEFAULT_OPTIONALS;
@@ -1019,18 +945,14 @@ export function EtichetteCalc() {
         () => loadedComponents.flatMap(c => c.rows.map(r => ({ ing: r.ing }))),
         [loadedComponents]
     );
-    const presentAllergens = useMemo(() => {
-        const set2 = new Set<string>();
-        allRowsForAllergens.forEach(({ ing }) => ALLERGEN_FIELDS.forEach(({ key, label }) => { if (ing[key]) set2.add(label); }));
-        return [...set2];
-    }, [allRowsForAllergens]);
-    const crossAllergensList = useMemo(() => {
-        const set2 = new Set<string>();
-        allRowsForAllergens.forEach(({ ing }) => CROSS_FIELDS.forEach(({ key, label }) => {
-            if (ing[key] && !presentAllergens.includes(label)) set2.add(label);
-        }));
-        return [...set2];
-    }, [allRowsForAllergens, presentAllergens]);
+    const presentAllergens = useMemo(
+        () => collectAllergenLabels(allRowsForAllergens.map(r => r.ing), ALLERGEN_FIELDS),
+        [allRowsForAllergens],
+    );
+    const crossAllergensList = useMemo(
+        () => collectAllergenLabels(allRowsForAllergens.map(r => r.ing), CROSS_FIELDS, presentAllergens),
+        [allRowsForAllergens, presentAllergens],
+    );
     // M2 — unione fornitore (calcolato) + stabilimento utente (selezione manuale in
     // data.facilityAllergens), come fa l'Excel (`e. UE!T22 = CONCAT(T24:DB26)`). Mai un
     // allergene già dichiarato "presente" (sarebbe ridondante/fuorviante come traccia).
@@ -1201,15 +1123,58 @@ export function EtichetteCalc() {
         }
     };
 
+    // Superficie e esenzioni per superficie — calcolate qui (e non più sotto, insieme a
+    // MIN_READABLE_MM) perché servono a `requiredFields`: quali menzioni siano davvero
+    // obbligatorie dipende dalla superficie. Art. 16(2): sotto i 10cm² restano dovute solo
+    // denominazione, allergeni, quantità netta e TMC. All. V p.18: sotto i 25cm² la
+    // dichiarazione nutrizionale non è obbligatoria.
+    // AUDIT E3 — la norma misura queste soglie sulla superficie maggiore dell'IMBALLAGGIO.
+    // Se l'utente l'ha dichiarata si usa quella; altrimenti si ricade sulla superficie
+    // dell'etichetta (comportamento storico) e i messaggi lo dichiarano apertamente.
+    const labelSurfaceCm2 = (Number(data.widthMm) * Number(data.heightMm)) / 100;
+    const declaredPackageSurfaceCm2 = Number(data.packageSurfaceCm2 ?? '') || 0;
+    const usesPackageSurface = declaredPackageSurfaceCm2 > 0;
+    const frontSurfaceCm2 = usesPackageSurface ? declaredPackageSurfaceCm2 : labelSurfaceCm2;
+    const isNutritionDeclarationExempt = frontSurfaceCm2 > 0 && frontSurfaceCm2 < 25;
+    const isMostFieldsExempt = frontSurfaceCm2 > 0 && frontSurfaceCm2 < 10;
+
+    // ─── Menzioni obbligatorie — Art. 9(1) Reg. 1169/2011 ────────────────────
+    // AUDIT E2: prima il controllo copriva solo 4 campi (a, e, h, b) e mostrava
+    // "Tutti i campi obbligatori compilati" su etichette prive di TMC, lotto e
+    // dichiarazione nutrizionale, abilitando comunque gli export.
+    // Le lettere c/d/i/j/k dell'Art. 9(1) restano fuori dal blocco perché sono
+    // condizionali al prodotto (allergeni, QUID, origine, istruzioni d'uso, titolo
+    // alcolometrico) e l'app non ha modo di stabilire se il caso si applica: renderle
+    // bloccanti produrrebbe falsi impedimenti. La lettera g (conservazione) è
+    // condizionale allo stesso modo ed è trattata sotto come avviso, non come blocco.
+    const isLotRequired = !(tmcGranularity === 'giorno' && !!data.bestBefore);
+    const hasNutritionDeclaration = !!per100 && data.showNutritionTable;
+
     const requiredFields: { id: string; label: string; ok: boolean }[] = [
         { id: 'et-nome', label: 'Denominazione del prodotto', ok: !!data.productName },
         { id: 'et-produttore', label: 'Produttore / Responsabile', ok: !!data.producer },
         { id: 'et-peso-netto', label: 'Quantità netta', ok: !!data.netWeight },
-        { id: 'et-ingredienti', label: 'Elenco ingredienti', ok: !!data.ingredients },
+        { id: 'et-scadenza', label: 'TMC / data di scadenza', ok: !!data.bestBefore },
+        // Art. 16(2): sotto i 10cm² l'elenco ingredienti non è dovuto.
+        ...(isMostFieldsExempt ? [] : [
+            { id: 'et-ingredienti', label: 'Elenco ingredienti', ok: !!data.ingredients },
+        ]),
+        // Dir. 2011/91/UE Art. 1(3): il lotto non serve se il TMC riporta giorno e mese.
+        ...(isLotRequired ? [
+            { id: 'et-lotto', label: 'Numero di lotto', ok: !!data.lotNumber },
+        ] : []),
+        // Art. 9(1)(l), con le esenzioni All. V p.18 (<25cm²) e Art. 16(2) (<10cm²).
+        ...(isNutritionDeclarationExempt || isMostFieldsExempt ? [] : [
+            { id: 'et-tabella-nutrizionale', label: 'Dichiarazione nutrizionale', ok: hasNutritionDeclaration },
+        ]),
     ];
     const missingFieldDefs = requiredFields.filter(f => !f.ok);
     const missingFields = missingFieldDefs.map(f => f.label);
     const isComplete = missingFields.length === 0;
+
+    // Art. 9(1)(g) + Art. 25: condizionale al prodotto — l'app non può stabilire se serve,
+    // quindi avvisa senza bloccare l'export.
+    const showStorageHint = isComplete && !data.storageConditions;
 
     // Mappa campo → storageKey della CollapsibleSection che lo contiene.
     // Aggiornare se si sposta un campo in una sezione diversa.
@@ -1218,6 +1183,10 @@ export function EtichetteCalc() {
         'et-produttore': 'dati-prodotto',
         'et-peso-netto': 'dati-prodotto',
         'et-ingredienti': 'ingredienti',
+        'et-scadenza': 'conservazione',
+        'et-lotto': 'conservazione',
+        'et-conservazione': 'conservazione',
+        'et-tabella-nutrizionale': 'tabella-nutrizionale',
     };
 
     const focusField = useCallback((id: string) => {
@@ -1571,17 +1540,14 @@ export function EtichetteCalc() {
     // clamping è algebricamente identica alla vecchia formula baseDim/100 — zero regressioni
     // sui formati che già funzionavano.
     const fontScale = visualFontScale(labelRenderedWidthPx, labelRenderedHeightPx, baseDim) * contentFitScale;
-    // Soglia leggibilità e esenzioni modulate sulla superficie maggiore dell'etichetta
-    // (Art. 13(2)+All.IV: 0,9mm invece di 1,2mm se <80cm²; All.V p.18: dichiarazione
-    // nutrizionale non obbligatoria se <25cm²; Art.16(2): quasi tutto facoltativo se <10cm²,
-    // restano solo denominazione/allergeni/quantità netta/TMC).
-    const frontSurfaceCm2 = (Number(data.widthMm) * Number(data.heightMm)) / 100;
+    // Soglia leggibilità modulata sulla superficie (Art. 13(2)+All.IV: 0,9mm invece di
+    // 1,2mm se <80cm²). `frontSurfaceCm2` e le due esenzioni per superficie sono ora
+    // definite più in alto, insieme a `requiredFields`, che ne ha bisogno.
     const MIN_READABLE_MM = frontSurfaceCm2 < 80 ? 0.9 : 1.2;
-    const isNutritionDeclarationExempt = frontSurfaceCm2 > 0 && frontSurfaceCm2 < 25;
-    const isMostFieldsExempt = frontSurfaceCm2 > 0 && frontSurfaceCm2 < 10;
     const mmPerPx = labelRenderedWidthPx > 0 ? Number(data.widthMm) / labelRenderedWidthPx : 0;
     const bodyFontSizeMm = mmPerPx * (11 * fontScale);
-    const isBodyTextReadable = bodyFontSizeMm >= MIN_READABLE_MM;
+    const bodyXHeightMm = xHeightMm(bodyFontSizeMm);
+    const isBodyTextReadable = bodyXHeightMm >= MIN_READABLE_MM;
     // Il rapporto mm/px è uniforme in entrambi gli assi (nessuno stretch indipendente in X/Y
     // nel contenitore) — stesso mmPerPx converte correttamente anche l'altezza renderizzata.
     // contentHeightMm ora usa scrollHeight (contenuto vero, anche la parte tagliata) — con
@@ -1638,7 +1604,8 @@ export function EtichetteCalc() {
     const BACK_MIN_READABLE_MM = backSurfaceCm2 < 80 ? 0.9 : 1.2;
     const backMmPerPx = backRenderedWidthPx > 0 ? Number(data.backWidthMm) / backRenderedWidthPx : 0;
     const backBodyFontSizeMm = backMmPerPx * (11 * backFontScale);
-    const isBackBodyTextReadable = backBodyFontSizeMm >= BACK_MIN_READABLE_MM;
+    const backBodyXHeightMm = xHeightMm(backBodyFontSizeMm);
+    const isBackBodyTextReadable = backBodyXHeightMm >= BACK_MIN_READABLE_MM;
     // scrollHeight (vero, anche tagliato) invece di contentRect.height (ora fissa a
     // backHeightMm per l'aspect-ratio sul contenitore) — stesso motivo del fronte.
     const backContentHeightMm = backMmPerPx > 0 ? backScrollHeightPx * backMmPerPx : 0;
@@ -2165,7 +2132,7 @@ export function EtichetteCalc() {
                         {per100 ? (
                             <div className="form-field">
                                 <label style={{ display: 'flex', alignItems: 'flex-start', gap: 8, fontSize: 12, fontWeight: 400, cursor: 'pointer', width: '100%' }}>
-                                    <input type="checkbox" style={{ flexShrink: 0, width: 16, height: 16, marginTop: 2 }} checked={data.showNutritionTable}
+                                    <input id="et-tabella-nutrizionale" type="checkbox" style={{ flexShrink: 0, width: 16, height: 16, marginTop: 2 }} checked={data.showNutritionTable}
                                         onChange={(e) => set('showNutritionTable', e.target.checked)} />
                                     <span>Mostra tabella valori nutrizionali in etichetta</span>
                                 </label>
@@ -2251,6 +2218,23 @@ export function EtichetteCalc() {
                                 <label htmlFor="et-height">Altezza (mm)</label>
                                 <input id="et-height" type="number" value={data.heightMm} onChange={(e) => set('heightMm', e.target.value)} min="10" />
                             </div>
+                        </div>
+
+                        {/* AUDIT E3 — le soglie del Reg. 1169/2011 si misurano sulla superficie
+                            maggiore dell'imballaggio, non dell'etichetta. Campo facoltativo:
+                            se vuoto si ricade sulla misura dell'etichetta, come prima. */}
+                        <div className="form-field">
+                            <label htmlFor="et-package-surface" style={{ display: 'flex', alignItems: 'center' }}>
+                                Superficie maggiore dell&apos;imballaggio (cm²)
+                                <InfoTooltip text="La faccia più grande della confezione su cui è applicata l'etichetta. Reg. 1169/2011 misura su questa — non sull'etichetta — la soglia di leggibilità (1,2mm sopra gli 80cm², 0,9mm sotto), l'esenzione dalla dichiarazione nutrizionale (<25cm², All. V p.18) e quella dell'Art. 16(2) (<10cm²). Lasciandolo vuoto l'app usa la superficie dell'etichetta, che per un'etichetta piccola su una confezione grande porta a esenzioni inesistenti." />
+                            </label>
+                            <input id="et-package-surface" type="number" min="0" step="0.1"
+                                value={data.packageSurfaceCm2 ?? ''}
+                                onChange={(e) => set('packageSurfaceCm2', e.target.value)}
+                                placeholder={`facoltativo — senza, si usa l'etichetta (≈${labelSurfaceCm2.toFixed(0)} cm²)`} />
+                            {!usesPackageSurface && (
+                                <ValidationError type="info" message={`Soglie calcolate sulla superficie dell'etichetta (≈${labelSurfaceCm2.toFixed(0)} cm²). Se l'imballaggio è più grande, compila questo campo: cambia la soglia di leggibilità e le esenzioni.`} />
+                            )}
                         </div>
 
                         <div style={{ borderTop: '1px solid var(--color-border)', paddingTop: 20, marginTop: 10 }}>
@@ -2490,9 +2474,24 @@ export function EtichetteCalc() {
             <div className="table-panel-header">
                 <div className="table-panel-header-title">Anteprima Etichetta</div>
                 {isComplete ? (
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '2px 0 8px', fontSize: 12, color: 'var(--color-accent)' }}>
-                        <CheckCircle2 size={14} /> Tutti i campi obbligatori compilati
-                    </div>
+                    <>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 6, paddingTop: 2, fontSize: 12, color: 'var(--color-accent)' }}>
+                            <CheckCircle2 size={14} /> Menzioni obbligatorie compilate
+                        </div>
+                        {/* Il claim di completezza va circoscritto a ciò che l'app può davvero
+                            verificare: le menzioni condizionali dell'Art. 9(1) dipendono dal
+                            prodotto e restano responsabilità di chi compila. */}
+                        <div style={{ fontSize: 11, color: 'var(--color-text-muted)', padding: '2px 0 8px' }}>
+                            Restano da verificare a mano le menzioni condizionali: allergeni, QUID, origine, istruzioni d&apos;uso, titolo alcolometrico.
+                        </div>
+                        {showStorageHint && (
+                            <button type="button" onClick={() => focusField('et-conservazione')}
+                                style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '2px 0 8px', fontSize: 11, color: '#b7791f', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit', textAlign: 'left' }}>
+                                <AlertTriangle size={12} style={{ flexShrink: 0 }} />
+                                Modalità di conservazione non indicate: obbligatorie se il prodotto è deperibile (Art. 9(1)(g) + Art. 25).
+                            </button>
+                        )}
+                    </>
                 ) : (
                     <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 6, padding: '2px 0 8px' }}>
                         <span style={{ fontSize: 12, color: 'var(--color-text-muted)' }}>Mancano:</span>
@@ -2803,20 +2802,32 @@ export function EtichetteCalc() {
                                 background: isBodyTextReadable ? 'rgba(0,163,108,0.08)' : 'rgba(230,126,34,0.12)',
                                 color: isBodyTextReadable ? 'var(--color-accent)' : '#b7791f',
                             }}>
-                                {isBodyTextReadable ? <CheckCircle2 size={13} /> : <AlertTriangle size={13} />} Corpo testo (fronte) ≈ {bodyFontSizeMm.toFixed(2)}mm — {isBodyTextReadable
-                                    ? 'leggibile secondo Reg. UE 1169/2011'
-                                    : `sotto la soglia minima leggibile (${MIN_READABLE_MM}mm): aumenta le dimensioni etichetta o riduci il testo`}
-                                <InfoTooltip text={`Soglia ${MIN_READABLE_MM}mm — All. IV Reg. 1169/2011: 0,9mm sotto gli 80cm² di superficie, 1,2mm sopra. Stima diagnostica sul corpo carattere, non sostituisce una verifica di stampa.`} />
+                                {isBodyTextReadable ? <CheckCircle2 size={13} /> : <AlertTriangle size={13} />} Altezza della x (fronte) ≈ {bodyXHeightMm.toFixed(2)}mm — {isBodyTextReadable
+                                    ? `≥ soglia ${MIN_READABLE_MM}mm All. IV Reg. UE 1169/2011`
+                                    : `sotto la soglia minima (${MIN_READABLE_MM}mm): aumenta le dimensioni etichetta o riduci il testo`}
+                                <InfoTooltip text={`Soglia ${MIN_READABLE_MM}mm — All. IV Reg. 1169/2011: 0,9mm sotto gli 80cm² di superficie, 1,2mm sopra. La norma misura l'altezza della x, non il corpo carattere: qui è ricavata dal corpo (≈${bodyFontSizeMm.toFixed(2)}mm) col rapporto di Arial, 1062/2048. Superficie usata: ${usesPackageSurface ? `imballaggio dichiarato, ≈${frontSurfaceCm2.toFixed(0)}cm²` : `etichetta, ≈${frontSurfaceCm2.toFixed(0)}cm² — dichiara la superficie dell'imballaggio nella scheda Grafica per la soglia corretta`}. Stima diagnostica, non sostituisce una verifica di stampa.`} />
                             </div>
                         )}
+                        {/* AUDIT E3 — le esenzioni per superficie della norma si misurano sulla
+                            superficie maggiore dell'IMBALLAGGIO, non su quella dell'etichetta:
+                            un'etichetta 40×30 su una scatola grande NON dà diritto all'esenzione.
+                            Finché non esiste un campo per la superficie dell'imballaggio, questi
+                            due avvisi sono presentati come condizionali da verificare, non come
+                            esenzioni accertate (erano verdi con spunta: sembravano un via libera). */}
                         {isNutritionDeclarationExempt && (
-                            <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 6, padding: '6px 10px', borderRadius: 6, fontSize: 11, background: 'rgba(0,163,108,0.08)', color: 'var(--color-accent)' }}>
-                                <CheckCircle2 size={13} /> Superficie ≈{frontSurfaceCm2.toFixed(0)}cm² &lt;25cm²: dichiarazione nutrizionale non obbligatoria (All. V p.18 Reg. 1169/2011) — puoi ometterla.
+                            <div style={{ display: 'flex', alignItems: 'flex-start', gap: 6, marginTop: 6, padding: '6px 10px', borderRadius: 6, fontSize: 11, background: 'rgba(230,126,34,0.12)', color: '#b7791f' }}>
+                                <AlertTriangle size={13} style={{ flexShrink: 0, marginTop: 2 }} />
+                                <span>{usesPackageSurface
+                                    ? <>Imballaggio ≈{frontSurfaceCm2.toFixed(0)}cm² &lt;25cm²: dichiarazione nutrizionale non obbligatoria (All. V p.18 Reg. 1169/2011).</>
+                                    : <>Etichetta ≈{frontSurfaceCm2.toFixed(0)}cm². <strong>Se anche la superficie maggiore dell&apos;imballaggio</strong> sta sotto i 25cm², la dichiarazione nutrizionale non è obbligatoria (All. V p.18 Reg. 1169/2011). Qui è confrontata la misura dell&apos;etichetta: dichiara la superficie dell&apos;imballaggio nella scheda Grafica prima di ometterla.</>}</span>
                             </div>
                         )}
                         {isMostFieldsExempt && (
-                            <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 6, padding: '6px 10px', borderRadius: 6, fontSize: 11, background: 'rgba(0,163,108,0.08)', color: 'var(--color-accent)' }}>
-                                <CheckCircle2 size={13} /> Superficie ≈{frontSurfaceCm2.toFixed(0)}cm² &lt;10cm²: solo denominazione, allergeni, quantità netta e TMC restano obbligatori (Art. 16(2) Reg. 1169/2011) — il resto è facoltativo.
+                            <div style={{ display: 'flex', alignItems: 'flex-start', gap: 6, marginTop: 6, padding: '6px 10px', borderRadius: 6, fontSize: 11, background: 'rgba(230,126,34,0.12)', color: '#b7791f' }}>
+                                <AlertTriangle size={13} style={{ flexShrink: 0, marginTop: 2 }} />
+                                <span>{usesPackageSurface
+                                    ? <>Imballaggio ≈{frontSurfaceCm2.toFixed(0)}cm² &lt;10cm²: restano obbligatori solo denominazione, allergeni, quantità netta e TMC (Art. 16(2) Reg. 1169/2011).</>
+                                    : <>Etichetta ≈{frontSurfaceCm2.toFixed(0)}cm². <strong>Se anche la superficie maggiore dell&apos;imballaggio</strong> sta sotto i 10cm², restano obbligatori solo denominazione, allergeni, quantità netta e TMC (Art. 16(2) Reg. 1169/2011). Qui è confrontata la misura dell&apos;etichetta: dichiara la superficie dell&apos;imballaggio nella scheda Grafica prima di omettere gli altri campi.</>}</span>
                             </div>
                         )}
                         {isFrontHeightOverflowing && (
@@ -2950,9 +2961,9 @@ export function EtichetteCalc() {
                                     background: isBackBodyTextReadable ? 'rgba(0,163,108,0.08)' : 'rgba(230,126,34,0.12)',
                                     color: isBackBodyTextReadable ? 'var(--color-accent)' : '#b7791f',
                                 }}>
-                                    {isBackBodyTextReadable ? <CheckCircle2 size={13} /> : <AlertTriangle size={13} />} Corpo testo (retro) ≈ {backBodyFontSizeMm.toFixed(2)}mm — {isBackBodyTextReadable
-                                        ? 'leggibile secondo Reg. UE 1169/2011'
-                                        : `sotto la soglia minima leggibile (${BACK_MIN_READABLE_MM}mm): aumenta le dimensioni del retro o riduci il testo`}
+                                    {isBackBodyTextReadable ? <CheckCircle2 size={13} /> : <AlertTriangle size={13} />} Altezza della x (retro) ≈ {backBodyXHeightMm.toFixed(2)}mm — {isBackBodyTextReadable
+                                        ? `≥ soglia ${BACK_MIN_READABLE_MM}mm All. IV Reg. UE 1169/2011`
+                                        : `sotto la soglia minima (${BACK_MIN_READABLE_MM}mm): aumenta le dimensioni del retro o riduci il testo`}
                                 </div>
                             )}
                             {isBackHeightOverflowing && (
@@ -3340,7 +3351,12 @@ export function EtichetteCalc() {
                         {([
                             { id: 'dati',      label: 'Dati',      icon: <FileText size={21} /> },
                             { id: 'anteprima', label: 'Anteprima', icon: <Eye size={21} /> },
-                            { id: 'grafica',   label: 'Grafica',   icon: <ImageDown size={21} /> },
+                            // AUDIT E6 — si chiamava "Grafica" come il tab in cima al pannello
+                            // Dati, ma contiene tutt'altro: questo è l'export (Report PDF,
+                            // fronte/retro per stampa, scheda per grafico), quello sono
+                            // dimensioni, sfondo e logo. Due nomi uguali per due contenuti
+                            // diversi, uno sopra l'altro nella stessa schermata.
+                            { id: 'grafica',   label: 'Export',    icon: <ImageDown size={21} /> },
                             { id: 'archivio',  label: 'Archivio',  icon: <Archive size={21} /> },
                         ] as { id: 'dati' | 'anteprima' | 'grafica' | 'archivio'; label: string; icon: ReactNode }[]).map(tab => {
                             const isActive = mobileTab === tab.id;

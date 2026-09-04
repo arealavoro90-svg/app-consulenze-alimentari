@@ -156,7 +156,10 @@ function ServingSection({ title, fields, form, onChange, open, onToggle }: {
 
 // ─── Component ────────────────────────────────────────────────────────────────
 export function TabellaTab({ calcResult, form, onChange, onSave, hasIngredients, presentAllergens: _presentAllergens = [], crossAllergens: _crossAllergens = [], initialRegion }: Props) {
-    const [selectedRegion, setSelectedRegion] = useState<Region | null>(initialRegion ?? null);
+    // AUDIT N4 — il default era `null`: la scheda Mercati si apriva con i soli chip
+    // EU/USA/CA/AU/AR e sotto il vuoto assoluto, senza nemmeno un messaggio. Il desktop
+    // parte da UE: stessa cosa qui, così le due versioni si comportano allo stesso modo.
+    const [selectedRegion, setSelectedRegion] = useState<Region | null>(initialRegion ?? 'UE');
     // eslint-disable-next-line react-hooks/set-state-in-effect -- sync region when archive is loaded externally
     useEffect(() => { if (initialRegion) setSelectedRegion(initialRegion); }, [initialRegion]);
     const [notice, setNotice] = useState<{ type: 'success' | 'error'; msg: string } | null>(null);

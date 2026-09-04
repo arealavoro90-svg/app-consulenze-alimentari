@@ -3,31 +3,18 @@ import { ChevronDown, ChevronRight, X, AlertTriangle, Save } from 'lucide-react'
 import { InfoTooltip } from './InfoTooltip';
 import { isValidDBIngredient } from '../../utils/validation';
 import { type DBIngredient, energyFromMacros } from '../../engines/nutrizionaleCalcEngine';
+import { ALLERGEN_FIELDS, CROSS_FIELDS } from './shared/constants';
 
-const CI_ALLERGEN_KEYS = [
-    'all_glutine','all_crostacei','all_uova','all_pesci','all_arachidi','all_soia',
-    'all_latte','all_frutta_guscio','all_anacardi','all_sedano','all_senape',
-    'all_sesamo','all_solfiti','all_lupini','all_molluschi',
-] as const;
-const CI_ALLERGEN_LABELS: Record<string, string> = {
-    all_glutine:'GLUTINE', all_crostacei:'CROSTACEI', all_uova:'UOVA', all_pesci:'PESCE',
-    all_arachidi:'ARACHIDI', all_soia:'SOIA', all_latte:'LATTE',
-    all_frutta_guscio:'FRUTTA A GUSCIO', all_anacardi:'ANACARDI',
-    all_sedano:'SEDANO', all_senape:'SENAPE', all_sesamo:'SESAMO',
-    all_solfiti:'SOLFITI (>10 ppm)', all_lupini:'LUPINI', all_molluschi:'MOLLUSCHI',
-};
-const CI_CROSS_KEYS = [
-    'cross_glutine','cross_crostacei','cross_uova','cross_pesci','cross_arachidi','cross_soia',
-    'cross_latte','cross_frutta_guscio','cross_anacardi','cross_sedano','cross_senape',
-    'cross_sesamo','cross_solfiti','cross_lupini','cross_molluschi',
-] as const;
-const CI_CROSS_LABELS: Record<string, string> = {
-    cross_glutine:'GLUTINE', cross_crostacei:'CROSTACEI', cross_uova:'UOVA', cross_pesci:'PESCE',
-    cross_arachidi:'ARACHIDI', cross_soia:'SOIA', cross_latte:'LATTE',
-    cross_frutta_guscio:'FRUTTA A GUSCIO', cross_anacardi:'ANACARDI',
-    cross_sedano:'SEDANO', cross_senape:'SENAPE', cross_sesamo:'SESAMO',
-    cross_solfiti:'SOLFITI (>10 ppm)', cross_lupini:'LUPINI', cross_molluschi:'MOLLUSCHI',
-};
+// AUDIT E4 — queste quattro liste erano ricopiate a mano qui e avevano già divergito
+// dalla fonte condivisa: mancava `all_grano`/`cross_grano`, quindi un ingrediente creato
+// a mano non poteva dichiarare il grano mentre 85 voci del DB lo usano. Derivate da
+// ALLERGEN_FIELDS/CROSS_FIELDS: una sola fonte di verità, nessuna divergenza possibile.
+const CI_ALLERGEN_KEYS: readonly string[] = ALLERGEN_FIELDS.map(f => f.key as string);
+const CI_ALLERGEN_LABELS: Record<string, string> =
+    Object.fromEntries(ALLERGEN_FIELDS.map(f => [f.key as string, f.label]));
+const CI_CROSS_KEYS: readonly string[] = CROSS_FIELDS.map(f => f.key as string);
+const CI_CROSS_LABELS: Record<string, string> =
+    Object.fromEntries(CROSS_FIELDS.map(f => [f.key as string, f.label]));
 
 // ── Componenti ausiliari a livello di modulo (evita ricreazione ad ogni render) ─
 

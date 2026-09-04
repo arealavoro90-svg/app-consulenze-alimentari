@@ -32,6 +32,7 @@ import {
 import {
     ALLERGEN_FIELDS,
     CROSS_FIELDS,
+    collectAllergenLabels,
 } from './shared/constants';
 
 // ponytail: scaleResult imported for use in sub-tabs (TabellaTab etc.)
@@ -382,18 +383,14 @@ export function NutrizionaleCalcMobile() {
 
     // Allergenici calcolati dagli ingredienti
     const allIngredients = useMemo(() => components.flatMap(c => c.rows.map(r => r.ing)), [components]);
-    const presentAllergens = useMemo<string[]>(() => {
-        const set = new Set<string>();
-        allIngredients.forEach(ing => ALLERGEN_FIELDS.forEach(({ key, label }) => { if (ing[key]) set.add(label); }));
-        return [...set];
-    }, [allIngredients]);
-    const crossAllergens = useMemo<string[]>(() => {
-        const set = new Set<string>();
-        allIngredients.forEach(ing => CROSS_FIELDS.forEach(({ key, label }) => {
-            if (ing[key] && !presentAllergens.includes(label)) set.add(label);
-        }));
-        return [...set];
-    }, [allIngredients, presentAllergens]);
+    const presentAllergens = useMemo<string[]>(
+        () => collectAllergenLabels(allIngredients, ALLERGEN_FIELDS),
+        [allIngredients],
+    );
+    const crossAllergens = useMemo<string[]>(
+        () => collectAllergenLabels(allIngredients, CROSS_FIELDS, presentAllergens),
+        [allIngredients, presentAllergens],
+    );
 
     const tabs: { id: MobileTab; label: string; icon: React.ReactNode }[] = [
         { id: 'ricetta',   label: 'Ricetta',   icon: <Salad size={21} /> },

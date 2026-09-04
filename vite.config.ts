@@ -70,5 +70,15 @@ export default defineConfig({
   test: {
     environment: 'node',
     exclude: ['e2e/**', 'node_modules/**', '.worktrees/**', '.claude/**'],
+    // AUDIT T1 — vitest carica anche `.env.local`, dove sta VITE_DEV_MOCK_AUTH=true per
+    // lo sviluppo senza backend. Quel flag attiva DEV_MOCK_ENABLED in AuthContext, che
+    // cortocircuita login e verifica del token: i due test AUTH-2 ("un errore del backend
+    // non deve MAI autenticare") fallivano su ogni macchina che avesse il mock attivo,
+    // cioè proprio i controlli di sicurezza smettevano di proteggere.
+    // Qui il flag è forzato a false per i soli test: lo sviluppo continua a usare il mock,
+    // la suite verifica sempre il comportamento reale.
+    env: {
+      VITE_DEV_MOCK_AUTH: 'false',
+    },
   },
 })

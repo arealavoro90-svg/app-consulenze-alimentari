@@ -43,3 +43,4 @@ PROMPTS/
 .worktrees/
 test-results/
 .claude/
+Beck-end/venv/

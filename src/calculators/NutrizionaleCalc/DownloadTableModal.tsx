@@ -87,9 +87,27 @@ export function DownloadTableModal({
         measure: effMeasure,
     };
 
+    // ─── AUDIT N3 — porzione obbligatoria sul pannello ufficiale ──────────────
+    // USA (21 CFR 101.9), Canada (FDR B.01.401), Australia (FSANZ 1.2.8) e Golfo
+    // (GSO 2233) stampano la porzione dentro il pannello: senza serving size le
+    // tabelle escono con "Serving size 0 g" / "Par 0g", cioè un'etichetta non
+    // valida — e il download non era bloccato. L'UE non compare qui: la sua base
+    // è per 100g/100ml e la porzione è volontaria (Art. 33).
+    // Il gate sta qui e non nei Tab*.tsx, che sono file protetti: questo è il
+    // punto unico da cui passa ogni download ufficiale.
+    const REGIONS_REQUIRING_SERVING: NationTab[] = ['USA', 'Canada', 'Australia', 'Arabi'];
+    const servingMissing =
+        REGIONS_REQUIRING_SERVING.includes(region) && !(nation.serving && nation.serving > 0);
+
 
     // ─── Download ─────────────────────────────────────────────────────────────
     async function handleDownload() {
+        // Guard anche qui, non solo sul disabled del bottone: il gate non deve
+        // dipendere dallo stato della UI (AUDIT N3).
+        if (servingMissing) {
+            toast.error('Indica la porzione per il mercato selezionato prima di scaricare.');
+            return;
+        }
         const container = previewRef.current;
         if (!container) {
             toast.error('Tabella non trovata.');
@@ -302,8 +320,17 @@ export function DownloadTableModal({
                 </div>
 
                 {/* Footer */}
-                <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 16 }}>
-                    <button className="btn btn-accent" onClick={handleDownload} disabled={downloading} style={{ padding: '8px 20px' }}>
+                <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: 12, marginTop: 16 }}>
+                    {servingMissing && (
+                        <span style={{ fontSize: 12, color: '#b7791f', textAlign: 'right' }}>
+                            Indica la <strong>porzione</strong> per questo mercato: senza, il pannello esce con
+                            &ldquo;Serving size 0&nbsp;g&rdquo; e non è un&apos;etichetta valida.
+                        </span>
+                    )}
+                    <button className="btn btn-accent" onClick={handleDownload}
+                        disabled={downloading || servingMissing}
+                        title={servingMissing ? 'Serve la porzione per il mercato selezionato' : undefined}
+                        style={{ padding: '8px 20px', flexShrink: 0 }}>
                         {downloading ? 'Generazione…' : 'Scarica PNG'}
                     </button>
                 </div>

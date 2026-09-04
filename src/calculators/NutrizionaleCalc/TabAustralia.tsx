@@ -52,26 +52,35 @@ export function TabAustralia({ p, au }: { p: CalcResult; au: ServingSizesNation 
     interface AURow { label: string; svVal: string; di: string; p100: string; isSub?: boolean; }
     const rows: AURow[] = [];
 
-    if (sv) {
+    // AUDIT N2 — le righe si costruivano solo dentro `if (sv)`, cioè solo con la porzione
+    // inserita: senza, la NIP restava vuota e spariva anche la colonna "Average Quantity
+    // per 100 g", che è obbligatoria FSANZ (Standard 1.2.8) e NON dipende dalla porzione.
+    // Ora le righe si costruiscono sempre; restano vuote le sole due colonne per-porzione
+    // finché la porzione manca. Nessuna modifica a stili, bordi, font o struttura tabella.
+    rows.push({
+        label: 'Energy',
+        svVal: sv ? `${rAU_kj(sv.energyKj)} kJ (${rAU_kcal(sv.energyKcal)} Cal)` : '',
+        di: sv ? diPct(sv.energyKj, DV_AU.energyKj) : '',
+        p100: `${rAU_kj(p.energyKj)} kJ (${rAU_kcal(p.energyKcal)} Cal)`,
+    });
+    ([
+        { label: 'Protein',       key: 'proteine',    ref: DV_AU.proteine,    unit: 'g' },
+        { label: 'Fat, total',    key: 'grassi',      ref: DV_AU.grassi,      unit: 'g' },
+        { label: '- saturated',   key: 'saturi',      ref: DV_AU.saturi,      unit: 'g', isSub: true },
+        { label: 'Carbohydrate',  key: 'carboidrati', ref: DV_AU.carboidrati, unit: 'g' },
+        { label: '- sugars',      key: 'zuccheri',    ref: DV_AU.zuccheri,    unit: 'g', isSub: true },
+        { label: 'Dietary fibre', key: 'fibre',       ref: DV_AU.fibre,       unit: 'g' },
+        { label: 'Sodium',        key: 'sodio_mg',    ref: DV_AU.sodio_mg,    unit: 'mg' },
+    ] as { label: string; key: keyof CalcResult; ref: number; unit: string; isSub?: boolean }[]).forEach(r => {
+        const fmt = (v: number) => r.unit === 'mg' ? `${rAU_mg(v)} mg` : `${rAU_g1(v)} g`;
         rows.push({
-            label: 'Energy',
-            svVal: `${rAU_kj(sv.energyKj)} kJ (${rAU_kcal(sv.energyKcal)} Cal)`,
-            di: diPct(sv.energyKj, DV_AU.energyKj),
-            p100: `${rAU_kj(p.energyKj)} kJ (${rAU_kcal(p.energyKcal)} Cal)`,
+            label: r.label,
+            svVal: sv ? fmt(sv[r.key]) : '',
+            di: sv ? diPct(sv[r.key], r.ref) : '',
+            p100: fmt(p[r.key]),
+            isSub: r.isSub,
         });
-        ([
-            { label: 'Protein',       svVal: sv.proteine,    p100: p.proteine,    ref: DV_AU.proteine,    unit: 'g' },
-            { label: 'Fat, total',    svVal: sv.grassi,      p100: p.grassi,      ref: DV_AU.grassi,      unit: 'g' },
-            { label: '- saturated',   svVal: sv.saturi,      p100: p.saturi,      ref: DV_AU.saturi,      unit: 'g', isSub: true },
-            { label: 'Carbohydrate',  svVal: sv.carboidrati, p100: p.carboidrati, ref: DV_AU.carboidrati, unit: 'g' },
-            { label: '- sugars',      svVal: sv.zuccheri,    p100: p.zuccheri,    ref: DV_AU.zuccheri,    unit: 'g', isSub: true },
-            { label: 'Dietary fibre', svVal: sv.fibre,       p100: p.fibre,       ref: DV_AU.fibre,       unit: 'g' },
-            { label: 'Sodium',        svVal: sv.sodio_mg,    p100: p.sodio_mg,    ref: DV_AU.sodio_mg,    unit: 'mg' },
-        ] as { label: string; svVal: number; p100: number; ref: number; unit: string; isSub?: boolean }[]).forEach(r => {
-            const fmt = (v: number) => r.unit === 'mg' ? `${rAU_mg(v)} mg` : `${rAU_g1(v)} g`;
-            rows.push({ label: r.label, svVal: fmt(r.svVal), di: diPct(r.svVal, r.ref), p100: fmt(r.p100), isSub: r.isSub });
-        });
-    }
+    });
 
     const bOut = '2px solid #000';
     const bHdr = '1px solid #000';
@@ -108,15 +117,16 @@ export function TabAustralia({ p, au }: { p: CalcResult; au: ServingSizesNation 
                             </tr>
                         </thead>
                         <tbody>
-                            {svG > 0 && sv ? rows.map((r, i) => (
+                            {rows.map((r, i) => (
                                 <tr key={i}>
                                     <td style={{ ...tdStyle, paddingTop: i === 0 ? 8 : 2, paddingLeft: r.isSub ? 22 : 10 }}>{r.label}</td>
                                     <td style={{ ...tdStyle, paddingTop: i === 0 ? 8 : 2, ...(i === 0 ? { whiteSpace: 'nowrap' } : {}) }}>{r.svVal}</td>
                                     <td style={{ ...tdStyle, paddingTop: i === 0 ? 8 : 2 }}>{r.di}</td>
                                     <td style={{ ...tdStyle, paddingTop: i === 0 ? 8 : 2, ...(i === 0 ? { whiteSpace: 'nowrap' } : {}) }}>{r.p100}</td>
                                 </tr>
-                            )) : (
-                                <tr><td colSpan={4} style={{ ...tdStyle, color: '#888' }}>Inserire il valore serving size sopra per calcolare le quantità per porzione.</td></tr>
+                            ))}
+                            {!sv && (
+                                <tr><td colSpan={4} style={{ ...tdStyle, color: '#888' }}>Inserire il valore serving size sopra per compilare le colonne per porzione.</td></tr>
                             )}
                         </tbody>
                     </table>

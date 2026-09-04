@@ -14,7 +14,12 @@ export function useIngredientsDB(errorMessage = 'Impossibile caricare il databas
         // S0: carica da endpoint Django autenticato; in dev senza backend → fallback statico
         const fromAPI = () => apiFetch<DBIngredient[]>('/api/ingredients/');
         const fromStatic = () => fetch('/data/ingredientsDB.json').then(r => r.json() as Promise<DBIngredient[]>);
-        fromAPI()
+        // AUDIT T3 — con VITE_DEV_MOCK_AUTH attivo non esiste alcuna sessione: la chiamata
+        // all'API è garantita fallire con 401. Saltarla evita un round-trip inutile e
+        // toglie dalla console errori che sembrano guasti e non lo sono. Il 401 resta il
+        // fallback legittimo in ogni altro caso (dev senza backend avviato, backend giù).
+        const mockAuth = import.meta.env.DEV && import.meta.env.VITE_DEV_MOCK_AUTH === 'true';
+        (mockAuth ? fromStatic() : fromAPI())
             .catch(() => fromStatic())
             .then(data => {
                 let base = Array.isArray(data) ? data : [];

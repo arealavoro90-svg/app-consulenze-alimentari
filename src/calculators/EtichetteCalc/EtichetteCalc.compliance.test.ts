@@ -12,9 +12,10 @@ import {
     EAN13_BAR_MODULES, EAN13_QUIET_MODULES, EAN13_HEIGHT_MM, EAN13_TRUNCATED_MIN_HEIGHT_MM,
     shouldShareBarcodeRow, BARCODE_SHARED_ROW_THRESHOLD,
     shouldUseTwoColumnLayout, HORIZONTAL_TWO_COLUMN_ASPECT_THRESHOLD,
+    xHeightMm, ARIAL_X_HEIGHT_RATIO,
 } from './EtichetteCalc';
-import { ALLERGEN_FIELDS, CROSS_FIELDS } from '../NutrizionaleCalc/shared/constants';
-import { calcClaims, ZERO_CALC, type CalcResult } from '../../engines/nutrizionaleCalcEngine';
+import { ALLERGEN_FIELDS, CROSS_FIELDS, ALLERGEN_PARENT, collectAllergenLabels, fmtQuantita } from '../NutrizionaleCalc/shared/constants';
+import { calcClaims, ZERO_CALC, type CalcResult, type DBIngredient } from '../../engines/nutrizionaleCalcEngine';
 import { PACKAGING_MATERIALS } from './packagingMaterials';
 import type { ArchiveData } from '../NutrizionaleCalc/NutrizionaleCalc';
 
@@ -27,6 +28,47 @@ describe('Reg. (UE) 1169/2011 Art. 21 + All. II — 14 allergeni obbligatori', (
             'all_sesamo', 'all_solfiti', 'all_lupini', 'all_molluschi',
         ];
         for (const k of obbligatori) expect(keys, `manca ${k}`).toContain(k);
+    });
+
+    // ─── E4: voci di dettaglio che trascinano il gruppo All. II ──────────────
+    it('un ingrediente con solo all_grano dichiara anche il gruppo GLUTINE (All. II punto 1)', () => {
+        // Il caso reale: 85 voci su 1065 del DB valorizzano all_grano senza all_glutine.
+        // Prima del fix l'etichetta mostrava solo "GRANO" e ometteva il gruppo obbligatorio.
+        const ing = { nome: 'farina di grano', all_grano: 'SI' } as unknown as DBIngredient;
+        const labels = collectAllergenLabels([ing], ALLERGEN_FIELDS);
+        expect(labels).toContain('GLUTINE');
+        expect(labels).toContain('GRANO'); // il dettaglio resta: indicare il cereale è utile
+    });
+
+    it('un ingrediente con solo all_anacardi dichiara anche FRUTTA A GUSCIO (All. II punto 8)', () => {
+        const ing = { nome: 'anacardi tostati', all_anacardi: 'SI' } as unknown as DBIngredient;
+        const labels = collectAllergenLabels([ing], ALLERGEN_FIELDS);
+        expect(labels).toContain('FRUTTA A GUSCIO');
+        expect(labels).toContain('ANACARDI');
+    });
+
+    it('nessun gruppo inventato per gli allergeni che sono già gruppi di primo livello', () => {
+        const ing = { nome: 'latte', all_latte: 'SI' } as unknown as DBIngredient;
+        expect(collectAllergenLabels([ing], ALLERGEN_FIELDS)).toEqual(['LATTE']);
+    });
+
+    it('le tracce non ripetono un allergene già presente, né il suo gruppo', () => {
+        // GLUTINE già presente come allergene → la traccia cross_grano non deve
+        // riproporre GLUTINE fra le tracce (sarebbe ridondante e fuorviante).
+        const ing = { nome: 'x', cross_grano: 'SI' } as unknown as DBIngredient;
+        const tracce = collectAllergenLabels([ing], CROSS_FIELDS, ['GLUTINE']);
+        expect(tracce).toContain('GRANO');
+        expect(tracce).not.toContain('GLUTINE');
+    });
+
+    it('la mappa dei gruppi copre solo i due casi noti, non introduce gerarchie arbitrarie', () => {
+        expect(Object.keys(ALLERGEN_PARENT).sort()).toEqual(['ANACARDI', 'GRANO']);
+    });
+
+    it('il modal ingrediente personale espone gli stessi campi del DB (incluso il grano)', () => {
+        // Le liste del modal erano ricopiate a mano e avevano perso all_grano/cross_grano.
+        expect(ALLERGEN_FIELDS.map(f => f.key)).toContain('all_grano');
+        expect(CROSS_FIELDS.map(f => f.key)).toContain('cross_grano');
     });
 
     it('highlightAllergens evidenzia sedano/senape/sesamo in MAIUSCOLO (Art. 21: distinguibili dal resto)', () => {
@@ -326,5 +368,56 @@ describe('Framework impaginazione responsive quadrata/verticale/orizzontale (ric
     it('le soglie sono costanti esportate, non magic number sparsi nel JSX', () => {
         expect(BARCODE_SHARED_ROW_THRESHOLD).toBe(0.55);
         expect(HORIZONTAL_TWO_COLUMN_ASPECT_THRESHOLD).toBe(1.25);
+    });
+});
+
+// ─── N7: formattazione quantità nel Riepilogo ───────────────────────────────────
+describe('N7 — fmtQuantita', () => {
+    it('non produce più "100,000" per il valore 100', () => {
+        expect(fmtQuantita(100)).toBe('100');
+    });
+
+    it('mantiene i decimali significativi, fino a 3', () => {
+        expect(fmtQuantita(12.5)).toBe('12,5');
+        expect(fmtQuantita(0.125)).toBe('0,125');
+        expect(fmtQuantita(33.333333)).toBe('33,333');
+    });
+
+    it('zero resta "0", non stringa vuota', () => {
+        expect(fmtQuantita(0)).toBe('0');
+    });
+
+    it('non tronca gli zeri interni né quelli di un intero tondo', () => {
+        // Il rischio della regex: "1000.000" non deve diventare "1".
+        expect(fmtQuantita(1000)).toBe('1000');
+        expect(fmtQuantita(10.5)).toBe('10,5');
+        expect(fmtQuantita(100.05)).toBe('100,05');
+    });
+});
+
+// ─── E1: leggibilità misurata sull'altezza della x (All. IV Reg. 1169/2011) ──────
+describe('E1 — altezza della x vs corpo carattere', () => {
+    it('il rapporto è quello reale di Arial (1062 unità su em 2048)', () => {
+        expect(ARIAL_X_HEIGHT_RATIO).toBeCloseTo(0.5186, 4);
+    });
+
+    it('l\'altezza della x è circa metà del corpo, non il corpo stesso', () => {
+        expect(xHeightMm(2)).toBeCloseTo(1.037, 3);
+        expect(xHeightMm(0)).toBe(0);
+    });
+
+    it('un corpo appena sopra 1,2mm NON è conforme: la sua altezza della x sta sotto soglia', () => {
+        // Il bug: 1,25mm di corpo veniva dichiarato "leggibile" contro la soglia 1,2mm,
+        // ma l'altezza della x reale è ~0,65mm — meno della metà del minimo.
+        const corpoMm = 1.25;
+        expect(corpoMm).toBeGreaterThanOrEqual(1.2);          // vecchio confronto: passava
+        expect(xHeightMm(corpoMm)).toBeLessThan(1.2);          // nuovo confronto: non passa
+        expect(xHeightMm(corpoMm)).toBeLessThan(0.9);          // nemmeno la soglia ridotta
+    });
+
+    it('per rispettare 1,2mm di altezza della x serve un corpo di ~2,31mm', () => {
+        const corpoMinimo = 1.2 / ARIAL_X_HEIGHT_RATIO;
+        expect(corpoMinimo).toBeCloseTo(2.314, 3);
+        expect(xHeightMm(corpoMinimo)).toBeCloseTo(1.2, 6);
     });
 });
