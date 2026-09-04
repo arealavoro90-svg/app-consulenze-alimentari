@@ -19,6 +19,20 @@ const TOOL_ICONS: Record<ToolId, React.ReactNode> = {
     'excel-import':        <FileText size={16} />,
 };
 
+// ponytail: label abbreviate per sidebar collassata (max 8 char)
+const RAIL_LABELS: Record<string, string> = {
+    'dashboard':            'Home',
+    'risorse':              'Risorse',
+    'nutrizionale':         'Nutriz.',
+    'etichette':            'Etich.',
+    'etichette-vini':       'Et. Vini',
+    'rintracciabilita':     'Rintrac.',
+    'trattamento-termico':  'Termico',
+    'schede-complete':      'Schede',
+    'scheda-processo':      'Processo',
+    'excel-import':         'Excel',
+};
+
 interface SidebarProps {
     /** Used on <900px to open sidebar as a drawer */
     isOpen?: boolean;
@@ -86,6 +100,7 @@ export function Sidebar({ isOpen = false, onClose }: SidebarProps) {
                             onClick={onClose}
                         >
                             {item.icon}
+                            <span className="sidebar-nav-rail-label">{RAIL_LABELS[item.key] ?? item.label.slice(0, 8)}</span>
                         </NavLink>
                     ))}
                 </nav>
