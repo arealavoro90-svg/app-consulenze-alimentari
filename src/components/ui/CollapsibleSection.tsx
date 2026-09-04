@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from 'react';
+import { useState, useEffect, type ReactNode } from 'react';
 import { ChevronDown } from 'lucide-react';
 
 export function CollapsibleSection({
@@ -21,40 +21,35 @@ export function CollapsibleSection({
         } catch { return defaultOpen; }
     });
 
+    useEffect(() => {
+        const handler = (e: Event) => {
+            if ((e as CustomEvent<{ storageKey: string }>).detail?.storageKey === storageKey) {
+                setOpen(true);
+                try { localStorage.setItem(`et_sec_${storageKey}`, '1'); } catch { /* noop */ }
+            }
+        };
+        document.addEventListener('openEtichetteSection', handler);
+        return () => document.removeEventListener('openEtichetteSection', handler);
+    }, [storageKey]);
+
     const toggle = () => {
         setOpen(v => {
             const next = !v;
-            try { localStorage.setItem(`et_sec_${storageKey}`, next ? '1' : '0'); } catch { /* storage non disponibile, stato solo in memoria */ }
+            try { localStorage.setItem(`et_sec_${storageKey}`, next ? '1' : '0'); } catch { /* noop */ }
             return next;
         });
     };
 
     return (
-        <div className="card" style={{ marginBottom: 16 }}>
-            <button
-                type="button"
-                onClick={toggle}
-                style={{
-                    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                    width: '100%', background: 'none', border: 'none', padding: 0,
-                    cursor: 'pointer', textAlign: 'left',
-                    marginBottom: open ? 16 : 0,
-                }}
-            >
-                <div>
-                    <h3 style={{ fontWeight: 700, margin: 0 }}>{title}</h3>
+        <div className="comp-card" style={{ marginBottom: 10 }}>
+            <div className="comp-card-header" onClick={toggle}>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                    <h3 className="comp-card-title" style={{ margin: 0 }}>{title}</h3>
                     {subtitle && <p className="hint" style={{ margin: '2px 0 0', fontSize: 11 }}>{subtitle}</p>}
                 </div>
-                <ChevronDown
-                    size={16}
-                    style={{
-                        flexShrink: 0, marginLeft: 8,
-                        transform: open ? 'rotate(180deg)' : 'none',
-                        transition: 'transform 0.2s',
-                    }}
-                />
-            </button>
-            {open && <div>{children}</div>}
+                <ChevronDown size={14} style={{ flexShrink: 0, marginLeft: 8, transform: open ? 'rotate(0deg)' : 'rotate(-90deg)', transition: 'transform 0.2s', color: 'var(--color-text-muted)', pointerEvents: 'none' }} />
+            </div>
+            {open && <div className="comp-card-body">{children}</div>}
         </div>
     );
 }

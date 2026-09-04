@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState, useCallback, type ReactNode } fro
 import { createPortal } from 'react-dom';
 import {
     Plus, Archive, BookOpen, Save, Sparkles, ImageDown,
-    RefreshCw, X, Image, Building2, CheckCircle2, AlertTriangle, FileText, Eye, ChevronDown,
+    RefreshCw, X, Image, Building2, CheckCircle2, AlertTriangle, FileText, Eye,
 } from 'lucide-react';
 import QRCode from 'qrcode';
 import JsBarcode from 'jsbarcode';
@@ -15,6 +15,7 @@ import { useIngredientsDB } from '../../hooks/useIngredientsDB';
 import { useLocalStorage } from '../../hooks/useLocalStorage';
 import { ArchiveModal } from '../../components/ArchiveModal';
 import { ConfirmDialog } from '../../components/ui/ConfirmDialog';
+import { CollapsibleSection } from '../../components/ui/CollapsibleSection';
 import { PromptDialog } from '../../components/ui/PromptDialog';
 import { useToast } from '../../components/ui/Toast';
 import { WelcomeModal, ETICHETTE_SLIDES } from '../../components/WelcomeModal';
@@ -750,59 +751,6 @@ function CodeCanvas({ type, value, scale, pxPerMm }: { type: 'qr' | 'barcode' | 
         <div style={{ display: 'inline-block' }}>
             {type === 'qr' ? <canvas ref={canvasRef} /> : <svg ref={svgRef} />}
             {error && <div style={{ fontSize: 9, color: '#c53030' }}>{error}</div>}
-        </div>
-    );
-}
-
-function CollapsibleSection({
-    title,
-    defaultOpen = true,
-    storageKey,
-    children,
-    subtitle,
-}: {
-    title: string | ReactNode;
-    defaultOpen?: boolean;
-    storageKey: string;
-    children: ReactNode;
-    subtitle?: string;
-}) {
-    const [open, setOpen] = useState(() => {
-        try {
-            const stored = localStorage.getItem(`et_sec_${storageKey}`);
-            return stored !== null ? stored === '1' : defaultOpen;
-        } catch { return defaultOpen; }
-    });
-
-    useEffect(() => {
-        const handler = (e: Event) => {
-            if ((e as CustomEvent<{ storageKey: string }>).detail?.storageKey === storageKey) {
-                setOpen(true);
-                try { localStorage.setItem(`et_sec_${storageKey}`, '1'); } catch { /* noop */ }
-            }
-        };
-        document.addEventListener('openEtichetteSection', handler);
-        return () => document.removeEventListener('openEtichetteSection', handler);
-    }, [storageKey]);
-
-    const toggle = () => {
-        setOpen(v => {
-            const next = !v;
-            try { localStorage.setItem(`et_sec_${storageKey}`, next ? '1' : '0'); } catch { /* noop */ }
-            return next;
-        });
-    };
-
-    return (
-        <div className="comp-card" style={{ marginBottom: 10 }}>
-            <div className="comp-card-header" onClick={toggle}>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                    <h3 className="comp-card-title" style={{ margin: 0 }}>{title}</h3>
-                    {subtitle && <p className="hint" style={{ margin: '2px 0 0', fontSize: 11 }}>{subtitle}</p>}
-                </div>
-                <ChevronDown size={14} style={{ flexShrink: 0, marginLeft: 8, transform: open ? 'rotate(0deg)' : 'rotate(-90deg)', transition: 'transform 0.2s', color: 'var(--color-text-muted)', pointerEvents: 'none' }} />
-            </div>
-            {open && <div className="comp-card-body">{children}</div>}
         </div>
     );
 }
