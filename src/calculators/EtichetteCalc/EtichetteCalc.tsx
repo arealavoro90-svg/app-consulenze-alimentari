@@ -573,10 +573,11 @@ for (const nutrient of ['CALCIO', 'FERRO', 'POTASSIO', 'PROTEINE', 'FOSFORO', 'M
 // eslint-disable-next-line react-refresh/only-export-components
 export function calcAdditionalClaims(p: CalcResult, isLiquid: boolean): string[] {
     const claims: string[] = [];
-    if (p.grassi <= 0.5) claims.push('SENZA GRASSI');
-    if (p.saturi <= (isLiquid ? 0.75 : 1.5)) claims.push('A BASSO CONTENUTO DI GRASSI SATURI');
-    if (p.saturi <= 0.1) claims.push('SENZA GRASSI SATURI');
-    if (p.zuccheri <= 0.5) claims.push('SENZA ZUCCHERI');
+    if (p.grassi < 0.5) claims.push('SENZA GRASSI');
+    if ((p.saturi + (p.trans ?? 0)) <= (isLiquid ? 0.75 : 1.5)) claims.push('A BASSO CONTENUTO DI GRASSI SATURI');
+    if ((p.saturi + (p.trans ?? 0)) <= 0.1) claims.push('SENZA GRASSI SATURI');
+    if (p.zuccheri < 0.5) claims.push('SENZA ZUCCHERI');
+    if (p.sodio_mg < 5) claims.push('SENZA SODIO/SALE');
     const microAR: { field: keyof CalcResult; label: string; ar: number }[] = [
         { field: 'fosforo', label: 'FOSFORO', ar: 700 },
         { field: 'magnesio', label: 'MAGNESIO', ar: 375 },
@@ -977,7 +978,7 @@ export function EtichetteCalc() {
         vitC: { field: 'vitC', ar: 80 }, vitB1: { field: 'vitB1', ar: 1.1 },
         vitB2: { field: 'vitB2', ar: 1.4 }, vitB3: { field: 'vitB3', ar: 16 },
         vitB5: { field: 'vitB5', ar: 6 }, vitB6: { field: 'vitB6', ar: 1.4 },
-        vitB9: { field: 'vitB9', ar: 200 }, vitB12: { field: 'vitB12', ar: 2.4 },
+        vitB9: { field: 'vitB9', ar: 200 }, vitB12: { field: 'vitB12', ar: 2.5 },
     };
     const autoSelectedOptionals: SelectedOptionals = useMemo(() => {
         if (!per100) return DEFAULT_OPTIONALS;

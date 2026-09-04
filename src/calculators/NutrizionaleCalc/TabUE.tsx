@@ -27,7 +27,7 @@ const AR_UE = {
     energyKj: 8400, energyKcal: 2000, grassi: 70, saturi: 20, carboidrati: 260,
     zuccheri: 90, fibre: 25, proteine: 50, sale: 6, potassio: 2000, calcio: 800,
     fosforo: 700, magnesio: 375, ferro: 14, zinco: 10, vitC: 80, vitB1: 1.1,
-    vitB2: 1.4, vitB3: 16, vitB6: 1.4, vitB9: 200, vitB12: 2.4, vitA_eq: 800, vitD: 5, vitE: 12,
+    vitB2: 1.4, vitB3: 16, vitB6: 1.4, vitB9: 200, vitB12: 2.5, vitA_eq: 800, vitD: 5, vitE: 12,
     // Additional EU Reg 1169/2011 Annex XIII values
     vitK: 75, vitB5: 6, rame: 1, manganese: 2, selenio: 55, iodio: 150,
 };

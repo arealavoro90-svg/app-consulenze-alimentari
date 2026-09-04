@@ -1,4 +1,3 @@
-import * as XLSX from 'xlsx';
 import Fuse from 'fuse.js';
 import type { DBIngredient } from '../engines/nutrizionaleCalcEngine';
 import type { ParsedGroup, ParsedLine } from './recipeParser';
@@ -18,6 +17,7 @@ const FINISHED_WEIGHT_CELL = { r: 12, c: 31 };
 const CONFIDENCE_THRESHOLD = 50;
 
 export async function importFromExcel(file: File, db: DBIngredient[]): Promise<ExcelImportData> {
+  const XLSX = await import('xlsx');
   const buffer = await file.arrayBuffer();
   const wb = XLSX.read(buffer, { type: 'array' });
 

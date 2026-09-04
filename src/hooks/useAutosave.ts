@@ -22,6 +22,19 @@ export function useAutosave<T>(
         return () => clearInterval(id);
     }, [key, data, enabled, intervalMs]);
 
+    useEffect(() => {
+        if (!enabled) return;
+        const saveNow = () => {
+            try {
+                localStorage.setItem(key, JSON.stringify(data));
+            } catch (e) {
+                console.warn('[useAutosave] Failed to save draft on unload:', e);
+            }
+        };
+        window.addEventListener('beforeunload', saveNow);
+        return () => window.removeEventListener('beforeunload', saveNow);
+    }, [key, data, enabled]);
+
     const hasDraft = localStorage.getItem(key) !== null;
 
     const loadDraft = useCallback((): T | null => {

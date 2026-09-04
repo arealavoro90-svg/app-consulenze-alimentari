@@ -20,7 +20,7 @@ export type SubTab = 'verticale' | 'orizzontale' | 'lineare';
 
 // ─── DV Canada ────────────────────────────────────────────────────────────────
 const DV_CA = {
-    energyKcal: 2000, grassi: 78, satTrans: 20, carboidratiTot: 275, fibre: 25,
+    energyKcal: 2000, grassi: 75, satTrans: 20, carboidratiTot: 275, fibre: 28,
     zuccheri: 100, proteine: 50, sodio_mg: 2300, potassio: 4700, calcio: 1300, ferro: 18,
 };
 

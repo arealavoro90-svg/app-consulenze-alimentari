@@ -23,6 +23,7 @@ import { WelcomeModal } from '../../components/WelcomeModal';
 import { ArchiveModal } from '../../components/ArchiveModal';
 import { ValidationError } from '../../components/ValidationError';
 import {
+    parseDecimalIT,
     validatePositiveNumber,
     validatePercentage,
     validateFinishedWeight,
@@ -1005,8 +1006,8 @@ export function NutrizionaleCalc() {
                                 return (
                                     <div key={k} className="field">
                                         <label className="field-label" htmlFor={`portion-ue-${k}`} title={fullLabels[i]}>{shortLabels[i]}</label>
-                                        <input id={`portion-ue-${k}`} type="number" min={0} placeholder="—" value={ue[k] || ''}
-                                            onChange={e => setUE(prev => ({ ...prev, [k]: parseFloat(e.target.value) || undefined }))}
+                                        <input id={`portion-ue-${k}`} type="text" inputMode="decimal" placeholder="—" value={ue[k] || ''}
+                                            onChange={e => setUE(prev => ({ ...prev, [k]: parseDecimalIT(e.target.value) || undefined }))}
                                             className="field-input" />
                                     </div>
                                 );
@@ -1023,8 +1024,8 @@ export function NutrizionaleCalc() {
                                 return (
                                     <div key={k} className="field">
                                         <label className="field-label" htmlFor={`portion-au-${k}`} title={fullLabels[i]}>{shortLabels[i]}</label>
-                                        <input id={`portion-au-${k}`} type="number" min={0} placeholder="—" value={au[k] || ''}
-                                            onChange={e => setAU(prev => ({ ...prev, [k]: parseFloat(e.target.value) || undefined }))}
+                                        <input id={`portion-au-${k}`} type="text" inputMode="decimal" placeholder="—" value={au[k] || ''}
+                                            onChange={e => setAU(prev => ({ ...prev, [k]: parseDecimalIT(e.target.value) || undefined }))}
                                             className="field-input" />
                                     </div>
                                 );
@@ -1042,14 +1043,14 @@ export function NutrizionaleCalc() {
                                 <div role="group" aria-label="Riferimento" style={{ display: 'contents' }}>
                                     <div className="field">
                                         <label className="field-label" htmlFor="portion-serving" title="Serving size (g/ml)">Serving</label>
-                                        <input id="portion-serving" type="number" min={0} placeholder="—" value={vals.serving || ''}
-                                            onChange={e => setFn(prev => ({ ...prev, serving: parseFloat(e.target.value) || undefined }))}
+                                        <input id="portion-serving" type="text" inputMode="decimal" placeholder="—" value={vals.serving || ''}
+                                            onChange={e => setFn(prev => ({ ...prev, serving: parseDecimalIT(e.target.value) || undefined }))}
                                             className="field-input" />
                                     </div>
                                     <div className="field">
                                         <label className="field-label" htmlFor="portion-confezione" title="Confezione (g/ml)">Confez.</label>
-                                        <input id="portion-confezione" type="number" min={0} placeholder="—" value={vals.confezione || ''}
-                                            onChange={e => setFn(prev => ({ ...prev, confezione: parseFloat(e.target.value) || undefined }))}
+                                        <input id="portion-confezione" type="text" inputMode="decimal" placeholder="—" value={vals.confezione || ''}
+                                            onChange={e => setFn(prev => ({ ...prev, confezione: parseDecimalIT(e.target.value) || undefined }))}
                                             className="field-input" />
                                     </div>
                                 </div>
@@ -1060,20 +1061,20 @@ export function NutrizionaleCalc() {
                                     <div className="field">
                                         <label className="field-label" htmlFor="portion-cup" title={`1 Cup = ${cupMl}ml → (g)`}>Cup</label>
                                         <InfoTooltip text={`Una cup è un contenitore fisico standard da ${cupMl}ml. Inserisci il peso in grammi di una cup piena del tuo prodotto. Es: 1 cup di farina = 120g, 1 cup di riso = 185g, 1 cup di liquido = ~${cupMl}g.`} />
-                                        <input id="portion-cup" type="number" min={0} placeholder="—" value={vals.cup || ''}
-                                            onChange={e => setFn(prev => ({ ...prev, cup: parseFloat(e.target.value) || undefined }))}
+                                        <input id="portion-cup" type="text" inputMode="decimal" placeholder="—" value={vals.cup || ''}
+                                            onChange={e => setFn(prev => ({ ...prev, cup: parseDecimalIT(e.target.value) || undefined }))}
                                             className="field-input" />
                                     </div>
                                     <div className="field">
                                         <label className="field-label" htmlFor="portion-cucchiaio" title="1 Cucchiaio = 15ml → (g)">Cucch.</label>
-                                        <input id="portion-cucchiaio" type="number" min={0} placeholder="—" value={vals.cucchiaio || ''}
-                                            onChange={e => setFn(prev => ({ ...prev, cucchiaio: parseFloat(e.target.value) || undefined }))}
+                                        <input id="portion-cucchiaio" type="text" inputMode="decimal" placeholder="—" value={vals.cucchiaio || ''}
+                                            onChange={e => setFn(prev => ({ ...prev, cucchiaio: parseDecimalIT(e.target.value) || undefined }))}
                                             className="field-input" />
                                     </div>
                                     <div className="field">
                                         <label className="field-label" htmlFor="portion-pezzo" title="Pezzo (g)">Pezzo</label>
-                                        <input id="portion-pezzo" type="number" min={0} placeholder="—" value={vals.pezzo || ''}
-                                            onChange={e => setFn(prev => ({ ...prev, pezzo: parseFloat(e.target.value) || undefined }))}
+                                        <input id="portion-pezzo" type="text" inputMode="decimal" placeholder="—" value={vals.pezzo || ''}
+                                            onChange={e => setFn(prev => ({ ...prev, pezzo: parseDecimalIT(e.target.value) || undefined }))}
                                             className="field-input" />
                                     </div>
                                 </div>
@@ -1576,6 +1577,8 @@ export function NutrizionaleCalc() {
                                                 const val = (!raw || isNaN(v) || v < 0) ? 0 : v;
                                                 setGramsRaw(prev => ({ ...prev, [rowKey]: String(val) }));
                                                 updateGrams(comp.id, row.id, val);
+                                                const vr = validateIngredientQuantity(val, row.ing.nome);
+                                                setFieldErrors(prev => ({ ...prev, [`${rowKey}-grams`]: vr.isValid ? '' : (vr.error ?? '') }));
                                             }}
                                         />
                                         <span style={{ fontSize: 12, color: 'var(--color-text-muted)' }}>g</span>
