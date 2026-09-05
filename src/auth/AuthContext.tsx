@@ -38,7 +38,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const [user, setUser] = useState<User | null>(() => {
         // In mock mode: sempre loggato, nessuna chiamata backend
         if (DEV_MOCK_ENABLED) return DEV_MOCK_USER;
-        const cached = localStorage.getItem(CACHE_KEY);
+        const cached = sessionStorage.getItem(CACHE_KEY);
         if (cached) {
             try { return JSON.parse(cached) as User; } catch { /* cache corrotta */ }
         }
@@ -51,11 +51,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         apiMe()
             .then((freshUser) => {
                 setUser(freshUser);
-                localStorage.setItem(CACHE_KEY, JSON.stringify(freshUser));
+                sessionStorage.setItem(CACHE_KEY, JSON.stringify(freshUser));
             })
             .catch(() => {
                 setUser(null);
-                localStorage.removeItem(CACHE_KEY);
+                sessionStorage.removeItem(CACHE_KEY);
                 clearTokens();
             });
     }, []);
@@ -70,7 +70,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         try {
             const loggedUser = await apiLogin(email, password);
             setUser(loggedUser);
-            localStorage.setItem(CACHE_KEY, JSON.stringify(loggedUser));
+            sessionStorage.setItem(CACHE_KEY, JSON.stringify(loggedUser));
             return true;
         } catch {
             return false;
@@ -79,7 +79,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const logout = (): void => {
         setUser(null);
-        localStorage.removeItem(CACHE_KEY);
+        sessionStorage.removeItem(CACHE_KEY);
         void apiLogout(); // fire-and-forget: blacklist refresh token sul server
     };
 
