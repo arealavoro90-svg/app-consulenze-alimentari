@@ -1,18 +1,26 @@
 # TODO — AEA Consulenze Alimentari
 > **Aggiorna dopo ogni sessione.** Inizio sessione: leggi CLAUDE.md + questo file.
 > Audit storico: `AUDIT.md` · Audit 2026-09-03: `AUDIT-2026-09-03.md` (20/22 chiusi)
-> **Sessione 2026-09-07: DEPLOY PROD live. Auth reale verificata. Vedi sezione ✅.**
+> Audit 360° Etichette+Nutrizionale: `docs/audit/AUDIT-2026-09-07-etichette-nutrizionale.md`
+> **Sessione 2026-09-07: DEPLOY PROD live. Auth reale verificata. Quick wins audit implementati.**
 > Production URL: **https://app-consulenze-alimentari.vercel.app**
 
 ---
 
 ## 🔴 BLOCCANTE (ancora aperto)
 
-- [ ] **GDPR-1** 🔴 — Redigere e pubblicare (tuo):
+- [ ] **GDPR-1** 🔴 — Redigere e pubblicare (**solo tuo**):
   - Informativa privacy Art. 13 GDPR (titolare: AEA, finalità, base giuridica, conservazione, diritti)
   - Cookie policy — cookie httpOnly `aea_access`/`aea_refresh` sono tecnici/essenziali
   - DPA con Vercel (firma in pannello legal Vercel) + DPA con Neon (provider DB)
   - Procedura diritto cancellazione Art. 17 (anche manuale via Django admin)
+
+- [ ] **D3-BE** 🔴 — Verificare che l'endpoint `/api/ingredients/` ritorni il campo `allergens` nel JSON.
+  Backend Django ha il JSONField ma non è confermato che sia serializzato e restituito dal frontend.
+  Rischio: etichette generate senza allergeni → violazione Art. 21 Reg. 1169/2011 (rischio salute).
+
+- [ ] **D2-DATA** 🔴 — 9 prodotti "senza glutine" con `all_glutine: 1` nel DB (**solo tuo — scheda tecnica fornitore**).
+  Lista in `AUDIT-2026-09-03.md`. Falsa dichiarazione allergene → rischio revoca certificazione GF.
 
 ---
 
@@ -20,74 +28,143 @@
 
 ### Sicurezza
 
-- [ ] **COD-07-LOGIN** — Rate limit login 3/min: `LocMemCache` non persiste tra worker Gunicorn.
-  Aggiungere Redis in `production.py` per `CACHES`. Senza Redis il throttling è inefficace in prod.
+- [ ] **COD-07-LOGIN / SEC-11-CACHE** — Redis per throttling login in produzione.
+  `LocMemCache` non persiste tra worker Gunicorn → throttling login 3/min inefficace in prod.
+  Fix: aggiungere Redis in `production.py` per `CACHES`. Un solo intervento chiude sia questo che SEC-11.
 
-### Normative
+### Normativa
 
-- [ ] **NORM-09** — Gulf/Arabi: verificare clausola small-package su fonte primaria SFDA/GSO.
+- [ ] **NORM-09** — Gulf/Arabi: verificare clausola small-package su fonte primaria SFDA/GSO (**solo tuo**).
   Confidenza normativa bassa nel codice. Verificare GSO 2233/2012 + SFDA prima di vendere a clienti Gulf.
 
 - [ ] **NORM-10** — Scostamenti grassi/proteine Lasagna (ETI-6) — causa non isolata.
   Scope: NutrizionaleCalc, EtichetteCalc, TrattamentoTermicoCalc — almeno 3 ricette reali per tool.
 
+- [ ] **GULF-ARABO** — Tabella nutrizionale Gulf solo in inglese — non conforme per export Golfo.
+  GSO 2233/2012 richiede lingua araba. Da verificare prima di commercializzare verso clienti Gulf.
+
+- [ ] **CA-LINEAR-FR** — Formato lineare Canada solo in inglese. CFIA richiede bilinguismo in tutti i formati.
+
+- [ ] **FG-DETAIL** — Solo anacardi tracciato tra frutti a guscio; 7 sottovoci (mandorle, nocciole, noci,
+  pistacchi, pecan, noci Brasile, macadamia) non distinguibili. All. II p.8 Reg. 1169/2011.
+
+- [ ] **VITAMINA-CLAIM** — Nessun claim generato per vitamine (valori AR_UE presenti ma non usati per claim).
+  Reg. 1924/2006. Aggiungere in `calcClaims()` del nutrizionaleCalcEngine.
+
 ### UX
 
-- [ ] **UX-07** — Login page: proposta di valore. Tagline generica, nessun pricing/social proof.
+- [ ] **UX-07** — Login page: proposta di valore. Social proof aggiunta (QW-9 ✅), manca pricing/tagline forte.
 
-- [ ] **UX-DEV** — Test fisici iOS Safari + Android Chrome. Input decimali, scroll tabelle, touch 44px, PDF.
+- [ ] **UX-DEV** — Test fisici iOS Safari + Android Chrome (**solo tuo**). Input decimali, scroll tabelle, touch 44px, PDF.
+
+- [ ] **UX-EMPTY** — EtichetteCalc: form vuoto con 40+ campi senza priorità visiva. Abbandono al primo accesso.
+  Aggiungere wizard/sezioni guidate o highlight dei campi critici da compilare per primi.
+
+- [ ] **UX-MOBILE-ETI** — Anteprima etichetta inutilizzabile su mobile (label 100x150mm su 375px).
+  Tablet in stabilimento non funzionano. FASE 2 mobile EtichetteCalc.
+
+### Feature consulenti
+
+- [ ] **FEAT-SEARCH** — Ricerca full-text nell'archivio (NutrizionaleCalc + EtichetteCalc).
+  ArchiveModal ha già campo cerca per nome — estendere a ricerca per ingredienti/produttore.
+
+- [x] **FEAT-CLAIM** — Claim "senza" (grassi, zuccheri, sale, calorie) + claim saturi + vitamine. ✅ 2026-09-07
+  Implementati: SENZA SALE/ZUCCHERI/GRASSI/GRASSI SATURI/CALORIE, MOLTO BASSO SODIO, BASSO CALORIE/GRASSI SATURI, 12 vitamine, zinco/magnesio/fosforo. Tutti con else-if (no claim doppi).
+
+- [ ] **FEAT-TMPL** — Template etichetta per categoria merceologica (pasta, conserve, bevande, surgelati).
+  Dimezza tempo compilazione per nuovi clienti. Competitor Agriware ce l'ha.
 
 ### Dati
 
 - [ ] **D1-EXCEL** — 4 celle errate Excel (colonna HO, righe 331, 485, 625, 824).
   ⚠️ Leggere trappola in `AUDIT-2026-09-03.md` prima di toccare.
 
-- [ ] **D2-DATA** — 9 prodotti "senza glutine" con GLUTINE marcato presente.
-  Necessaria scheda tecnica fornitore. Lista in `AUDIT-2026-09-03.md`.
-
 ---
 
 ## 🟡 MEDIA PRIORITÀ
 
-- [ ] **SEC-11-CACHE** — Redis per throttling in produzione (vedi COD-07-LOGIN sopra).
-- [ ] **GDPR-2** — Endpoint cancellazione dati `/api/users/me/delete/` (entro 30gg dal go-live).
+### GDPR / Legale
+
+- [ ] **GDPR-2** — Endpoint cancellazione dati `/api/users/me/delete/` Art. 17 (entro 30gg dal go-live).
 - [ ] **GDPR-3** — Backup DB Neon: policy retention + log accesso ≤12 mesi.
-- [ ] **DOC-2** — Workflow docs per i 6 calcolatori.
+- [ ] **GDPR-4** — Portabilità dati `/api/users/export/` Art. 20.
+
+### Design system
+
+- [ ] **DS-TYPO** — Nessun token tipografia — 12+ font-size hardcoded (11px, 12px, 13px, 15px, 28px...).
+  Definire scale CSS in `index.css` e sostituire gli hardcoded.
+
+- [ ] **DS-TABLET** — Nessun breakpoint tablet landscape (1024-1279px) — layout collassa a mobile.
+
+- [ ] **DS-SIDEBAR** — Flyout sidebar disabilitato sotto 1280px — utenti su schermi medi vedono solo icone.
+
+- [ ] **DS-INLINE** — 80+ stili inline in Dashboard + AbbonamentoPage. Bassa riutilizzabilità.
+
+### Tecnico
+
 - [ ] **S0-FINAL** — Rimuovere `public/data/ingredientsDB.json` (dopo Redis + auth stabile).
+- [ ] **DOC-2** — Workflow docs per i 6 calcolatori.
+- [ ] **SEC-SEARCH** — Endpoint search `/api/ingredients/search?q=` (evita download 478KB su mobile).
 
 ---
 
 ## 🟢 ROADMAP POST-LAUNCH
 
+### Feature differenzianti (competitività nazionale)
+
+- [ ] **FEAT-GS1** — Export JSON/XML GS1-like per GDO. Prerequisito per PMI che vendono a catene. Competitor Alia/Agriware ce l'hanno.
+- [ ] **FEAT-EXCEL** — Export Excel strutturato tabella nutrizionale (i consulenti vivono in Excel).
+- [ ] **UX-12** — Versioning ricette/etichette (storico revisioni). Richiesto da consulenti + conformità HACCP.
+- [ ] **TD-7** — Export vettoriale PDF 300dpi (sostituire `html2canvas` 96dpi non professionale per tipografia).
+- [ ] **P7-MULTIUTENTE** — Multi-utente con ruoli (consulente + aziende clienti). Tutti i competitor ce l'hanno.
+- [ ] **P9-DASHBOARD** — Dashboard operativa con KPI e attività recente (ora solo griglia tool).
+- [ ] **P10-NOTIFICHE** — Notifiche aggiornamenti normativi. Competitor Agriware ce l'ha.
+
+### Debito tecnico
+
+- [ ] **TD-1 / COD-02** — Estrazione engine da `EtichetteCalc.tsx` (3400+ righe). Prerequisito per refactor sicuro.
+- [ ] **TD-2 / COD-05** — Ridurre duplicazione desktop/mobile NutrizionaleCalc (~2000 righe).
+- [ ] **TD-4 / E2E-1** — E2E test Playwright: login → ricetta → tabella → PDF. Prerequisito per ogni refactor.
+- [ ] **A11Y-1** — Audit accessibilità completo.
+
+### Dati
+
 - [ ] **DATA-1** — Validazione campione CREA BDA live (20+ ingredienti)
 - [ ] **DATA-2/SYNC-CNF** — Canada Nutrient File
 - [ ] **DATA-3/SYNC-AUSNUT** — Australia AUSNUT 2011-13
-- [ ] **SEC-SEARCH** — Endpoint search `/api/ingredients/search?q=`
-- [ ] **COD-02** — Estrazione engine da `EtichetteCalc.tsx` (3438 righe)
-- [ ] **COD-05** — Ridurre duplicazione desktop/mobile (~2000 righe)
-- [ ] **UX-12** — Versioning ricette
-- [ ] **UX-OB** — Onboarding clienti per ogni tool
-- [ ] **UX-14** — Ricetta demo per nuovi account
-- [ ] **EXP-1** — Export/import archivi ricette JSON
-- [ ] **A11Y-1** — Audit accessibilità completo
-- [ ] **E2E-1** — Playwright E2E: login → ricetta → tabella → PDF
-- [ ] **GDPR-4** — Portabilità dati `/api/users/export/` (Art. 20)
-- [ ] **UX-PAY** — Integrazione pagamenti / gestione abbonamento
+
+### Pagamenti / crescita
+
+- [ ] **UX-PAY** — Integrazione pagamenti / gestione abbonamento.
+- [ ] **EXP-1** — Export/import archivi ricette JSON.
+- [ ] **UX-OB** — Onboarding guidato per ogni tool (walkthrough interattivo).
 
 ---
 
-## ✅ COMPLETATI SESSIONE 2026-09-07
+## ✅ COMPLETATI SESSIONE 2026-09-07 (quick wins audit)
 
-- ✅ **DEPLOY-1** — Merge `fix/audit-2026-09-03` → main (già fatto sessione precedente) + deploy prod
-  Production: https://app-consulenze-alimentari.vercel.app
+- ✅ **QW-1 / CLAIM-SALE** — già implementato via `relabelClaim()` in EtichetteCalc.tsx:602 (N/A)
+- ✅ **QW-2 / DISCLAIMER** — footer legale globale in AppShell (copre tutti i tool)
+- ✅ **QW-3 / EMPTY-STATE** — empty state dashed border in NutrizionaleCalc quando componente senza ingredienti
+- ✅ **QW-4 / DEMO-RECIPE** — bottone "Carica ricetta demo" nell'ultimo slide WelcomeModal; carica pasta all'uovo (4 ingredienti) in NutrizionaleCalc
+- ✅ **QW-5 / FEAT-DUP** — bottone "Duplica" (Copy icon) in ArchiveModal; attivo su NutrizionaleCalc + EtichetteCalc
+- ✅ **QW-6 / TOOLTIP** — già implementato: InfoTooltip su Resa, Peso finito, Peso specifico, Pzuv (N/A)
+- ✅ **QW-7 / REQUIRED-HIGHLIGHT** — bordo rosso su campi obbligatori mancanti in EtichetteCalc (et-nome, et-produttore, et-peso-netto, et-ingredienti)
+- ✅ **QW-8 / SKELETON** — skeleton shimmer rows in NutrizionaleCalc mentre loadingDB=true + animazione CSS
+- ✅ **QW-9 / SOCIAL-PROOF** — badge "100+" PMI alimentari nel pannello sinistro LoginPage
+- ✅ **QW-10 / DS-SEVERITY** — banner overflow/taglio/barcode → rosso; esenzioni normative → arancione (EtichetteCalc)
+
+## ✅ COMPLETATI SESSIONE 2026-09-07 (deploy + auth)
+
+- ✅ **DEPLOY-1** — Deploy prod `https://app-consulenze-alimentari.vercel.app`
 - ✅ **Django comandi** — `migrate` (0007 allergens già applicata) + `import_allergens_from_json` (366 aggiornati)
 - ✅ **AUTH-1** — Account cliente `makegraphicidea@gmail.com` creato con tutti i tool
 - ✅ **AUTH-2 + SEC-03** — Rimossi token localStorage (`getAccessToken`, `setTokens`, `clearTokens`) da `client.ts` + `AuthContext.tsx`
 - ✅ **UX-02** — Verificato: campo `password` assente dal payload `/api/auth/me/`
-- ✅ **SEC-05** — Cache utente migrata da `localStorage` a `sessionStorage` (sessione precedente)
+- ✅ **SEC-05** — Cache utente migrata da `localStorage` a `sessionStorage`
 - ✅ **SEC-07** — `ArchiveEntryViewSet` filtra per tool acquistato (submodule commit 1c3875f)
 - ✅ **SEC-10** — `IngredientViewSet` throttle `ingredient_list: 10/min` configurato (submodule)
-- ✅ **D3-FRONTEND** — N/A: `useAllergens` non esiste, il frontend non consuma ancora il dict sparse
+- ✅ **D3-FRONTEND** — N/A: `useAllergens` non esiste, frontend non consuma ancora il dict sparse
 - ✅ **UX-04** — Pagina `/abbonamento` con account info, strumenti attivi e non acquistati
 - ✅ **SEC-12-CSP** — Verificata: nessun font/CDN esterno, CSP corretta in prod
 

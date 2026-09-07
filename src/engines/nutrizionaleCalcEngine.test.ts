@@ -254,13 +254,14 @@ describe('calcClaims', () => {
         expect(calcClaims(ZERO_CALC)).toEqual([]);
         expect(calcClaims(ZERO_CALC, true)).toEqual([]);
     });
-    it('un solo valore valorizzato → i claim "a basso contenuto" restano attivi', () => {
+    it('un solo valore valorizzato → i claim restano attivi (con soglie SENZA per valori a zero)', () => {
         // Il guard non deve sopprimere i claim di un prodotto reale povero di
-        // tutto tranne un nutriente.
+        // tutto tranne un nutriente. Con valori a zero escono le varianti SENZA
+        // (soglia più stretta rispetto a BASSO CONTENUTO), che è corretto per Reg. 1924/2006.
         const claims = calcClaims({ ...ZERO_CALC, proteine: 5 });
-        expect(claims).toContain('A BASSO CONTENUTO DI SODIO');
-        expect(claims).toContain('A BASSO CONTENUTO DI ZUCCHERI');
-        expect(claims).toContain('A BASSO CONTENUTO DI GRASSI');
+        expect(claims).toContain('SENZA SALE');
+        expect(claims).toContain('SENZA ZUCCHERI');
+        expect(claims).toContain('SENZA GRASSI');
     });
 });
 

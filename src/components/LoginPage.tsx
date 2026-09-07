@@ -51,6 +51,10 @@ export function LoginPage() {
                         Trattamento termico e rintracciabilità
                     </div>
                 </div>
+                <div className="login-panel-social-proof">
+                    <span className="login-panel-social-proof-badge">100+</span>
+                    PMI alimentari italiane
+                </div>
             </div>
 
             {/* Right form panel */}

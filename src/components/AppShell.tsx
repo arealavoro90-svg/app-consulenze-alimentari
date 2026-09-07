@@ -64,6 +64,20 @@ export function AppShell() {
                 </div>
 
                 <Outlet />
+
+                {/* ponytail: disclaimer legale globale — QW-2 audit 2026-09-07 */}
+                <footer style={{
+                    padding: '10px 24px',
+                    borderTop: '1px solid var(--color-border)',
+                    fontSize: 11,
+                    color: 'var(--color-text-muted)',
+                    textAlign: 'center',
+                    lineHeight: 1.5,
+                }}>
+                    I dati prodotti da questo strumento hanno scopo informativo e di supporto professionale.
+                    AEA Consulenze Alimentari non risponde di errori od omissioni nei documenti finali.
+                    La responsabilità della correttezza delle etichette e delle dichiarazioni nutrizionali rimane in capo al produttore.
+                </footer>
             </main>
         </div>
     );

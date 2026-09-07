@@ -246,14 +246,64 @@ export function calcClaims(r: CalcResult, isLiquid = false): string[] {
     if (r.potassio >= 600)     claims.push('RICCO DI POTASSIO');
     else if (r.potassio >= 300) claims.push('FONTE DI POTASSIO');
 
-    // ─── Sodio basso: ≤120mg/100g = ≤0.12g ──────────────────────────────────
-    if (r.sodio_mg <= 120)  claims.push('A BASSO CONTENUTO DI SODIO');
+    // ─── Sodio: SENZA SALE ≤5mg, MOLTO BASSO ≤40mg, BASSO ≤120mg ────────────
+    if (r.sodio_mg <= 5)        claims.push('SENZA SALE');
+    else if (r.sodio_mg <= 40)  claims.push('MOLTO BASSO CONTENUTO DI SODIO');
+    else if (r.sodio_mg <= 120) claims.push('A BASSO CONTENUTO DI SODIO');
 
-    // ─── Zuccheri bassi: ≤5g (solidi) o ≤2,5g (liquidi) ────────────────────
-    if (r.zuccheri <= (isLiquid ? 2.5 : 5))  claims.push('A BASSO CONTENUTO DI ZUCCHERI');
+    // ─── Zuccheri: SENZA ≤0.5g; BASSO ≤5g (sol) o ≤2.5g (liq) ─────────────
+    if (r.zuccheri <= 0.5)                    claims.push('SENZA ZUCCHERI');
+    else if (r.zuccheri <= (isLiquid ? 2.5 : 5)) claims.push('A BASSO CONTENUTO DI ZUCCHERI');
 
-    // ─── Grassi bassi: ≤3g (solidi) o ≤1,5g (liquidi) ──────────────────────
-    if (r.grassi <= (isLiquid ? 1.5 : 3))    claims.push('A BASSO CONTENUTO DI GRASSI');
+    // ─── Grassi: SENZA ≤0.5g; BASSO ≤3g (sol) o ≤1.5g (liq) ───────────────
+    if (r.grassi <= 0.5)                     claims.push('SENZA GRASSI');
+    else if (r.grassi <= (isLiquid ? 1.5 : 3)) claims.push('A BASSO CONTENUTO DI GRASSI');
+
+    // ─── Grassi saturi: SENZA ≤0.1g; BASSO ≤1.5g(sol)/0.75g(liq)+≤10%E ────
+    if (r.saturi <= 0.1) {
+        claims.push('SENZA GRASSI SATURI');
+    } else {
+        const satEnergyPct = r.energyKcal > 0 ? (r.saturi * 9 / r.energyKcal) * 100 : 0;
+        if (r.saturi <= (isLiquid ? 0.75 : 1.5) && satEnergyPct <= 10)
+            claims.push('A BASSO CONTENUTO DI GRASSI SATURI');
+    }
+
+    // ─── Calorie: SENZA ≤4kcal/100ml (liquidi); BASSO ≤40kcal(sol)/20kcal(liq)
+    if (isLiquid && r.energyKcal <= 4) {
+        claims.push('SENZA CALORIE');
+    } else if (r.energyKcal <= (isLiquid ? 20 : 40)) {
+        claims.push('A BASSO CONTENUTO DI CALORIE');
+    }
+
+    // ─── Vitamine — NRV EU Reg. 1169/2011 all. XIII; FONTE ≥15%, RICCO ≥30% ─
+    const vitClaims: [string, number, number][] = [
+        ['VITAMINA A',                r.vitA_eq, 800 ],
+        ['VITAMINA D',                r.vitD,      5 ],
+        ['VITAMINA E',                r.vitE,     12 ],
+        ['VITAMINA C',                r.vitC,     80 ],
+        ['VITAMINA B1 (TIAMINA)',     r.vitB1,   1.1 ],
+        ['VITAMINA B2 (RIBOFLAVINA)', r.vitB2,   1.4 ],
+        ['NIACINA',                   r.vitB3,    16 ],
+        ['VITAMINA B6',               r.vitB6,   1.4 ],
+        ['ACIDO FOLICO',              r.vitB9,   200 ],
+        ['VITAMINA B12',              r.vitB12,  2.5 ],
+        ['VITAMINA K',                r.vitK,     75 ],
+        ['ACIDO PANTOTENICO',         r.vitB5,     6 ],
+    ];
+    for (const [name, val, nrv] of vitClaims) {
+        if (val >= nrv * 0.30)      claims.push(`RICCO DI ${name}`);
+        else if (val >= nrv * 0.15) claims.push(`FONTE DI ${name}`);
+    }
+
+    // ─── Minerali aggiuntivi: zinco (NRV 10mg), magnesio (375mg), fosforo (700mg)
+    if (r.zinco >= 3)          claims.push('RICCO DI ZINCO');
+    else if (r.zinco >= 1.5)   claims.push('FONTE DI ZINCO');
+
+    if (r.magnesio >= 112.5)       claims.push('RICCO DI MAGNESIO');
+    else if (r.magnesio >= 56.25)  claims.push('FONTE DI MAGNESIO');
+
+    if (r.fosforo >= 210)      claims.push('RICCO DI FOSFORO');
+    else if (r.fosforo >= 105) claims.push('FONTE DI FOSFORO');
 
     return claims;
 }

@@ -1171,6 +1171,8 @@ export function EtichetteCalc() {
     const missingFieldDefs = requiredFields.filter(f => !f.ok);
     const missingFields = missingFieldDefs.map(f => f.label);
     const isComplete = missingFields.length === 0;
+    // ponytail: Set per highlight bordo rosso campi obbligatori mancanti — QW-7 audit 2026-09-07
+    const missingIds = new Set(missingFieldDefs.map(f => f.id));
 
     // Art. 9(1)(g) + Art. 25: condizionale al prodotto — l'app non può stabilire se serve,
     // quindi avvisa senza bloccare l'export.
@@ -1830,7 +1832,7 @@ export function EtichetteCalc() {
 
                         <div className="form-field">
                             <label htmlFor="et-nome">Denominazione del prodotto *</label>
-                            <input id="et-nome" type="text" value={data.productName} onChange={(e) => set('productName', e.target.value)} placeholder="es. Pomodori pelati in succo di pomodoro" />
+                            <input id="et-nome" type="text" value={data.productName} onChange={(e) => set('productName', e.target.value)} placeholder="es. Pomodori pelati in succo di pomodoro" style={missingIds.has('et-nome') ? { borderColor: '#e53e3e' } : undefined} />
                         </div>
                         <div className="form-field">
                             <label htmlFor="et-denom-legale" style={{ display: 'flex', alignItems: 'center' }}>
@@ -1873,7 +1875,7 @@ export function EtichetteCalc() {
                         <div className="form-row">
                             <div className="form-field">
                                 <label htmlFor="et-produttore">Produttore / Responsabile *</label>
-                                <input id="et-produttore" type="text" value={data.producer} onChange={(e) => set('producer', e.target.value)} placeholder="Ragione sociale" />
+                                <input id="et-produttore" type="text" value={data.producer} onChange={(e) => set('producer', e.target.value)} placeholder="Ragione sociale" style={missingIds.has('et-produttore') ? { borderColor: '#e53e3e' } : undefined} />
                             </div>
                             <div className="form-field">
                                 <label htmlFor="et-indirizzo">Indirizzo stabilimento</label>
@@ -1892,7 +1894,7 @@ export function EtichetteCalc() {
                         <div className="form-row">
                             <div className="form-field">
                                 <label htmlFor="et-peso-netto">Quantità netta *</label>
-                                <input id="et-peso-netto" type="text" value={data.netWeight} onChange={(e) => set('netWeight', e.target.value)} onBlur={(e) => set('netWeight', appendUnit(e.target.value, 'g'))} placeholder="es. 400 g" />
+                                <input id="et-peso-netto" type="text" value={data.netWeight} onChange={(e) => set('netWeight', e.target.value)} onBlur={(e) => set('netWeight', appendUnit(e.target.value, 'g'))} placeholder="es. 400 g" style={missingIds.has('et-peso-netto') ? { borderColor: '#e53e3e' } : undefined} />
                                 {data.additionalNetWeights.map((v, i) => (
                                     <div key={i} style={{ display: 'flex', gap: 6, marginTop: 6 }}>
                                         <input type="text" value={v.netWeight} placeholder="es. 250 g" aria-label={`Quantità netta aggiuntiva ${i + 1}`}
@@ -1958,7 +1960,7 @@ export function EtichetteCalc() {
                                 onChange={(e) => set('ingredients', e.target.value)}
                                 placeholder="es. Pomodori 85%, succo di pomodoro, sale marino"
                                 className="et-textarea"
-                                style={{ overflowY: 'hidden', resize: 'none' }}
+                                style={{ overflowY: 'hidden', resize: 'none', ...(missingIds.has('et-ingredienti') ? { borderColor: '#e53e3e' } : {}) }}
                             />
                             <span className="hint">Gli allergeni devono essere evidenziati (es. in MAIUSCOLO o corsivo)</span>
                             {allergenIssues.length > 0 && (
@@ -2834,7 +2836,7 @@ export function EtichetteCalc() {
                             <div style={{
                                 display: 'flex', alignItems: 'center', gap: 6, marginTop: 6,
                                 padding: '6px 10px', borderRadius: 6, fontSize: 11,
-                                background: 'rgba(230,126,34,0.12)', color: '#b7791f',
+                                background: 'rgba(229,62,62,0.1)', color: '#c53030',
                             }}>
                                 <AlertTriangle size={13} /> Contenuto più alto di quanto impostato (≈{contentHeightMm.toFixed(0)}mm vs {data.heightMm}mm) — l'export rispetta le dimensioni impostate, quindi la parte in eccesso viene tagliata e non compare nel file. Sposta qualcosa sul retro, riduci il testo o aumenta l'altezza etichetta.
                             </div>
@@ -2843,7 +2845,7 @@ export function EtichetteCalc() {
                             <div style={{
                                 display: 'flex', alignItems: 'center', gap: 6, marginTop: 6,
                                 padding: '6px 10px', borderRadius: 6, fontSize: 11,
-                                background: 'rgba(230,126,34,0.12)', color: '#b7791f',
+                                background: 'rgba(229,62,62,0.1)', color: '#c53030',
                             }}>
                                 <AlertTriangle size={13} /> Tabella nutrizionale troppo grande per lo spazio disponibile — nell'export viene tagliata. Prova il formato Semplificata o Solo energia, oppure aumenta le dimensioni dell'etichetta / sposta la tabella sul retro.
                                 <InfoTooltip text="Formato Semplificata = lineare (Art. 34(2) Reg. 1169/2011). Solo energia = solo valore energetico per superfici < 10 cm² (Art. 34(3)). Se anche Solo energia non basta, aumenta l'etichetta o usa un etichetta aggiuntiva dedicata." />
@@ -2853,7 +2855,7 @@ export function EtichetteCalc() {
                             <div style={{
                                 display: 'flex', alignItems: 'center', gap: 6, marginTop: 6,
                                 padding: '6px 10px', borderRadius: 6, fontSize: 11,
-                                background: 'rgba(230,126,34,0.12)', color: '#b7791f',
+                                background: 'rgba(229,62,62,0.1)', color: '#c53030',
                             }}>
                                 <AlertTriangle size={13} /> Codice a barre più largo dell'etichetta a magnificazione minima (80% GS1) — nell'export rischia di essere tagliato o non scansionabile. Aumenta le dimensioni dell'etichetta o sposta il codice sul retro.
                                 <InfoTooltip text="Sotto l'80% di magnificazione (GS1 General Specifications) un EAN-13/CODE128 non è garantito leggibile da uno scanner reale, quindi il codice non si rimpicciolisce oltre quella soglia anche se il riquadro è più piccolo." />
@@ -3192,6 +3194,7 @@ export function EtichetteCalc() {
                     onClose={() => setIsArchiveOpen(false)}
                     onLoad={handleLoad}
                     onDelete={deleteItem}
+                    onDuplicate={(item) => { void saveItem(item.name + ' (Copia)', item.data); }}
                     renderItemDetails={(d) => (
                         <>
                             <span><strong>Prodotto:</strong> {d.productName || '-'}</span><br />

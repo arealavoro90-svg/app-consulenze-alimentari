@@ -94,6 +94,14 @@ function n(v: unknown): number { const num = Number(v); return isNaN(num) ? 0 : 
 // ─── Main Component ───────────────────────────────────────────────────────────
 const makeComp = (): Component => ({ id: String(Date.now() + Math.random()), name: '', rows: [], additiveRows: [], pzUV: 1 });
 
+// ponytail: demo recipe — nomi esatti verificati in ingredientsDB.json 2026-09-07
+const DEMO_INGREDIENTS = [
+    { nome: 'farina di grano tenero tipo "0" - (W < 170)', grammi: 300 },
+    { nome: 'uova', grammi: 150 },
+    { nome: 'olio extravergine di oliva', grammi: 5 },
+    { nome: 'sale', grammi: 3 },
+] as const;
+
 export function NutrizionaleCalc() {
 
     const [productName, setProductName] = useState('');
@@ -367,6 +375,20 @@ export function NutrizionaleCalc() {
         [allRows, presentAllergens],
     );
 
+
+    const loadDemo = useCallback(() => {
+        if (!db.length) { toast.info('Database ancora in caricamento — riprova tra un momento.'); return; }
+        const rows = DEMO_INGREDIENTS.flatMap(d => {
+            const found = db.find(i => i.nome === d.nome);
+            if (!found) return [];
+            return [{ id: String(Date.now() + Math.random()), ing: found, grams: d.grammi, eurKg: 0, resa: 100 }];
+        });
+        const comp = { ...makeComp(), rows };
+        setProductName('Pasta fresca all\'uovo (Demo)');
+        setFinishedWeight('430');
+        setComponents([comp]);
+        setPzUVRaw({ [comp.id]: '1' });
+    }, [db, toast]);
 
     // Component modifiers
     const addComp = () => { setComponents(prev => [...prev, makeComp()]); };
@@ -1248,6 +1270,7 @@ export function NutrizionaleCalc() {
                 <WelcomeModal
                     onClose={() => setShowWelcome(false)}
                     onNeverShow={() => { setWelcomeSeen(true); setShowWelcome(false); }}
+                    onLoadDemo={loadDemo}
                 />
             )}
             {archiveOpen && (
@@ -1256,6 +1279,7 @@ export function NutrizionaleCalc() {
                     onClose={() => setArchiveOpen(false)}
                     onLoad={(item) => { handleLoad(item); setArchiveOpen(false); }}
                     onDelete={deleteItem}
+                    onDuplicate={(item) => { void saveItem(item.name + ' (Copia)', item.data); }}
                     renderItemDetails={(d) => {
                         // eslint-disable-next-line @typescript-eslint/no-explicit-any
                         const data = d as any;
@@ -1534,6 +1558,28 @@ export function NutrizionaleCalc() {
                     <ValidationError message={fieldErrors[`${comp.id}-pzuv`]} visible={!!fieldErrors[`${comp.id}-pzuv`]} />
                     <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--color-text-muted)', marginBottom: 4, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Cerca e aggiungi ingrediente dal database</div>
                     <IngSearch onAdd={(ing) => addRowToComp(comp.id, ing)} db={db} loading={loadingDB} error={dbError} onRetry={loadDB} />
+                    {loadingDB && comp.rows.length === 0 && (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 8 }} aria-hidden="true">
+                            {[90, 70, 80].map((w, i) => (
+                                <div key={i} style={{
+                                    height: 32, borderRadius: 6,
+                                    background: 'linear-gradient(90deg, var(--color-bg-secondary) 25%, var(--color-border) 50%, var(--color-bg-secondary) 75%)',
+                                    backgroundSize: '200% 100%',
+                                    animation: 'skeleton-shimmer 1.4s infinite',
+                                    width: `${w}%`,
+                                }} />
+                            ))}
+                        </div>
+                    )}
+                    {comp.rows.length === 0 && !loadingDB && !dbError && (
+                        <div style={{
+                            textAlign: 'center', padding: '20px 16px',
+                            border: '1px dashed var(--color-border)', borderRadius: 8,
+                            color: 'var(--color-text-muted)', fontSize: 13, marginBottom: 8,
+                        }}>
+                            Nessun ingrediente ancora — cerca nel campo sopra per iniziare.
+                        </div>
+                    )}
                     {comp.rows.length > 0 && (
                     <div style={{ border: '1px solid var(--color-border)', borderRadius: 'var(--radius-md)', overflow: 'hidden', marginBottom: 6 }}>
                     {comp.rows.map((row, rowIdx) => {

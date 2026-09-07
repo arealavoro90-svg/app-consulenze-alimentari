@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Archive, X, Search, Calendar, Trash2 } from 'lucide-react';
+import { Archive, X, Search, Calendar, Trash2, Copy } from 'lucide-react';
 import type { ArchiveItem } from '../hooks/useArchive';
 import { ConfirmDialog } from './ui/ConfirmDialog';
 
@@ -9,6 +9,7 @@ export function ArchiveModal<T>({
     onClose,
     onLoad,
     onDelete,
+    onDuplicate,
     renderItemDetails
 }: {
     items: ArchiveItem<T>[];
@@ -16,6 +17,7 @@ export function ArchiveModal<T>({
     onClose: () => void;
     onLoad: (item: ArchiveItem<T>) => void;
     onDelete: (id: string) => void;
+    onDuplicate?: (item: ArchiveItem<T>) => void;
     renderItemDetails?: (data: T) => React.ReactNode;
 }) {
     const [search, setSearch] = useState('');
@@ -91,6 +93,16 @@ export function ArchiveModal<T>({
                                             >
                                                 Carica
                                             </button>
+                                            {onDuplicate && (
+                                                <button
+                                                    className="btn btn-outline"
+                                                    style={{ padding: '6px 12px', fontSize: 12, display: 'flex', alignItems: 'center' }}
+                                                    title="Duplica"
+                                                    onClick={() => onDuplicate(item)}
+                                                >
+                                                    <Copy size={14} />
+                                                </button>
+                                            )}
                                             <button
                                                 className="btn btn-danger"
                                                 style={{ padding: '6px 12px', fontSize: 12, display: 'flex', alignItems: 'center' }}

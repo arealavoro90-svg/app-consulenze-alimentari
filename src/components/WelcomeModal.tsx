@@ -10,6 +10,7 @@ interface Slide {
 interface WelcomeModalProps {
     onClose: () => void;
     onNeverShow: () => void;
+    onLoadDemo?: () => void;
     slides?: Slide[];
 }
 
@@ -165,7 +166,7 @@ export const ETICHETTE_SLIDES: Slide[] = [
     },
 ];
 
-export function WelcomeModal({ onClose, onNeverShow, slides = NUTRIZIONALE_SLIDES }: WelcomeModalProps) {
+export function WelcomeModal({ onClose, onNeverShow, onLoadDemo, slides = NUTRIZIONALE_SLIDES }: WelcomeModalProps) {
     const [slide, setSlide] = useState(0);
     const isLast = slide === slides.length - 1;
     const current = slides[slide];
@@ -229,11 +230,18 @@ export function WelcomeModal({ onClose, onNeverShow, slides = NUTRIZIONALE_SLIDE
                             Avanti <ChevronRight size={13} />
                         </button>
                     ) : (
-                        <div style={{ display: 'flex', gap: 8 }}>
+                        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
                             <button type="button" onClick={onNeverShow}
                                 style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 11, color: 'var(--color-text-muted)', padding: '6px 8px' }}>
                                 Non mostrare più
                             </button>
+                            {onLoadDemo && (
+                                <button type="button" onClick={() => { onLoadDemo(); onClose(); }}
+                                    className="btn btn-outline"
+                                    style={{ fontSize: 12, padding: '6px 12px' }}>
+                                    Carica ricetta demo
+                                </button>
+                            )}
                             <button type="button" onClick={onClose}
                                 className="btn btn-accent"
                                 style={{ fontSize: 12, padding: '6px 16px' }}>
