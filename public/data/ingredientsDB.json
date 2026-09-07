@@ -3360,7 +3360,6 @@
     "sodio_mg": 200,
     "sale": 0.5,
     "vitA_eq": 0,
-    "all_glutine": "1",
     "all_latte": "1",
     "cross_uova": "1",
     "cross_latte": "1",
@@ -18250,7 +18249,6 @@
     "sodio_mg": 84,
     "sale": 0.21,
     "vitA_eq": 0,
-    "all_glutine": "1",
     "categoria": "semilavorato"
   },
   {
@@ -18413,7 +18411,6 @@
     "sodio_mg": 280,
     "sale": 0.7,
     "vitA_eq": 0,
-    "all_glutine": "1",
     "all_uova": "1",
     "cross_uova": "1",
     "cross_soia": "1",
@@ -23983,7 +23980,6 @@
     "sodio_mg": 20,
     "sale": 0.05,
     "vitA_eq": 0,
-    "all_glutine": "1",
     "categoria": "semilavorato"
   },
   {
@@ -24006,7 +24002,6 @@
     "sodio_mg": 328,
     "sale": 0.82,
     "vitA_eq": 0,
-    "all_glutine": "1",
     "categoria": "semilavorato"
   },
   {
@@ -24025,7 +24020,6 @@
     "sodio_mg": 20,
     "sale": 0.05,
     "vitA_eq": 0,
-    "all_glutine": "1",
     "categoria": "semilavorato"
   },
   {
@@ -24044,7 +24038,6 @@
     "sodio_mg": 800,
     "sale": 2,
     "vitA_eq": 0,
-    "all_glutine": "1",
     "cross_soia": "1",
     "categoria": "semilavorato"
   },
@@ -24064,7 +24057,6 @@
     "sodio_mg": 880,
     "sale": 2.2,
     "vitA_eq": 0,
-    "all_glutine": "1",
     "cross_soia": "1",
     "categoria": "semilavorato"
   },
@@ -24084,7 +24076,6 @@
     "sodio_mg": 168,
     "sale": 0.42,
     "vitA_eq": 0,
-    "all_glutine": "1",
     "all_uova": "1",
     "cross_uova": "1",
     "categoria": "semilavorato"
@@ -26912,7 +26903,6 @@
     "sodio_mg": 260,
     "sale": 0.65,
     "vitA_eq": 0,
-    "all_glutine": "1",
     "categoria": "semilavorato"
   },
   {
