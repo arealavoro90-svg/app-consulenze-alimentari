@@ -33,16 +33,16 @@
 - [ ] **NORM-09** — Gulf/Arabi: verificare clausola small-package su fonte primaria SFDA/GSO (**solo tuo**).
   Confidenza normativa bassa nel codice. Verificare GSO 2233/2012 + SFDA prima di vendere a clienti Gulf.
 
-- [ ] **NORM-10** — Scostamenti grassi/proteine Lasagna (ETI-6) — causa non isolata.
-  Scope: NutrizionaleCalc, EtichetteCalc, TrattamentoTermicoCalc — almeno 3 ricette reali per tool.
-
 - [ ] **GULF-ARABO** — Tabella nutrizionale Gulf solo in inglese — non conforme per export Golfo.
   GSO 2233/2012 richiede lingua araba. Da verificare prima di commercializzare verso clienti Gulf.
 
 - [ ] **CA-LINEAR-FR** — Formato lineare Canada solo in inglese. CFIA richiede bilinguismo in tutti i formati.
 
-- [ ] **FG-DETAIL** — Solo anacardi tracciato tra frutti a guscio; 7 sottovoci (mandorle, nocciole, noci,
-  pistacchi, pecan, noci Brasile, macadamia) non distinguibili. All. II p.8 Reg. 1169/2011.
+- [x] **FG-DETAIL** ✅ — 8 sottovoci frutta a guscio ora distinguibili (mandorle, nocciole, noci, anacardi, pistacchi, pecan, noci Brasile, macadamia). ✅ 2026-09-07
+  ALLERGEN_FIELDS + ALLERGEN_PARENT aggiornati in constants.ts; DBIngredient esteso; 35 ingredienti patchati in ingredientsDB.json. All. II p.8 Reg. 1169/2011.
+
+- [x] **D4-ALLERGEN** ✅ — 153 ingredienti privi di flag all_* patchati da Excel (49 pesci, 30 soia, 35 frutta_guscio+subcategory, 14 molluschi, 6 crostacei, 3 arachidi, 2 senape, 2 sesamo). ✅ 2026-09-07
+  Causa: import originale non mappava tutte le colonne "I" (dichiarato). Nessun unmatched dopo patch.
 
 - [x] **VITAMINA-CLAIM** ✅ — 12 vitamine + zinco/magnesio/fosforo in `calcClaims()`. ✅ 2026-09-07
 
