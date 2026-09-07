@@ -15,12 +15,10 @@
   - DPA con Vercel (firma in pannello legal Vercel) + DPA con Neon (provider DB)
   - Procedura diritto cancellazione Art. 17 (anche manuale via Django admin)
 
-- [ ] **D3-BE** 🔴 — Verificare che l'endpoint `/api/ingredients/` ritorni il campo `allergens` nel JSON.
-  Backend Django ha il JSONField ma non è confermato che sia serializzato e restituito dal frontend.
-  Rischio: etichette generate senza allergeni → violazione Art. 21 Reg. 1169/2011 (rischio salute).
+- [x] **D3-BE** ✅ — `to_representation` in `serializers.py` già appiattisce `allergens` JSONField in campi `all_*`/`cross_*`. Confermato chiuso 2026-09-07.
 
-- [ ] **D2-DATA** 🔴 — 9 prodotti "senza glutine" con `all_glutine: 1` nel DB (**solo tuo — scheda tecnica fornitore**).
-  Lista in `AUDIT-2026-09-03.md`. Falsa dichiarazione allergene → rischio revoca certificazione GF.
+- [x] **D2-DATA** ✅ — Falso `all_glutine:1` rimosso da 10 prodotti GF. ✅ 2026-09-07
+  Era errore data entry Excel (col HM=glutine ingrediente, mai valorizzata correttamente). Verificato su Excel sorgente. ⚠️ Correggere anche Excel alla prossima revisione (col HM riga 120,625,629,632,830,832,833,834,936,630).
 
 ---
 
@@ -28,9 +26,7 @@
 
 ### Sicurezza
 
-- [ ] **COD-07-LOGIN / SEC-11-CACHE** — Redis per throttling login in produzione.
-  `LocMemCache` non persiste tra worker Gunicorn → throttling login 3/min inefficace in prod.
-  Fix: aggiungere Redis in `production.py` per `CACHES`. Un solo intervento chiude sia questo che SEC-11.
+- [x] **COD-07-LOGIN / SEC-11-CACHE** ✅ — `django-redis` in requirements + CACHES Redis graceful in `production.py`. Attivo solo se `REDIS_URL` impostata. ⚠️ Impostare `REDIS_URL` (Upstash) nelle env Vercel per attivare.
 
 ### Normativa
 
@@ -48,8 +44,7 @@
 - [ ] **FG-DETAIL** — Solo anacardi tracciato tra frutti a guscio; 7 sottovoci (mandorle, nocciole, noci,
   pistacchi, pecan, noci Brasile, macadamia) non distinguibili. All. II p.8 Reg. 1169/2011.
 
-- [ ] **VITAMINA-CLAIM** — Nessun claim generato per vitamine (valori AR_UE presenti ma non usati per claim).
-  Reg. 1924/2006. Aggiungere in `calcClaims()` del nutrizionaleCalcEngine.
+- [x] **VITAMINA-CLAIM** ✅ — 12 vitamine + zinco/magnesio/fosforo in `calcClaims()`. ✅ 2026-09-07
 
 ### UX
 
