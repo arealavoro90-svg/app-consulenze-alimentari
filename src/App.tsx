@@ -8,6 +8,7 @@ import { AppShell } from './components/AppShell';
 import { Dashboard } from './components/Dashboard';
 import { useMobile } from './hooks/useMobile';
 import { RisorseLinks } from './components/RisorseLinks';
+import { AbbonamentoPage } from './components/AbbonamentoPage';
 import { ErrorBoundary } from './components/ErrorBoundary';
 
 const NutrizionaleCalc = lazy(() =>
@@ -84,6 +85,7 @@ export default function App() {
               <Route index element={<Navigate to="/dashboard" replace />} />
               <Route path="dashboard" element={<Dashboard />} />
               <Route path="risorse" element={<RisorseLinks />} />
+              <Route path="abbonamento" element={<AbbonamentoPage />} />
               <Route
                 path="tool/nutrizionale"
                 element={

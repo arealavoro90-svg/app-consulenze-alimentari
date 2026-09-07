@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import {
     Home, LogOut, Salad, Tag, Wine, Package,
-    Thermometer, FileText, Settings2, BookOpen,
+    Thermometer, FileText, Settings2, BookOpen, CreditCard,
 } from 'lucide-react';
 import { useAuth } from '../auth/AuthContext';
 import { TOOLS_CATALOG } from '../data/mockUsers';
@@ -23,6 +23,7 @@ const TOOL_ICONS: Record<ToolId, React.ReactNode> = {
 const RAIL_LABELS: Record<string, string> = {
     'dashboard':            'Home',
     'risorse':              'Risorse',
+    'abbonamento':          'Account',
     'nutrizionale':         'Nutriz.',
     'etichette':            'Etich.',
     'etichette-vini':       'Et. Vini',
@@ -68,8 +69,9 @@ export function Sidebar({ isOpen = false, onClose }: SidebarProps) {
     };
 
     const allItems = [
-        { to: '/dashboard',   icon: <Home size={16} />,     label: 'Dashboard',       key: 'dashboard' },
-        { to: '/risorse',     icon: <BookOpen size={16} />, label: 'Links e Risorse', key: 'risorse' },
+        { to: '/dashboard',    icon: <Home size={16} />,       label: 'Dashboard',       key: 'dashboard' },
+        { to: '/risorse',      icon: <BookOpen size={16} />,   label: 'Links e Risorse', key: 'risorse' },
+        { to: '/abbonamento',  icon: <CreditCard size={16} />, label: 'Abbonamento',     key: 'abbonamento' },
     ];
     const toolItems = (user?.purchasedTools ?? []).map((toolId) => ({
         to:    `/tool/${toolId}`,
