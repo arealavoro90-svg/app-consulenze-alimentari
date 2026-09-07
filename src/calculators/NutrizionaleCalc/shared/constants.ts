@@ -9,7 +9,15 @@ export const ALLERGEN_FIELDS: { key: keyof DBIngredient; label: string }[] = [
     { key: 'all_pesci', label: 'PESCE' }, { key: 'all_arachidi', label: 'ARACHIDI' },
     { key: 'all_soia', label: 'SOIA' }, { key: 'all_latte', label: 'LATTE' },
     { key: 'all_frutta_guscio', label: 'FRUTTA A GUSCIO' },
+    // Sottovoci frutta a guscio All. II p.8 Reg. 1169/2011
+    { key: 'all_mandorle', label: 'MANDORLE' },
+    { key: 'all_nocciole', label: 'NOCCIOLE' },
+    { key: 'all_noci', label: 'NOCI' },
     { key: 'all_anacardi', label: 'ANACARDI' },
+    { key: 'all_pistacchi', label: 'PISTACCHI' },
+    { key: 'all_pecan', label: 'NOCI DI PECAN' },
+    { key: 'all_noci_brasile', label: 'NOCI DEL BRASILE' },
+    { key: 'all_macadamia', label: 'NOCI DI MACADAMIA' },
     { key: 'all_solfiti', label: 'SOLFITI (>10 ppm)' }, { key: 'all_lupini', label: 'LUPINI' },
     { key: 'all_molluschi', label: 'MOLLUSCHI' },
     { key: 'all_sedano', label: 'SEDANO' }, { key: 'all_senape', label: 'SENAPE' },
@@ -58,7 +66,15 @@ export function fmtQuantita(v: number): string {
 // specifico è informazione utile e conforme — ma trascina sempre con sé il gruppo.
 export const ALLERGEN_PARENT: Record<string, string> = {
     'GRANO': 'GLUTINE',
+    // Sottovoci frutta a guscio — tutte trascinano il gruppo (All. II p.8)
+    'MANDORLE': 'FRUTTA A GUSCIO',
+    'NOCCIOLE': 'FRUTTA A GUSCIO',
+    'NOCI': 'FRUTTA A GUSCIO',
     'ANACARDI': 'FRUTTA A GUSCIO',
+    'PISTACCHI': 'FRUTTA A GUSCIO',
+    'NOCI DI PECAN': 'FRUTTA A GUSCIO',
+    'NOCI DEL BRASILE': 'FRUTTA A GUSCIO',
+    'NOCI DI MACADAMIA': 'FRUTTA A GUSCIO',
 };
 
 /**

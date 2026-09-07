@@ -29,7 +29,9 @@ export interface DBIngredient {
     all_glutine?: string; all_grano?: string; all_crostacei?: string;
     all_uova?: string; all_pesci?: string; all_arachidi?: string;
     all_soia?: string; all_latte?: string; all_frutta_guscio?: string;
-    all_anacardi?: string; all_sedano?: string; all_senape?: string; all_sesamo?: string;
+    all_anacardi?: string; all_mandorle?: string; all_noci?: string; all_nocciole?: string;
+    all_pistacchi?: string; all_pecan?: string; all_noci_brasile?: string; all_macadamia?: string;
+    all_sedano?: string; all_senape?: string; all_sesamo?: string;
     all_solfiti?: string; all_lupini?: string; all_molluschi?: string;
     cross_glutine?: string; cross_grano?: string; cross_crostacei?: string;
     cross_uova?: string; cross_pesci?: string; cross_arachidi?: string;

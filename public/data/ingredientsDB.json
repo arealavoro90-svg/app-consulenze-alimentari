@@ -66,7 +66,8 @@
     "vitA_eq": 0,
     "vitD": 1.7,
     "cross_pesci": "1",
-    "categoria": "prodotto"
+    "categoria": "prodotto",
+    "all_pesci": "1"
   },
   {
     "nome": "acciughe in olio di semi di girasole",
@@ -92,7 +93,8 @@
     "vitA_eq": 0,
     "vitD": 1.7,
     "cross_pesci": "1",
-    "categoria": "prodotto"
+    "categoria": "prodotto",
+    "all_pesci": "1"
   },
   {
     "nome": "acciughe salate",
@@ -129,7 +131,8 @@
     "vitB6": 0.14,
     "vitB9": 8,
     "cross_pesci": "1",
-    "categoria": "prodotto"
+    "categoria": "prodotto",
+    "all_pesci": "1"
   },
   {
     "nome": "aceto balsamico di modena 19% di zuccheri",
@@ -1632,7 +1635,9 @@
     "vitB9": 25,
     "vitB12": 0,
     "cross_frutta_guscio": "1",
-    "categoria": "ingrediente"
+    "categoria": "ingrediente",
+    "all_frutta_guscio": "1",
+    "all_anacardi": "1"
   },
   {
     "nome": "ananas fresco",
@@ -1948,7 +1953,8 @@
     "vitB9": 240,
     "vitB12": 0,
     "cross_arachidi": "1",
-    "categoria": "ingrediente"
+    "categoria": "ingrediente",
+    "all_arachidi": "1"
   },
   {
     "nome": "arancia (frutto intero)",
@@ -2144,7 +2150,8 @@
     "vitB9": 9.4,
     "vitB12": 11.5,
     "cross_pesci": "1",
-    "categoria": "ingrediente"
+    "categoria": "ingrediente",
+    "all_pesci": "1"
   },
   {
     "nome": "aringhe sotto sale",
@@ -2170,7 +2177,8 @@
     "vitA_eq": 0,
     "vitD": 2.2,
     "cross_pesci": "1",
-    "categoria": "prodotto"
+    "categoria": "prodotto",
+    "all_pesci": "1"
   },
   {
     "nome": "armelline amare pelate",
@@ -2665,7 +2673,8 @@
     "vitB9": 12.3,
     "vitB12": 1.64,
     "cross_crostacei": "1",
-    "categoria": "ingrediente"
+    "categoria": "ingrediente",
+    "all_crostacei": "1"
   },
   {
     "nome": "astice crudo",
@@ -2705,7 +2714,8 @@
     "vitB9": 12,
     "vitB12": 3.78,
     "cross_crostacei": "1",
-    "categoria": "ingrediente"
+    "categoria": "ingrediente",
+    "all_crostacei": "1"
   },
   {
     "nome": "avena",
@@ -2829,7 +2839,8 @@
     "sale": 1,
     "vitA_eq": 0,
     "cross_pesci": "1",
-    "categoria": "ingrediente"
+    "categoria": "ingrediente",
+    "all_pesci": "1"
   },
   {
     "nome": "bacche di ginepro",
@@ -3302,7 +3313,8 @@
     "all_grano": "1",
     "cross_uova": "1",
     "cross_soia": "1",
-    "categoria": "semilavorato"
+    "categoria": "semilavorato",
+    "all_soia": "1"
   },
   {
     "nome": "birra",
@@ -3364,7 +3376,9 @@
     "cross_uova": "1",
     "cross_latte": "1",
     "cross_frutta_guscio": "1",
-    "categoria": "prodotto"
+    "categoria": "prodotto",
+    "all_frutta_guscio": "1",
+    "all_nocciole": "1"
   },
   {
     "nome": "borragine",
@@ -3423,7 +3437,8 @@
     "sale": 4.5,
     "vitA_eq": 0,
     "cross_pesci": "1",
-    "categoria": "ingrediente"
+    "categoria": "ingrediente",
+    "all_pesci": "1"
   },
   {
     "nome": "bottarga di tonno (uova di tonno salate ed essiccate)",
@@ -3443,7 +3458,8 @@
     "sale": 5.1,
     "vitA_eq": 0,
     "cross_pesci": "1",
-    "categoria": "ingrediente"
+    "categoria": "ingrediente",
+    "all_pesci": "1"
   },
   {
     "nome": "bresaola",
@@ -3539,7 +3555,10 @@
     "cross_soia": "1",
     "cross_frutta_guscio": "1",
     "cross_sedano": "1",
-    "categoria": "semilavorato"
+    "categoria": "semilavorato",
+    "all_soia": "1",
+    "all_frutta_guscio": "1",
+    "all_noci": "1"
   },
   {
     "nome": "buccia di psyllium",
@@ -3758,7 +3777,8 @@
     "vitB9": 70,
     "vitB12": 0,
     "cross_arachidi": "1",
-    "categoria": "ingrediente"
+    "categoria": "ingrediente",
+    "all_arachidi": "1"
   },
   {
     "nome": "burro di cacao",
@@ -3884,7 +3904,9 @@
     "vitB9": 0,
     "vitB12": 0,
     "cross_frutta_guscio": "1",
-    "categoria": "ingrediente"
+    "categoria": "ingrediente",
+    "all_frutta_guscio": "1",
+    "all_mandorle": "1"
   },
   {
     "nome": "cacao in polvere intero",
@@ -4147,7 +4169,8 @@
     "vitB9": 11,
     "vitB12": 3.15,
     "cross_molluschi": "1",
-    "categoria": "ingrediente"
+    "categoria": "ingrediente",
+    "all_molluschi": "1"
   },
   {
     "nome": "calamari surgelati",
@@ -4183,7 +4206,8 @@
     "vitB9": 2,
     "vitB12": 3,
     "cross_molluschi": "1",
-    "categoria": "ingrediente"
+    "categoria": "ingrediente",
+    "all_molluschi": "1"
   },
   {
     "nome": "calcio vegetale",
@@ -5732,7 +5756,8 @@
     "vitB9": 101,
     "vitB12": 0,
     "cross_molluschi": "1",
-    "categoria": "ingrediente"
+    "categoria": "ingrediente",
+    "all_molluschi": "1"
   },
   {
     "nome": "cavolo verde disidratato (verza) (yes spices)",
@@ -6048,7 +6073,8 @@
     "vitB2": 0.1,
     "vitB3": 7.3,
     "cross_pesci": "1",
-    "categoria": "ingrediente"
+    "categoria": "ingrediente",
+    "all_pesci": "1"
   },
   {
     "nome": "cefalo salato e affumicato",
@@ -6072,7 +6098,8 @@
     "sale": 1.96,
     "vitA_eq": 0,
     "cross_pesci": "1",
-    "categoria": "ingrediente"
+    "categoria": "ingrediente",
+    "all_pesci": "1"
   },
   {
     "nome": "cernia",
@@ -6111,7 +6138,8 @@
     "vitB9": 9,
     "vitB12": 0.6,
     "cross_pesci": "1",
-    "categoria": "ingrediente"
+    "categoria": "ingrediente",
+    "all_pesci": "1"
   },
   {
     "nome": "cetriolo",
@@ -6482,7 +6510,8 @@
     "all_latte": "1",
     "cross_soia": "1",
     "cross_latte": "1",
-    "categoria": "semilavorato"
+    "categoria": "semilavorato",
+    "all_soia": "1"
   },
   {
     "nome": "cioccolato bianco (59% di zucchero)",
@@ -6523,7 +6552,8 @@
     "all_latte": "1",
     "cross_soia": "1",
     "cross_latte": "1",
-    "categoria": "semilavorato"
+    "categoria": "semilavorato",
+    "all_soia": "1"
   },
   {
     "nome": "cioccolato bianco bio",
@@ -6565,7 +6595,9 @@
     "vitA_eq": 0,
     "cross_latte": "1",
     "cross_frutta_guscio": "1",
-    "categoria": "semilavorato"
+    "categoria": "semilavorato",
+    "all_frutta_guscio": "1",
+    "all_mandorle": "1"
   },
   {
     "nome": "cioccolato bianco con mandorle e cannella",
@@ -6585,7 +6617,9 @@
     "vitA_eq": 0,
     "cross_latte": "1",
     "cross_frutta_guscio": "1",
-    "categoria": "semilavorato"
+    "categoria": "semilavorato",
+    "all_frutta_guscio": "1",
+    "all_mandorle": "1"
   },
   {
     "nome": "cioccolato fondente (cacao 45%)",
@@ -6608,7 +6642,8 @@
     "vitA_eq": 0,
     "cross_soia": "1",
     "cross_latte": "1",
-    "categoria": "ingrediente"
+    "categoria": "ingrediente",
+    "all_soia": "1"
   },
   {
     "nome": "cioccolato fondente (cacao 50%)",
@@ -6628,7 +6663,8 @@
     "vitA_eq": 0,
     "cross_soia": "1",
     "cross_latte": "1",
-    "categoria": "prodotto"
+    "categoria": "prodotto",
+    "all_soia": "1"
   },
   {
     "nome": "cioccolato fondente (cacao 55%)",
@@ -6650,7 +6686,8 @@
     "sale": 0.08,
     "vitA_eq": 0,
     "cross_soia": "1",
-    "categoria": "ingrediente"
+    "categoria": "ingrediente",
+    "all_soia": "1"
   },
   {
     "nome": "cioccolato fondente (cacao 70%)",
@@ -6674,7 +6711,8 @@
     "vitA_eq": 0,
     "cross_soia": "1",
     "cross_latte": "1",
-    "categoria": "ingrediente"
+    "categoria": "ingrediente",
+    "all_soia": "1"
   },
   {
     "nome": "cioccolato fondente in gocce (cacao minimo 46%)",
@@ -7146,7 +7184,8 @@
     "vitA_eq": 0,
     "vitD": 0,
     "cross_pesci": "1",
-    "categoria": "prodotto"
+    "categoria": "prodotto",
+    "all_pesci": "1"
   },
   {
     "nome": "colorante",
@@ -7539,7 +7578,8 @@
     "vitB9": 39.5,
     "vitB12": 12.3,
     "cross_molluschi": "1",
-    "categoria": "ingrediente"
+    "categoria": "ingrediente",
+    "all_molluschi": "1"
   },
   {
     "nome": "crauti",
@@ -7599,7 +7639,10 @@
     "all_latte": "1",
     "cross_latte": "1",
     "cross_frutta_guscio": "1",
-    "categoria": "semilavorato"
+    "categoria": "semilavorato",
+    "all_frutta_guscio": "1",
+    "all_mandorle": "1",
+    "all_pistacchi": "1"
   },
   {
     "nome": "crema all' arancia bio",
@@ -7677,7 +7720,10 @@
     "vitA_eq": 0,
     "cross_soia": "1",
     "cross_frutta_guscio": "1",
-    "categoria": "semilavorato"
+    "categoria": "semilavorato",
+    "all_soia": "1",
+    "all_frutta_guscio": "1",
+    "all_nocciole": "1"
   },
   {
     "nome": "crema gusto vaniglia",
@@ -7791,7 +7837,9 @@
     "all_latte": "1",
     "cross_latte": "1",
     "cross_frutta_guscio": "1",
-    "categoria": "prodotto"
+    "categoria": "prodotto",
+    "all_frutta_guscio": "1",
+    "all_nocciole": "1"
   },
   {
     "nome": "crostini di pane preconfezionati",
@@ -8152,7 +8200,8 @@
     "vitB9": 5,
     "vitB12": 3,
     "cross_pesci": "1",
-    "categoria": "ingrediente"
+    "categoria": "ingrediente",
+    "all_pesci": "1"
   },
   {
     "nome": "destrosio 38DE",
@@ -10614,7 +10663,9 @@
     "vitB9": 53,
     "vitB12": 0,
     "cross_frutta_guscio": "1",
-    "categoria": "ingrediente"
+    "categoria": "ingrediente",
+    "all_frutta_guscio": "1",
+    "all_mandorle": "1"
   },
   {
     "nome": "farina di maranta",
@@ -10724,7 +10775,9 @@
     "sale": 0,
     "vitA_eq": 0,
     "cross_frutta_guscio": "1",
-    "categoria": "ingrediente"
+    "categoria": "ingrediente",
+    "all_frutta_guscio": "1",
+    "all_nocciole": "1"
   },
   {
     "nome": "farina di olive",
@@ -11114,7 +11167,8 @@
     "vitB9": 345,
     "vitB12": 0,
     "cross_soia": "1",
-    "categoria": "ingrediente"
+    "categoria": "ingrediente",
+    "all_soia": "1"
   },
   {
     "nome": "farina di soia degrassata",
@@ -11153,7 +11207,8 @@
     "vitB9": 305,
     "vitB12": 0,
     "cross_soia": "1",
-    "categoria": "ingrediente"
+    "categoria": "ingrediente",
+    "all_soia": "1"
   },
   {
     "nome": "farina di soia integrale tostata",
@@ -11176,7 +11231,8 @@
     "sale": 0.01,
     "vitA_eq": 0,
     "cross_soia": "1",
-    "categoria": "ingrediente"
+    "categoria": "ingrediente",
+    "all_soia": "1"
   },
   {
     "nome": "farina di sorgo",
@@ -12113,7 +12169,9 @@
     "vitB9": 53,
     "vitB12": 0,
     "cross_frutta_guscio": "1",
-    "categoria": "ingrediente"
+    "categoria": "ingrediente",
+    "all_frutta_guscio": "1",
+    "all_mandorle": "1"
   },
   {
     "nome": "foglie disidratate di lamponi",
@@ -13583,7 +13641,8 @@
     "vitB6": 0.07,
     "vitB9": 13,
     "cross_crostacei": "1",
-    "categoria": "ingrediente"
+    "categoria": "ingrediente",
+    "all_crostacei": "1"
   },
   {
     "nome": "gamberi (sgusciati)",
@@ -13621,7 +13680,8 @@
     "vitB9": 30,
     "vitB12": 2.1,
     "cross_crostacei": "1",
-    "categoria": "ingrediente"
+    "categoria": "ingrediente",
+    "all_crostacei": "1"
   },
   {
     "nome": "gambero rosso",
@@ -13647,7 +13707,8 @@
     "vitA_eq": 0,
     "vitD": 0,
     "cross_crostacei": "1",
-    "categoria": "ingrediente"
+    "categoria": "ingrediente",
+    "all_crostacei": "1"
   },
   {
     "nome": "gas per confezionamento",
@@ -13901,7 +13962,9 @@
     "all_latte": "1",
     "cross_latte": "1",
     "cross_frutta_guscio": "1",
-    "categoria": "semilavorato"
+    "categoria": "semilavorato",
+    "all_frutta_guscio": "1",
+    "all_pistacchi": "1"
   },
   {
     "nome": "glucosio da mais bio",
@@ -14035,7 +14098,8 @@
     "sale": 0.01,
     "vitA_eq": 0,
     "cross_soia": "1",
-    "categoria": "semilavorato"
+    "categoria": "semilavorato",
+    "all_soia": "1"
   },
   {
     "nome": "granchio crudo fresco (polpa)",
@@ -14074,7 +14138,8 @@
     "vitB9": 26,
     "vitB12": 9.5,
     "cross_crostacei": "1",
-    "categoria": "ingrediente"
+    "categoria": "ingrediente",
+    "all_crostacei": "1"
   },
   {
     "nome": "granella di cacao biologico essiccata",
@@ -14865,7 +14930,8 @@
     "ferro": 0.4,
     "vitA_eq": 0,
     "cross_soia": "1",
-    "categoria": "ingrediente"
+    "categoria": "ingrediente",
+    "all_soia": "1"
   },
   {
     "nome": "latte intero",
@@ -15264,7 +15330,8 @@
     "sale": 0,
     "vitA_eq": 0,
     "cross_soia": "1",
-    "categoria": "additivo"
+    "categoria": "additivo",
+    "all_soia": "1"
   },
   {
     "nome": "Legumama",
@@ -16494,7 +16561,9 @@
     "vitB9": 76,
     "vitB12": 0,
     "cross_frutta_guscio": "1",
-    "categoria": "ingrediente"
+    "categoria": "ingrediente",
+    "all_frutta_guscio": "1",
+    "all_noci": "1"
   },
   {
     "nome": "MADRE ACIDA",
@@ -16803,7 +16872,9 @@
     "all_uova": "1",
     "cross_uova": "1",
     "cross_frutta_guscio": "1",
-    "categoria": "semilavorato"
+    "categoria": "semilavorato",
+    "all_frutta_guscio": "1",
+    "all_mandorle": "1"
   },
   {
     "nome": "mandorle amare pelate",
@@ -16822,7 +16893,9 @@
     "sale": 0,
     "vitA_eq": 0,
     "cross_frutta_guscio": "1",
-    "categoria": "ingrediente"
+    "categoria": "ingrediente",
+    "all_frutta_guscio": "1",
+    "all_mandorle": "1"
   },
   {
     "nome": "mandorle in granella",
@@ -16849,7 +16922,9 @@
     "vitA_eq": 0,
     "vitD": 0,
     "cross_frutta_guscio": "1",
-    "categoria": "ingrediente"
+    "categoria": "ingrediente",
+    "all_frutta_guscio": "1",
+    "all_mandorle": "1"
   },
   {
     "nome": "Mandorle non pelate",
@@ -16877,7 +16952,9 @@
     "vitA_eq": 0,
     "vitD": 0,
     "cross_frutta_guscio": "1",
-    "categoria": "ingrediente"
+    "categoria": "ingrediente",
+    "all_frutta_guscio": "1",
+    "all_mandorle": "1"
   },
   {
     "nome": "Mandorle pelate",
@@ -16905,7 +16982,9 @@
     "vitA_eq": 0,
     "vitD": 0,
     "cross_frutta_guscio": "1",
-    "categoria": "ingrediente"
+    "categoria": "ingrediente",
+    "all_frutta_guscio": "1",
+    "all_mandorle": "1"
   },
   {
     "nome": "mandorle secche",
@@ -16945,7 +17024,9 @@
     "vitB9": 44,
     "vitB12": 0,
     "cross_frutta_guscio": "1",
-    "categoria": "ingrediente"
+    "categoria": "ingrediente",
+    "all_frutta_guscio": "1",
+    "all_mandorle": "1"
   },
   {
     "nome": "mango (frutto fresco)",
@@ -18271,7 +18352,8 @@
     "sale": 0.05,
     "vitA_eq": 0,
     "cross_sesamo": "1",
-    "categoria": "semilavorato"
+    "categoria": "semilavorato",
+    "all_sesamo": "1"
   },
   {
     "nome": "mix di farine di cereali e semi",
@@ -18295,7 +18377,8 @@
     "all_glutine": "1",
     "all_grano": "1",
     "cross_sesamo": "1",
-    "categoria": "semilavorato"
+    "categoria": "semilavorato",
+    "all_sesamo": "1"
   },
   {
     "nome": "mix di spezie ed erbe aromatiche a base di cumino, finocchio e coriandolo biologici",
@@ -18414,7 +18497,8 @@
     "all_uova": "1",
     "cross_uova": "1",
     "cross_soia": "1",
-    "categoria": "semilavorato"
+    "categoria": "semilavorato",
+    "all_soia": "1"
   },
   {
     "nome": "molva dissalato ed ammollato",
@@ -18726,7 +18810,8 @@
     "vitA_eq": 0,
     "vitD": 0,
     "cross_molluschi": "1",
-    "categoria": "ingrediente"
+    "categoria": "ingrediente",
+    "all_molluschi": "1"
   },
   {
     "nome": "nespola giapponese",
@@ -18788,7 +18873,9 @@
     "sale": 0,
     "vitA_eq": 0,
     "cross_frutta_guscio": "1",
-    "categoria": "ingrediente"
+    "categoria": "ingrediente",
+    "all_frutta_guscio": "1",
+    "all_nocciole": "1"
   },
   {
     "nome": "nocciole non pelate",
@@ -18827,7 +18914,9 @@
     "vitB9": 113,
     "vitB12": 0,
     "cross_frutta_guscio": "1",
-    "categoria": "ingrediente"
+    "categoria": "ingrediente",
+    "all_frutta_guscio": "1",
+    "all_nocciole": "1"
   },
   {
     "nome": "nocciole pelate",
@@ -18866,7 +18955,9 @@
     "vitB9": 113,
     "vitB12": 0,
     "cross_frutta_guscio": "1",
-    "categoria": "ingrediente"
+    "categoria": "ingrediente",
+    "all_frutta_guscio": "1",
+    "all_nocciole": "1"
   },
   {
     "nome": "nocciole secche tostate",
@@ -18905,7 +18996,9 @@
     "vitB9": 113,
     "vitB12": 0,
     "cross_frutta_guscio": "1",
-    "categoria": "ingrediente"
+    "categoria": "ingrediente",
+    "all_frutta_guscio": "1",
+    "all_nocciole": "1"
   },
   {
     "nome": "noce moscata disidratata",
@@ -18938,7 +19031,9 @@
     "fosforo": 213,
     "magnesio": 183,
     "ferro": 3.04,
-    "zinco": 2.15
+    "zinco": 2.15,
+    "all_frutta_guscio": "1",
+    "all_noci": "1"
   },
   {
     "nome": "noci",
@@ -18977,7 +19072,9 @@
     "vitB9": 31,
     "vitB12": 0,
     "cross_frutta_guscio": "1",
-    "categoria": "ingrediente"
+    "categoria": "ingrediente",
+    "all_frutta_guscio": "1",
+    "all_noci": "1"
   },
   {
     "nome": "Noci di macadamia",
@@ -19017,7 +19114,10 @@
     "vitB9": 11,
     "vitB12": 0,
     "cross_frutta_guscio": "1",
-    "categoria": "ingrediente"
+    "categoria": "ingrediente",
+    "all_frutta_guscio": "1",
+    "all_noci": "1",
+    "all_macadamia": "1"
   },
   {
     "nome": "Noci di pecan",
@@ -19057,7 +19157,10 @@
     "vitB9": 19.8,
     "vitB12": 0,
     "cross_frutta_guscio": "1",
-    "categoria": "ingrediente"
+    "categoria": "ingrediente",
+    "all_frutta_guscio": "1",
+    "all_noci": "1",
+    "all_pecan": "1"
   },
   {
     "nome": "noci di pecan caramellate, con miele",
@@ -19076,7 +19179,10 @@
     "sale": 1.9,
     "vitA_eq": 0,
     "cross_frutta_guscio": "1",
-    "categoria": "semilavorato"
+    "categoria": "semilavorato",
+    "all_frutta_guscio": "1",
+    "all_noci": "1",
+    "all_pecan": "1"
   },
   {
     "nome": "olio di arachidi",
@@ -19115,7 +19221,8 @@
     "vitB9": 0,
     "vitB12": 0,
     "cross_arachidi": "1",
-    "categoria": "ingrediente"
+    "categoria": "ingrediente",
+    "all_arachidi": "1"
   },
   {
     "nome": "olio di avocado",
@@ -19516,7 +19623,8 @@
     "vitB9": 0,
     "vitB12": 0,
     "cross_soia": "1",
-    "categoria": "ingrediente"
+    "categoria": "ingrediente",
+    "all_soia": "1"
   },
   {
     "nome": "olio di semi di vinaccioli",
@@ -19647,7 +19755,8 @@
     "sale": 0.01,
     "vitA_eq": 0,
     "cross_senape": "1",
-    "categoria": "ingrediente"
+    "categoria": "ingrediente",
+    "all_senape": "1"
   },
   {
     "nome": "olio extravergine di oliva",
@@ -19938,7 +20047,9 @@
     "calcio": 52,
     "vitA_eq": 0,
     "cross_frutta_guscio": "1",
-    "categoria": "ingrediente"
+    "categoria": "ingrediente",
+    "all_frutta_guscio": "1",
+    "all_nocciole": "1"
   },
   {
     "nome": "olive verdi in salamoia",
@@ -20045,7 +20156,8 @@
     "vitB2": 0.07,
     "vitB3": 4,
     "cross_pesci": "1",
-    "categoria": "ingrediente"
+    "categoria": "ingrediente",
+    "all_pesci": "1"
   },
   {
     "nome": "orata surgelata",
@@ -20066,7 +20178,8 @@
     "sale": 0.15,
     "vitA_eq": 0,
     "cross_pesci": "1",
-    "categoria": "ingrediente"
+    "categoria": "ingrediente",
+    "all_pesci": "1"
   },
   {
     "nome": "origano disidratato in polvere bio",
@@ -20750,7 +20863,9 @@
     "vitB9": 113,
     "vitB12": 0,
     "cross_frutta_guscio": "1",
-    "categoria": "ingrediente"
+    "categoria": "ingrediente",
+    "all_frutta_guscio": "1",
+    "all_nocciole": "1"
   },
   {
     "nome": "pasta di semola di grano duro",
@@ -20886,7 +21001,8 @@
     "all_grano": "1",
     "cross_uova": "1",
     "cross_soia": "1",
-    "categoria": "semilavorato"
+    "categoria": "semilavorato",
+    "all_soia": "1"
   },
   {
     "nome": "patata dolce",
@@ -20947,7 +21063,10 @@
     "cross_frutta_guscio": "1",
     "cross_sedano": "1",
     "cross_solfiti": "1",
-    "categoria": "semilavorato"
+    "categoria": "semilavorato",
+    "all_soia": "1",
+    "all_frutta_guscio": "1",
+    "all_noci": "1"
   },
   {
     "nome": "patate cotte senza sale",
@@ -21676,7 +21795,8 @@
     "sale": 0.14,
     "vitA_eq": 3,
     "cross_pesci": "1",
-    "categoria": "ingrediente"
+    "categoria": "ingrediente",
+    "all_pesci": "1"
   },
   {
     "nome": "pesce merluzzo",
@@ -21716,7 +21836,8 @@
     "vitB9": 21.2,
     "vitB12": 1.32,
     "cross_pesci": "1",
-    "categoria": "ingrediente"
+    "categoria": "ingrediente",
+    "all_pesci": "1"
   },
   {
     "nome": "pesce muggine (filetto)",
@@ -21756,7 +21877,8 @@
     "vitB9": 9,
     "vitB12": 5.56,
     "cross_pesci": "1",
-    "categoria": "ingrediente"
+    "categoria": "ingrediente",
+    "all_pesci": "1"
   },
   {
     "nome": "pesce nasello",
@@ -21796,7 +21918,8 @@
     "vitB9": 9,
     "vitB12": 1,
     "cross_pesci": "1",
-    "categoria": "ingrediente"
+    "categoria": "ingrediente",
+    "all_pesci": "1"
   },
   {
     "nome": "pesce persico crudo",
@@ -21833,7 +21956,8 @@
     "vitB2": 0.25,
     "vitB3": 2.31,
     "cross_pesci": "1",
-    "categoria": "ingrediente"
+    "categoria": "ingrediente",
+    "all_pesci": "1"
   },
   {
     "nome": "pesce ricciola in olio di oliva",
@@ -21864,7 +21988,9 @@
     "vitB2": 0.04,
     "cross_pesci": "1",
     "cross_molluschi": "1",
-    "categoria": "prodotto"
+    "categoria": "prodotto",
+    "all_pesci": "1",
+    "all_molluschi": "1"
   },
   {
     "nome": "pesce salmone affumicato",
@@ -21903,7 +22029,8 @@
     "vitB9": 26,
     "vitB12": 3.35,
     "cross_pesci": "1",
-    "categoria": "ingrediente"
+    "categoria": "ingrediente",
+    "all_pesci": "1"
   },
   {
     "nome": "pesce salmone fresco",
@@ -21942,7 +22069,8 @@
     "vitB9": 20.8,
     "vitB12": 3.95,
     "cross_pesci": "1",
-    "categoria": "ingrediente"
+    "categoria": "ingrediente",
+    "all_pesci": "1"
   },
   {
     "nome": "pesce salmone surgelato",
@@ -21962,7 +22090,8 @@
     "sale": 0,
     "vitA_eq": 0,
     "cross_pesci": "1",
-    "categoria": "ingrediente"
+    "categoria": "ingrediente",
+    "all_pesci": "1"
   },
   {
     "nome": "pesce sardine",
@@ -22001,7 +22130,8 @@
     "vitB9": 3.18,
     "vitB12": 8.6,
     "cross_pesci": "1",
-    "categoria": "ingrediente"
+    "categoria": "ingrediente",
+    "all_pesci": "1"
   },
   {
     "nome": "pesce scorfano crudo",
@@ -22041,7 +22171,8 @@
     "vitB9": 9,
     "vitB12": 1.78,
     "cross_pesci": "1",
-    "categoria": "ingrediente"
+    "categoria": "ingrediente",
+    "all_pesci": "1"
   },
   {
     "nome": "pesce spada affumicato",
@@ -22069,7 +22200,8 @@
     "vitA_eq": 0,
     "vitD": 17,
     "cross_pesci": "1",
-    "categoria": "ingrediente"
+    "categoria": "ingrediente",
+    "all_pesci": "1"
   },
   {
     "nome": "pesce spada cotto a vapore",
@@ -22109,7 +22241,8 @@
     "vitB9": 2,
     "vitB12": 1.82,
     "cross_pesci": "1",
-    "categoria": "ingrediente"
+    "categoria": "ingrediente",
+    "all_pesci": "1"
   },
   {
     "nome": "pesce spada in olio di oliva-filetti",
@@ -22140,7 +22273,8 @@
     "vitB2": 0.05,
     "vitB6": 0.51,
     "cross_pesci": "1",
-    "categoria": "ingrediente"
+    "categoria": "ingrediente",
+    "all_pesci": "1"
   },
   {
     "nome": "pesce spada surgelato",
@@ -22161,7 +22295,8 @@
     "sale": 0.23,
     "vitA_eq": 0,
     "cross_pesci": "1",
-    "categoria": "ingrediente"
+    "categoria": "ingrediente",
+    "all_pesci": "1"
   },
   {
     "nome": "pesce triglia, crudo",
@@ -22201,7 +22336,8 @@
     "vitB9": 9,
     "vitB12": 5.56,
     "cross_pesci": "1",
-    "categoria": "ingrediente"
+    "categoria": "ingrediente",
+    "all_pesci": "1"
   },
   {
     "nome": "petali di rose essiccati",
@@ -22504,7 +22640,9 @@
     "vitB3": 1.4,
     "vitB12": 0,
     "cross_frutta_guscio": "1",
-    "categoria": "ingrediente"
+    "categoria": "ingrediente",
+    "all_frutta_guscio": "1",
+    "all_pistacchi": "1"
   },
   {
     "nome": "polenta (senza sale)",
@@ -22727,7 +22865,8 @@
     "vitB9": 14,
     "vitB12": 15,
     "cross_molluschi": "1",
-    "categoria": "ingrediente"
+    "categoria": "ingrediente",
+    "all_molluschi": "1"
   },
   {
     "nome": "polpo surgelato",
@@ -22753,7 +22892,8 @@
     "vitA_eq": 0,
     "vitD": 0,
     "cross_molluschi": "1",
-    "categoria": "ingrediente"
+    "categoria": "ingrediente",
+    "all_molluschi": "1"
   },
   {
     "nome": "pomodori da insalata",
@@ -23319,7 +23459,8 @@
     "sale": 1.32,
     "vitA_eq": 0,
     "cross_molluschi": "1",
-    "categoria": "prodotto"
+    "categoria": "prodotto",
+    "all_molluschi": "1"
   },
   {
     "nome": "porro (tritato)",
@@ -23547,7 +23688,8 @@
     "all_latte": "1",
     "cross_soia": "1",
     "cross_latte": "1",
-    "categoria": "semilavorato"
+    "categoria": "semilavorato",
+    "all_soia": "1"
   },
   {
     "nome": "preparato all' albicocca 35% di purea di albicocca",
@@ -23919,7 +24061,8 @@
     "vitA_eq": 0,
     "all_grano": "1",
     "cross_soia": "1",
-    "categoria": "semilavorato"
+    "categoria": "semilavorato",
+    "all_soia": "1"
   },
   {
     "nome": "preparato per pane con curcuma, semi di chia e semi di lino",
@@ -24039,7 +24182,8 @@
     "sale": 2,
     "vitA_eq": 0,
     "cross_soia": "1",
-    "categoria": "semilavorato"
+    "categoria": "semilavorato",
+    "all_soia": "1"
   },
   {
     "nome": "preparato per prodotti da forno senza glutine con succo di uva",
@@ -24058,7 +24202,8 @@
     "sale": 2.2,
     "vitA_eq": 0,
     "cross_soia": "1",
-    "categoria": "semilavorato"
+    "categoria": "semilavorato",
+    "all_soia": "1"
   },
   {
     "nome": "preparato per prodotti da forno senza glutine con uovo",
@@ -24121,7 +24266,8 @@
     "all_latte": "1",
     "cross_soia": "1",
     "cross_latte": "1",
-    "categoria": "semilavorato"
+    "categoria": "semilavorato",
+    "all_soia": "1"
   },
   {
     "nome": "preparazione alcolica aromatizzata per bagne",
@@ -24431,7 +24577,8 @@
     "sale": 2.97,
     "vitA_eq": 0,
     "cross_soia": "1",
-    "categoria": "ingrediente"
+    "categoria": "ingrediente",
+    "all_soia": "1"
   },
   {
     "nome": "proteine isolate di soia 90%",
@@ -24453,7 +24600,8 @@
     "sale": 0.7,
     "vitA_eq": 0,
     "cross_soia": "1",
-    "categoria": "ingrediente"
+    "categoria": "ingrediente",
+    "all_soia": "1"
   },
   {
     "nome": "proteine isolate di soia 92%",
@@ -24475,7 +24623,8 @@
     "sale": 0.7,
     "vitA_eq": 0,
     "cross_soia": "1",
-    "categoria": "ingrediente"
+    "categoria": "ingrediente",
+    "all_soia": "1"
   },
   {
     "nome": "provola affumicata  48% di umidità",
@@ -25077,7 +25226,8 @@
     "sale": 0.5,
     "vitA_eq": 0,
     "cross_soia": "1",
-    "categoria": "semilavorato"
+    "categoria": "semilavorato",
+    "all_soia": "1"
   },
   {
     "nome": "riso integrale",
@@ -25752,7 +25902,8 @@
     "vitB9": 24,
     "vitB12": 9,
     "cross_pesci": "1",
-    "categoria": "ingrediente"
+    "categoria": "ingrediente",
+    "all_pesci": "1"
   },
   {
     "nome": "sbiancante",
@@ -26829,7 +26980,8 @@
     "vitB9": 97,
     "vitB12": 0,
     "cross_sesamo": "1",
-    "categoria": "ingrediente"
+    "categoria": "ingrediente",
+    "all_sesamo": "1"
   },
   {
     "nome": "semi di zucca",
@@ -27284,7 +27436,8 @@
     "vitB9": 57,
     "vitB12": 0,
     "cross_senape": "1",
-    "categoria": "ingrediente"
+    "categoria": "ingrediente",
+    "all_senape": "1"
   },
   {
     "nome": "seppie surgelate",
@@ -27313,7 +27466,8 @@
     "vitB9": 57,
     "vitB12": 0,
     "cross_molluschi": "1",
-    "categoria": "ingrediente"
+    "categoria": "ingrediente",
+    "all_molluschi": "1"
   },
   {
     "nome": "sgombri al naturale scolati",
@@ -27352,7 +27506,8 @@
     "vitB9": 57,
     "vitB12": 0,
     "cross_pesci": "1",
-    "categoria": "ingrediente"
+    "categoria": "ingrediente",
+    "all_pesci": "1"
   },
   {
     "nome": "sgombro crudo",
@@ -27392,7 +27547,8 @@
     "vitB9": 57,
     "vitB12": 0,
     "cross_pesci": "1",
-    "categoria": "ingrediente"
+    "categoria": "ingrediente",
+    "all_pesci": "1"
   },
   {
     "nome": "sgombro in olio di oliva-filetti",
@@ -27429,7 +27585,8 @@
     "vitB9": 57,
     "vitB12": 0,
     "cross_pesci": "1",
-    "categoria": "ingrediente"
+    "categoria": "ingrediente",
+    "all_pesci": "1"
   },
   {
     "nome": "sidro",
@@ -27576,7 +27733,8 @@
     "vitB9": 57,
     "vitB12": 0,
     "cross_pesci": "1",
-    "categoria": "ingrediente"
+    "categoria": "ingrediente",
+    "all_pesci": "1"
   },
   {
     "nome": "soia cruda secca",
@@ -27613,7 +27771,8 @@
     "vitB9": 57,
     "vitB12": 0,
     "cross_soia": "1",
-    "categoria": "ingrediente"
+    "categoria": "ingrediente",
+    "all_soia": "1"
   },
   {
     "nome": "soia decorticata tostata in granella",
@@ -27642,7 +27801,8 @@
     "vitB9": 57,
     "vitB12": 0,
     "cross_soia": "1",
-    "categoria": "ingrediente"
+    "categoria": "ingrediente",
+    "all_soia": "1"
   },
   {
     "nome": "solmix polpette",
@@ -27759,7 +27919,8 @@
     "vitB9": 57,
     "vitB12": 0,
     "cross_pesci": "1",
-    "categoria": "ingrediente"
+    "categoria": "ingrediente",
+    "all_pesci": "1"
   },
   {
     "nome": "spigole surgelate",
@@ -27788,7 +27949,8 @@
     "vitB9": 57,
     "vitB12": 0,
     "cross_pesci": "1",
-    "categoria": "ingrediente"
+    "categoria": "ingrediente",
+    "all_pesci": "1"
   },
   {
     "nome": "spinaci",
@@ -28239,7 +28401,8 @@
     "vitB12": 0,
     "cross_pesci": "1",
     "categoria": "ingrediente",
-    "fonte_dati": "INRAN — kcal/kJ allineati ai macronutrienti dichiarati (era 114.22/481.94, non giustificato dai macro)"
+    "fonte_dati": "INRAN — kcal/kJ allineati ai macronutrienti dichiarati (era 114.22/481.94, non giustificato dai macro)",
+    "all_pesci": "1"
   },
   {
     "nome": "strutto (0,4% di umidità)",
@@ -28423,7 +28586,8 @@
     "all_uova": "1",
     "cross_uova": "1",
     "cross_pesci": "1",
-    "categoria": "ingrediente"
+    "categoria": "ingrediente",
+    "all_pesci": "1"
   },
   {
     "nome": "susina gialla",
@@ -28499,7 +28663,8 @@
     "vitB9": 57,
     "vitB12": 0,
     "cross_sesamo": "1",
-    "categoria": "ingrediente"
+    "categoria": "ingrediente",
+    "all_sesamo": "1"
   },
   {
     "nome": "tarassaco (fiori)",
@@ -28932,7 +29097,8 @@
     "vitB9": 57,
     "vitB12": 0,
     "cross_pesci": "1",
-    "categoria": "prodotto"
+    "categoria": "prodotto",
+    "all_pesci": "1"
   },
   {
     "nome": "tonno al naturale",
@@ -28969,7 +29135,8 @@
     "vitB9": 57,
     "vitB12": 0,
     "cross_pesci": "1",
-    "categoria": "prodotto"
+    "categoria": "prodotto",
+    "all_pesci": "1"
   },
   {
     "nome": "tonno alalunga crudo",
@@ -29009,7 +29176,8 @@
     "vitB9": 57,
     "vitB12": 0,
     "cross_pesci": "1",
-    "categoria": "ingrediente"
+    "categoria": "ingrediente",
+    "all_pesci": "1"
   },
   {
     "nome": "tonno cotto a vapore senza sale",
@@ -29045,7 +29213,8 @@
     "vitB9": 57,
     "vitB12": 0,
     "cross_pesci": "1",
-    "categoria": "semilavorato"
+    "categoria": "semilavorato",
+    "all_pesci": "1"
   },
   {
     "nome": "tonno cotto in salamoia",
@@ -29081,7 +29250,8 @@
     "vitB9": 57,
     "vitB12": 0,
     "cross_pesci": "1",
-    "categoria": "semilavorato"
+    "categoria": "semilavorato",
+    "all_pesci": "1"
   },
   {
     "nome": "tonno crudo-alletterato",
@@ -29111,7 +29281,8 @@
     "vitB9": 57,
     "vitB12": 0,
     "cross_pesci": "1",
-    "categoria": "ingrediente"
+    "categoria": "ingrediente",
+    "all_pesci": "1"
   },
   {
     "nome": "tonno crudo-pinna gialla",
@@ -29147,7 +29318,8 @@
     "vitB9": 57,
     "vitB12": 0,
     "cross_pesci": "1",
-    "categoria": "ingrediente"
+    "categoria": "ingrediente",
+    "all_pesci": "1"
   },
   {
     "nome": "tonno crudo-rosso",
@@ -29187,7 +29359,8 @@
     "vitB9": 57,
     "vitB12": 0,
     "cross_pesci": "1",
-    "categoria": "ingrediente"
+    "categoria": "ingrediente",
+    "all_pesci": "1"
   },
   {
     "nome": "tonno del mediterraneo in olio di oliva-ventresca",
@@ -29224,7 +29397,8 @@
     "vitB9": 57,
     "vitB12": 0,
     "cross_pesci": "1",
-    "categoria": "prodotto"
+    "categoria": "prodotto",
+    "all_pesci": "1"
   },
   {
     "nome": "tonno in olio di oliva (sgocciolato)",
@@ -29263,7 +29437,8 @@
     "vitB9": 57,
     "vitB12": 0,
     "cross_pesci": "1",
-    "categoria": "prodotto"
+    "categoria": "prodotto",
+    "all_pesci": "1"
   },
   {
     "nome": "tonno in olio di oliva 16,5 % di proteine",
@@ -29300,7 +29475,8 @@
     "vitB9": 57,
     "vitB12": 0,
     "cross_pesci": "1",
-    "categoria": "prodotto"
+    "categoria": "prodotto",
+    "all_pesci": "1"
   },
   {
     "nome": "tonno in olio di oliva 24% di proteine",
@@ -29329,7 +29505,8 @@
     "vitB9": 57,
     "vitB12": 0,
     "cross_pesci": "1",
-    "categoria": "prodotto"
+    "categoria": "prodotto",
+    "all_pesci": "1"
   },
   {
     "nome": "tonno in olio di oliva alalunga",
@@ -29366,7 +29543,8 @@
     "vitB9": 57,
     "vitB12": 0,
     "cross_pesci": "1",
-    "categoria": "prodotto"
+    "categoria": "prodotto",
+    "all_pesci": "1"
   },
   {
     "nome": "tonno in olio di oliva del mediterraneo",
@@ -29403,7 +29581,8 @@
     "vitB9": 57,
     "vitB12": 0,
     "cross_pesci": "1",
-    "categoria": "prodotto"
+    "categoria": "prodotto",
+    "all_pesci": "1"
   },
   {
     "nome": "tonno in olio di oliva Palamita",
@@ -29440,7 +29619,8 @@
     "vitB9": 57,
     "vitB12": 0,
     "cross_pesci": "1",
-    "categoria": "prodotto"
+    "categoria": "prodotto",
+    "all_pesci": "1"
   },
   {
     "nome": "tonno in olio di oliva tombarello",
@@ -29477,7 +29657,8 @@
     "vitB9": 57,
     "vitB12": 0,
     "cross_pesci": "1",
-    "categoria": "prodotto"
+    "categoria": "prodotto",
+    "all_pesci": "1"
   },
   {
     "nome": "tonno in olio di oliva-pinna gialla-filetto",
@@ -29507,7 +29688,8 @@
     "vitB9": 57,
     "vitB12": 0,
     "cross_pesci": "1",
-    "categoria": "prodotto"
+    "categoria": "prodotto",
+    "all_pesci": "1"
   },
   {
     "nome": "tonno in olio di oliva-pinna gialla-tarantello",
@@ -29537,7 +29719,8 @@
     "vitB9": 57,
     "vitB12": 0,
     "cross_pesci": "1",
-    "categoria": "prodotto"
+    "categoria": "prodotto",
+    "all_pesci": "1"
   },
   {
     "nome": "tonno in olio di oliva-pinna gialla-ventresca",
@@ -29567,7 +29750,8 @@
     "vitB9": 57,
     "vitB12": 0,
     "cross_pesci": "1",
-    "categoria": "prodotto"
+    "categoria": "prodotto",
+    "all_pesci": "1"
   },
   {
     "nome": "tonno in olio di oliva-rosso-filetto",
@@ -29597,7 +29781,8 @@
     "vitB9": 57,
     "vitB12": 0,
     "cross_pesci": "1",
-    "categoria": "prodotto"
+    "categoria": "prodotto",
+    "all_pesci": "1"
   },
   {
     "nome": "tonno in olio di oliva-rosso-tarantello",
@@ -29627,7 +29812,8 @@
     "vitB9": 57,
     "vitB12": 0,
     "cross_pesci": "1",
-    "categoria": "prodotto"
+    "categoria": "prodotto",
+    "all_pesci": "1"
   },
   {
     "nome": "tonno in olio di oliva-rosso-ventresca",
@@ -29664,7 +29850,8 @@
     "vitB9": 57,
     "vitB12": 0,
     "cross_pesci": "1",
-    "categoria": "prodotto"
+    "categoria": "prodotto",
+    "all_pesci": "1"
   },
   {
     "nome": "tonno in olio di semi di girasole sgocciolato",
@@ -29693,7 +29880,8 @@
     "vitB9": 57,
     "vitB12": 0,
     "cross_pesci": "1",
-    "categoria": "prodotto"
+    "categoria": "prodotto",
+    "all_pesci": "1"
   },
   {
     "nome": "tonno salato in salamoia",
@@ -29730,7 +29918,8 @@
     "vitB9": 57,
     "vitB12": 0,
     "cross_pesci": "1",
-    "categoria": "prodotto"
+    "categoria": "prodotto",
+    "all_pesci": "1"
   },
   {
     "nome": "topinambur",
@@ -29801,7 +29990,9 @@
     "all_uova": "1",
     "cross_uova": "1",
     "cross_frutta_guscio": "1",
-    "categoria": "semilavorato"
+    "categoria": "semilavorato",
+    "all_frutta_guscio": "1",
+    "all_mandorle": "1"
   },
   {
     "nome": "totano",
@@ -29840,7 +30031,8 @@
     "vitB9": 57,
     "vitB12": 0,
     "cross_molluschi": "1",
-    "categoria": "ingrediente"
+    "categoria": "ingrediente",
+    "all_molluschi": "1"
   },
   {
     "nome": "Trancio",
@@ -30206,7 +30398,9 @@
     "vitB12": 0,
     "cross_pesci": "1",
     "cross_molluschi": "1",
-    "categoria": "ingrediente"
+    "categoria": "ingrediente",
+    "all_pesci": "1",
+    "all_molluschi": "1"
   },
   {
     "nome": "uovo in polvere",
@@ -30850,7 +31044,8 @@
     "vitB9": 57,
     "vitB12": 0,
     "cross_molluschi": "1",
-    "categoria": "ingrediente"
+    "categoria": "ingrediente",
+    "all_molluschi": "1"
   },
   {
     "nome": "vongole crude (parte edibile)",
@@ -30890,7 +31085,8 @@
     "vitB9": 57,
     "vitB12": 0,
     "cross_molluschi": "1",
-    "categoria": "ingrediente"
+    "categoria": "ingrediente",
+    "all_molluschi": "1"
   },
   {
     "nome": "whisky",
