@@ -23,9 +23,6 @@
 - [ ] **COD-07-LOGIN** — Rate limit login 3/min: `LocMemCache` non persiste tra worker Gunicorn.
   Aggiungere Redis in `production.py` per `CACHES`. Senza Redis il throttling è inefficace in prod.
 
-- [ ] **SEC-12-CSP** — Verificare che nessun componente usi stili/script inline rotti dopo rimozione `unsafe-inline`.
-  Test manuale su production: aprire devtools → console → cercare CSP violations.
-
 ### Normative
 
 - [ ] **NORM-09** — Gulf/Arabi: verificare clausola small-package su fonte primaria SFDA/GSO.
@@ -35,9 +32,6 @@
   Scope: NutrizionaleCalc, EtichetteCalc, TrattamentoTermicoCalc — almeno 3 ricette reali per tool.
 
 ### UX
-
-- [ ] **UX-04** — Pagina "Il tuo abbonamento".
-  Scope minimo: pagina statica con `purchased_tools` + email da Django.
 
 - [ ] **UX-07** — Login page: proposta di valore. Tagline generica, nessun pricing/social proof.
 
@@ -94,6 +88,8 @@
 - ✅ **SEC-07** — `ArchiveEntryViewSet` filtra per tool acquistato (submodule commit 1c3875f)
 - ✅ **SEC-10** — `IngredientViewSet` throttle `ingredient_list: 10/min` configurato (submodule)
 - ✅ **D3-FRONTEND** — N/A: `useAllergens` non esiste, il frontend non consuma ancora il dict sparse
+- ✅ **UX-04** — Pagina `/abbonamento` con account info, strumenti attivi e non acquistati
+- ✅ **SEC-12-CSP** — Verificata: nessun font/CDN esterno, CSP corretta in prod
 
 ---
 
