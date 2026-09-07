@@ -2,7 +2,6 @@ import { createContext, useContext, useState, useEffect } from 'react';
 import type { ReactNode } from 'react';
 import type { User, ToolId } from '../data/mockUsers';
 import { apiLogin, apiLogout, apiMe } from '../api/auth';
-import { clearTokens } from '../api/client';
 
 interface AuthContextType {
     user:            User | null;
@@ -56,7 +55,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             .catch(() => {
                 setUser(null);
                 sessionStorage.removeItem(CACHE_KEY);
-                clearTokens();
             });
     }, []);
 
