@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Outlet, useLocation, Link } from 'react-router-dom';
 import { Sidebar } from './Sidebar';
 import { MobileShell } from './MobileShell';
@@ -22,6 +22,13 @@ export function AppShell() {
     const location = useLocation();
     const isMobile = useMobile();
     const pageLabel = ROUTE_LABELS[location.pathname] ?? 'Portale';
+
+    useEffect(() => {
+        const label = ROUTE_LABELS[location.pathname];
+        document.title = label
+            ? `${label} — AEA Consulenze`
+            : 'AEA Consulenze Alimentari — Portale Clienti';
+    }, [location.pathname]);
 
     if (isMobile) {
         const insideTool = location.pathname.startsWith('/tool/');

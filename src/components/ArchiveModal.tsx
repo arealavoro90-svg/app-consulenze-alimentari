@@ -65,8 +65,20 @@ export function ArchiveModal<T>({
 
                     <div style={{ overflowY: 'auto', flex: 1, paddingRight: 8 }}>
                         {filtered.length === 0 ? (
-                            <div style={{ textAlign: 'center', padding: 32, color: 'var(--color-text-muted)' }}>
-                                <p>Nessun elemento trovato nell'archivio.</p>
+                            <div style={{ textAlign: 'center', padding: 40, color: 'var(--color-text-muted)' }}>
+                                {items.length === 0 ? (
+                                    <>
+                                        <Archive size={32} style={{ marginBottom: 12, opacity: 0.3 }} />
+                                        <p style={{ fontWeight: 600, marginBottom: 4 }}>Archivio vuoto</p>
+                                        <p style={{ fontSize: 12 }}>Salva il tuo primo documento per vederlo qui.</p>
+                                    </>
+                                ) : (
+                                    <>
+                                        <Search size={32} style={{ marginBottom: 12, opacity: 0.3 }} />
+                                        <p style={{ fontWeight: 600, marginBottom: 4 }}>Nessun risultato</p>
+                                        <p style={{ fontSize: 12 }}>Nessun documento corrisponde a "{search}".</p>
+                                    </>
+                                )}
                             </div>
                         ) : (
                             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
