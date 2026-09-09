@@ -1223,6 +1223,19 @@ export function EtichetteCalc() {
         setPromptOpen(true);
     };
 
+    // Cmd/Ctrl+S → salva
+    useEffect(() => {
+        const onKey = (e: KeyboardEvent) => {
+            if ((e.metaKey || e.ctrlKey) && e.key === 's') {
+                e.preventDefault();
+                handleSave();
+            }
+        };
+        window.addEventListener('keydown', onKey);
+        return () => window.removeEventListener('keydown', onKey);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [handleSave]);
+
     const handleLoad = (item: { data: LabelData; id: string; name: string }) => {
         // Merge coi default: etichette salvate prima dell'introduzione di codeType/codeValue/codeScale
         // non hanno questi campi — senza merge risulterebbero undefined invece che 'none'/''/100.

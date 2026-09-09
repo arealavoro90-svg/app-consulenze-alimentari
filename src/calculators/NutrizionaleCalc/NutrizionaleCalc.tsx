@@ -599,6 +599,19 @@ export function NutrizionaleCalc() {
         }
     };
 
+    // Cmd/Ctrl+S → salva
+    useEffect(() => {
+        const onKey = (e: KeyboardEvent) => {
+            if ((e.metaKey || e.ctrlKey) && e.key === 's') {
+                e.preventDefault();
+                handleSave();
+            }
+        };
+        window.addEventListener('keydown', onKey);
+        return () => window.removeEventListener('keydown', onKey);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [handleSave]);
+
     const handleLoad = (item: typeof archiveItems[0]) => {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any -- legacy archive shape is unknown
         const d = item.data as any; // Allow legacy fallback
