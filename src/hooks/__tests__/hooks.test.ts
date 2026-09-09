@@ -189,23 +189,31 @@ describe('useArchive — localStorage path', () => {
 });
 
 // ─── useIngredientsDB ─────────────────────────────────────────────────────────
+// S0: fromStatic ora usa dynamic import (non fetch). apiFetch è la sorgente primaria.
+// In dev con VITE_DEV_MOCK_AUTH=false (forzato nei test, vedi vite.config.ts):
+//   - apiFetch risolve → db popolato dall'API
+//   - apiFetch rigetta → fallback a import('../data/ingredientsDB.json')
+// In prod: nessun fallback statico (ramo eliminato da Vite a build time).
+
 const MOCK_INGREDIENTS = [
-    { id: 1, name: 'Farina', energia_kcal: 364, proteine: 10, grassi: 1, carboidrati: 76, fibre: 2.7, zuccheri: 0.3, grassi_saturi: 0.2 },
+    { id: 1, nome: 'Farina', etichetta: 'Farina di grano tenero', kcal: 364, kj: 1523, proteine: 10, grassi: 1, saturi: 0.2, carboidrati: 76, zuccheri: 0.3, fibre: 2.7, sodio_mg: 2 },
 ];
 
 vi.mock('../../api/client', () => ({
-    apiFetch: vi.fn().mockRejectedValue(new Error('no backend')),
+    apiFetch: vi.fn(),
 }));
+
+// Intercetta il dynamic import del JSON bundled (fallback dev) — restituisce MOCK_INGREDIENTS
+vi.mock('../../data/ingredientsDB.json', () => ({ default: MOCK_INGREDIENTS }));
+
+import { apiFetch } from '../../api/client';
 
 describe('useIngredientsDB', () => {
     beforeEach(() => {
         localStorage.clear();
-        // Mock fetch per /data/ingredientsDB.json
-        vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
-            json: () => Promise.resolve(MOCK_INGREDIENTS),
-        }));
+        vi.mocked(apiFetch).mockResolvedValue(MOCK_INGREDIENTS);
     });
-    afterEach(() => vi.unstubAllGlobals());
+    afterEach(() => vi.restoreAllMocks());
 
     it('loadingDB=true inizialmente, poi false dopo il caricamento', async () => {
         const { useIngredientsDB } = await import('../useIngredientsDB');
@@ -219,7 +227,7 @@ describe('useIngredientsDB', () => {
         const { result } = renderHook(() => useIngredientsDB());
         await waitFor(() => expect(result.current.loadingDB).toBe(false));
         expect(result.current.db).toHaveLength(1);
-        expect(result.current.db[0].name).toBe('Farina');
+        expect(result.current.db[0].nome).toBe('Farina');
     });
 
     it('merge degli ingredienti custom da localStorage', async () => {
@@ -232,12 +240,15 @@ describe('useIngredientsDB', () => {
         expect(result.current.db.some(i => i.nome === 'Ingrediente Custom')).toBe(true);
     });
 
-    it('fetch fallisce → dbError impostato, loadingDB=false', async () => {
-        vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('network error')));
+    it('API fallisce in dev → fallback JSON bundled, nessun dbError', async () => {
+        // In dev: apiFetch rigetta → import('../data/ingredientsDB.json') (mockato sopra) → db popolato
+        // In prod: il ramo fallback è eliminato da Vite → dbError verrebbe impostato
+        vi.mocked(apiFetch).mockRejectedValue(new Error('network error'));
         const { useIngredientsDB } = await import('../useIngredientsDB');
         const { result } = renderHook(() => useIngredientsDB('Errore DB'));
         await waitFor(() => expect(result.current.loadingDB).toBe(false));
-        expect(result.current.dbError).toBe('Errore DB');
+        expect(result.current.dbError).toBeNull();
+        expect(result.current.db).toHaveLength(1);
     });
 });
 

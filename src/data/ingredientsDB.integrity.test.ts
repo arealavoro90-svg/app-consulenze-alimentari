@@ -17,7 +17,7 @@ interface RawIngredient {
 }
 
 const db = JSON.parse(
-    readFileSync(resolve(__dirname, '../../public/data/ingredientsDB.json'), 'utf8'),
+    readFileSync(resolve(__dirname, './ingredientsDB.json'), 'utf8'),
 ) as RawIngredient[];
 
 const testo = (i: RawIngredient) => `${i.nome ?? ''} ${i.etichetta ?? ''}`;

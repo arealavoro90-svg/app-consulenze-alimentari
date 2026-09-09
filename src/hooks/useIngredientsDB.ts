@@ -11,16 +11,28 @@ export function useIngredientsDB(errorMessage = 'Impossibile caricare il databas
     const loadDB = useCallback(() => {
         setLoadingDB(true);
         setDbError(null);
-        // S0: carica da endpoint Django autenticato; in dev senza backend → fallback statico
-        const fromAPI = () => apiFetch<DBIngredient[]>('/api/ingredients/');
-        const fromStatic = () => fetch('/data/ingredientsDB.json').then(r => r.json() as Promise<DBIngredient[]>);
-        // AUDIT T3 — con VITE_DEV_MOCK_AUTH attivo non esiste alcuna sessione: la chiamata
-        // all'API è garantita fallire con 401. Saltarla evita un round-trip inutile e
-        // toglie dalla console errori che sembrano guasti e non lo sono. Il 401 resta il
-        // fallback legittimo in ogni altro caso (dev senza backend avviato, backend giù).
+
         const mockAuth = import.meta.env.DEV && import.meta.env.VITE_DEV_MOCK_AUTH === 'true';
-        (mockAuth ? fromStatic() : fromAPI())
-            .catch(() => fromStatic())
+
+        // S0: prod usa solo API autenticata — nessun fallback statico pubblico.
+        // Dev con VITE_DEV_MOCK_AUTH=true: carica JSON bundled (Django non necessario).
+        // Dev senza mock: prova API, fallback al JSON bundled se Django non gira.
+        // Il ramo import('../data/ingredientsDB.json') è eliminato dal bundle prod da Vite
+        // (dead branch su import.meta.env.DEV === false a build time).
+        let promise: Promise<DBIngredient[]>;
+        if (mockAuth) {
+            promise = import('../data/ingredientsDB.json').then(m => (m as { default: DBIngredient[] }).default);
+        } else {
+            promise = apiFetch<DBIngredient[]>('/api/ingredients/');
+            if (import.meta.env.DEV) {
+                // ponytail: dev-only fallback — eliminato dal bundle prod (dead branch)
+                promise = promise.catch(() =>
+                    import('../data/ingredientsDB.json').then(m => (m as { default: DBIngredient[] }).default)
+                );
+            }
+        }
+
+        promise
             .then(data => {
                 let base = Array.isArray(data) ? data : [];
                 try {

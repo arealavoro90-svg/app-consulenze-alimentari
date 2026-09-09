@@ -30,14 +30,6 @@ export default defineConfig({
         // Nota: dopo S0 deploy questa entry va rimossa (il DB sarà dietro API autenticata)
         runtimeCaching: [
           {
-            urlPattern: /\/data\/ingredientsDB\.json$/,
-            handler: 'CacheFirst',
-            options: {
-              cacheName: 'ingredients-db',
-              expiration: { maxAgeSeconds: 60 * 60 * 24 * 7 }, // 7 giorni
-            },
-          },
-          {
             // API Django: network-first (richiede auth fresca, no cache offline)
             urlPattern: /\/api\//,
             handler: 'NetworkOnly',
