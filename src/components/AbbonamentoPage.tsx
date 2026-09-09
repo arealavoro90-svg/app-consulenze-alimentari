@@ -1,7 +1,7 @@
 import { useState } from 'react';
-import { CreditCard, CheckCircle2, Mail, Building2, ShieldCheck, Trash2 } from 'lucide-react';
+import { CreditCard, CheckCircle2, Mail, Building2, ShieldCheck, Trash2, Download } from 'lucide-react';
 import { useAuth } from '../auth/AuthContext';
-import { apiDeleteAccount } from '../api/auth';
+import { apiDeleteAccount, apiExportData } from '../api/auth';
 import { TOOLS_CATALOG } from '../data/mockUsers';
 import type { ToolId } from '../data/mockUsers';
 
@@ -9,6 +9,13 @@ export function AbbonamentoPage() {
     const { user, logout } = useAuth();
     const [deleteStep, setDeleteStep] = useState<'idle' | 'confirm' | 'loading'>('idle');
     const [deleteError, setDeleteError] = useState<string | null>(null);
+    const [exporting, setExporting] = useState(false);
+
+    const handleExport = async () => {
+        setExporting(true);
+        try { await apiExportData(); } catch { /* silenzioso — il browser mostra l'errore */ }
+        finally { setExporting(false); }
+    };
 
     const handleDeleteAccount = async () => {
         setDeleteStep('loading');
@@ -123,6 +130,31 @@ export function AbbonamentoPage() {
                     </div>
                 </div>
             )}
+            {/* GDPR Art.20 — Export dati */}
+            <div className="card" style={{ marginTop: 20 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8 }}>
+                    <Download size={18} color="var(--color-orange)" />
+                    <span style={{ fontWeight: 700, fontSize: 15 }}>Esporta i tuoi dati</span>
+                </div>
+                <p style={{ fontSize: 13, color: 'var(--color-text-muted)', marginBottom: 12 }}>
+                    Scarica una copia di tutti i tuoi dati (ricette, etichette, calcoli) in formato JSON — Art. 20 GDPR.
+                </p>
+                <button
+                    onClick={handleExport}
+                    disabled={exporting}
+                    style={{
+                        padding: '8px 16px', borderRadius: 8,
+                        border: '1px solid var(--color-orange)',
+                        background: 'transparent', color: 'var(--color-orange)',
+                        fontSize: 13, fontWeight: 600,
+                        cursor: exporting ? 'not-allowed' : 'pointer',
+                        opacity: exporting ? 0.7 : 1,
+                    }}
+                >
+                    {exporting ? 'Esportazione…' : 'Scarica i miei dati'}
+                </button>
+            </div>
+
             {/* GDPR Art.17 — Cancellazione account */}
             <div className="card" style={{ marginTop: 20, borderColor: 'rgba(220,38,38,0.2)' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>

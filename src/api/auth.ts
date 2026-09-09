@@ -69,3 +69,17 @@ export async function apiMe(): Promise<User> {
 export async function apiDeleteAccount(): Promise<void> {
     await apiFetch('/api/auth/me/delete/', { method: 'DELETE' });
 }
+
+/** GDPR-4 Art.20 — scarica tutti i dati dell'utente come JSON. */
+export async function apiExportData(): Promise<void> {
+    const BASE_URL = (import.meta.env.VITE_API_URL as string | undefined) ?? '';
+    const res = await fetch(`${BASE_URL}/api/auth/me/export/`, { credentials: 'include' });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'aea_export.json';
+    a.click();
+    URL.revokeObjectURL(url);
+}
