@@ -1,10 +1,26 @@
-import { CreditCard, CheckCircle2, Mail, Building2, ShieldCheck } from 'lucide-react';
+import { useState } from 'react';
+import { CreditCard, CheckCircle2, Mail, Building2, ShieldCheck, Trash2 } from 'lucide-react';
 import { useAuth } from '../auth/AuthContext';
+import { apiDeleteAccount } from '../api/auth';
 import { TOOLS_CATALOG } from '../data/mockUsers';
 import type { ToolId } from '../data/mockUsers';
 
 export function AbbonamentoPage() {
-    const { user } = useAuth();
+    const { user, logout } = useAuth();
+    const [deleteStep, setDeleteStep] = useState<'idle' | 'confirm' | 'loading'>('idle');
+    const [deleteError, setDeleteError] = useState<string | null>(null);
+
+    const handleDeleteAccount = async () => {
+        setDeleteStep('loading');
+        setDeleteError(null);
+        try {
+            await apiDeleteAccount();
+            logout();
+        } catch {
+            setDeleteError('Errore durante la cancellazione. Riprova o contatta il supporto.');
+            setDeleteStep('confirm');
+        }
+    };
 
     const purchasedTools: ToolId[] = user?.role === 'admin'
         ? (Object.keys(TOOLS_CATALOG) as ToolId[])
@@ -107,6 +123,66 @@ export function AbbonamentoPage() {
                     </div>
                 </div>
             )}
+            {/* GDPR Art.17 — Cancellazione account */}
+            <div className="card" style={{ marginTop: 20, borderColor: 'rgba(220,38,38,0.2)' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
+                    <Trash2 size={18} color="#dc2626" />
+                    <span style={{ fontWeight: 700, fontSize: 15, color: '#dc2626' }}>Zona pericolosa</span>
+                </div>
+                <p style={{ fontSize: 13, color: 'var(--color-text-muted)', marginBottom: 16 }}>
+                    La cancellazione è irreversibile. Tutti i dati (ricette, etichette, archivi) verranno eliminati definitivamente.
+                </p>
+
+                {deleteStep === 'idle' && (
+                    <button
+                        onClick={() => setDeleteStep('confirm')}
+                        style={{
+                            padding: '8px 16px', borderRadius: 8, border: '1px solid #dc2626',
+                            background: 'transparent', color: '#dc2626', fontSize: 13,
+                            fontWeight: 600, cursor: 'pointer',
+                        }}
+                    >
+                        Cancella il mio account
+                    </button>
+                )}
+
+                {(deleteStep === 'confirm' || deleteStep === 'loading') && (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                        <p style={{ fontSize: 13, fontWeight: 600, color: '#dc2626', margin: 0 }}>
+                            Sei sicuro? Questa azione non può essere annullata.
+                        </p>
+                        {deleteError && (
+                            <p style={{ fontSize: 13, color: '#dc2626', margin: 0 }}>{deleteError}</p>
+                        )}
+                        <div style={{ display: 'flex', gap: 10 }}>
+                            <button
+                                onClick={handleDeleteAccount}
+                                disabled={deleteStep === 'loading'}
+                                style={{
+                                    padding: '8px 16px', borderRadius: 8, border: 'none',
+                                    background: '#dc2626', color: '#fff', fontSize: 13,
+                                    fontWeight: 600, cursor: deleteStep === 'loading' ? 'not-allowed' : 'pointer',
+                                    opacity: deleteStep === 'loading' ? 0.7 : 1,
+                                }}
+                            >
+                                {deleteStep === 'loading' ? 'Cancellazione…' : 'Sì, cancella definitivamente'}
+                            </button>
+                            <button
+                                onClick={() => { setDeleteStep('idle'); setDeleteError(null); }}
+                                disabled={deleteStep === 'loading'}
+                                style={{
+                                    padding: '8px 16px', borderRadius: 8,
+                                    border: '1px solid var(--color-border)',
+                                    background: 'transparent', color: 'var(--color-text-muted)',
+                                    fontSize: 13, cursor: 'pointer',
+                                }}
+                            >
+                                Annulla
+                            </button>
+                        </div>
+                    </div>
+                )}
+            </div>
         </div>
     );
 }
