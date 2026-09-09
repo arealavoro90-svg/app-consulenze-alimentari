@@ -33,27 +33,27 @@ export function LoginPage() {
                     className="login-panel-logo"
                 />
                 <div className="login-panel-tagline">
-                    <h2>Consulenza<br />Alimentare</h2>
+                    <h2>Etichette conformi.<br />In minuti.</h2>
                     <div className="login-panel-divider" />
-                    <p>Strumenti professionali per etichettatura, nutrizione e conformità normativa.</p>
+                    <p>Il gestionale per consulenti e PMI alimentari. Calcolo nutrizionale, etichette multi-mercato e claim normativi — tutto in un posto.</p>
                 </div>
                 <div className="login-panel-features">
                     <div className="login-panel-feature">
                         <span className="login-panel-feature-dot" />
-                        Calcolo nutrizionale EU Reg 1169/2011
+                        Tabelle nutrizionali EU, USA, Canada, Australia, Gulf
                     </div>
                     <div className="login-panel-feature">
                         <span className="login-panel-feature-dot" />
-                        Etichette vini e prodotti alimentari
+                        Etichette conformi Reg. 1169/2011 con claim automatici
                     </div>
                     <div className="login-panel-feature">
                         <span className="login-panel-feature-dot" />
-                        Trattamento termico e rintracciabilità
+                        Trattamento termico, costi ricetta, rintracciabilità
                     </div>
                 </div>
                 <div className="login-panel-social-proof">
                     <span className="login-panel-social-proof-badge">100+</span>
-                    PMI alimentari italiane
+                    PMI alimentari italiane già attive
                 </div>
             </div>
 
@@ -95,9 +95,28 @@ export function LoginPage() {
                         </button>
                     </form>
 
-                    <p style={{ fontSize: 12, color: 'var(--color-text-dim)', textAlign: 'center', marginTop: 24 }}>
-                        Contatta AEA per ricevere le credenziali di accesso
-                    </p>
+                    <div style={{
+                        marginTop: 28,
+                        paddingTop: 20,
+                        borderTop: '1px solid var(--color-border)',
+                        textAlign: 'center',
+                    }}>
+                        <p style={{ fontSize: 12, color: 'var(--color-text-dim)', marginBottom: 8 }}>
+                            Non hai ancora un account?
+                        </p>
+                        <a
+                            href="mailto:info@aeaconsulenze.it?subject=Richiesta%20accesso%20portale%20AEA"
+                            style={{
+                                display: 'inline-block',
+                                fontSize: 13,
+                                fontWeight: 600,
+                                color: 'var(--color-orange)',
+                                textDecoration: 'none',
+                            }}
+                        >
+                            Richiedi accesso →
+                        </a>
+                    </div>
                 </div>
             </div>
         </div>

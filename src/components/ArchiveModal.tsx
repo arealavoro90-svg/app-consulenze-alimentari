@@ -10,7 +10,8 @@ export function ArchiveModal<T>({
     onLoad,
     onDelete,
     onDuplicate,
-    renderItemDetails
+    renderItemDetails,
+    searchData,
 }: {
     items: ArchiveItem<T>[];
     currentId?: string;
@@ -19,11 +20,20 @@ export function ArchiveModal<T>({
     onDelete: (id: string) => void;
     onDuplicate?: (item: ArchiveItem<T>) => void;
     renderItemDetails?: (data: T) => React.ReactNode;
+    /** Restituisce una stringa ricercabile dai campi dati del documento. */
+    searchData?: (data: T) => string;
 }) {
     const [search, setSearch] = useState('');
     const [pendingDelete, setPendingDelete] = useState<{ id: string; name: string } | null>(null);
 
-    const filtered = items.filter(t => (t.name || 'Senza Nome').toLowerCase().includes(search.toLowerCase()));
+    const q = search.toLowerCase();
+    const filtered = items.filter(t => {
+        if (!q) return true;
+        const nameMatch = (t.name || 'Senza Nome').toLowerCase().includes(q);
+        if (nameMatch) return true;
+        if (searchData) return searchData(t.data).toLowerCase().includes(q);
+        return false;
+    });
 
     return (
         <>

@@ -43,20 +43,14 @@ export function Dashboard() {
 
             <div className="card" style={{ marginBottom: 28 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-                    <div style={{
-                        width: 52, height: 52,
-                        background: 'var(--color-accent-bg)',
-                        borderRadius: 12,
-                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        color: 'var(--color-orange)', border: '1px solid rgba(255,126,46,0.25)'
-                    }}>
+                    <div className="stat-icon-box">
                         <BarChart2 size={26} />
                     </div>
                     <div>
-                        <div style={{ fontSize: 13, color: 'var(--color-text-muted)', marginBottom: 2 }}>Strumenti acquistati</div>
-                        <div style={{ fontSize: 28, fontWeight: 800, color: 'var(--color-orange)' }}>
+                        <div className="info-label" style={{ marginBottom: 2 }}>Strumenti acquistati</div>
+                        <div className="stat-value">
                             {visibleTools.length}
-                            <span style={{ fontSize: 14, color: 'var(--color-text-muted)', fontWeight: 400, marginLeft: 8 }}>
+                            <span className="stat-value-sub">
                                 / {Object.keys(TOOLS_CATALOG).length} disponibili
                             </span>
                         </div>
@@ -65,7 +59,7 @@ export function Dashboard() {
             </div>
 
             <div className="page-header">
-                <h1 style={{ fontSize: 18 }}>I tuoi strumenti</h1>
+                <h1 style={{ fontSize: 'var(--text-2xl)' }}>I tuoi strumenti</h1>
                 <p>Clicca su uno strumento per accedere al calcolatore</p>
             </div>
 

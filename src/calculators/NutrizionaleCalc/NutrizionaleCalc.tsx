@@ -1288,6 +1288,11 @@ export function NutrizionaleCalc() {
                         const ingCount = ((data.componenti || data.components || []) as any[]).reduce((s: number, c: any) => s + ((c.ingredienti || c.rows || []) as any[]).length, 0);
                         return <><strong>{nome || '—'}</strong>{ingCount > 0 ? ` · ${ingCount} ingredienti` : ''}</>;
                     }}
+                    searchData={(d) => {
+                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                        const data = d as any;
+                        return [data.nome_prodotto, data.productName].filter(Boolean).join(' ');
+                    }}
                 />
             )}
 

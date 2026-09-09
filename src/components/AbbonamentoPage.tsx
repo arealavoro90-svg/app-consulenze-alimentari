@@ -51,17 +51,17 @@ export function AbbonamentoPage() {
                     <span style={{ fontWeight: 700, fontSize: 15 }}>Informazioni account</span>
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 14 }}>
+                    <div className="info-row">
                         <Mail size={15} color="var(--color-text-muted)" />
-                        <span style={{ color: 'var(--color-text-muted)', minWidth: 80 }}>Email</span>
+                        <span className="info-label">Email</span>
                         <span>{user?.email}</span>
                     </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 14 }}>
+                    <div className="info-row">
                         <Building2 size={15} color="var(--color-text-muted)" />
-                        <span style={{ color: 'var(--color-text-muted)', minWidth: 80 }}>Azienda</span>
+                        <span className="info-label">Azienda</span>
                         <span>{user?.company || '—'}</span>
                     </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 14 }}>
+                    <div className="info-row">
                         <CreditCard size={15} color="var(--color-text-muted)" />
                         <span style={{ color: 'var(--color-text-muted)', minWidth: 80 }}>Piano</span>
                         <span style={{
@@ -89,12 +89,7 @@ export function AbbonamentoPage() {
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                     {purchasedTools.map((id) => (
-                        <div key={id} style={{
-                            display: 'flex', alignItems: 'center', gap: 10,
-                            padding: '8px 12px',
-                            background: 'var(--color-bg-secondary)',
-                            borderRadius: 8, fontSize: 14,
-                        }}>
+                        <div key={id} className="tool-item-row">
                             <CheckCircle2 size={14} color="var(--color-orange)" />
                             {TOOLS_CATALOG[id].label}
                         </div>
@@ -110,13 +105,7 @@ export function AbbonamentoPage() {
                     </div>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                         {notPurchased.map((id) => (
-                            <div key={id} style={{
-                                display: 'flex', alignItems: 'center', gap: 10,
-                                padding: '8px 12px',
-                                background: 'var(--color-bg-secondary)',
-                                borderRadius: 8, fontSize: 14,
-                                opacity: 0.5,
-                            }}>
+                            <div key={id} className="tool-item-row" style={{ opacity: 0.5 }}>
                                 <span style={{ width: 14, height: 14, borderRadius: '50%', border: '1.5px solid var(--color-text-muted)', display: 'inline-block' }} />
                                 {TOOLS_CATALOG[id].label}
                             </div>

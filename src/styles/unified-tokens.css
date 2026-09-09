@@ -50,6 +50,23 @@
   --danger:  #e53e3e;
   --warning: #d97706;
 
+  /* Typography scale — usare sempre questi token, mai px hardcoded nei fogli di stile */
+  --text-micro:   9px;   /* step dots, badge micro-label */
+  --text-tiny:    10px;  /* sezione uppercase, flyout label */
+  --text-caption: 11px;  /* hint, form label, tag */
+  --text-small:   12px;  /* testo secondario, small button */
+  --text-body:    13px;  /* testo body principale (più comune) */
+  --text-md:      14px;  /* input, body medio */
+  --text-lg:      15px;  /* titolo card */
+  --text-xl:      16px;  /* base HTML root */
+  --text-2xl:     18px;  /* sotto-titolo sezione */
+  --text-3xl:     20px;  /* h1 responsive mid */
+  --text-4xl:     22px;  /* modal title, step number */
+  --text-5xl:     26px;  /* login form title */
+  --text-6xl:     28px;  /* page h1 */
+  --text-7xl:     30px;  /* dashboard icon */
+  --text-8xl:     40px;  /* large display */
+
   /* Radius */
   --r-sm: 6px;
   --r-md: 10px;

@@ -44,12 +44,16 @@
 - Backend Django in sviluppo in `Beck-end/` (spec: `docs/django-backend-spec.md`, API client: `src/api/`) — coordinare le modifiche auth con questo
 
 ## Workflow deploy (regola permanente)
-Al termine di OGNI sessione di lavoro, chiedere SEMPRE entrambe le cose:
-> 1. "Vuoi fare `git push origin main` per pushare i commit su GitHub?"
-> 2. "Vuoi deployare su Vercel per portare le modifiche in produzione?"
+**MAI push o deploy in autonomia.** Chiedere sempre esplicitamente quando l'utente segnala fine sessione.
 
-Entrambe obbligatorie — push senza deploy lascia prod vecchio, deploy senza push perde la storia.
-Comandi:
+Quando l'utente dice che ha finito o vuole chiudere, chiedere entrambe:
+> 1. "Vuoi fare `git push origin main`?"
+> 2. "Vuoi deployare su Vercel?"
+
+NON chiedere a fine di ogni task — solo a fine sessione reale. Se il lavoro continua, non interrompere.
+Push senza deploy = prod vecchio. Deploy senza push = storia persa. Entrambi o nessuno.
+
+Comandi (solo su approvazione esplicita):
 - Frontend: `git push origin main` poi `vercel deploy --prod --scope team_o6LXdelylqAyfa6pmdWBwa2m`
 - Backend: `cd Beck-end/backend && git push origin main` poi `vercel redeploy <last-url> --scope team_o6LXdelylqAyfa6pmdWBwa2m`
 

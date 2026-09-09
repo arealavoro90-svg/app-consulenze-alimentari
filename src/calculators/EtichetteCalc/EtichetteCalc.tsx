@@ -31,6 +31,8 @@ import type { ArchiveData } from '../NutrizionaleCalc/NutrizionaleCalc';
 import { TabUE, DEFAULT_OPTIONALS, type SelectedOptionals, rUE_energy, rUE_macro, rUE_sat, rUE_sale } from '../NutrizionaleCalc/TabUE';
 import { rAU_kj, rAU_kcal, rAU_g1, rAU_mg, rArabi_energy, rArabi_g, rArabi_mg } from '../../utils/nutritionalRounding';
 import { PACKAGING_MATERIALS } from './packagingMaterials';
+import { TemplatePickerModal } from './TemplatePickerModal';
+import { PRODUCT_TEMPLATES } from '../../data/productTemplates';
 
 /** Placeholder discreto per campo vuoto nell'anteprima live (mai più gated da un bottone). */
 function ph(val: string, placeholder: string) {
@@ -266,7 +268,7 @@ export function highlightAllergens(nome: string): string {
     return out;
 }
 
-interface LabelData {
+export interface LabelData {
     productName: string;
     // Denominazione legale estesa (Art. 17 Reg. 1169/2011) quando diversa dal nome commerciale
     // — es. Excel "e. UE" riga 12: "PREPARAZIONE GASTRONOMICA A BASE DI PASTA ALL'UOVO CON
@@ -782,6 +784,7 @@ export function EtichetteCalc() {
     // Guida rapida — stessa UX del tool Nutrizionale (WelcomeModal, slide dedicate)
     const [welcomeSeen, setWelcomeSeen] = useLocalStorage<boolean>('aea_welcome_seen_etichette', false);
     const [showWelcome, setShowWelcome] = useState(!welcomeSeen);
+    const [showTemplatePicker, setShowTemplatePicker] = useState(false);
 
     // Toast + ConfirmDialog + PromptDialog state (replaces native alert/confirm/prompt)
     const toast = useToast();
@@ -1235,6 +1238,13 @@ export function EtichetteCalc() {
         setCurrentId(undefined);
         setCurrentName('');
         setIsDirty(false);
+    };
+    const handleApplyTemplate = (template: import('../../data/productTemplates').ProductTemplate) => {
+        setData({ ...defaults, ...template.fields });
+        setCurrentId(undefined);
+        setCurrentName('');
+        setIsDirty(true);
+        setShowTemplatePicker(false);
     };
     const handleNew = () => {
         if (data.productName || data.producer) {
@@ -3187,6 +3197,16 @@ export function EtichetteCalc() {
                 />
             )}
 
+            {showTemplatePicker && (
+                <TemplatePickerModal
+                    templates={user?.role === 'admin'
+                        ? PRODUCT_TEMPLATES
+                        : PRODUCT_TEMPLATES.filter(t => t.audience === 'base')}
+                    onSelect={handleApplyTemplate}
+                    onClose={() => setShowTemplatePicker(false)}
+                />
+            )}
+
             {isArchiveOpen && (
                 <ArchiveModal
                     items={savedLabels}
@@ -3201,6 +3221,7 @@ export function EtichetteCalc() {
                             <span><strong>Produttore:</strong> {d.producer || '-'}</span>
                         </>
                     )}
+                    searchData={(d) => [d.productName, d.producer, d.legalDenomination, d.ingredients, d.allergens, d.countryOrigin].filter(Boolean).join(' ')}
                 />
             )}
 
@@ -3218,6 +3239,9 @@ export function EtichetteCalc() {
                 <div style={{ display: 'flex', gap: 8 }}>
                     <button type="button" className="topbar-btn-primary" onClick={handleNew}>
                         <Plus size={13} /> Nuovo
+                    </button>
+                    <button type="button" className="topbar-btn-ghost" onClick={() => setShowTemplatePicker(true)} title="Inizia da un template di categoria">
+                        <Sparkles size={13} /> Template
                     </button>
                     <button type="button" className="topbar-btn-ghost" onClick={() => setIsArchiveOpen(true)}>
                         <Archive size={13} /> Archivio ({savedLabels.length})
@@ -3241,6 +3265,7 @@ export function EtichetteCalc() {
                     {/* Barra azioni compatta in cima */}
                     <div style={{ display: 'flex', gap: 8, padding: '8px 12px', borderBottom: '1px solid var(--color-border)', background: 'white', flexShrink: 0, flexWrap: 'wrap' }}>
                         <button type="button" className="btn btn-outline" style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 12 }} onClick={handleNew}><Plus size={12} /> Nuovo</button>
+                        <button type="button" className="btn btn-outline" style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 12 }} onClick={() => setShowTemplatePicker(true)}><Sparkles size={12} /> Template</button>
                         <button type="button" className="btn btn-outline" style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 12 }} onClick={() => setShowWelcome(true)} aria-label="Apri guida rapida"><BookOpen size={12} /> Guida</button>
                         <button type="button" className="btn btn-accent" style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: 5, fontSize: 12, marginLeft: 'auto' }} onClick={handleSave}>
                             {isDirty && (
