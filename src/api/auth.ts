@@ -64,3 +64,8 @@ export async function apiMe(): Promise<User> {
     const data = await apiFetch<BackendUser>('/api/auth/me/');
     return mapUser(data);
 }
+
+/** GDPR-2 Art.17 — cancella l'account corrente. Backend blacklista il token e cancella l'utente. */
+export async function apiDeleteAccount(): Promise<void> {
+    await apiFetch('/api/auth/me/delete/', { method: 'DELETE' });
+}
