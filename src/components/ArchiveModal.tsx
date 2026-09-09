@@ -56,7 +56,7 @@ export function ArchiveModal<T>({
                         <Search size={14} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: 'var(--color-text-muted)', pointerEvents: 'none' }} />
                         <input
                             type="text"
-                            placeholder="Cerca per nome..."
+                            placeholder="Cerca per nome o contenuto…"
                             value={search}
                             onChange={(e) => setSearch(e.target.value)}
                             style={{ paddingLeft: 32 }}
