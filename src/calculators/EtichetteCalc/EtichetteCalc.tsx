@@ -1796,7 +1796,7 @@ export function EtichetteCalc() {
                                             Ingredienti caratterizzanti (con QUID% in etichetta)
                                             <InfoTooltip text="Seleziona solo gli ingredienti evidenziati nella denominazione o nell'immagine del prodotto (es. 'Pizza al PROSCIUTTO' → solo prosciutto). Il QUID% va dichiarato solo per questi, non per l'intera lista (Art. 22 + All. VIII Reg. 1169/2011)." />
                                         </label>
-                                        <div style={{ maxHeight: 160, overflowY: 'auto', border: '1.5px solid var(--color-border)', borderRadius: 6, padding: 8 }}>
+                                        <div style={{ border: '1.5px solid var(--color-border)', borderRadius: 6, padding: 8 }}>
                                             {orderedIngredientsWithQuid.map(r => (
                                                 <label key={r.nome} style={{ display: 'flex', alignItems: 'flex-start', gap: 8, fontSize: 12, cursor: 'pointer', padding: '3px 0' }}>
                                                     <input type="checkbox" style={{ flexShrink: 0, width: 14, height: 14, marginTop: 2 }}
