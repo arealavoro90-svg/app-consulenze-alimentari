@@ -2003,7 +2003,7 @@ export function EtichetteCalc() {
                         </div>
                         </CollapsibleSection>
 
-                        <CollapsibleSection title="Claims nutrizionali" storageKey="claims" defaultOpen={true}>
+                        <CollapsibleSection title="Claims nutrizionali" storageKey="claims" defaultOpen={false}>
                         {allClaims.length > 0 ? (
                             <div className="form-field">
                                 <label style={{ display: 'flex', alignItems: 'center' }}>
@@ -2041,7 +2041,7 @@ export function EtichetteCalc() {
                         )}
                         </CollapsibleSection>
 
-                        <CollapsibleSection title="Conservazione e scadenza" storageKey="conservazione" defaultOpen={true}>
+                        <CollapsibleSection title="Conservazione e scadenza" storageKey="conservazione" defaultOpen={false}>
                         <div className="form-field">
                             <label htmlFor="et-conservazione">Modalità di conservazione</label>
                             <input id="et-conservazione" type="text" value={data.storageConditions} onChange={(e) => set('storageConditions', e.target.value)} placeholder="es. Conservare in luogo fresco e asciutto" />
@@ -2089,7 +2089,7 @@ export function EtichetteCalc() {
                         </div>
                         </CollapsibleSection>
 
-                        <CollapsibleSection title="Raccolta differenziata imballi" storageKey="raccolta" defaultOpen={true}>
+                        <CollapsibleSection title="Raccolta differenziata imballi" storageKey="raccolta" defaultOpen={false}>
                         <div className="form-field">
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
                                 <label style={{ margin: 0, display: 'flex', alignItems: 'center' }}>
@@ -2130,7 +2130,7 @@ export function EtichetteCalc() {
                         </div>
                         </CollapsibleSection>
 
-                        <CollapsibleSection title="Tabella nutrizionale" storageKey="tabella-nutrizionale" defaultOpen={true}>
+                        <CollapsibleSection title="Tabella nutrizionale" storageKey="tabella-nutrizionale" defaultOpen={false}>
                         {per100 ? (
                             <div className="form-field">
                                 <label style={{ display: 'flex', alignItems: 'flex-start', gap: 8, fontSize: 12, fontWeight: 400, cursor: 'pointer', width: '100%' }}>
