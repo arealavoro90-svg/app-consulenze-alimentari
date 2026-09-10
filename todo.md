@@ -112,7 +112,7 @@
 - [ ] **TD-7** — Export vettoriale PDF 300dpi (sostituire `html2canvas` 96dpi non professionale per tipografia).
 - [ ] **P7-MULTIUTENTE** — Multi-utente con ruoli (consulente + aziende clienti). Tutti i competitor ce l'hanno.
 - [x] **P9-DASHBOARD** ✅ — Dashboard con 3 KPI: Strumenti / Ricette salvate / Etichette salvate. ✅ 2026-09-10
-- [ ] **P10-NOTIFICHE** — Notifiche aggiornamenti normativi. Competitor Agriware ce l'ha.
+- [x] **P10-NOTIFICHE** ✅ — Campanella notifiche in topbar (AppShell). JSON statico `public/data/normative_updates.json`, badge unread, mark read via localStorage. ✅ 2026-09-10
 
 ### Debito tecnico
 

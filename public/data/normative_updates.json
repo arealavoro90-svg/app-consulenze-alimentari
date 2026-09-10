@@ -1,0 +1,42 @@
+[
+  {
+    "id": "2026-09-01-reg-2023-2232",
+    "date": "2026-09-01",
+    "category": "Etichettatura",
+    "title": "Reg. UE 2023/2232 — Nuove norme etichettatura miele e prodotti apistici",
+    "summary": "Dal 1° settembre 2026 obbligatorio indicare i Paesi di origine del miele in ordine decrescente di quantità. Sostituisce la dicitura generica 'miscela di mieli CE e non CE'.",
+    "reference": "Reg. UE 2023/2232"
+  },
+  {
+    "id": "2026-07-15-vini-digital-label",
+    "date": "2026-07-15",
+    "category": "Vini",
+    "title": "Reg. UE 2021/2117 — Obbligo e-label vini in vigore",
+    "summary": "Dal 8 dicembre 2023 tutti i vini prodotti nell'UE devono riportare elenco ingredienti e tabella nutrizionale, ammessa tramite QR code (e-label). Verificare conformità etichette esistenti.",
+    "reference": "Reg. UE 2021/2117 Art. 119"
+  },
+  {
+    "id": "2026-06-01-claim-polinsaturi",
+    "date": "2026-06-01",
+    "category": "Claim nutrizionali",
+    "title": "Chiarimento EFSA — Claim omega-3 e acidi grassi polinsaturi",
+    "summary": "EFSA conferma: il claim 'fonte di acidi grassi omega-3' richiede ≥0,3 g ALA per 100g (o 100ml per liquidi). Claim 'alto contenuto' richiede il doppio. Verificare ricette con olio di lino, noci, pesce grasso.",
+    "reference": "EFSA NDA 2022"
+  },
+  {
+    "id": "2026-04-10-sale-sodio",
+    "date": "2026-04-10",
+    "category": "Tabelle nutrizionali",
+    "title": "Promemoria: Sale = Sodio × 2,5 (Reg. 1169/2011)",
+    "summary": "Ricordare ai clienti che la tabella nutrizionale EU richiede 'Sale' (non sodio). Il calcolo è Sale = Na × 2,5. L'app gestisce automaticamente questa conversione.",
+    "reference": "Reg. UE 1169/2011 All. XV"
+  },
+  {
+    "id": "2026-03-20-allergeni-sesamo",
+    "date": "2026-03-20",
+    "category": "Allergeni",
+    "title": "USA — Sesamo obbligatorio come allergene principale dal 2023",
+    "summary": "Negli USA il sesamo è il 9° allergene principale (FASTER Act 2021, in vigore dal 1° gennaio 2023). Prodotti esportati negli USA devono dichiararlo esplicitamente in etichetta. L'app supporta questo campo.",
+    "reference": "FASTER Act 2021 (USA)"
+  }
+]

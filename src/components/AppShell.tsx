@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Outlet, useLocation, Link } from 'react-router-dom';
 import { Sidebar } from './Sidebar';
 import { MobileShell } from './MobileShell';
+import { NotificationBell } from './NotificationBell';
 import { useMobile } from '../hooks/useMobile';
 import { AlignJustify } from 'lucide-react';
 
@@ -65,6 +66,7 @@ export function AppShell() {
                     </div>
 
                     <div className="topbar-right">
+                        <NotificationBell />
                         <div id="topbar-mode-toggle-slot" />
                         <div id="topbar-actions-slot" />
                     </div>
