@@ -7,7 +7,8 @@
 > **Sessione 2026-09-10: Audit Opus 6-agenti. Fix security (stacktrace, migrate cold start, legacy tokens), normativa (DV-CA-01, CA-01 FR lineare, CLAIM-01 saturi+trans), UX (iOS input, toast save), infra (Python CI, xlsx chunk). 242/242 test verdi.**
 > **Sessione 2026-09-10 (cont.): REDIS_URL Upstash attivo in prod + backend ridepployato. 9 test thermalEngine (DT-2). Endpoint GDPR-2/4 backend verificati già presenti. SEC-SEARCH /api/ingredients/search/?q= implementato e deployato. Push frontend+backend.**
 > **Sessione 2026-09-10 (cont.2): FEAT-EXCEL (export Excel tabella nutrizionale), UX-MOBILE-ETI (scale preview etichetta su mobile), EXP-1 (export/import JSON archivi Nutrizionale+Etichette), fix lint. 251/251 test. Deploy prod.**
-> **Sessione 2026-09-10 (cont.3): FEAT-GS1 (export JSON+XML GS1-like in EtichetteCalc), P9-DASHBOARD (KPI Ricette+Etichette), UX-OB (già presente), DOC-2 (workflow-calcolatori.md). 251/251 test.**
+> **Sessione 2026-09-10 (cont.3): FEAT-GS1, P9-DASHBOARD, UX-OB, DOC-2. 251 test.**
+> **Sessione 2026-09-10 (cont.4): TD-4/E2E-1 (auth.spec.ts + archive.spec.ts), +15 unit test EtichetteCalc (266 tot), DATA-1 (validazione CREA 20 ingredienti, 9 divergenze >10%).**
 > Production URL: **https://app-consulenze-alimentari.vercel.app**
 
 ---
@@ -117,12 +118,12 @@
 
 - [ ] **TD-1 / COD-02** — Estrazione engine da `EtichetteCalc.tsx` (3400+ righe). Prerequisito per refactor sicuro.
 - [ ] **TD-2 / COD-05** — Ridurre duplicazione desktop/mobile NutrizionaleCalc (~2000 righe).
-- [ ] **TD-4 / E2E-1** — E2E test Playwright: login → ricetta → tabella → PDF. Prerequisito per ogni refactor.
+- [x] **TD-4 / E2E-1** ✅ — E2E test Playwright: `lasagna.spec.ts` + `auth.spec.ts` (login fallito/corretto/logout) + `archive.spec.ts` (salva/carica/elimina). ✅ 2026-09-10
 - [ ] **A11Y-1** — Audit accessibilità completo.
 
 ### Dati
 
-- [ ] **DATA-1** — Validazione campione CREA BDA live (20+ ingredienti)
+- [x] **DATA-1** ✅ — Validazione 20 ingredienti vs CREA (alimentinutrizione.it). 9/20 divergono >10% (aglio, farina 00, pollo). Report: `docs/data-validation-crea.md`. Fix: `sync_crea.py` su cat. 01/03/06/12. ✅ 2026-09-10
 - [ ] **DATA-2/SYNC-CNF** — Canada Nutrient File
 - [ ] **DATA-3/SYNC-AUSNUT** — Australia AUSNUT 2011-13
 
