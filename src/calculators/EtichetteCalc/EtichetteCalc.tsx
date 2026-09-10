@@ -1481,7 +1481,7 @@ export function EtichetteCalc() {
         if (!el) return;
         setExportingLabel(face);
         try {
-            const renderedWidthPx = el.getBoundingClientRect().width;
+            const renderedWidthPx = el.offsetWidth; // offsetWidth: layout px, non affetto da transform del parent (es. mobilePreviewScale)
             const targetWidthPx = mmToPx(Number(widthMm) || 100, PRINT_DPI);
             const scale = targetWidthPx / renderedWidthPx;
             const canvas = await html2canvas(el, {
@@ -1541,6 +1541,8 @@ export function EtichetteCalc() {
     // vede davvero. La differenza tra i due è il segnale di overflow reale, ora che il riquadro
     // fisico non cresce più oltre heightMm (vedi labelPreviewRef sotto).
     const [labelScrollHeightPx, setLabelScrollHeightPx] = useState(0);
+    // ponytail: scale visivo mobile — non tocca il ref usato da export (offsetWidth non risente del transform del parent)
+    const [mobilePreviewScale, setMobilePreviewScale] = useState(1);
     useEffect(() => {
         const el = labelPreviewRef.current;
         if (!el) return;
@@ -1553,6 +1555,13 @@ export function EtichetteCalc() {
             setLabelRenderedWidthPx(el.offsetWidth);
             setLabelRenderedHeightPx(el.offsetHeight);
             setLabelScrollHeightPx(el.scrollHeight);
+            if (window.innerWidth < 768) {
+                const availableWidth = el.parentElement ? el.parentElement.clientWidth - 40 : window.innerWidth - 40;
+                const scale = availableWidth > 0 && el.offsetWidth > availableWidth ? availableWidth / el.offsetWidth : 1;
+                setMobilePreviewScale(Math.min(1, scale));
+            } else {
+                setMobilePreviewScale(1);
+            }
         });
         ro.observe(el);
         return () => ro.disconnect();
@@ -2560,7 +2569,12 @@ export function EtichetteCalc() {
                                 <div style={{
                                     display: 'flex', justifyContent: 'center', alignItems: 'center',
                                     background: 'repeating-conic-gradient(#f0f0f0 0% 25%, transparent 0% 50%) 50% / 20px 20px',
-                                    padding: 20, borderRadius: 8, border: '1px solid var(--color-border)'
+                                    padding: 20, borderRadius: 8, border: '1px solid var(--color-border)',
+                                    ...(mobilePreviewScale < 1 ? {
+                                        transform: `scale(${mobilePreviewScale})`,
+                                        transformOrigin: 'top center',
+                                        marginBottom: `calc((${mobilePreviewScale} - 1) * 100%)`,
+                                    } : {}),
                                 }}>
                                     {/* labelPreviewRef è il vero riquadro fisico widthMm×heightMm — aspectRatio +
                                         overflow:hidden QUI, non sul figlio: prima la tabella/imballi aggiuntivi

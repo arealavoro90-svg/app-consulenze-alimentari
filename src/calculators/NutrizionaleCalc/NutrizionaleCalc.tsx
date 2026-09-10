@@ -45,6 +45,7 @@ import {
     calcNutrients, scaleResult, calcClaims, calcQuid,
 } from '../../engines/nutrizionaleCalcEngine';
 import { ALLERGEN_FIELDS, CROSS_FIELDS, ADDITIVI_CATEGORIE, ADDITIVI_SPECIFICI, collectAllergenLabels, fmtQuantita } from './shared/constants';
+import { exportNutrizionaleExcel } from '../../utils/exportExcel';
 import { writeBridge, readBridge, buildDesktopDraft } from './sessionBridge';
 import { InfoTooltip } from './InfoTooltip';
 import { TabCanada } from './TabCanada';
@@ -1123,6 +1124,14 @@ export function NutrizionaleCalc() {
                     <button type="button" className="btn btn-accent" onClick={() => setDownloadModalOpen(true)}
                         style={{ flex: 1, padding: '7px', fontSize: '12px', fontWeight: 600, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
                         <ImageDown size={13} aria-hidden="true" /> Scarica ufficiale…
+                    </button>
+                    <button
+                        type="button"
+                        className="btn btn-ghost"
+                        title="Esporta tabella nutrizionale in formato Excel (.xlsx)"
+                        onClick={() => void exportNutrizionaleExcel(per100display, productName, ue.porzione && ue.porzione > 0 ? ue.porzione : undefined)}
+                        style={{ padding: '7px 10px', fontSize: '12px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '5px' }}>
+                        <FileSpreadsheet size={13} aria-hidden="true" /> Excel
                     </button>
                 </div>
             </div>
