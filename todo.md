@@ -3,6 +3,10 @@
 > Audit storico: `AUDIT.md` · Audit 2026-09-03: `AUDIT-2026-09-03.md` (20/22 chiusi)
 > Audit 360° Etichette+Nutrizionale: `docs/audit/AUDIT-2026-09-07-etichette-nutrizionale.md`
 > **Sessione 2026-09-07: DEPLOY PROD live. Auth reale verificata. Quick wins audit implementati.**
+> **Sessione 2026-09-09: UX-07, FEAT-TMPL, FEAT-SEARCH, DS-TYPO, DS-INLINE, DS-TABLET, DS-SIDEBAR, UX-EMPTY, GDPR-2 UI, GDPR-4 UI, S0-FINAL completati.**
+> **Sessione 2026-09-10: Audit Opus 6-agenti. Fix security (stacktrace, migrate cold start, legacy tokens), normativa (DV-CA-01, CA-01 FR lineare, CLAIM-01 saturi+trans), UX (iOS input, toast save), infra (Python CI, xlsx chunk). 242/242 test verdi.**
+> **Sessione 2026-09-10 (cont.): REDIS_URL Upstash attivo in prod + backend ridepployato. 9 test thermalEngine (DT-2). Endpoint GDPR-2/4 backend verificati già presenti. SEC-SEARCH /api/ingredients/search/?q= implementato e deployato. Push frontend+backend.**
+> **Sessione 2026-09-10 (cont.2): FEAT-EXCEL (export Excel tabella nutrizionale), UX-MOBILE-ETI (scale preview etichetta su mobile), EXP-1 (export/import JSON archivi Nutrizionale+Etichette), fix lint. 251/251 test. Deploy prod.**
 > Production URL: **https://app-consulenze-alimentari.vercel.app**
 
 ---
@@ -26,7 +30,7 @@
 
 ### Sicurezza
 
-- [x] **COD-07-LOGIN / SEC-11-CACHE** ✅ — `django-redis` in requirements + CACHES Redis graceful in `production.py`. Attivo solo se `REDIS_URL` impostata. ⚠️ Impostare `REDIS_URL` (Upstash) nelle env Vercel per attivare.
+- [x] **COD-07-LOGIN / SEC-11-CACHE** ✅ — `django-redis` in requirements + CACHES Redis graceful in `production.py`. `REDIS_URL` Upstash configurata su Vercel e attiva in prod. ✅ 2026-09-10
 
 ### Normativa
 
@@ -36,7 +40,7 @@
 - [ ] **GULF-ARABO** — Tabella nutrizionale Gulf solo in inglese — non conforme per export Golfo.
   GSO 2233/2012 richiede lingua araba. Da verificare prima di commercializzare verso clienti Gulf.
 
-- [ ] **CA-LINEAR-FR** — Formato lineare Canada solo in inglese. CFIA richiede bilinguismo in tutti i formati.
+- [x] **CA-LINEAR-FR** ✅ — Formato lineare Canada bilingue EN/FR. ✅ 2026-09-10
 
 - [x] **FG-DETAIL** ✅ — 8 sottovoci frutta a guscio ora distinguibili (mandorle, nocciole, noci, anacardi, pistacchi, pecan, noci Brasile, macadamia). ✅ 2026-09-07
   ALLERGEN_FIELDS + ALLERGEN_PARENT aggiornati in constants.ts; DBIngredient esteso; 35 ingredienti patchati in ingredientsDB.json. All. II p.8 Reg. 1169/2011.
@@ -48,26 +52,22 @@
 
 ### UX
 
-- [ ] **UX-07** — Login page: proposta di valore. Social proof aggiunta (QW-9 ✅), manca pricing/tagline forte.
+- [x] **UX-07** ✅ — Login: tagline + feature bullets + CTA "Richiedi accesso". ✅ 2026-09-09
 
 - [ ] **UX-DEV** — Test fisici iOS Safari + Android Chrome (**solo tuo**). Input decimali, scroll tabelle, touch 44px, PDF.
 
-- [ ] **UX-EMPTY** — EtichetteCalc: form vuoto con 40+ campi senza priorità visiva. Abbandono al primo accesso.
-  Aggiungere wizard/sezioni guidate o highlight dei campi critici da compilare per primi.
+- [x] **UX-EMPTY** ✅ — Sezioni non critiche EtichetteCalc collassate di default. ✅ 2026-09-09
 
-- [ ] **UX-MOBILE-ETI** — Anteprima etichetta inutilizzabile su mobile (label 100x150mm su 375px).
-  Tablet in stabilimento non funzionano. FASE 2 mobile EtichetteCalc.
+- [x] **UX-MOBILE-ETI** ✅ — Preview etichetta auto-scala su mobile via CSS transform (ResizeObserver). Export/stampa invariati. ✅ 2026-09-10
 
 ### Feature consulenti
 
-- [ ] **FEAT-SEARCH** — Ricerca full-text nell'archivio (NutrizionaleCalc + EtichetteCalc).
-  ArchiveModal ha già campo cerca per nome — estendere a ricerca per ingredienti/produttore.
+- [x] **FEAT-SEARCH** ✅ — Ricerca full-text estesa a produttore/ingredienti/allergeni (EtichetteCalc) e nome (NutrizionaleCalc). ✅ 2026-09-09
 
 - [x] **FEAT-CLAIM** — Claim "senza" (grassi, zuccheri, sale, calorie) + claim saturi + vitamine. ✅ 2026-09-07
   Implementati: SENZA SALE/ZUCCHERI/GRASSI/GRASSI SATURI/CALORIE, MOLTO BASSO SODIO, BASSO CALORIE/GRASSI SATURI, 12 vitamine, zinco/magnesio/fosforo. Tutti con else-if (no claim doppi).
 
-- [ ] **FEAT-TMPL** — Template etichetta per categoria merceologica (pasta, conserve, bevande, surgelati).
-  Dimezza tempo compilazione per nuovi clienti. Competitor Agriware ce l'ha.
+- [x] **FEAT-TMPL** ✅ — 7 template merceologici in EtichetteCalc (modal picker, filtro ruolo). ✅ 2026-09-09
 
 ### Dati
 
@@ -80,26 +80,23 @@
 
 ### GDPR / Legale
 
-- [ ] **GDPR-2** — Endpoint cancellazione dati `/api/users/me/delete/` Art. 17 (entro 30gg dal go-live).
+- [x] **GDPR-2** ✅ — UI + backend `DELETE /api/auth/me/delete/` implementato e attivo in prod. ✅ 2026-09-10
 - [ ] **GDPR-3** — Backup DB Neon: policy retention + log accesso ≤12 mesi.
-- [ ] **GDPR-4** — Portabilità dati `/api/users/export/` Art. 20.
+- [x] **GDPR-4** ✅ — UI + backend `GET /api/auth/me/export/` implementato e attivo in prod. ✅ 2026-09-10
 
 ### Design system
 
-- [ ] **DS-TYPO** — Nessun token tipografia — 12+ font-size hardcoded (11px, 12px, 13px, 15px, 28px...).
-  Definire scale CSS in `index.css` e sostituire gli hardcoded.
-
-- [ ] **DS-TABLET** — Nessun breakpoint tablet landscape (1024-1279px) — layout collassa a mobile.
-
-- [ ] **DS-SIDEBAR** — Flyout sidebar disabilitato sotto 1280px — utenti su schermi medi vedono solo icone.
-
-- [ ] **DS-INLINE** — 80+ stili inline in Dashboard + AbbonamentoPage. Bassa riutilizzabilità.
+- [x] **DS-TYPO** ✅ — 136 font-size hardcoded → token CSS (--text-micro … --text-8xl) in unified-tokens.css. ✅ 2026-09-09
+- [x] **DS-TABLET** ✅ — Breakpoint 900-1279px aggiunto. ✅ 2026-09-09
+- [x] **DS-SIDEBAR** ✅ — Flyout attivo su hover da 900px (era bloccato a ≥1280px). ✅ 2026-09-09
+- [x] **DS-INLINE** ✅ — Classi estratte da Dashboard + AbbonamentoPage. ✅ 2026-09-09
 
 ### Tecnico
 
-- [ ] **S0-FINAL** — Rimuovere `public/data/ingredientsDB.json` (dopo Redis + auth stabile).
+- [x] **S0-FINAL** ✅ — `public/data/ingredientsDB.json` rimosso. ✅ 2026-09-09
 - [ ] **DOC-2** — Workflow docs per i 6 calcolatori.
-- [ ] **SEC-SEARCH** — Endpoint search `/api/ingredients/search?q=` (evita download 478KB su mobile).
+- [x] **SEC-SEARCH** ✅ — Endpoint `/api/ingredients/search/?q=` attivo in prod (max 50 risultati, auth required). ✅ 2026-09-10
+- [x] **EXP-1** ✅ — Export/import archivi JSON in ArchiveModal (Nutrizionale + Etichette). Bottoni Esporta/Importa nell'header modal. ✅ 2026-09-10
 
 ---
 
@@ -108,7 +105,7 @@
 ### Feature differenzianti (competitività nazionale)
 
 - [ ] **FEAT-GS1** — Export JSON/XML GS1-like per GDO. Prerequisito per PMI che vendono a catene. Competitor Alia/Agriware ce l'hanno.
-- [ ] **FEAT-EXCEL** — Export Excel strutturato tabella nutrizionale (i consulenti vivono in Excel).
+- [x] **FEAT-EXCEL** ✅ — Export Excel tabella nutrizionale (colonne: Nutriente/Unità/Per 100g/Per porzione/%VNR). Bottone accanto a "Scarica ufficiale". ✅ 2026-09-10
 - [ ] **UX-12** — Versioning ricette/etichette (storico revisioni). Richiesto da consulenti + conformità HACCP.
 - [ ] **TD-7** — Export vettoriale PDF 300dpi (sostituire `html2canvas` 96dpi non professionale per tipografia).
 - [ ] **P7-MULTIUTENTE** — Multi-utente con ruoli (consulente + aziende clienti). Tutti i competitor ce l'hanno.
