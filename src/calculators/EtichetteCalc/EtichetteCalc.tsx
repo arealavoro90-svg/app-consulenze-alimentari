@@ -10,6 +10,7 @@ import html2canvas from 'html2canvas';
 import { useAuth } from '../../auth/AuthContext';
 import { useMobile } from '../../hooks/useMobile';
 import { generatePDFReport, generateEtichettaPDF } from '../../utils/pdfGenerator';
+import { exportGS1Json, exportGS1Xml } from '../../utils/exportGS1';
 import { useArchive, type ArchiveItem } from '../../hooks/useArchive';
 import { useIngredientsDB } from '../../hooks/useIngredientsDB';
 import { useLocalStorage } from '../../hooks/useLocalStorage';
@@ -3046,6 +3047,14 @@ export function EtichetteCalc() {
                     style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}
                     title={isComplete ? 'Scheda completa (ingredienti integrali, tabella, claims, imballi) per grafico/tipografia' : `Campi mancanti: ${missingFields.join(', ')}`}
                 ><FileText size={13} aria-hidden="true" /> {exportingScheda ? 'Esportazione…' : 'Scheda per grafico'}</button>
+                <button type="button" className="btn btn-outline" disabled={!isComplete} onClick={() => exportGS1Json(data)}
+                    style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}
+                    title={isComplete ? 'Export GS1-like JSON per GDO/ERP' : `Campi mancanti: ${missingFields.join(', ')}`}
+                ><FileText size={13} aria-hidden="true" /> GS1 JSON</button>
+                <button type="button" className="btn btn-outline" disabled={!isComplete} onClick={() => exportGS1Xml(data)}
+                    style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}
+                    title={isComplete ? 'Export GS1-like XML per GDO/ERP' : `Campi mancanti: ${missingFields.join(', ')}`}
+                ><FileText size={13} aria-hidden="true" /> GS1 XML</button>
             </div>
         </div>
     );

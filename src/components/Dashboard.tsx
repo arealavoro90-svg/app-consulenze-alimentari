@@ -1,14 +1,18 @@
 
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import {
     BarChart2, ArrowRight, Crown,
     Salad, Tag, Wine, Package, Thermometer, FileText, Settings2,
-    ClipboardList, BookOpen,
+    ClipboardList, BookOpen, HelpCircle,
 } from 'lucide-react';
 import { useAuth } from '../auth/AuthContext';
 import { useArchive } from '../hooks/useArchive';
 import { TOOLS_CATALOG } from '../data/mockUsers';
 import type { ToolId } from '../data/mockUsers';
+import { WelcomeModal, ONBOARDING_SLIDES } from './WelcomeModal';
+
+const ONBOARDING_KEY = 'aea_onboarding_done';
 
 const TOOL_ICONS: Record<ToolId, React.ReactNode> = {
     'nutrizionale':        <Salad size={28} />,
@@ -26,6 +30,20 @@ export function Dashboard() {
     const { items: recipes } = useArchive('nutrizionale-v3', 'nutrizionale');
     const { items: labels } = useArchive('aea_archive_etichette', 'etichette');
 
+    const [showOnboarding, setShowOnboarding] = useState(false);
+
+    useEffect(() => {
+        if (!localStorage.getItem(ONBOARDING_KEY)) {
+            setShowOnboarding(true);
+        }
+    }, []);
+
+    const closeOnboarding = () => setShowOnboarding(false);
+    const neverShowOnboarding = () => {
+        localStorage.setItem(ONBOARDING_KEY, '1');
+        setShowOnboarding(false);
+    };
+
     const greeting = () => {
         const h = new Date().getHours();
         if (h < 12) return 'Buongiorno';
@@ -40,6 +58,32 @@ export function Dashboard() {
 
     return (
         <div>
+            {showOnboarding && (
+                <WelcomeModal
+                    slides={ONBOARDING_SLIDES}
+                    onClose={closeOnboarding}
+                    onNeverShow={neverShowOnboarding}
+                />
+            )}
+
+            {/* Floating "Guida rapida" button */}
+            <button
+                type="button"
+                onClick={() => setShowOnboarding(true)}
+                aria-label="Apri guida rapida"
+                style={{
+                    position: 'fixed', bottom: 24, right: 24, zIndex: 1000,
+                    display: 'flex', alignItems: 'center', gap: 6,
+                    background: 'var(--color-orange)', color: '#fff',
+                    border: 'none', borderRadius: 24, padding: '10px 16px',
+                    cursor: 'pointer', fontSize: 13, fontWeight: 600,
+                    boxShadow: '0 4px 16px rgba(0,0,0,0.18)',
+                }}
+            >
+                <HelpCircle size={16} />
+                Guida rapida
+            </button>
+
             <div className="page-header">
                 <h1>{greeting()}, {user?.name.split(' ')[0]}</h1>
                 <p>Portale strumenti AEA · {user?.company}</p>

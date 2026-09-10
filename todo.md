@@ -7,6 +7,7 @@
 > **Sessione 2026-09-10: Audit Opus 6-agenti. Fix security (stacktrace, migrate cold start, legacy tokens), normativa (DV-CA-01, CA-01 FR lineare, CLAIM-01 saturi+trans), UX (iOS input, toast save), infra (Python CI, xlsx chunk). 242/242 test verdi.**
 > **Sessione 2026-09-10 (cont.): REDIS_URL Upstash attivo in prod + backend ridepployato. 9 test thermalEngine (DT-2). Endpoint GDPR-2/4 backend verificati già presenti. SEC-SEARCH /api/ingredients/search/?q= implementato e deployato. Push frontend+backend.**
 > **Sessione 2026-09-10 (cont.2): FEAT-EXCEL (export Excel tabella nutrizionale), UX-MOBILE-ETI (scale preview etichetta su mobile), EXP-1 (export/import JSON archivi Nutrizionale+Etichette), fix lint. 251/251 test. Deploy prod.**
+> **Sessione 2026-09-10 (cont.3): FEAT-GS1 (export JSON+XML GS1-like in EtichetteCalc), P9-DASHBOARD (KPI Ricette+Etichette), UX-OB (già presente), DOC-2 (workflow-calcolatori.md). 251/251 test.**
 > Production URL: **https://app-consulenze-alimentari.vercel.app**
 
 ---
@@ -94,7 +95,7 @@
 ### Tecnico
 
 - [x] **S0-FINAL** ✅ — `public/data/ingredientsDB.json` rimosso. ✅ 2026-09-09
-- [ ] **DOC-2** — Workflow docs per i 6 calcolatori.
+- [x] **DOC-2** ✅ — Workflow docs per i 6 calcolatori. `docs/workflow-calcolatori.md`. ✅ 2026-09-10
 - [x] **SEC-SEARCH** ✅ — Endpoint `/api/ingredients/search/?q=` attivo in prod (max 50 risultati, auth required). ✅ 2026-09-10
 - [x] **EXP-1** ✅ — Export/import archivi JSON in ArchiveModal (Nutrizionale + Etichette). Bottoni Esporta/Importa nell'header modal. ✅ 2026-09-10
 
@@ -104,12 +105,12 @@
 
 ### Feature differenzianti (competitività nazionale)
 
-- [ ] **FEAT-GS1** — Export JSON/XML GS1-like per GDO. Prerequisito per PMI che vendono a catene. Competitor Alia/Agriware ce l'hanno.
+- [x] **FEAT-GS1** ✅ — Export JSON/XML GS1-like per GDO. Bottoni "GS1 JSON" e "GS1 XML" in EtichetteCalc footer. `src/utils/exportGS1.ts`. ✅ 2026-09-10
 - [x] **FEAT-EXCEL** ✅ — Export Excel tabella nutrizionale (colonne: Nutriente/Unità/Per 100g/Per porzione/%VNR). Bottone accanto a "Scarica ufficiale". ✅ 2026-09-10
 - [ ] **UX-12** — Versioning ricette/etichette (storico revisioni). Richiesto da consulenti + conformità HACCP.
 - [ ] **TD-7** — Export vettoriale PDF 300dpi (sostituire `html2canvas` 96dpi non professionale per tipografia).
 - [ ] **P7-MULTIUTENTE** — Multi-utente con ruoli (consulente + aziende clienti). Tutti i competitor ce l'hanno.
-- [ ] **P9-DASHBOARD** — Dashboard operativa con KPI e attività recente (ora solo griglia tool).
+- [x] **P9-DASHBOARD** ✅ — Dashboard con 3 KPI: Strumenti / Ricette salvate / Etichette salvate. ✅ 2026-09-10
 - [ ] **P10-NOTIFICHE** — Notifiche aggiornamenti normativi. Competitor Agriware ce l'ha.
 
 ### Debito tecnico
@@ -129,7 +130,7 @@
 
 - [ ] **UX-PAY** — Integrazione pagamenti / gestione abbonamento.
 - [ ] **EXP-1** — Export/import archivi ricette JSON.
-- [ ] **UX-OB** — Onboarding guidato per ogni tool (walkthrough interattivo).
+- [x] **UX-OB** ✅ — Guida rapida floating button + WelcomeModal step-based già presente in Dashboard. ✅ 2026-09-10
 
 ---
 

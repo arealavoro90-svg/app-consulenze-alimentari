@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, ChevronRight, ChevronLeft, Database, Layers, Scale, ExternalLink } from 'lucide-react';
+import { X, ChevronRight, ChevronLeft, Database, Layers, Scale, ExternalLink, MousePointerClick, UtensilsCrossed, Tag, Download } from 'lucide-react';
 
 interface Slide {
     icon: React.ReactNode;
@@ -162,6 +162,57 @@ export const ETICHETTE_SLIDES: Slide[] = [
                     del tuo Comune".
                 </p>
             </div>
+        ),
+    },
+];
+
+// ponytail: onboarding slides reuse this component — no separate OnboardingModal
+// eslint-disable-next-line react-refresh/only-export-components
+export const ONBOARDING_SLIDES: Slide[] = [
+    {
+        icon: <MousePointerClick size={28} strokeWidth={1.5} />,
+        title: 'Scegli uno strumento',
+        content: (
+            <p style={{ margin: 0, fontSize: 13, color: 'var(--color-text-muted)', lineHeight: 1.7 }}>
+                Dalla Dashboard clicca su uno dei riquadri per accedere allo strumento desiderato.
+                Ogni strumento è pensato per una specifica esigenza: valori nutrizionali, etichette, rintracciabilità e molto altro.
+            </p>
+        ),
+    },
+    {
+        icon: <UtensilsCrossed size={28} strokeWidth={1.5} />,
+        title: 'Crea la tua prima ricetta',
+        content: (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                <p style={{ margin: 0, fontSize: 13, color: 'var(--color-text-muted)', lineHeight: 1.7 }}>
+                    Apri <strong>Tabelle Nutrizionali</strong>, cerca ogni ingrediente nel database integrato
+                    e impostane la quantità. Inserisci il peso finito dopo lavorazione per ottenere valori precisi.
+                </p>
+                <p style={{ margin: 0, fontSize: 12, color: 'var(--color-text-muted)', lineHeight: 1.6 }}>
+                    Salva la ricetta con <strong>Salva</strong> per riutilizzarla in seguito.
+                </p>
+            </div>
+        ),
+    },
+    {
+        icon: <Tag size={28} strokeWidth={1.5} />,
+        title: "Genera l'etichetta",
+        content: (
+            <p style={{ margin: 0, fontSize: 13, color: 'var(--color-text-muted)', lineHeight: 1.7 }}>
+                Apri <strong>Etichette Alimentari</strong> e collega la ricetta salvata: ingredienti, allergeni
+                e tabella nutrizionale si compilano automaticamente. Personalizza grafica, logo e dimensioni,
+                poi genera l'anteprima dell'etichetta conforme al Reg. UE 1169/2011.
+            </p>
+        ),
+    },
+    {
+        icon: <Download size={28} strokeWidth={1.5} />,
+        title: 'Esporta PDF o Excel',
+        content: (
+            <p style={{ margin: 0, fontSize: 13, color: 'var(--color-text-muted)', lineHeight: 1.7 }}>
+                Da qualsiasi strumento usa i pulsanti di esportazione per scaricare i tuoi dati in formato
+                PDF o Excel, pronti per clienti, fornitori o per la tua documentazione interna.
+            </p>
         ),
     },
 ];
