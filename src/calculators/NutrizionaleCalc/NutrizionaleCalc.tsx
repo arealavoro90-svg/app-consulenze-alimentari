@@ -1302,6 +1302,8 @@ export function NutrizionaleCalc() {
                     onLoad={(item) => { handleLoad(item); setArchiveOpen(false); }}
                     onDelete={deleteItem}
                     onDuplicate={(item) => { void saveItem(item.name + ' (Copia)', item.data); }}
+                    onImport={(imported) => { imported.forEach(it => { void saveItem(it.name, it.data); }); }}
+                    exportFilename="archivio_nutrizionale"
                     renderItemDetails={(d) => {
                         // eslint-disable-next-line @typescript-eslint/no-explicit-any
                         const data = d as any;

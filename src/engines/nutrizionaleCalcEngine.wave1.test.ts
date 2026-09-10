@@ -63,9 +63,9 @@ describe('COD-10 — resa=0 fallback a 100', () => {
     zuccheri_agg: 0, eritritolo: 0, acidi_organici: 0, alcol: 0,
   };
 
-  const row0 = { id: 't', ing: baseIngredient as any, grams: 100, eurKg: 0, resa: 0 };
-  const row100 = { id: 't', ing: baseIngredient as any, grams: 100, eurKg: 0, resa: 100 };
-  const row50 = { id: 't', ing: baseIngredient as any, grams: 100, eurKg: 0, resa: 50 };
+  const row0 = { id: 't', ing: baseIngredient as unknown as Parameters<typeof calcNutrients>[0][0]['rows'][0]['ing'], grams: 100, eurKg: 0, resa: 0 };
+  const row100 = { id: 't', ing: baseIngredient as unknown as Parameters<typeof calcNutrients>[0][0]['rows'][0]['ing'], grams: 100, eurKg: 0, resa: 100 };
+  const row50 = { id: 't', ing: baseIngredient as unknown as Parameters<typeof calcNutrients>[0][0]['rows'][0]['ing'], grams: 100, eurKg: 0, resa: 50 };
   const mkComp = (row: typeof row0): Component[] => [{ id: 'c', name: 'c', rows: [row], additiveRows: [], pzUV: 1 }];
 
   it('resa=0 produce stesso risultato di resa=100', () => {

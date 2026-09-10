@@ -3242,6 +3242,8 @@ export function EtichetteCalc() {
                     onLoad={handleLoad}
                     onDelete={deleteItem}
                     onDuplicate={(item) => { void saveItem(item.name + ' (Copia)', item.data); }}
+                    onImport={(imported) => { imported.forEach(it => { void saveItem(it.name, it.data); }); }}
+                    exportFilename="archivio_etichette"
                     renderItemDetails={(d) => (
                         <>
                             <span><strong>Prodotto:</strong> {d.productName || '-'}</span><br />

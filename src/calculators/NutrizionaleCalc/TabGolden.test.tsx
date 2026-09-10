@@ -7,7 +7,7 @@
 //               vitD=1.0, energyKcal=190, energyKj=795
 // Porzione 50g (f=0.5): tutti i valori si dimezzano.
 import { describe, it, expect } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { render } from '@testing-library/react';
 import { TabUSA } from './TabUSA';
 import { TabCanada } from './TabCanada';
 import { TabAustralia } from './TabAustralia';

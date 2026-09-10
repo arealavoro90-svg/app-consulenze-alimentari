@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Archive, X, Search, Calendar, Trash2, Copy } from 'lucide-react';
+import { useRef, useState } from 'react';
+import { Archive, X, Search, Calendar, Trash2, Copy, Download, Upload } from 'lucide-react';
 import type { ArchiveItem } from '../hooks/useArchive';
 import { ConfirmDialog } from './ui/ConfirmDialog';
 
@@ -10,8 +10,10 @@ export function ArchiveModal<T>({
     onLoad,
     onDelete,
     onDuplicate,
+    onImport,
     renderItemDetails,
     searchData,
+    exportFilename = 'archivio',
 }: {
     items: ArchiveItem<T>[];
     currentId?: string;
@@ -19,11 +21,45 @@ export function ArchiveModal<T>({
     onLoad: (item: ArchiveItem<T>) => void;
     onDelete: (id: string) => void;
     onDuplicate?: (item: ArchiveItem<T>) => void;
+    onImport?: (imported: ArchiveItem<T>[]) => void;
     renderItemDetails?: (data: T) => React.ReactNode;
     /** Restituisce una stringa ricercabile dai campi dati del documento. */
     searchData?: (data: T) => string;
+    exportFilename?: string;
 }) {
     const [search, setSearch] = useState('');
+    const fileInputRef = useRef<HTMLInputElement>(null);
+
+    function handleExport() {
+        const blob = new Blob([JSON.stringify(items, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${exportFilename}_${new Date().toISOString().slice(0, 10)}.json`;
+        a.click();
+        URL.revokeObjectURL(url);
+    }
+
+    function handleImportFile(e: React.ChangeEvent<HTMLInputElement>) {
+        const file = e.target.files?.[0];
+        if (!file || !onImport) return;
+        const reader = new FileReader();
+        reader.onload = () => {
+            try {
+                const parsed = JSON.parse(reader.result as string) as unknown;
+                if (!Array.isArray(parsed)) return;
+                const valid = parsed.filter(
+                    (it): it is ArchiveItem<T> =>
+                        typeof it === 'object' && it !== null &&
+                        'id' in it && 'name' in it && 'date' in it && 'data' in it
+                );
+                onImport(valid);
+            } catch { /* file malformato, ignora */ }
+            // reset input so same file can be re-imported
+            e.target.value = '';
+        };
+        reader.readAsText(file);
+    }
     const [pendingDelete, setPendingDelete] = useState<{ id: string; name: string } | null>(null);
 
     const q = search.toLowerCase();
@@ -47,9 +83,22 @@ export function ArchiveModal<T>({
                         <h2 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
                             <Archive size={20} /> Archivio
                         </h2>
-                        <button className="btn btn-outline" onClick={onClose} style={{ padding: '6px 12px', display: 'flex', alignItems: 'center', gap: 6 }}>
-                            <X size={14} /> Chiudi
-                        </button>
+                        <div style={{ display: 'flex', gap: 8 }}>
+                            <button className="btn btn-outline" onClick={handleExport} title="Esporta archivio JSON" style={{ padding: '6px 10px', display: 'flex', alignItems: 'center', gap: 4, fontSize: 12 }}>
+                                <Download size={13} /> Esporta
+                            </button>
+                            {onImport && (
+                                <>
+                                    <input ref={fileInputRef} type="file" accept=".json" style={{ display: 'none' }} onChange={handleImportFile} />
+                                    <button className="btn btn-outline" onClick={() => fileInputRef.current?.click()} title="Importa archivio JSON" style={{ padding: '6px 10px', display: 'flex', alignItems: 'center', gap: 4, fontSize: 12 }}>
+                                        <Upload size={13} /> Importa
+                                    </button>
+                                </>
+                            )}
+                            <button className="btn btn-outline" onClick={onClose} style={{ padding: '6px 12px', display: 'flex', alignItems: 'center', gap: 6 }}>
+                                <X size={14} /> Chiudi
+                            </button>
+                        </div>
                     </div>
 
                     <div className="form-field" style={{ marginBottom: 20, position: 'relative' }}>
