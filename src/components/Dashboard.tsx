@@ -3,8 +3,10 @@ import { Link } from 'react-router-dom';
 import {
     BarChart2, ArrowRight, Crown,
     Salad, Tag, Wine, Package, Thermometer, FileText, Settings2,
+    ClipboardList, BookOpen,
 } from 'lucide-react';
 import { useAuth } from '../auth/AuthContext';
+import { useArchive } from '../hooks/useArchive';
 import { TOOLS_CATALOG } from '../data/mockUsers';
 import type { ToolId } from '../data/mockUsers';
 
@@ -21,6 +23,8 @@ const TOOL_ICONS: Record<ToolId, React.ReactNode> = {
 
 export function Dashboard() {
     const { user } = useAuth();
+    const { items: recipes } = useArchive('nutrizionale-v3', 'nutrizionale');
+    const { items: labels } = useArchive('aea_archive_etichette', 'etichette');
 
     const greeting = () => {
         const h = new Date().getHours();
@@ -41,18 +45,34 @@ export function Dashboard() {
                 <p>Portale strumenti AEA · {user?.company}</p>
             </div>
 
-            <div className="card" style={{ marginBottom: 28 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-                    <div className="stat-icon-box">
-                        <BarChart2 size={26} />
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 16, marginBottom: 28 }}>
+                <div className="card" style={{ margin: 0 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                        <div className="stat-icon-box"><BarChart2 size={22} /></div>
+                        <div>
+                            <div className="info-label" style={{ marginBottom: 2 }}>Strumenti</div>
+                            <div className="stat-value">
+                                {visibleTools.length}
+                                <span className="stat-value-sub">/ {Object.keys(TOOLS_CATALOG).length}</span>
+                            </div>
+                        </div>
                     </div>
-                    <div>
-                        <div className="info-label" style={{ marginBottom: 2 }}>Strumenti acquistati</div>
-                        <div className="stat-value">
-                            {visibleTools.length}
-                            <span className="stat-value-sub">
-                                / {Object.keys(TOOLS_CATALOG).length} disponibili
-                            </span>
+                </div>
+                <div className="card" style={{ margin: 0 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                        <div className="stat-icon-box"><BookOpen size={22} /></div>
+                        <div>
+                            <div className="info-label" style={{ marginBottom: 2 }}>Ricette salvate</div>
+                            <div className="stat-value">{recipes.length}</div>
+                        </div>
+                    </div>
+                </div>
+                <div className="card" style={{ margin: 0 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                        <div className="stat-icon-box"><ClipboardList size={22} /></div>
+                        <div>
+                            <div className="info-label" style={{ marginBottom: 2 }}>Etichette salvate</div>
+                            <div className="stat-value">{labels.length}</div>
                         </div>
                     </div>
                 </div>
