@@ -54,6 +54,7 @@ export default defineConfig({
           'react-vendor': ['react', 'react-dom', 'react-router-dom'],
           'charts': ['recharts'],
           'pdf': ['jspdf', 'html2canvas'],
+          'xlsx': ['xlsx'],
         },
       },
     },

@@ -262,11 +262,13 @@ export function calcClaims(r: CalcResult, isLiquid = false): string[] {
     else if (r.grassi <= (isLiquid ? 1.5 : 3)) claims.push('A BASSO CONTENUTO DI GRASSI');
 
     // ─── Grassi saturi: SENZA ≤0.1g; BASSO ≤1.5g(sol)/0.75g(liq)+≤10%E ────
-    if (r.saturi <= 0.1) {
+    // Reg. 1924/2006: soglie calcolate su saturi+trans (sum)
+    const satTrans = r.saturi + (r.trans ?? 0);
+    if (satTrans <= 0.1) {
         claims.push('SENZA GRASSI SATURI');
     } else {
-        const satEnergyPct = r.energyKcal > 0 ? (r.saturi * 9 / r.energyKcal) * 100 : 0;
-        if (r.saturi <= (isLiquid ? 0.75 : 1.5) && satEnergyPct <= 10)
+        const satEnergyPct = r.energyKcal > 0 ? (satTrans * 9 / r.energyKcal) * 100 : 0;
+        if (satTrans <= (isLiquid ? 0.75 : 1.5) && satEnergyPct <= 10)
             claims.push('A BASSO CONTENUTO DI GRASSI SATURI');
     }
 

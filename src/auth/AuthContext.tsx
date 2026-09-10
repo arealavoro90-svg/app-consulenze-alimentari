@@ -55,6 +55,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             .catch(() => {
                 setUser(null);
                 sessionStorage.removeItem(CACHE_KEY);
+                // Cleanup legacy localStorage tokens (pre-SEC-03 migration)
+                localStorage.removeItem('aea_access');
+                localStorage.removeItem('aea_refresh');
             });
     }, []);
 

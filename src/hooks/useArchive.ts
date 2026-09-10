@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../auth/AuthContext';
+import { useToast } from '../components/ui/Toast';
 import {
     listArchive,
     createArchive,
@@ -45,6 +46,7 @@ function writeLocal<T>(storageKey: string, items: ArchiveItem<T>[]): void {
  */
 export function useArchive<T>(storageKey: string, tool?: string) {
     const { isAuthenticated } = useAuth();
+    const { warning } = useToast();
     // AUDIT T3 — in mock auth l'utente è finto e non esiste alcuna sessione: ogni chiamata
     // all'archivio remoto è garantita fallire con 401 e ricadere su localStorage. Saltarla
     // porta allo stesso risultato senza round-trip inutili né errori in console che
@@ -114,6 +116,7 @@ export function useArchive<T>(storageKey: string, tool?: string) {
                     return mapped.id;
                 } catch {
                     // Backend non disponibile — fallback a localStorage.
+                    warning('Salvataggio cloud non riuscito. Ricetta salvata localmente su questo dispositivo.');
                 }
             }
 

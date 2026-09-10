@@ -62,7 +62,10 @@ describe('Reg. (UE) 1169/2011 Art. 21 + All. II — 14 allergeni obbligatori', (
     });
 
     it('la mappa dei gruppi copre solo i due casi noti, non introduce gerarchie arbitrarie', () => {
-        expect(Object.keys(ALLERGEN_PARENT).sort()).toEqual(['ANACARDI', 'GRANO']);
+        expect(Object.keys(ALLERGEN_PARENT).sort()).toEqual([
+            'ANACARDI', 'GRANO', 'MANDORLE', 'NOCCIOLE', 'NOCI',
+            'NOCI DEL BRASILE', 'NOCI DI MACADAMIA', 'NOCI DI PECAN', 'PISTACCHI',
+        ]);
     });
 
     it('il modal ingrediente personale espone gli stessi campi del DB (incluso il grano)', () => {

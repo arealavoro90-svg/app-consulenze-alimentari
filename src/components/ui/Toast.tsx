@@ -25,7 +25,11 @@ const ToastContext = createContext<ToastContextValue | null>(null);
 // eslint-disable-next-line react-refresh/only-export-components
 export function useToast(): ToastContextValue {
     const ctx = useContext(ToastContext);
-    if (!ctx) throw new Error('useToast must be used within <ToastProvider>');
+    if (!ctx) {
+        // Outside ToastProvider (e.g. tests): return no-ops to avoid hard dependency
+        const noop = () => {};
+        return { toast: noop, success: noop, error: noop, warning: noop, info: noop };
+    }
     return ctx;
 }
 

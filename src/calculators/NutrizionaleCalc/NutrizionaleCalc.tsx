@@ -1482,7 +1482,7 @@ export function NutrizionaleCalc() {
                             <label style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--color-text-muted)' }} htmlFor="nut-finished-weight">Peso finito (g)</label>
                             <InfoTooltip text="Peso del prodotto dopo cottura, disidratazione o evaporazione di acqua. Deve essere uguale o inferiore al peso del prodotto processato." />
                         </div>
-                        <input id="nut-finished-weight" type="number" min={0}
+                        <input id="nut-finished-weight" type="text" inputMode="decimal"
                             placeholder={allRows.length === 0 ? 'Aggiungi prima gli ingredienti' : `max ${Math.round(totGrammiXpzuv)}g`}
                             value={finishedWeight}
                             disabled={allRows.length === 0}
@@ -1494,7 +1494,7 @@ export function NutrizionaleCalc() {
                             <label style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--color-text-muted)' }} htmlFor="nut-specific-gravity">Peso specifico (g/ml)</label>
                             <InfoTooltip text="Inserisci il peso specifico SOLO per alimenti liquidi. Quando compilato, i valori verranno espressi su 100 ml." />
                         </div>
-                        <input id="nut-specific-gravity" type="number" min={0} step={0.01} placeholder="opzionale" value={specificGravity}
+                        <input id="nut-specific-gravity" type="text" inputMode="decimal" placeholder="opzionale" value={specificGravity}
                             onChange={e => setSpecificGravity(e.target.value)} className="field-input" style={{ width: '100%' }} />
                     </div>
                 </div>

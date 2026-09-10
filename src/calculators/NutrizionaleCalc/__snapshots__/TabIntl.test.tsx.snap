@@ -1060,7 +1060,7 @@ exports[`TabCanada — snapshot rendering > layout lineare 1`] = `
           <span
             style="font-size: 10pt; font-weight: 700;"
           >
-            Nutrition Facts
+            Nutrition Facts / Valeur nutritive
           </span>
           <span
             style="font-size: 7.5pt; font-weight: 400;"
@@ -1084,7 +1084,7 @@ exports[`TabCanada — snapshot rendering > layout lineare 1`] = `
           <span
             style="font-weight: 700;"
           >
-            Fat
+            Lipides / Fat
           </span>
            
           6
@@ -1096,7 +1096,7 @@ exports[`TabCanada — snapshot rendering > layout lineare 1`] = `
           <span
             style="font-weight: 700;"
           >
-            Saturated Fat
+            Acides gras saturés / Saturated Fat
           </span>
            
           4.0
@@ -1116,7 +1116,7 @@ exports[`TabCanada — snapshot rendering > layout lineare 1`] = `
           <span
             style="font-weight: 700;"
           >
-            Cholesterol
+            Cholestérol / Cholesterol
           </span>
            
           19
@@ -1128,7 +1128,7 @@ exports[`TabCanada — snapshot rendering > layout lineare 1`] = `
           <span
             style="font-weight: 700;"
           >
-            Carbohydrate
+            Glucides / Carbohydrate
           </span>
            
           1
@@ -1137,7 +1137,7 @@ exports[`TabCanada — snapshot rendering > layout lineare 1`] = `
           <span
             style="font-weight: 700;"
           >
-            Fibre
+            Fibres / Fibre
           </span>
            
           0
@@ -1149,7 +1149,7 @@ exports[`TabCanada — snapshot rendering > layout lineare 1`] = `
           <span
             style="font-weight: 700;"
           >
-            Sugars
+            Sucres / Sugars
           </span>
            
           1
@@ -1161,7 +1161,7 @@ exports[`TabCanada — snapshot rendering > layout lineare 1`] = `
           <span
             style="font-weight: 700;"
           >
-            Protein
+            Protéines / Protein
           </span>
            
           5
@@ -1208,7 +1208,7 @@ exports[`TabCanada — snapshot rendering > layout lineare 1`] = `
           <span
             style="font-weight: 700;"
           >
-            Iron
+            Fer / Iron
           </span>
            
           0.1
@@ -1222,7 +1222,7 @@ exports[`TabCanada — snapshot rendering > layout lineare 1`] = `
           <span
             style="font-size: 6pt; font-weight: 400;"
           >
-            % = % Daily Value
+            % = % valeur quotidienne / % Daily Value
             <span
               style="font-size: 9pt; position: relative; top: 2pt;"
             >
@@ -1237,7 +1237,19 @@ exports[`TabCanada — snapshot rendering > layout lineare 1`] = `
             >
               *
             </span>
-            5% or less is 
+            5% ou moins c'est 
+            <span
+              style="font-weight: 700;"
+            >
+              peu
+            </span>
+            , 15% ou plus c'est 
+            <span
+              style="font-weight: 700;"
+            >
+              beaucoup
+            </span>
+             / 5% or less is 
             <span
               style="font-weight: 700;"
             >
@@ -2206,7 +2218,7 @@ exports[`TabCanada — snapshot rendering > riferimento confezione, misura tazze
           <span
             style="font-family: Arial, Helvetica, sans-serif; font-size: 11px; font-weight: 400; min-width: 22px; text-align: right;"
           >
-            6
+            9
             %
           </span>
         </div>

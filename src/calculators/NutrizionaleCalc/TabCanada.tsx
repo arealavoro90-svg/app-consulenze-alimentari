@@ -21,7 +21,7 @@ export type SubTab = 'verticale' | 'orizzontale' | 'lineare';
 // ─── DV Canada ────────────────────────────────────────────────────────────────
 const DV_CA = {
     energyKcal: 2000, grassi: 75, satTrans: 20, carboidratiTot: 275, fibre: 28,
-    zuccheri: 100, proteine: 50, sodio_mg: 2300, potassio: 4700, calcio: 1300, ferro: 18,
+    zuccheri: 100, proteine: 50, sodio_mg: 2300, potassio: 3400, calcio: 1300, ferro: 18,
 };
 
 // ─── Scale helper ─────────────────────────────────────────────────────────────
@@ -247,40 +247,40 @@ export function TabCanada({ p, ca, servingRef, measure, subTab }: TabCanadaProps
                 const B = (text: string) => <span style={{ fontWeight: 700 }}>{text}</span>;
                 return (
                     <div style={{ border: '0.5pt solid #000', padding: '3pt', fontFamily: F, fontSize: '7pt', display: 'inline-block', backgroundColor: '#fff', color: '#000', boxSizing: 'content-box' as const }}>
-                        {/* Line 1: Heading · Serving · Calories */}
+                        {/* Line 1: Heading · Serving · Calories — CFIA: bilingual EN/FR */}
                         <div style={{ whiteSpace: 'nowrap' }}>
-                            <span style={{ fontSize: '10pt', fontWeight: 700 }}>Nutrition Facts</span>
+                            <span style={{ fontSize: '10pt', fontWeight: 700 }}>Nutrition Facts / Valeur nutritive</span>
                             {caLinearServing ? <span style={{ fontSize: '7.5pt', fontWeight: 400 }}>{' '}{caLinearServing}</span> : null}
                             {' :'}
                             <span style={{ fontSize: '8pt', fontWeight: 700 }}>{' '}Calories{' '}{rCA_energy(d.energyKcal)}</span>
                         </div>
                         {/* Line 2: Fat → Cholesterol */}
                         <div style={{ whiteSpace: 'nowrap', lineHeight: '8pt' }}>
-                            {B('Fat')}{' '}{rCA_fat(d.grassi)} g{' '}{pctCA(d.grassi, DV_CA.grassi)},{' '}
-                            {B('Saturated Fat')}{' '}{rCA_fat(d.saturi)} g + {B('Trans')}{' '}{rCA_fat(d.trans)} g{' '}{pctCA(satTrans, DV_CA.satTrans)},{' '}
-                            {B('Cholesterol')}{' '}{rCA_chol(d.colesterolo)} mg
+                            {B('Lipides / Fat')}{' '}{rCA_fat(d.grassi)} g{' '}{pctCA(d.grassi, DV_CA.grassi)},{' '}
+                            {B('Acides gras saturés / Saturated Fat')}{' '}{rCA_fat(d.saturi)} g + {B('Trans')}{' '}{rCA_fat(d.trans)} g{' '}{pctCA(satTrans, DV_CA.satTrans)},{' '}
+                            {B('Cholestérol / Cholesterol')}{' '}{rCA_chol(d.colesterolo)} mg
                         </div>
                         {/* Line 3: Carbohydrate → Sodium */}
                         <div style={{ whiteSpace: 'nowrap', lineHeight: '8pt' }}>
-                            {B('Carbohydrate')}{' '}{rCA_carb(d.carboidratiTot)} g,{' '}
-                            {B('Fibre')}{' '}{rCA_carb(d.fibre)} g{' '}{pctCA(d.fibre, DV_CA.fibre)},{' '}
-                            {B('Sugars')}{' '}{rCA_carb(d.zuccheri)} g{' '}{pctCA(d.zuccheri, DV_CA.zuccheri)},{' '}
-                            {B('Protein')}{' '}{rCA_carb(d.proteine)} g,{' '}
+                            {B('Glucides / Carbohydrate')}{' '}{rCA_carb(d.carboidratiTot)} g,{' '}
+                            {B('Fibres / Fibre')}{' '}{rCA_carb(d.fibre)} g{' '}{pctCA(d.fibre, DV_CA.fibre)},{' '}
+                            {B('Sucres / Sugars')}{' '}{rCA_carb(d.zuccheri)} g{' '}{pctCA(d.zuccheri, DV_CA.zuccheri)},{' '}
+                            {B('Protéines / Protein')}{' '}{rCA_carb(d.proteine)} g,{' '}
                             {B('Sodium')}{' '}{rCA_na(d.sodio_mg)} mg{' '}{pctCA(d.sodio_mg, DV_CA.sodio_mg)}
                         </div>
                         {/* Line 4: Potassium → Iron */}
                         <div style={{ whiteSpace: 'nowrap', lineHeight: '8pt' }}>
                             {B('Potassium')}{' '}{rCA_na(d.potassio)} mg{' '}{pctCA(d.potassio, DV_CA.potassio)},{' '}
                             {B('Calcium')}{' '}{rCA_na(d.calcio)} mg{' '}{pctCA(d.calcio, DV_CA.calcio)},{' '}
-                            {B('Iron')}{' '}{rCA_iron(d.ferro)} mg{' '}{pctCA(d.ferro, DV_CA.ferro)}
+                            {B('Fer / Iron')}{' '}{rCA_iron(d.ferro)} mg{' '}{pctCA(d.ferro, DV_CA.ferro)}
                         </div>
-                        {/* Line 5: Legend (left) · Footnote (right) */}
+                        {/* Line 5: Legend · Footnote — bilingual CFIA */}
                         <div style={{ display: 'flex', justifyContent: 'space-between', gap: 16, marginTop: '-2px', whiteSpace: 'nowrap' }}>
                             <span style={{ fontSize: '6pt', fontWeight: 400 }}>
-                                % = % Daily Value<span style={{ fontSize: '9pt', position: 'relative', top: '2pt' }}>*</span>
+                                % = % valeur quotidienne / % Daily Value<span style={{ fontSize: '9pt', position: 'relative', top: '2pt' }}>*</span>
                             </span>
                             <span style={{ fontSize: '6pt', fontWeight: 400 }}>
-                                <span style={{ fontSize: '9pt', position: 'relative', top: '2pt' }}>*</span>5% or less is <span style={{ fontWeight: 700 }}>a little</span>, 15% or more is <span style={{ fontWeight: 700 }}>a lot</span>
+                                <span style={{ fontSize: '9pt', position: 'relative', top: '2pt' }}>*</span>5% ou moins c'est <span style={{ fontWeight: 700 }}>peu</span>, 15% ou plus c'est <span style={{ fontWeight: 700 }}>beaucoup</span> / 5% or less is <span style={{ fontWeight: 700 }}>a little</span>, 15% or more is <span style={{ fontWeight: 700 }}>a lot</span>
                             </span>
                         </div>
                     </div>
