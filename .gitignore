@@ -44,3 +44,12 @@ PROMPTS/
 test-results/
 .claude/
 Beck-end/venv/
+
+# generated artifacts
+graphify-out/
+layout-mockup.html
+mobile-mockup.html
+nutrizionale-mockup.html
+tool-mockups.html
+ui-preview.html
+docs/superpowers/

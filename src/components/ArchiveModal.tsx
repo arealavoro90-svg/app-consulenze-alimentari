@@ -169,6 +169,7 @@ export function ArchiveModal<T>({
                                                     className="btn btn-outline"
                                                     style={{ padding: '6px 12px', fontSize: 12, display: 'flex', alignItems: 'center' }}
                                                     title="Duplica"
+                                                    aria-label={`Duplica ${item.name}`}
                                                     onClick={() => onDuplicate(item)}
                                                 >
                                                     <Copy size={14} />
@@ -177,6 +178,7 @@ export function ArchiveModal<T>({
                                             <button
                                                 className="btn btn-danger"
                                                 style={{ padding: '6px 12px', fontSize: 12, display: 'flex', alignItems: 'center' }}
+                                                aria-label={`Elimina ${item.name || 'elemento'}`}
                                                 onClick={() => setPendingDelete({ id: item.id, name: item.name || 'Senza Nome' })}
                                             >
                                                 <Trash2 size={14} />

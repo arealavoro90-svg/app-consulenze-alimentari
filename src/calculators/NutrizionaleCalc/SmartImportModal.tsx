@@ -678,6 +678,7 @@ export function SmartImportModal({ db, onClose, onImport }: Props) {
           <button
             type="button"
             onClick={onClose}
+            aria-label="Chiudi"
             style={{
               background: 'none',
               border: 'none',

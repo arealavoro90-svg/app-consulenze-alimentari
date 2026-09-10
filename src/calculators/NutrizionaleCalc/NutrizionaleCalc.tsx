@@ -1537,7 +1537,7 @@ export function NutrizionaleCalc() {
                         </div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 4, flexShrink: 0 }}>
                             {components.length > 1 && (
-                                <button onClick={(e) => { e.stopPropagation(); removeComp(comp.id); }} className="comp-action-btn" title="Rimuovi questo componente">
+                                <button onClick={(e) => { e.stopPropagation(); removeComp(comp.id); }} className="comp-action-btn" title="Rimuovi questo componente" aria-label={`Rimuovi componente ${comp.name || ci + 1}`}>
                                     <Trash2 size={13} />
                                 </button>
                             )}
@@ -1627,6 +1627,8 @@ export function NutrizionaleCalc() {
                                         onClick={() => toggleExpandRow(rowKey)}
                                         style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 2, color: 'var(--color-text-muted)', flexShrink: 0, display: 'flex', alignItems: 'center' }}
                                         title={isExpanded ? 'Comprimi' : 'Espandi €/kg e Resa dopo cottura (%)'}
+                                        aria-label={isExpanded ? 'Comprimi dettagli ingrediente' : 'Espandi dettagli ingrediente'}
+                                        aria-expanded={isExpanded}
                                     >
                                         <ChevronDown size={12} style={{ transform: isExpanded ? 'rotate(0deg)' : 'rotate(-90deg)', transition: 'transform 0.15s' }} />
                                     </button>
@@ -1658,7 +1660,7 @@ export function NutrizionaleCalc() {
                                         />
                                         <span style={{ fontSize: 12, color: 'var(--color-text-muted)' }}>g</span>
                                     </div>
-                                    <button onClick={() => removeRow(comp.id, row.id)} className="ing-delete-btn" title="Rimuovi ingrediente" style={{ width: 24, height: 24, flexShrink: 0 }}>
+                                    <button onClick={() => removeRow(comp.id, row.id)} className="ing-delete-btn" title="Rimuovi ingrediente" aria-label={`Rimuovi ${(row.ing.nome || '').trim() || 'ingrediente'}`} style={{ width: 24, height: 24, flexShrink: 0 }}>
                                         <Trash2 size={12} />
                                     </button>
                                 </div>
@@ -1782,7 +1784,7 @@ export function NutrizionaleCalc() {
                                                 {(ADDITIVI_SPECIFICI[arow.categoria] || []).map(n => <option key={n} value={n}>{n}</option>)}
                                             </select>
                                         </div>
-                                        <button className="ing-delete-btn" onClick={() => removeAdditiveRow(comp.id, arow.id)} title="Rimuovi additivo"><Trash2 size={13} /></button>
+                                        <button className="ing-delete-btn" onClick={() => removeAdditiveRow(comp.id, arow.id)} title="Rimuovi additivo" aria-label={`Rimuovi additivo ${arow.nomeSpecifico || arow.categoria || ''}`}><Trash2 size={13} /></button>
                                     </div>
                                     <div className="ing-card-body">
                                         <div className="ing-field-group">
