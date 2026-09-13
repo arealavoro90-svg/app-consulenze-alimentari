@@ -139,7 +139,7 @@ export function useArchive<T>(storageKey: string, tool?: string) {
 
             return newItem.id;
         },
-        [useBackend, tool, storageKey],
+        [useBackend, tool, storageKey, warning],
     );
 
     const deleteItem = useCallback(

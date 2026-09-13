@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
     BarChart2, ArrowRight, Crown,
@@ -30,13 +30,7 @@ export function Dashboard() {
     const { items: recipes } = useArchive('nutrizionale-v3', 'nutrizionale');
     const { items: labels } = useArchive('aea_archive_etichette', 'etichette');
 
-    const [showOnboarding, setShowOnboarding] = useState(false);
-
-    useEffect(() => {
-        if (!localStorage.getItem(ONBOARDING_KEY)) {
-            setShowOnboarding(true);
-        }
-    }, []);
+    const [showOnboarding, setShowOnboarding] = useState(() => !localStorage.getItem(ONBOARDING_KEY));
 
     const closeOnboarding = () => setShowOnboarding(false);
     const neverShowOnboarding = () => {
