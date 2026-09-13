@@ -7,9 +7,13 @@
  */
 const BASE_URL = (import.meta.env.VITE_API_URL as string | undefined) ?? '';
 
+// Deduplica chiamate refresh concorrenti: una sola richiesta in volo alla volta.
+let _refreshPromise: Promise<void> | null = null;
+
 export async function apiFetch<T>(
     path: string,
     options: RequestInit = {},
+    _isRetry = false,
 ): Promise<T> {
     // S5: autenticazione via httpOnly cookie — nessun token in header.
     // In dev mock il cookie non esiste, Django restituisce 401 → il chiamante
@@ -24,6 +28,23 @@ export async function apiFetch<T>(
         headers,
         credentials: 'include',   // invia il cookie httpOnly ad ogni richiesta
     });
+
+    // Auto-refresh: se il server risponde 401 e non siamo già in un retry,
+    // tentiamo di rinnovare i cookie tramite /api/auth/refresh/ e riproviamo una volta.
+    // Se il refresh fallisce, l'errore propaga → AuthContext imposta user=null → redirect login.
+    if (res.status === 401 && !_isRetry && path !== '/api/auth/refresh/') {
+        if (!_refreshPromise) {
+            _refreshPromise = fetch(`${BASE_URL}/api/auth/refresh/`, {
+                method: 'POST',
+                credentials: 'include',
+                headers: { 'Content-Type': 'application/json' },
+            }).then(r => {
+                if (!r.ok) throw new Error('session_expired');
+            }).finally(() => { _refreshPromise = null; });
+        }
+        await _refreshPromise;
+        return apiFetch<T>(path, options, true);
+    }
 
     if (!res.ok) {
         const body = await res.json().catch(() => ({})) as { detail?: string };

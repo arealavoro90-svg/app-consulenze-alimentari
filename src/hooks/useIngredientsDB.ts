@@ -43,10 +43,19 @@ export function useIngredientsDB(errorMessage = 'Impossibile caricare il databas
                 setDb(base);
                 setLoadingDB(false);
             })
-            .catch(err => { console.error('Error loading DB:', err); setLoadingDB(false); setDbError(errorMessage); });
+            .catch(err => {
+                console.error('Error loading DB:', err);
+                // Carica comunque gli ingredienti custom anche se l'API principale fallisce
+                try {
+                    const raw = JSON.parse(localStorage.getItem('custom_ingredients') || '[]') as unknown[];
+                    const custom = Array.isArray(raw) ? raw.filter(isValidDBIngredient) as DBIngredient[] : [];
+                    if (custom.length) setDb(custom);
+                } catch { /* localStorage corrotto o non disponibile */ }
+                setLoadingDB(false);
+                setDbError(errorMessage);
+            });
     }, [errorMessage]);
 
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- loadDB sets loading state on mount; this is the correct pattern for data fetching
     useEffect(() => { loadDB(); }, [loadDB]);
 
     return { db, setDb, loadingDB, dbError, loadDB };
