@@ -1,4 +1,6 @@
 import { useState, useMemo, useEffect } from 'react';
+import { useAuth } from '../../auth/AuthContext';
+import { promoteUserIngredient } from '../../api/ingredients';
 
 interface DBIngredient {
     nome: string; etichetta: string;
@@ -36,6 +38,7 @@ interface Props {
     onClose: () => void;
     db: DBIngredient[];
     onEditIngredient: (ing: DBIngredient, isCustom: boolean) => void;
+    onPromote: (ing: DBIngredient) => void;
 }
 
 type MacroRow = { label: string; value: number | undefined; unit: string };
@@ -191,10 +194,12 @@ function ExpandedDetails({ ing }: { ing: DBIngredient }) {
     );
 }
 
-export function BrowseIngredientsModal({ onClose, db, onEditIngredient }: Props) {
+export function BrowseIngredientsModal({ onClose, db, onEditIngredient, onPromote }: Props) {
     const [search, setSearch] = useState('');
     const [soloPersonali, setSoloPersonali] = useState(false);
     const [expandedIdx, setExpandedIdx] = useState<number | null>(null);
+    const { user } = useAuth();
+    const isAdmin = user?.role === 'admin';
 
     useEffect(() => {
         const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
@@ -385,17 +390,40 @@ export function BrowseIngredientsModal({ onClose, db, onEditIngredient }: Props)
                                         {sodioG !== undefined && <> &nbsp;|&nbsp; Sale {fmt(sodioG, 2)} g</>}
                                     </span>
 
-                                    {/* Modifica */}
-                                    <button
-                                        className="btn btn-outline bim-edit-btn"
-                                        style={{ padding: '4px 10px', fontSize: 12, flexShrink: 0 }}
-                                        onClick={e => {
-                                            e.stopPropagation();
-                                            onEditIngredient(ing, isCustom);
-                                        }}
-                                    >
-                                        Modifica
-                                    </button>
+                                    {/* Modifica — admin vede tutto, user solo i propri custom */}
+                                    {(isAdmin || isCustom) && (
+                                        <button
+                                            className="btn btn-outline bim-edit-btn"
+                                            style={{ padding: '4px 10px', fontSize: 12, flexShrink: 0 }}
+                                            onClick={e => {
+                                                e.stopPropagation();
+                                                onEditIngredient(ing, isCustom);
+                                            }}
+                                        >
+                                            Modifica
+                                        </button>
+                                    )}
+
+                                    {/* Promuovi — solo admin su ingredienti custom */}
+                                    {isAdmin && isCustom && (
+                                        <button
+                                            className="btn btn-outline bim-edit-btn"
+                                            style={{ padding: '4px 10px', fontSize: 12, flexShrink: 0, color: 'var(--color-green, #16a34a)', borderColor: 'var(--color-green, #16a34a)' }}
+                                            onClick={async e => {
+                                                e.stopPropagation();
+                                                const uid = (ing as DBIngredient & { _uid?: string })._uid;
+                                                if (!uid) return;
+                                                try {
+                                                    await promoteUserIngredient(uid);
+                                                    onPromote(ing);
+                                                } catch {
+                                                    // silently ignore — user will see ingredient stays custom
+                                                }
+                                            }}
+                                        >
+                                            Promuovi
+                                        </button>
+                                    )}
                                 </div>
 
                                 {isExpanded && (

@@ -1266,6 +1266,7 @@ export function NutrizionaleCalc() {
                 <BrowseIngredientsModal
                     db={db}
                     onClose={() => setShowBrowseModal(false)}
+                    onPromote={() => { loadDB(); }}
                     onEditIngredient={(ing, isCustom) => {
                         setShowBrowseModal(false);
                         setEditIngredient({ ing, isCustom });

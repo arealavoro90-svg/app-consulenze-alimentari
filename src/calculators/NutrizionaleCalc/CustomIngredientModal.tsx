@@ -4,6 +4,8 @@ import { InfoTooltip } from './InfoTooltip';
 import { isValidDBIngredient } from '../../utils/validation';
 import { type DBIngredient, energyFromMacros } from '../../engines/nutrizionaleCalcEngine';
 import { ALLERGEN_FIELDS, CROSS_FIELDS } from './shared/constants';
+import { useAuth } from '../../auth/AuthContext';
+import { createUserIngredient, updateUserIngredient, createOfficialIngredient, updateOfficialIngredient } from '../../api/ingredients';
 
 // AUDIT E4 — queste quattro liste erano ricopiate a mano qui e avevano già divergito
 // dalla fonte condivisa: mancava `all_grano`/`cross_grano`, quindi un ingrediente creato
@@ -100,6 +102,9 @@ export function CustomIngredientModal({ onClose, onSave, initialIngredient, orig
     initialIngredient?: DBIngredient;
     originalNome?: string; // nome dell'ingrediente originale da rimuovere in caso di modifica
 }) {
+    const { user } = useAuth();
+    const isAdmin = user?.role === 'admin';
+
     useEffect(() => {
         const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
         document.addEventListener('keydown', handler);
@@ -312,17 +317,39 @@ export function CustomIngredientModal({ onClose, onSave, initialIngredient, orig
         CI_ALLERGEN_KEYS.forEach(k => { if (allergens[k]) (ing as unknown as Record<string, unknown>)[k] = 'SI'; });
         // Tracce (contaminazione crociata)
         CI_CROSS_KEYS.forEach(k => { if (crossAllergens[k]) (ing as unknown as Record<string, unknown>)[k] = 'SI'; });
-        try {
-            const rawEx = JSON.parse(localStorage.getItem('custom_ingredients') || '[]');
-            let ex = (Array.isArray(rawEx) ? (rawEx as unknown[]).filter(isValidDBIngredient) : []) as DBIngredient[];
-            // Se stiamo modificando un ingrediente esistente, rimuoviamo il vecchio
-            if (originalNome) {
-                ex = ex.filter(i => i.nome !== originalNome);
+        // Save to backend if authenticated, localStorage as fallback
+        const _uid = (initialIngredient as (DBIngredient & { _uid?: string }) | undefined)?._uid;
+        const officialId = initialIngredient && !_uid && typeof (initialIngredient as DBIngredient & { id?: number }).id === 'number'
+            ? (initialIngredient as DBIngredient & { id?: number }).id
+            : undefined;
+
+        const saveToBackend = async (): Promise<DBIngredient | null> => {
+            try {
+                if (isAdmin) {
+                    if (officialId !== undefined) return await updateOfficialIngredient(officialId, ing);
+                    return await createOfficialIngredient(ing);
+                } else {
+                    if (_uid) return await updateUserIngredient(_uid, ing);
+                    return await createUserIngredient(ing);
+                }
+            } catch {
+                return null;
             }
-            localStorage.setItem('custom_ingredients', JSON.stringify([...ex, ing]));
-        } catch { /* storage pieno o non disponibile */ }
-        onSave(ing);
-        onClose();
+        };
+
+        void saveToBackend().then(saved => {
+            const result = saved ?? ing;
+            if (!saved) {
+                try {
+                    const rawEx = JSON.parse(localStorage.getItem('custom_ingredients') || '[]');
+                    let ex = (Array.isArray(rawEx) ? (rawEx as unknown[]).filter(isValidDBIngredient) : []) as DBIngredient[];
+                    if (originalNome) ex = ex.filter(i => i.nome !== originalNome);
+                    localStorage.setItem('custom_ingredients', JSON.stringify([...ex, ing]));
+                } catch { /* noop */ }
+            }
+            onSave(result);
+            onClose();
+        });
     };
 
     // Stili locali (non ricreano NF — NF è fuori dal componente)

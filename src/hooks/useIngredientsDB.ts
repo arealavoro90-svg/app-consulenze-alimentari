@@ -1,5 +1,6 @@
 import { useState, useCallback, useEffect } from 'react';
 import { apiFetch } from '../api/client';
+import { listUserIngredients } from '../api/ingredients';
 import { isValidDBIngredient } from '../utils/validation';
 import { type DBIngredient } from '../engines/nutrizionaleCalcEngine';
 
@@ -14,16 +15,15 @@ export function useIngredientsDB(errorMessage = 'Impossibile caricare il databas
 
         const mockAuth = import.meta.env.DEV && import.meta.env.VITE_DEV_MOCK_AUTH === 'true';
 
-        // S0: prod usa solo API autenticata — nessun fallback statico pubblico.
-        // Dev con VITE_DEV_MOCK_AUTH=true: carica JSON bundled (Django non necessario).
-        // Dev senza mock: prova API, fallback al JSON bundled se Django non gira.
-        // Il ramo import('../data/ingredientsDB.json') è eliminato dal bundle prod da Vite
-        // (dead branch su import.meta.env.DEV === false a build time).
         let promise: Promise<DBIngredient[]>;
         if (mockAuth) {
             promise = import('../data/ingredientsDB.json').then(m => (m as { default: DBIngredient[] }).default);
         } else {
-            promise = apiFetch<DBIngredient[]>('/api/ingredients/');
+            // Load official + user custom in parallel
+            const official = apiFetch<DBIngredient[]>('/api/ingredients/');
+            const custom = listUserIngredients().catch(() => [] as DBIngredient[]);
+            promise = Promise.all([official, custom]).then(([off, cust]) => [...off, ...cust]);
+
             if (import.meta.env.DEV) {
                 // ponytail: dev-only fallback — eliminato dal bundle prod (dead branch)
                 promise = promise.catch(() =>
@@ -35,22 +35,25 @@ export function useIngredientsDB(errorMessage = 'Impossibile caricare il databas
         promise
             .then(data => {
                 let base = Array.isArray(data) ? data : [];
+                // Merge localStorage custom (legacy / unauthenticated fallback)
                 try {
                     const raw = JSON.parse(localStorage.getItem('custom_ingredients') || '[]') as unknown[];
-                    const custom = Array.isArray(raw) ? raw.filter(isValidDBIngredient) as DBIngredient[] : [];
-                    if (custom.length) base = [...base, ...custom];
-                } catch { /* localStorage corrotto o non disponibile */ }
+                    const local = Array.isArray(raw) ? raw.filter(isValidDBIngredient) as DBIngredient[] : [];
+                    // Only add local items not already in backend (avoid duplicates by nome)
+                    const backendNames = new Set(base.filter(i => i.categoria === '_custom').map(i => i.nome));
+                    const newLocal = local.filter(i => !backendNames.has(i.nome));
+                    if (newLocal.length) base = [...base, ...newLocal];
+                } catch { /* localStorage corrotto */ }
                 setDb(base);
                 setLoadingDB(false);
             })
             .catch(err => {
                 console.error('Error loading DB:', err);
-                // Carica comunque gli ingredienti custom anche se l'API principale fallisce
                 try {
                     const raw = JSON.parse(localStorage.getItem('custom_ingredients') || '[]') as unknown[];
                     const custom = Array.isArray(raw) ? raw.filter(isValidDBIngredient) as DBIngredient[] : [];
                     if (custom.length) setDb(custom);
-                } catch { /* localStorage corrotto o non disponibile */ }
+                } catch { /* noop */ }
                 setLoadingDB(false);
                 setDbError(errorMessage);
             });
