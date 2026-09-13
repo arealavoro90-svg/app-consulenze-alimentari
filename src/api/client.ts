@@ -40,10 +40,6 @@ export async function apiFetch<T>(
                 headers: { 'Content-Type': 'application/json' },
             }).then(r => {
                 if (!r.ok) throw new Error('session_expired');
-            }).catch((err) => {
-                // Refresh fallito → sessione scaduta, notifica AuthContext
-                window.dispatchEvent(new Event('session-expired'));
-                throw err;
             }).finally(() => { _refreshPromise = null; });
         }
         await _refreshPromise;

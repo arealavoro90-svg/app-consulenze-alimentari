@@ -48,24 +48,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         // In mock mode: skip verifica backend
         if (DEV_MOCK_ENABLED) return;
 
-        const clearSession = () => {
-            setUser(null);
-            sessionStorage.removeItem(CACHE_KEY);
-            // Cleanup legacy localStorage tokens (pre-SEC-03 migration)
-            localStorage.removeItem('aea_access');
-            localStorage.removeItem('aea_refresh');
-        };
-
         apiMe()
             .then((freshUser) => {
                 setUser(freshUser);
                 sessionStorage.setItem(CACHE_KEY, JSON.stringify(freshUser));
             })
-            .catch(clearSession);
-
-        // Ascolta evento da apiFetch quando il refresh token è scaduto/assente
-        window.addEventListener('session-expired', clearSession);
-        return () => window.removeEventListener('session-expired', clearSession);
+            .catch(() => {
+                setUser(null);
+                sessionStorage.removeItem(CACHE_KEY);
+                // Cleanup legacy localStorage tokens (pre-SEC-03)
+                localStorage.removeItem('aea_access');
+                localStorage.removeItem('aea_refresh');
+            });
     }, []);
 
     const login = async (email: string, password: string): Promise<boolean> => {
