@@ -48,18 +48,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         // In mock mode: skip verifica backend
         if (DEV_MOCK_ENABLED) return;
 
+        // Cattura lo stato utente al momento del mount.
+        // Se il refresh iniziale impiega secondi (cold start serverless) e l'utente
+        // fa login nel frattempo, il .catch() non deve sovrascrivere il nuovo stato.
+        const userAtMount = user;
+
         apiMe()
             .then((freshUser) => {
                 setUser(freshUser);
                 sessionStorage.setItem(CACHE_KEY, JSON.stringify(freshUser));
             })
             .catch(() => {
-                setUser(null);
-                sessionStorage.removeItem(CACHE_KEY);
-                // Cleanup legacy localStorage tokens (pre-SEC-03)
-                localStorage.removeItem('aea_access');
-                localStorage.removeItem('aea_refresh');
+                setUser(prev => {
+                    // Se lo stato è cambiato dal mount (login avvenuto), non sovrascrivere
+                    if (prev !== userAtMount) return prev;
+                    sessionStorage.removeItem(CACHE_KEY);
+                    localStorage.removeItem('aea_access');
+                    localStorage.removeItem('aea_refresh');
+                    return null;
+                });
             });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     const login = async (email: string, password: string): Promise<boolean> => {
