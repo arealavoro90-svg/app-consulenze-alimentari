@@ -579,6 +579,7 @@ export function NutrizionaleCalcMobile() {
                         setShowBrowseModal(false);
                         setEditIngredient({ ing, isCustom });
                     }}
+                    onPromote={() => { loadDB(); }}
                 />
             )}
 
