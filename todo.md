@@ -9,7 +9,31 @@
 > **Sessione 2026-09-10 (cont.2): FEAT-EXCEL (export Excel tabella nutrizionale), UX-MOBILE-ETI (scale preview etichetta su mobile), EXP-1 (export/import JSON archivi Nutrizionale+Etichette), fix lint. 251/251 test. Deploy prod.**
 > **Sessione 2026-09-10 (cont.3): FEAT-GS1, P9-DASHBOARD, UX-OB, DOC-2. 251 test.**
 > **Sessione 2026-09-10 (cont.4): TD-4/E2E-1 (auth.spec.ts + archive.spec.ts), +15 unit test EtichetteCalc (266 tot), DATA-1 (validazione CREA 20 ingredienti, 9 divergenze >10%).**
+> **Sessione 2026-09-14: UserIngredient feature completa (backend + frontend). Admin crea ingredienti ufficiali, utenti salvano ingredienti privati (_custom), admin promuove _custom a ufficiale. Deploy prod frontend+backend.**
 > Production URL: **https://app-consulenze-alimentari.vercel.app**
+
+---
+
+## 🧪 TEST DA ESEGUIRE (sessione 2026-09-14)
+
+### UserIngredient — E2E manuale
+- [ ] **ING-E2E-1** — Admin login → crea ingrediente → verifica visibile nel DB ufficiale per tutti gli utenti
+- [ ] **ING-E2E-2** — Admin login → DB → tasto "Modifica" visibile su TUTTI gli ingredienti
+- [ ] **ING-E2E-3** — User login → crea ingrediente → visibile solo a quell'utente (categoria `_custom`)
+- [ ] **ING-E2E-4** — User login → DB → tasto "Modifica" visibile solo sui propri `_custom`
+- [ ] **ING-E2E-5** — Admin login → ingrediente `_custom` di un user → "Promuovi a ufficiale"
+- [ ] **ING-E2E-6** — Dopo promozione → sparisce da `_custom`, appare nel DB ufficiale
+
+### UserIngredient — Security
+- [ ] **ING-SEC-1** — User non autenticato → 401 su `GET /api/ingredients/user/`
+- [ ] **ING-SEC-2** — User A non vede/modifica/elimina ingredienti di User B (IDOR)
+- [ ] **ING-SEC-3** — User normale → 403 su `POST /api/ingredients/user/{id}/promote/`
+- [ ] **ING-SEC-4** — User normale → 403 su `POST /api/ingredients/` (crea ingrediente ufficiale)
+
+### UserIngredient — Infra
+- [ ] **ING-DATA-1** — Migrazione `0008_user_ingredient` applicata in prod (tabella `ingredients_useringredient` esiste in Neon)
+- [ ] **ING-PERF-1** — Cold start post-deploy: latenza prima chiamata `/api/ingredients/` accettabile
+- [ ] **ING-UX-1** — Ingredienti custom del User A non compaiono nel selettore ricette di User B
 
 ---
 
