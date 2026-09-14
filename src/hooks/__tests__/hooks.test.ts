@@ -211,7 +211,9 @@ import { apiFetch } from '../../api/client';
 describe('useIngredientsDB', () => {
     beforeEach(() => {
         localStorage.clear();
-        vi.mocked(apiFetch).mockResolvedValue(MOCK_INGREDIENTS);
+        vi.mocked(apiFetch).mockImplementation((url: string) =>
+            Promise.resolve(url === '/api/ingredients/user/' ? [] : MOCK_INGREDIENTS)
+        );
     });
     afterEach(() => vi.restoreAllMocks());
 

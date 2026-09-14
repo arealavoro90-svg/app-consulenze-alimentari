@@ -10,6 +10,7 @@
 > **Sessione 2026-09-10 (cont.3): FEAT-GS1, P9-DASHBOARD, UX-OB, DOC-2. 251 test.**
 > **Sessione 2026-09-10 (cont.4): TD-4/E2E-1 (auth.spec.ts + archive.spec.ts), +15 unit test EtichetteCalc (266 tot), DATA-1 (validazione CREA 20 ingredienti, 9 divergenze >10%).**
 > **Sessione 2026-09-14: UserIngredient feature completa (backend + frontend). Admin crea ingredienti ufficiali, utenti salvano ingredienti privati (_custom), admin promuove _custom a ufficiale. Deploy prod frontend+backend.**
+> **Sessione 2026-09-14 (cont.): ING-SEC-1/2/3/4 verificati via curl+Django shell (locale). Fix test useIngredientsDB (mockImplementation per URL). 266/266 test verdi.**
 > Production URL: **https://app-consulenze-alimentari.vercel.app**
 
 ---
@@ -25,10 +26,10 @@
 - [ ] **ING-E2E-6** — Dopo promozione → sparisce da `_custom`, appare nel DB ufficiale
 
 ### UserIngredient — Security
-- [ ] **ING-SEC-1** — User non autenticato → 401 su `GET /api/ingredients/user/`
-- [ ] **ING-SEC-2** — User A non vede/modifica/elimina ingredienti di User B (IDOR)
-- [ ] **ING-SEC-3** — User normale → 403 su `POST /api/ingredients/user/{id}/promote/`
-- [ ] **ING-SEC-4** — User normale → 403 su `POST /api/ingredients/` (crea ingrediente ufficiale)
+- [x] **ING-SEC-1** ✅ — User non autenticato → 401 su `GET /api/ingredients/user/`. ✅ 2026-09-14
+- [x] **ING-SEC-2** ✅ — IDOR safe: lista filtrata per owner; PATCH/DELETE su ing altrui → 404. ✅ 2026-09-14
+- [x] **ING-SEC-3** ✅ — User normale → 403 su `POST /api/ingredients/user/{id}/promote/`. ✅ 2026-09-14
+- [x] **ING-SEC-4** ✅ — User normale → 401/403 su `POST /api/ingredients/` (crea ingrediente ufficiale). ✅ 2026-09-14
 
 ### UserIngredient — Infra
 - [ ] **ING-DATA-1** — Migrazione `0008_user_ingredient` applicata in prod (tabella `ingredients_useringredient` esiste in Neon)
