@@ -60,14 +60,14 @@ describe('AuthContext — AUTH-2: nessun fallback su errore backend', () => {
         expect(ok).toBe(false);
         expect(result.current.user).toBeNull();
         expect(result.current.isAuthenticated).toBe(false);
-        expect(sessionStorage.getItem('aea_user')).toBeNull();
+        expect(localStorage.getItem('aea_user')).toBeNull();
     });
 
     it('mount: se apiMe() fallisce, ignora una cache aea_user manomessa (es. role admin) e slogga', async () => {
-        // Simula un utente che ha modificato sessionStorage per auto-elevarsi ad admin.
+        // Simula un utente che ha modificato localStorage per auto-elevarsi ad admin.
         localStorage.setItem('aea_access', 'token-falso-o-scaduto');
         localStorage.setItem('aea_refresh', 'refresh-falso-o-scaduto');
-        sessionStorage.setItem('aea_user', JSON.stringify({
+        localStorage.setItem('aea_user', JSON.stringify({
             id: 'fake', email: 'attacker@example.com', password: '', name: 'Attacker',
             company: '', role: 'admin',
             purchasedTools: ['nutrizionale', 'etichette', 'etichette-vini', 'rintracciabilita', 'trattamento-termico', 'schede-complete', 'scheda-processo', 'excel-import'],
@@ -83,7 +83,7 @@ describe('AuthContext — AUTH-2: nessun fallback su errore backend', () => {
         });
 
         expect(result.current.isAuthenticated).toBe(false);
-        expect(sessionStorage.getItem('aea_user')).toBeNull();
+        expect(localStorage.getItem('aea_user')).toBeNull();
         expect(localStorage.getItem('aea_access')).toBeNull();
         expect(localStorage.getItem('aea_refresh')).toBeNull();
     });
