@@ -37,7 +37,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const [user, setUser] = useState<User | null>(() => {
         // In mock mode: sempre loggato, nessuna chiamata backend
         if (DEV_MOCK_ENABLED) return DEV_MOCK_USER;
-        const cached = sessionStorage.getItem(CACHE_KEY);
+        const cached = localStorage.getItem(CACHE_KEY);
         if (cached) {
             try { return JSON.parse(cached) as User; } catch { /* cache corrotta */ }
         }
@@ -56,13 +56,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         apiMe()
             .then((freshUser) => {
                 setUser(freshUser);
-                sessionStorage.setItem(CACHE_KEY, JSON.stringify(freshUser));
+                localStorage.setItem(CACHE_KEY, JSON.stringify(freshUser));
             })
             .catch(() => {
                 setUser(prev => {
                     // Se lo stato è cambiato dal mount (login avvenuto), non sovrascrivere
                     if (prev !== userAtMount) return prev;
-                    sessionStorage.removeItem(CACHE_KEY);
+                    localStorage.removeItem(CACHE_KEY);
                     localStorage.removeItem('aea_access');
                     localStorage.removeItem('aea_refresh');
                     return null;
@@ -81,7 +81,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         try {
             const loggedUser = await apiLogin(email, password);
             setUser(loggedUser);
-            sessionStorage.setItem(CACHE_KEY, JSON.stringify(loggedUser));
+            localStorage.setItem(CACHE_KEY, JSON.stringify(loggedUser));
             return true;
         } catch {
             return false;
@@ -90,7 +90,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const logout = (): void => {
         setUser(null);
-        sessionStorage.removeItem(CACHE_KEY);
+        localStorage.removeItem(CACHE_KEY);
         void apiLogout(); // fire-and-forget: blacklist refresh token sul server
     };
 
