@@ -1504,7 +1504,7 @@ export function EtichetteCalc() {
         }
     };
     const handleExportFront = () => exportFace(labelPreviewRef, data.widthMm, 'front', `fronte_${data.widthMm}x${data.heightMm}mm`);
-    const handleExportBack = () => exportFace(labelBackPreviewRef, data.backWidthMm, 'back', `retro_${data.backWidthMm}mm`);
+    const handleExportBack = () => exportFace(labelBackPreviewRef, data.backWidthMm, 'back', `retro_${data.backWidthMm}x${data.backHeightMm}mm`);
 
     // M6 — scheda etichetta completa per grafico/tipografia (Guida PDF cap. 13): a differenza
     // dell'export fronte/retro (dimensione fisica reale, solo ciò che va in stampa), qui va
@@ -1701,6 +1701,17 @@ export function EtichetteCalc() {
     // Opzione B — formati orizzontali larghi: corpo testo e tabella+imballi si affiancano invece
     // di impilarsi, per non sprecare la larghezza extra (stessa gerarchia, solo due colonne).
     const useTwoColumnFront = shouldUseTwoColumnLayout(Number(data.widthMm), Number(data.heightMm));
+
+    // ponytail: paddingBottom su textContainerRef — riserva spazio per barcode/QR in
+    // posizione default (88%) così il testo non finisce sotto i codici. Upgrade: layout
+    // engine che calcola collisioni reali se servono posizioni arbitrarie.
+    const codePaddingBottomPx = (() => {
+        const barcodeHeightMm = showCodeFront ? (EAN13_TRUNCATED_MIN_HEIGHT_MM + 3) : 0;
+        const qrHeightMm = (data.qrEnabled && !!data.qrValue && onFront('code')) ? 20 * (data.qrScale / 100) : 0;
+        const maxCodeMm = Math.max(barcodeHeightMm, qrHeightMm);
+        if (maxCodeMm === 0) return 0;
+        return (maxCodeMm + 4) * pxPerMmFront; // +4mm margine
+    })();
     const useTwoColumnBack = data.hasBackLabel && shouldUseTwoColumnLayout(Number(data.backWidthMm), Number(data.backHeightMm));
 
     const leftPanel = (
@@ -2449,6 +2460,15 @@ export function EtichetteCalc() {
         </div>
     );
 
+    // rUE_micro: stessa logica di TabUE.tsx (non esportata), usata solo per scheda M6.
+    const rUE_micro = (v: number): string => {
+        if (v < 0.1) return '0';
+        if (v < 10) { const s = v.toFixed(1); return s.endsWith('.0') ? String(Math.round(v)) : s; }
+        return String(Math.round(v));
+    };
+    // Set nutrienti in µg (non mg) — da TabUE.tsx riga 184-205.
+    const MICRO_KEYS = new Set(['vitA','vitD','vitK','vitB9','vitB12','selenio','iodio']);
+
     // M6 — tabella nutrizionale dedicata alla scheda per grafico/tipografia, in tabella HTML
     // semplice (bordi reali, no flex/WebkitTextStroke): TabUE è un componente ufficiale
     // protetto, non toccarlo, ma i suoi flex annidati non catturano in modo affidabile con
@@ -2480,7 +2500,8 @@ export function EtichetteCalc() {
             if (!autoSelectedOptionals[k]) continue;
             const ref = MINERAL_VITAMIN_AR[k]!;
             const v = per100[ref.field] as number;
-            rows.push({ label: k, value: `${rUE_macro(v)} mg`, ar: `${Math.round(v / ref.ar * 100)}%` });
+            const isMicro = MICRO_KEYS.has(k);
+            rows.push({ label: k, value: `${isMicro ? rUE_micro(v) : rUE_macro(v)} ${isMicro ? 'µg' : 'mg'}`, ar: `${Math.round(v / ref.ar * 100)}%` });
         }
         return (
             <table style={{ width: '100%', borderCollapse: 'collapse' }}>
@@ -2619,6 +2640,7 @@ export function EtichetteCalc() {
                                             : 'transparent',
                                         overflow: 'hidden',
                                         display: 'flex', flexDirection: 'column',
+                                        paddingBottom: codePaddingBottomPx > 0 ? codePaddingBottomPx : undefined,
                                     }}>
                                         {/* Logo — draggabile direttamente sull'etichetta */}
                                         {data.logoUrl && (

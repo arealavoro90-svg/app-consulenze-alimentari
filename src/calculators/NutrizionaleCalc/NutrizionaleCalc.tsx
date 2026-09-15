@@ -251,7 +251,7 @@ export function NutrizionaleCalc() {
     // ponytail: servingValsRef / auto-open effect rimossi — porzioni sempre visibili
 
     const { items: archiveItems, saveItem, deleteItem, pendingMigration, migrateLocalToBackend, dismissMigration } = useArchive<ArchiveData>('nutrizionale-v3', 'nutrizionale');
-    const [, setCurrentId] = useState<string | undefined>(undefined);
+    const [currentId, setCurrentId] = useState<string | undefined>(undefined);
     const [, setCurrentName] = useState('');
     const [isFlashing, setIsFlashing] = useState(false);
     const [lastAddedRowId, setLastAddedRowId] = useState('');
@@ -572,7 +572,9 @@ export function NutrizionaleCalc() {
     // Archive save/load
     const handleSave = async () => {
         const name = productName || 'Ricetta';
-        const existing = archiveItems.find(i => i.name === name);
+        const existing = currentId
+            ? archiveItems.find(i => i.id === currentId)
+            : archiveItems.find(i => i.name === name);
         const snap = JSON.stringify(draftData);
         try {
             const savedId = await saveItem(name, {

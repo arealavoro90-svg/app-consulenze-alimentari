@@ -163,7 +163,7 @@ export function useArchive<T>(storageKey: string, tool?: string) {
             }
             setItems((prev) => {
                 const updated = prev.filter((t) => t.id !== id);
-                writeLocal(storageKey, updated);
+                if (!useBackend) writeLocal(storageKey, updated);
                 return updated;
             });
         },
@@ -177,8 +177,13 @@ export function useArchive<T>(storageKey: string, tool?: string) {
      */
     const migrateLocalToBackend = useCallback(async (): Promise<void> => {
         if (!tool || !useBackend) return;
-        for (const item of pendingMigration) {
-            await createArchive(tool, item.name, item.data);
+        try {
+            for (const item of pendingMigration) {
+                await createArchive(tool, item.name, item.data);
+            }
+        } catch {
+            warning('Migrazione parzialmente fallita. Riprova.');
+            return;
         }
         localStorage.removeItem(storageKey);
         localStorage.setItem(migrationKey(tool), '1');
