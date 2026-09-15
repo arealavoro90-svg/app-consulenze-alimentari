@@ -89,7 +89,15 @@ export function useArchive<T>(storageKey: string, tool?: string) {
 
                 // Se il backend restituisce un array vuoto, mostra i dati localStorage
                 // (es. salvataggi avvenuti durante cold start backend).
-                setItems(mapped.length > 0 ? mapped : readLocal<T>(storageKey));
+                if (mapped.length > 0) {
+                    // Sincronizza localStorage come cache: altri tool (es. EtichetteCalc) che
+                    // leggono la stessa storageKey senza tool ricevono dati aggiornati.
+                    // Usato anche come fallback al logout (useBackend → false).
+                    writeLocal(storageKey, mapped);
+                    setItems(mapped);
+                } else {
+                    setItems(readLocal<T>(storageKey));
+                }
 
                 // Controlla se ci sono dati locali da migrare (one-shot).
                 if (!localStorage.getItem(migrationKey(tool))) {
@@ -121,11 +129,13 @@ export function useArchive<T>(storageKey: string, tool?: string) {
                     };
 
                     lastSaveTimeRef.current = Date.now();
-                    setItems((prev) =>
-                        isNaN(numericId)
+                    setItems((prev) => {
+                        const updated = isNaN(numericId)
                             ? [mapped, ...prev]
-                            : prev.map((it) => (it.id === existingId ? mapped : it))
-                    );
+                            : prev.map((it) => (it.id === existingId ? mapped : it));
+                        writeLocal(storageKey, updated); // cache per logout e altri tool read-only
+                        return updated;
+                    });
                     return mapped.id;
                 } catch {
                     // Backend non disponibile — fallback a localStorage.
@@ -163,7 +173,7 @@ export function useArchive<T>(storageKey: string, tool?: string) {
             }
             setItems((prev) => {
                 const updated = prev.filter((t) => t.id !== id);
-                if (!useBackend) writeLocal(storageKey, updated);
+                writeLocal(storageKey, updated); // aggiorna cache in entrambe le modalità
                 return updated;
             });
         },

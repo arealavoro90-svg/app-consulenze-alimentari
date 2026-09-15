@@ -117,7 +117,6 @@ export function MobileShell({ pageLabel = 'Dashboard', insideTool = false }: Mob
                 <Outlet />
             </div>
 
-            {!insideTool && (
             <nav className="m-tabbar" aria-label="Navigazione principale">
                 {/* Home always first */}
                 <NavLink
@@ -183,11 +182,10 @@ export function MobileShell({ pageLabel = 'Dashboard', insideTool = false }: Mob
                     </button>
                 )}
             </nav>
-            )}
         </div>
 
         {/* ── Overflow tool drawer ── */}
-        {drawerOpen && !insideTool && (
+        {drawerOpen && (
             <>
                 {/* Backdrop */}
                 <div

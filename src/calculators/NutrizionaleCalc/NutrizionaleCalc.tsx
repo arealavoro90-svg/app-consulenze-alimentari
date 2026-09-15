@@ -672,6 +672,7 @@ export function NutrizionaleCalc() {
         setPzUVRaw(restoredPzUVRaw);
         setCurrentId(item.id);
         setCurrentName(item.name);
+        try { localStorage.setItem('aea_last_recipe', JSON.stringify({ id: item.id, name: item.name })); } catch { /* noop */ }
         setArchiveOpen(false);
         writeBridge(buildDesktopDraft(d, compsToSet));
     };
