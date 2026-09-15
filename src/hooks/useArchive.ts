@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useAuth } from '../auth/AuthContext';
 import { useToast } from '../components/ui/Toast';
 import {
@@ -60,6 +60,10 @@ export function useArchive<T>(storageKey: string, tool?: string) {
     // Dati locali non ancora migrati (mostrati al chiamante per proporre migrazione).
     const [pendingMigration, setPendingMigration] = useState<ArchiveItem<T>[]>([]);
 
+    // Timestamp dell'ultimo salvataggio. Previene che una listArchive in volo
+    // sovrascriva lo state dopo un save più recente (race condition al mount).
+    const lastSaveTimeRef = useRef<number>(0);
+
     // Carica archivio al mount e quando cambia il contesto auth.
     useEffect(() => {
         if (!useBackend || !tool) {
@@ -68,16 +72,24 @@ export function useArchive<T>(storageKey: string, tool?: string) {
             return;
         }
 
+        const fetchStartTime = Date.now();
         setLoading(true);
         listArchive(tool)
             .then((backendItems) => {
+                // Race condition guard: se un save è avvenuto dopo che questa
+                // fetch è partita, lo state locale è più aggiornato — non sovrascrivere.
+                if (lastSaveTimeRef.current > fetchStartTime) return;
+
                 const mapped: ArchiveItem<T>[] = backendItems.map((b) => ({
                     id: String(b.id),
                     name: b.name,
                     date: b.created_at,
                     data: b.data as T,
                 }));
-                setItems(mapped);
+
+                // Se il backend restituisce un array vuoto, mostra i dati localStorage
+                // (es. salvataggi avvenuti durante cold start backend).
+                setItems(mapped.length > 0 ? mapped : readLocal<T>(storageKey));
 
                 // Controlla se ci sono dati locali da migrare (one-shot).
                 if (!localStorage.getItem(migrationKey(tool))) {
@@ -108,6 +120,7 @@ export function useArchive<T>(storageKey: string, tool?: string) {
                         data: backendItem.data as T,
                     };
 
+                    lastSaveTimeRef.current = Date.now();
                     setItems((prev) =>
                         isNaN(numericId)
                             ? [mapped, ...prev]
@@ -128,6 +141,7 @@ export function useArchive<T>(storageKey: string, tool?: string) {
                 data,
             };
 
+            lastSaveTimeRef.current = Date.now();
             setItems((prev) => {
                 const updated =
                     existingId && prev.some((t) => t.id === existingId)
