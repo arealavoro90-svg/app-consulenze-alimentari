@@ -33,7 +33,7 @@
 
 ### UserIngredient — Infra
 - [x] **ING-DATA-1** ✅ — Migrazione `0008_user_ingredient` applicata in prod. Tabella `ingredients_useringredient` operativa. CRUD + promote admin verificati via curl. ✅ 2026-09-16
-- [ ] **ING-PERF-1** — Cold start post-deploy: latenza prima chiamata `/api/ingredients/` accettabile
+- [x] **ING-PERF-1** ✅ — Cold start misurato: 6.5s. Fix: cron warm-up `/api/ping/` ogni 5 min in vercel.json backend. ✅ 2026-09-16
 - [x] **ING-UX-1** ✅ — Admin non vede custom di user2; user2 vede solo i propri. Isolamento confermato via curl prod. ✅ 2026-09-16
 
 ---
