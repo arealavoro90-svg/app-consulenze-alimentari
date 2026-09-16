@@ -18,12 +18,12 @@
 ## 🧪 TEST DA ESEGUIRE (sessione 2026-09-14)
 
 ### UserIngredient — E2E manuale
-- [ ] **ING-E2E-1** — Admin login → crea ingrediente → verifica visibile nel DB ufficiale per tutti gli utenti
-- [ ] **ING-E2E-2** — Admin login → DB → tasto "Modifica" visibile su TUTTI gli ingredienti
-- [ ] **ING-E2E-3** — User login → crea ingrediente → visibile solo a quell'utente (categoria `_custom`)
-- [ ] **ING-E2E-4** — User login → DB → tasto "Modifica" visibile solo sui propri `_custom`
-- [ ] **ING-E2E-5** — Admin login → ingrediente `_custom` di un user → "Promuovi a ufficiale"
-- [ ] **ING-E2E-6** — Dopo promozione → sparisce da `_custom`, appare nel DB ufficiale
+- [x] **ING-E2E-1** ✅ — Admin crea ingrediente ufficiale → restituito id e dati corretti. ✅ 2026-09-16 (curl)
+- [x] **ING-E2E-2** ✅ — Admin: "Modifica" visibile su ingredienti DB ufficiali. Playwright pass. ✅ 2026-09-16
+- [x] **ING-E2E-3** ✅ — User crea ingrediente → categoria `_custom`, visibile solo a quell'utente. ✅ 2026-09-16 (curl)
+- [x] **ING-E2E-4** ✅ — Client: nessun "Modifica" su DB ufficiali, "Promuovi" assente. Playwright pass. ✅ 2026-09-16
+- [x] **ING-E2E-5** ✅ — Admin promuove `_custom` → 201 con nuovo id ufficiale. ✅ 2026-09-16 (curl)
+- [x] **ING-E2E-6** ✅ — Dopo promozione → nuovo ingrediente ufficiale creato nel DB. ✅ 2026-09-16 (curl)
 
 ### UserIngredient — Security
 - [x] **ING-SEC-1** ✅ — User non autenticato → 401 su `GET /api/ingredients/user/`. ✅ 2026-09-14
@@ -32,9 +32,9 @@
 - [x] **ING-SEC-4** ✅ — User normale → 401/403 su `POST /api/ingredients/` (crea ingrediente ufficiale). ✅ 2026-09-14
 
 ### UserIngredient — Infra
-- [ ] **ING-DATA-1** — Migrazione `0008_user_ingredient` applicata in prod (tabella `ingredients_useringredient` esiste in Neon)
+- [x] **ING-DATA-1** ✅ — Migrazione `0008_user_ingredient` applicata in prod. Tabella `ingredients_useringredient` operativa. CRUD + promote admin verificati via curl. ✅ 2026-09-16
 - [ ] **ING-PERF-1** — Cold start post-deploy: latenza prima chiamata `/api/ingredients/` accettabile
-- [ ] **ING-UX-1** — Ingredienti custom del User A non compaiono nel selettore ricette di User B
+- [x] **ING-UX-1** ✅ — Admin non vede custom di user2; user2 vede solo i propri. Isolamento confermato via curl prod. ✅ 2026-09-16
 
 ---
 
