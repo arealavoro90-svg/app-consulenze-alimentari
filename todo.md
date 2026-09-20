@@ -73,7 +73,7 @@
 - [x] **COD-07-LOGIN / SEC-11-CACHE** ✅ — `django-redis` in requirements + CACHES Redis graceful in `production.py`. `REDIS_URL` Upstash configurata su Vercel e attiva in prod. ✅ 2026-09-10
 
 - [x] **SEC-CACHE-VERIFY** ✅ — `REDIS_URL` confermata presente in Vercel Production (Secret, Sep 10). Redis Upstash attivo. Throttling globale tra worker OK. ✅ 2026-09-20
-  ⚠️ Nota: `ADMIN_PASSWORD` e `SECRET_KEY` mostrano "Needs Attention" in Vercel — probabilmente salvate come Config invece di Secret. Verificare e riconvertire in Secret da pannello Vercel (operazione manuale tua).
+  ✅ Nota: `ADMIN_PASSWORD` e `SECRET_KEY` riconvertite in Secret nel pannello Vercel. ✅ 2026-09-20
 
 ### Normativa
 
@@ -170,8 +170,7 @@
 - [x] **PERF-LAZY-PDF** ✅ — `html2canvas` + `pdfGenerator` convertiti in dynamic `import()` in `EtichetteCalc.tsx` (3 handler: `handlePDF`, `exportFace`, `handleSchedaPDF`). Bundle iniziale ridotto ~650KB. ✅ 2026-09-20
 - [x] **ARCH-ROUND-UTIL** ✅ — `scaleResult` estratta come funzione generica in `nutritionalRounding.ts`. Rimosso da 5 Tab file, ~40 righe di duplicazione eliminate. 266/266 test verdi. ✅ 2026-09-20
   **Fix:** singola funzione `roundByRegion(value, region, nutrient)` in `src/utils/rounding.ts`. Effort: 4h.
-- [ ] **ARCH-API-VERSION** 🟡 — Nessun versionamento API. Ogni breaking change rompe backward compat.
-  **Fix:** prefissare `/api/v1/` nei prossimi 3 mesi prima del lancio commerciale. Effort: 1gg.
+- [x] **ARCH-API-VERSION** ✅ — Prefissati 7 endpoint business con `/api/v1/`. Infra endpoints invariati (cron). ✅ 2026-09-20
 - [ ] **UX-FORM-ZOD** 🟡 — Validazione form inconsistente: alcuni real-time, alcuni solo su submit, errori API non sempre inline.
   **Fix:** schema Zod unificato per ogni form, errori sempre sotto il campo. Effort: 1gg.
 - [ ] **A11Y-1** — Audit accessibilità completo.
