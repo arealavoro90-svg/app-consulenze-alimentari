@@ -175,7 +175,6 @@
 ### Pagamenti / crescita
 
 - [ ] **UX-PAY** — Integrazione pagamenti / gestione abbonamento.
-- [ ] **EXP-1** — Export/import archivi ricette JSON.
 - [x] **UX-OB** ✅ — Guida rapida floating button + WelcomeModal step-based già presente in Dashboard. ✅ 2026-09-10
 
 ---
