@@ -168,7 +168,7 @@
 - [ ] **TD-2 / COD-05** — Ridurre duplicazione desktop/mobile NutrizionaleCalc (~2000 righe).
 - [x] **TD-4 / E2E-1** ✅ — E2E test Playwright: `lasagna.spec.ts` + `auth.spec.ts` (login fallito/corretto/logout) + `archive.spec.ts` (salva/carica/elimina). ✅ 2026-09-10
 - [x] **PERF-LAZY-PDF** ✅ — `html2canvas` + `pdfGenerator` convertiti in dynamic `import()` in `EtichetteCalc.tsx` (3 handler: `handlePDF`, `exportFace`, `handleSchedaPDF`). Bundle iniziale ridotto ~650KB. ✅ 2026-09-20
-- [ ] **ARCH-ROUND-UTIL** 🟡 — ~125 righe di logica arrotondamento quasi identica in `Tab{UE,USA,Canada,Australia,Arabi}.tsx`.
+- [x] **ARCH-ROUND-UTIL** ✅ — `scaleResult` estratta come funzione generica in `nutritionalRounding.ts`. Rimosso da 5 Tab file, ~40 righe di duplicazione eliminate. 266/266 test verdi. ✅ 2026-09-20
   **Fix:** singola funzione `roundByRegion(value, region, nutrient)` in `src/utils/rounding.ts`. Effort: 4h.
 - [ ] **ARCH-API-VERSION** 🟡 — Nessun versionamento API. Ogni breaking change rompe backward compat.
   **Fix:** prefissare `/api/v1/` nei prossimi 3 mesi prima del lancio commerciale. Effort: 1gg.

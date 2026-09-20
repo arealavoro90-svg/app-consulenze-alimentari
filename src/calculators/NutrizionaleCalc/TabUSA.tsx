@@ -1,4 +1,5 @@
 import React from 'react';
+import { scaleResult } from '../../utils/nutritionalRounding';
 
 // ─── Exported types ─────────────────────────────────────────────────────────
 export type USAServingRef = 'serving' | 'confezione';
@@ -43,17 +44,6 @@ const ZERO_CALC: CalcResult = {
     vitB9: 0, vitB12: 0,
 };
 
-function scaleResult(r: CalcResult, grams: number): CalcResult {
-    const f = grams / 100;
-    const s: CalcResult = { ...ZERO_CALC };
-    for (const k of Object.keys(r) as (keyof CalcResult)[]) {
-        const val = r[k];
-        if (typeof val === 'number') {
-            (s as unknown as Record<string, number>)[k] = val * f;
-        }
-    }
-    return s;
-}
 
 // ─── FDA 21 CFR 101.9 rounding ───────────────────────────────────────────────
 function rEnergy(v: number): number {
@@ -559,7 +549,7 @@ export function TabUSA({ p, usa, specificGravity, servingRef, measure, subTab }:
         servingRef,
     };
 
-    const d = si.refGrams > 0 ? scaleResult(p, si.refGrams) : p;
+    const d = si.refGrams > 0 ? scaleResult(p, ZERO_CALC, si.refGrams) : p;
     const rows = buildRows(d);
     const vitamins = buildVitamins(d);
     const addedSugarsG = rG(d.zuccheri_agg);

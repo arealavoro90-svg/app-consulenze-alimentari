@@ -1,5 +1,20 @@
 // Rounding helpers for regional nutrition label tables (Canada, Australia, Arabi)
 
+// ─── Shared scale helper ──────────────────────────────────────────────────────
+/** Scale a per-100g CalcResult to an arbitrary gram amount. Generic so each
+ *  regional Tab can pass its own ZERO_CALC without a shared CalcResult type. */
+export function scaleResult<T>(r: T, zeros: T, grams: number): T {
+    const f = grams / 100;
+    const s = { ...zeros } as T;
+    for (const k of Object.keys(r as object) as (keyof T)[]) {
+        const val = (r as Record<string, unknown>)[k as string];
+        if (typeof val === 'number') {
+            (s as Record<string, number>)[k as string] = val * f;
+        }
+    }
+    return s;
+}
+
 // ─── Canada (Canadian Food Inspection Agency, SOR/2022-168) ──────────────────
 export function rCA_energy(v: number): string {
     if (v < 5) return '0';

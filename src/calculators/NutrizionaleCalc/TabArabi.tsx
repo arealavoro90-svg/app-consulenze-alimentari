@@ -1,3 +1,4 @@
+import { scaleResult } from '../../utils/nutritionalRounding';
 // ─── Shared types ─────────────────────────────────────────────────────────────
 export interface CalcResult {
     energyKcal: number; energyKj: number; grassi: number; saturi: number;
@@ -30,14 +31,6 @@ const ZERO_CALC: CalcResult = {
     vitA_eq: 0, vitD: 0, vitE: 0, vitC: 0, vitB1: 0, vitB2: 0, vitB3: 0, vitB6: 0,
     vitB9: 0, vitB12: 0,
 };
-function scaleResult(r: CalcResult, grams: number): CalcResult {
-    const f = grams / 100;
-    const s: CalcResult = { ...ZERO_CALC };
-    for (const k of Object.keys(r) as (keyof CalcResult)[]) {
-        (s as unknown as Record<string, number>)[k] = (r as unknown as Record<string, number>)[k] * f;
-    }
-    return s;
-}
 
 // ─── Rounding helpers (Gulf) — sorgente: versione desktop (TAB-UNIFY 2026-07-17) ──
 function arRndE(v: number): number { return Math.round(v); }
@@ -89,7 +82,7 @@ export function TabArabi({ p, arabi, servingRef, measure, specificGravity }: {
 }) {
     const unit = (specificGravity ?? 0) > 0 ? 'ml' : 'g';
     const si = buildArabiSI(arabi, servingRef, measure, unit);
-    const d  = si.refGrams > 0 ? scaleResult(p, si.refGrams) : p;
+    const d  = si.refGrams > 0 ? scaleResult(p, ZERO_CALC, si.refGrams) : p;
     const F  = 'Arial, Helvetica, sans-serif';
 
     const addedSugarsStr = arFmtG(d.zuccheri_agg);

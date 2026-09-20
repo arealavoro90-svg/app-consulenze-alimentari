@@ -1,3 +1,4 @@
+import { scaleResult } from '../../utils/nutritionalRounding';
 // ─── Exported types ───────────────────────────────────────────────────────────
 export type EUSubTab = '100g' | 'uv' | 'porzione' | 'pezzo';
 
@@ -110,17 +111,6 @@ const ZERO_CALC: CalcResult = {
     vitB9: 0, vitB12: 0, vitK: 0, vitB5: 0,
 };
 
-function scaleResult(r: CalcResult, grams: number): CalcResult {
-    const f = grams / 100;
-    const s: CalcResult = { ...ZERO_CALC };
-    for (const k of Object.keys(r) as (keyof CalcResult)[]) {
-        const val = r[k];
-        if (typeof val === 'number') {
-            (s as unknown as Record<string, number>)[k] = val * f;
-        }
-    }
-    return s;
-}
 
 // ─── Local interfaces (moved to module level) ─────────────────────────────────
 interface UERow {
@@ -146,9 +136,9 @@ interface TabUEProps {
 
 export function TabUE({ p, ue, specificGravity, selectedOptionals, showOptionals, activeSubTab }: TabUEProps) {
     const scaled: CalcResult = (() => {
-        if (activeSubTab === 'uv' && ue.confezione) return scaleResult(p, ue.confezione);
-        if (activeSubTab === 'porzione' && ue.porzione) return scaleResult(p, ue.porzione);
-        if (activeSubTab === 'pezzo' && ue.pezzo) return scaleResult(p, ue.pezzo);
+        if (activeSubTab === 'uv' && ue.confezione) return scaleResult(p, ZERO_CALC, ue.confezione);
+        if (activeSubTab === 'porzione' && ue.porzione) return scaleResult(p, ZERO_CALC, ue.porzione);
+        if (activeSubTab === 'pezzo' && ue.pezzo) return scaleResult(p, ZERO_CALC, ue.pezzo);
         return p;
     })();
 

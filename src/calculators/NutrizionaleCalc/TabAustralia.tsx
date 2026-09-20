@@ -1,5 +1,5 @@
 import React from 'react';
-import { rAU_kj, rAU_kcal, rAU_g1, rAU_mg } from '../../utils/nutritionalRounding';
+import { scaleResult, rAU_kj, rAU_kcal, rAU_g1, rAU_mg } from '../../utils/nutritionalRounding';
 
 // ─── Shared types ─────────────────────────────────────────────────────────────
 export interface CalcResult {
@@ -31,19 +31,11 @@ const ZERO_CALC: CalcResult = {
     vitA_eq: 0, vitD: 0, vitE: 0, vitC: 0, vitB1: 0, vitB2: 0, vitB3: 0, vitB6: 0,
     vitB9: 0, vitB12: 0,
 };
-function scaleResult(r: CalcResult, grams: number): CalcResult {
-    const f = grams / 100;
-    const s: CalcResult = { ...ZERO_CALC };
-    for (const k of Object.keys(r) as (keyof CalcResult)[]) {
-        (s as unknown as Record<string, number>)[k] = (r as unknown as Record<string, number>)[k] * f;
-    }
-    return s;
-}
 
 // ─── Component — markup UNIFICATO (sorgente: versione desktop, TAB-UNIFY 2026-07-17) ──
 export function TabAustralia({ p, au }: { p: CalcResult; au: ServingSizesNation }) {
     const svG = au.serving || 0;
-    const sv = svG > 0 ? scaleResult(p, svG) : null;
+    const sv = svG > 0 ? scaleResult(p, ZERO_CALC, svG) : null;
     const pkgG = au.confezione || 0;
     const servingsPerPkg = (svG > 0 && pkgG > 0) ? pkgG / svG : null;
 
