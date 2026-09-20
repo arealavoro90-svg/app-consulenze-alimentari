@@ -208,7 +208,7 @@ export function useArchive<T>(storageKey: string, tool?: string) {
                 data: b.data as T,
             })),
         );
-    }, [tool, useBackend, pendingMigration, storageKey]);
+    }, [tool, useBackend, pendingMigration, storageKey, warning]);
 
     /**
      * Scarta la migrazione senza farlo. Segna come già gestita.
