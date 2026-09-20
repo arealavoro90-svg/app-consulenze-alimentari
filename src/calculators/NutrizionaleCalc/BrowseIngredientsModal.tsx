@@ -3,6 +3,7 @@ import { useAuth } from '../../auth/AuthContext';
 import { promoteUserIngredient, deleteUserIngredient } from '../../api/ingredients';
 import { useToast } from '../../components/ui/Toast';
 import { ConfirmDialog } from '../../components/ui/ConfirmDialog';
+import { useFocusTrap } from '../../hooks/useFocusTrap';
 
 interface DBIngredient {
     nome: string; etichetta: string;
@@ -205,6 +206,7 @@ export function BrowseIngredientsModal({ onClose, db, onEditIngredient, onPromot
     const { user } = useAuth();
     const { success, error: toastError } = useToast();
     const isAdmin = user?.role === 'admin';
+    const trapRef = useFocusTrap<HTMLDivElement>(true);
 
     useEffect(() => {
         const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
@@ -308,7 +310,7 @@ export function BrowseIngredientsModal({ onClose, db, onEditIngredient, onPromot
 
     return (<>
         <div style={overlayStyle} onClick={onClose} role="dialog" aria-modal="true" aria-label="Sfoglia ingredienti">
-            <div style={cardStyle} onClick={e => e.stopPropagation()}>
+            <div ref={trapRef} style={cardStyle} onClick={e => e.stopPropagation()}>
                 {/* Header */}
                 <div style={headerStyle}>
                     <h2 style={{ margin: 0, fontSize: 18 }}>Sfoglia ingredienti DB</h2>

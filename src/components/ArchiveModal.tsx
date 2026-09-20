@@ -3,6 +3,7 @@ import { Archive, X, Search, Calendar, Trash2, Copy, Download, Upload } from 'lu
 import type { ArchiveItem } from '../hooks/useArchive';
 import { ConfirmDialog } from './ui/ConfirmDialog';
 import { useToast } from './ui/Toast';
+import { useFocusTrap } from '../hooks/useFocusTrap';
 
 export function ArchiveModal<T>({
     items,
@@ -31,6 +32,7 @@ export function ArchiveModal<T>({
     const [search, setSearch] = useState('');
     const fileInputRef = useRef<HTMLInputElement>(null);
     const { success } = useToast();
+    const trapRef = useFocusTrap<HTMLDivElement>(true);
 
     function handleExport() {
         const blob = new Blob([JSON.stringify(items, null, 2)], { type: 'application/json' });
@@ -80,7 +82,7 @@ export function ArchiveModal<T>({
                 backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 1000,
                 display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16
             }}>
-                <div className="card" style={{ width: '100%', maxWidth: 'min(600px, calc(100vw - 32px))', maxHeight: '85vh', display: 'flex', flexDirection: 'column' }}>
+                <div ref={trapRef} className="card" role="dialog" aria-modal="true" aria-label="Archivio" style={{ width: '100%', maxWidth: 'min(600px, calc(100vw - 32px))', maxHeight: '85vh', display: 'flex', flexDirection: 'column' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
                         <h2 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
                             <Archive size={20} /> Archivio

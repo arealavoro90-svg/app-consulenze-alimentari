@@ -51,8 +51,7 @@
 
 - [~] **SEC-ARCHIVE-FK** ~~won't fix~~ — mitigato da `perform_create` → `has_tool()`. CASCADE delete introduce rischio maggiore del beneficio. 2026-09-20
 
-- [ ] **INFRA-CRON-WARMUP** 🟡 — Vercel Hobby non supporta cron sub-daily → `/api/ping/` endpoint attivo ma non pingato.
-  **Fix (manuale utente):** configurare cron-job.org → `GET https://backend-snowy-seven-98.vercel.app/api/ping/` ogni 5 min. Effort: 15 min.
+- [x] **INFRA-CRON-WARMUP** ✅ — cron-job.org configurato: `GET https://backend-snowy-seven-98.vercel.app/api/ping` ogni 5 min. ✅ 2026-09-20
 
 - [ ] **GDPR-1** 🔴 — Redigere e pubblicare (**solo tuo**):
   - Informativa privacy Art. 13 GDPR (titolare: AEA, finalità, base giuridica, conservazione, diritti)

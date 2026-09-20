@@ -6,6 +6,7 @@ import { type DBIngredient, energyFromMacros } from '../../engines/nutrizionaleC
 import { ALLERGEN_FIELDS, CROSS_FIELDS } from './shared/constants';
 import { useAuth } from '../../auth/AuthContext';
 import { createUserIngredient, updateUserIngredient, createOfficialIngredient, updateOfficialIngredient } from '../../api/ingredients';
+import { useFocusTrap } from '../../hooks/useFocusTrap';
 
 // AUDIT E4 — queste quattro liste erano ricopiate a mano qui e avevano già divergito
 // dalla fonte condivisa: mancava `all_grano`/`cross_grano`, quindi un ingrediente creato
@@ -104,6 +105,7 @@ export function CustomIngredientModal({ onClose, onSave, initialIngredient, orig
 }) {
     const { user } = useAuth();
     const isAdmin = user?.role === 'admin';
+    const trapRef = useFocusTrap<HTMLDivElement>(true);
 
     useEffect(() => {
         const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
@@ -374,7 +376,7 @@ export function CustomIngredientModal({ onClose, onSave, initialIngredient, orig
             aria-modal="true"
             aria-labelledby="custom-ing-modal-title"
         >
-            <div className="card" style={{ width: '100%', maxWidth: 700, maxHeight: '92vh', overflowY: 'auto' }}>
+            <div ref={trapRef} className="card" style={{ width: '100%', maxWidth: 700, maxHeight: '92vh', overflowY: 'auto' }}>
 
                 {/* Header */}
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
