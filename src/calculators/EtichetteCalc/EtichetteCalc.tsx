@@ -6,10 +6,10 @@ import {
 } from 'lucide-react';
 import QRCode from 'qrcode';
 import JsBarcode from 'jsbarcode';
-import html2canvas from 'html2canvas';
+// html2canvas: caricato dinamicamente in exportFace per evitare ~650KB nel bundle iniziale
 import { useAuth } from '../../auth/AuthContext';
 import { useMobile } from '../../hooks/useMobile';
-import { generatePDFReport, generateEtichettaPDF } from '../../utils/pdfGenerator';
+// pdfGenerator: caricato dinamicamente in handlePDF/handleSchedaPDF per ridurre bundle iniziale
 import { exportGS1Json, exportGS1Xml } from '../../utils/exportGS1';
 import { useArchive, type ArchiveItem } from '../../hooks/useArchive';
 import { useIngredientsDB } from '../../hooks/useIngredientsDB';
@@ -1274,7 +1274,8 @@ export function EtichetteCalc() {
         resetLabel();
     };
 
-    const handlePDF = () => {
+    const handlePDF = async () => {
+        const { generatePDFReport } = await import('../../utils/pdfGenerator');
         const date = new Date().toLocaleDateString('it-IT');
         generatePDFReport({
             title: 'Etichetta Alimentare',
@@ -1485,7 +1486,8 @@ export function EtichetteCalc() {
             const renderedWidthPx = el.offsetWidth; // offsetWidth: layout px, non affetto da transform del parent (es. mobilePreviewScale)
             const targetWidthPx = mmToPx(Number(widthMm) || 100, PRINT_DPI);
             const scale = targetWidthPx / renderedWidthPx;
-            const canvas = await html2canvas(el, {
+            const { default: html2canvas } = await import('html2canvas');
+        const canvas = await html2canvas(el, {
                 scale,
                 useCORS: true,
                 backgroundColor: face === 'front' && data.bgImageUrl ? null : (data.theme === 'dark' ? '#222222' : '#ffffff'),
@@ -1517,6 +1519,7 @@ export function EtichetteCalc() {
         if (!schedaRef.current) return;
         setExportingScheda(true);
         try {
+            const { generateEtichettaPDF } = await import('../../utils/pdfGenerator');
             const fileName = `scheda_${(data.productName || 'etichetta').replace(/[^a-z0-9]+/gi, '_').toLowerCase()}${data.schedaRevisione ? `_rev${data.schedaRevisione}` : ''}.pdf`;
             await generateEtichettaPDF(schedaRef.current, fileName);
             toast.success('Scheda etichetta esportata — pronta per grafico/tipografia.');

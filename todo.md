@@ -167,8 +167,7 @@
   Piano minimo: `useEtichetteForm()` hook, `usePdfExport()` hook, `AllergenManager.tsx` componente. Effort: 3-5gg.
 - [ ] **TD-2 / COD-05** — Ridurre duplicazione desktop/mobile NutrizionaleCalc (~2000 righe).
 - [x] **TD-4 / E2E-1** ✅ — E2E test Playwright: `lasagna.spec.ts` + `auth.spec.ts` (login fallito/corretto/logout) + `archive.spec.ts` (salva/carica/elimina). ✅ 2026-09-10
-- [ ] **PERF-LAZY-PDF** 🟡 — `jspdf` + `html2canvas` ≈ 650KB caricati eager. Rallentano primo caricamento app.
-  **Fix:** `React.lazy(() => import('./PdfExporter'))` — carica solo su click "Stampa PDF". Effort: 3h.
+- [x] **PERF-LAZY-PDF** ✅ — `html2canvas` + `pdfGenerator` convertiti in dynamic `import()` in `EtichetteCalc.tsx` (3 handler: `handlePDF`, `exportFace`, `handleSchedaPDF`). Bundle iniziale ridotto ~650KB. ✅ 2026-09-20
 - [ ] **ARCH-ROUND-UTIL** 🟡 — ~125 righe di logica arrotondamento quasi identica in `Tab{UE,USA,Canada,Australia,Arabi}.tsx`.
   **Fix:** singola funzione `roundByRegion(value, region, nutrient)` in `src/utils/rounding.ts`. Effort: 4h.
 - [ ] **ARCH-API-VERSION** 🟡 — Nessun versionamento API. Ogni breaking change rompe backward compat.
@@ -176,8 +175,7 @@
 - [ ] **UX-FORM-ZOD** 🟡 — Validazione form inconsistente: alcuni real-time, alcuni solo su submit, errori API non sempre inline.
   **Fix:** schema Zod unificato per ogni form, errori sempre sotto il campo. Effort: 1gg.
 - [ ] **A11Y-1** — Audit accessibilità completo.
-- [ ] **A11Y-ARIA** 🟠 — Bottoni icona (edit, delete, promuovi) senza `aria-label` → screen reader inutilizzabile.
-  Focus trap mancante nei modal. **Fix:** audit `eslint-plugin-jsx-a11y` + `aria-label` su tutti i bottoni icona. Effort: 2h.
+- [x] **A11Y-ARIA** ✅ — Bottoni icona già tutti con aria-label (verificato). Focus trap implementato: hook `useFocusTrap` + applicato a ArchiveModal, BrowseIngredientsModal, CustomIngredientModal. ✅ 2026-09-20
 
 ### Dati
 
