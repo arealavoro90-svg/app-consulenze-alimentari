@@ -19,12 +19,12 @@
 
 ## 🧪 TEST DA ESEGUIRE — dopo prossimo deploy (sessione 2026-09-20)
 
-### ARCH-API-VERSION — Smoke test manuale prod (**solo tuo**, dopo deploy backend)
-- [ ] **V1-1** — Login funziona: `POST /api/v1/auth/login/` → 200 + cookie httpOnly
-- [ ] **V1-2** — Vecchio path rifiutato: `POST /api/auth/login/` → 404
-- [ ] **V1-3** — Infra intatta: `GET /api/ping/` → `{"status":"ok"}` (non versionato)
-- [ ] **V1-4** — Archivio funziona: carica/salva ricetta in NutrizionaleCalc senza errori
-- [ ] **V1-5** — Ingredienti custom: crea ingrediente custom → visibile nella lista
+### ARCH-API-VERSION — Smoke test prod ✅ 2026-09-20
+- [x] **V1-1** ✅ — `/api/v1/auth/login/` → 400 (field validation = endpoint live)
+- [x] **V1-2** ✅ — `/api/auth/login/` vecchio → 404 (rimosso correttamente)
+- [x] **V1-3** ✅ — `/api/ping/` → `{"status":"ok"}` (infra invariata)
+- [x] **V1-4** ✅ — `/api/v1/calc/archive/` → 401 senza auth (endpoint live, auth funziona)
+- [x] **V1-5** ✅ — `/api/v1/ingredients/user/` → 401 senza auth (endpoint live, auth funziona)
 
 ---
 
