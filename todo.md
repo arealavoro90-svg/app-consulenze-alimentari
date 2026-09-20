@@ -180,6 +180,7 @@
 ### Dati
 
 - [x] **DATA-1** ✅ — Validazione 20 ingredienti vs CREA (alimentinutrizione.it). 9/20 divergono >10% (aglio, farina 00, pollo). Report: `docs/data-validation-crea.md`. Fix: `sync_crea.py` su cat. 01/03/06/12. ✅ 2026-09-10
+- [x] **USDA-CREA-SYNC** ✅ — migrate 0006 in prod (auto). Endpoint `/api/sync-crea/` + cron Vercel mensile `0 3 1 * *`. Sync iniziale manuale per categoria (vedi MEMORY). ✅ 2026-09-20
 - [ ] **DATA-2/SYNC-CNF** — Canada Nutrient File
 - [ ] **DATA-3/SYNC-AUSNUT** — Australia AUSNUT 2011-13
 
