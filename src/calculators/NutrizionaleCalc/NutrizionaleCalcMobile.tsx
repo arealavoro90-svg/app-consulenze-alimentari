@@ -580,6 +580,7 @@ export function NutrizionaleCalcMobile() {
                         setEditIngredient({ ing, isCustom });
                     }}
                     onPromote={() => { loadDB(); }}
+                    onDeleteCustom={() => { loadDB(); }}
                 />
             )}
 

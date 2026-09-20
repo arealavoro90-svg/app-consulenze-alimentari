@@ -1270,6 +1270,7 @@ export function NutrizionaleCalc() {
                     db={db}
                     onClose={() => setShowBrowseModal(false)}
                     onPromote={() => { loadDB(); }}
+                    onDeleteCustom={() => { loadDB(); }}
                     onEditIngredient={(ing, isCustom) => {
                         setShowBrowseModal(false);
                         setEditIngredient({ ing, isCustom });

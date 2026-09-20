@@ -1,6 +1,6 @@
 import { Component, type ReactNode, type ErrorInfo } from 'react';
 
-interface Props { children: ReactNode }
+interface Props { children: ReactNode; fallback?: ReactNode }
 interface State { error: Error | null }
 
 /** Boundary top-level: un throw in render mostra questa schermata invece di pagina bianca. */
@@ -20,6 +20,7 @@ export class ErrorBoundary extends Component<Props, State> {
 
     render() {
         if (this.state.error) {
+            if (this.props.fallback !== undefined) return this.props.fallback;
             return (
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', gap: 12, padding: 24, textAlign: 'center' }}>
                     <h1 style={{ fontSize: 20, fontWeight: 700 }}>Si è verificato un errore</h1>

@@ -1,6 +1,8 @@
 import { useState, useMemo, useEffect } from 'react';
 import { useAuth } from '../../auth/AuthContext';
-import { promoteUserIngredient } from '../../api/ingredients';
+import { promoteUserIngredient, deleteUserIngredient } from '../../api/ingredients';
+import { useToast } from '../../components/ui/Toast';
+import { ConfirmDialog } from '../../components/ui/ConfirmDialog';
 
 interface DBIngredient {
     nome: string; etichetta: string;
@@ -39,6 +41,7 @@ interface Props {
     db: DBIngredient[];
     onEditIngredient: (ing: DBIngredient, isCustom: boolean) => void;
     onPromote: (ing: DBIngredient) => void;
+    onDeleteCustom: (ing: DBIngredient) => void;
 }
 
 type MacroRow = { label: string; value: number | undefined; unit: string };
@@ -194,11 +197,13 @@ function ExpandedDetails({ ing }: { ing: DBIngredient }) {
     );
 }
 
-export function BrowseIngredientsModal({ onClose, db, onEditIngredient, onPromote }: Props) {
+export function BrowseIngredientsModal({ onClose, db, onEditIngredient, onPromote, onDeleteCustom }: Props) {
     const [search, setSearch] = useState('');
     const [soloPersonali, setSoloPersonali] = useState(false);
     const [expandedIdx, setExpandedIdx] = useState<number | null>(null);
+    const [pendingDeleteIng, setPendingDeleteIng] = useState<(DBIngredient & { _uid?: string }) | null>(null);
     const { user } = useAuth();
+    const { success, error: toastError } = useToast();
     const isAdmin = user?.role === 'admin';
 
     useEffect(() => {
@@ -301,7 +306,7 @@ export function BrowseIngredientsModal({ onClose, db, onEditIngredient, onPromot
         fontSize: 12, color: 'var(--color-text-muted, #6b7280)', whiteSpace: 'nowrap',
     };
 
-    return (
+    return (<>
         <div style={overlayStyle} onClick={onClose} role="dialog" aria-modal="true" aria-label="Sfoglia ingredienti">
             <div style={cardStyle} onClick={e => e.stopPropagation()}>
                 {/* Header */}
@@ -424,6 +429,20 @@ export function BrowseIngredientsModal({ onClose, db, onEditIngredient, onPromot
                                             Promuovi
                                         </button>
                                     )}
+
+                                    {/* Elimina — utente sui propri custom */}
+                                    {isCustom && (
+                                        <button
+                                            className="btn btn-outline bim-edit-btn"
+                                            style={{ padding: '4px 10px', fontSize: 12, flexShrink: 0, color: 'var(--color-danger, #dc2626)', borderColor: 'var(--color-danger, #dc2626)' }}
+                                            onClick={e => {
+                                                e.stopPropagation();
+                                                setPendingDeleteIng(ing as DBIngredient & { _uid?: string });
+                                            }}
+                                        >
+                                            Elimina
+                                        </button>
+                                    )}
                                 </div>
 
                                 {isExpanded && (
@@ -437,5 +456,30 @@ export function BrowseIngredientsModal({ onClose, db, onEditIngredient, onPromot
                 </div>
             </div>
         </div>
+
+        {pendingDeleteIng && (
+            <ConfirmDialog
+                open
+                title="Eliminare ingrediente"
+                message={`Vuoi eliminare "${pendingDeleteIng.nome}"? L'azione è irreversibile.`}
+                variant="danger"
+                confirmLabel="Elimina"
+                onConfirm={async () => {
+                    const ing = pendingDeleteIng;
+                    setPendingDeleteIng(null);
+                    const uid = ing._uid;
+                    if (!uid) return;
+                    try {
+                        await deleteUserIngredient(uid);
+                        onDeleteCustom(ing);
+                        success('Ingrediente eliminato.');
+                    } catch {
+                        toastError('Impossibile eliminare l\'ingrediente. Riprova.');
+                    }
+                }}
+                onCancel={() => setPendingDeleteIng(null)}
+            />
+        )}
+    </>
     );
 }

@@ -2,6 +2,7 @@ import { useRef, useState } from 'react';
 import { Archive, X, Search, Calendar, Trash2, Copy, Download, Upload } from 'lucide-react';
 import type { ArchiveItem } from '../hooks/useArchive';
 import { ConfirmDialog } from './ui/ConfirmDialog';
+import { useToast } from './ui/Toast';
 
 export function ArchiveModal<T>({
     items,
@@ -29,6 +30,7 @@ export function ArchiveModal<T>({
 }) {
     const [search, setSearch] = useState('');
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const { success } = useToast();
 
     function handleExport() {
         const blob = new Blob([JSON.stringify(items, null, 2)], { type: 'application/json' });
@@ -199,7 +201,7 @@ export function ArchiveModal<T>({
                     message={`Vuoi eliminare "${pendingDelete.name}"? L'azione è irreversibile.`}
                     variant="danger"
                     confirmLabel="Elimina"
-                    onConfirm={() => { onDelete(pendingDelete.id); setPendingDelete(null); }}
+                    onConfirm={() => { onDelete(pendingDelete.id); setPendingDelete(null); success('Elemento eliminato.'); }}
                     onCancel={() => setPendingDelete(null)}
                 />
             )}

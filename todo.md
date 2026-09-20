@@ -11,6 +11,7 @@
 > **Sessione 2026-09-10 (cont.4): TD-4/E2E-1 (auth.spec.ts + archive.spec.ts), +15 unit test EtichetteCalc (266 tot), DATA-1 (validazione CREA 20 ingredienti, 9 divergenze >10%).**
 > **Sessione 2026-09-14: UserIngredient feature completa (backend + frontend). Admin crea ingredienti ufficiali, utenti salvano ingredienti privati (_custom), admin promuove _custom a ufficiale. Deploy prod frontend+backend.**
 > **Sessione 2026-09-14 (cont.): ING-SEC-1/2/3/4 verificati via curl+Django shell (locale). Fix test useIngredientsDB (mockImplementation per URL). 266/266 test verdi.**
+> **Sessione 2026-09-16: Audit 360° elite-team (PM+Architect+UI/UX+Security). 5 critici sicurezza identificati, god component EtichetteCalc 3475L, bundle 650KB lazy-load mancante, UX feedback gaps. Roadmap aggiornata.**
 > Production URL: **https://app-consulenze-alimentari.vercel.app**
 
 ---
@@ -40,6 +41,19 @@
 
 ## 🔴 BLOCCANTE (ancora aperto)
 
+### Sicurezza — nuovi da audit 2026-09-16
+
+- [x] **SEC-JWT-ROT** ✅ — try/except con rollback aggiunto attorno a `blacklist()` in `TokenRefreshView`. Se blacklist fallisce → 500 esplicito, vecchio token ancora valido. ✅ 2026-09-20
+
+- [x] **SEC-MIGRATE-RUNTIME** ✅ — Aggiunto env flag `RUN_MIGRATIONS_ON_STARTUP` (default `true`). PostgreSQL gestisce concorrenza nativamente via row-lock su `django_migrations`. Flag disabilitabile da Vercel se si introduce deploy script. ✅ 2026-09-20
+
+- [x] **SEC-ARCHIVE-PERM** ✅ — `perform_create` in `ArchiveEntryViewSet` ora verifica `has_tool(tool)` prima di salvare → 403 se tool non acquistato. ✅ 2026-09-20
+
+- [~] **SEC-ARCHIVE-FK** ~~won't fix~~ — mitigato da `perform_create` → `has_tool()`. CASCADE delete introduce rischio maggiore del beneficio. 2026-09-20
+
+- [ ] **INFRA-CRON-WARMUP** 🟡 — Vercel Hobby non supporta cron sub-daily → `/api/ping/` endpoint attivo ma non pingato.
+  **Fix (manuale utente):** configurare cron-job.org → `GET https://backend-snowy-seven-98.vercel.app/api/ping/` ogni 5 min. Effort: 15 min.
+
 - [ ] **GDPR-1** 🔴 — Redigere e pubblicare (**solo tuo**):
   - Informativa privacy Art. 13 GDPR (titolare: AEA, finalità, base giuridica, conservazione, diritti)
   - Cookie policy — cookie httpOnly `aea_access`/`aea_refresh` sono tecnici/essenziali
@@ -58,6 +72,9 @@
 ### Sicurezza
 
 - [x] **COD-07-LOGIN / SEC-11-CACHE** ✅ — `django-redis` in requirements + CACHES Redis graceful in `production.py`. `REDIS_URL` Upstash configurata su Vercel e attiva in prod. ✅ 2026-09-10
+
+- [x] **SEC-CACHE-VERIFY** ✅ — `REDIS_URL` confermata presente in Vercel Production (Secret, Sep 10). Redis Upstash attivo. Throttling globale tra worker OK. ✅ 2026-09-20
+  ⚠️ Nota: `ADMIN_PASSWORD` e `SECRET_KEY` mostrano "Needs Attention" in Vercel — probabilmente salvate come Config invece di Secret. Verificare e riconvertire in Secret da pannello Vercel (operazione manuale tua).
 
 ### Normativa
 
@@ -78,6 +95,12 @@
 - [x] **VITAMINA-CLAIM** ✅ — 12 vitamine + zinco/magnesio/fosforo in `calcClaims()`. ✅ 2026-09-07
 
 ### UX
+
+- [x] **UX-ERROR-BOUNDARY** ✅ — `ToolBoundary` + `ToolError` in `App.tsx`. Tutti e 7 i tool wrappati. Crash tool → fallback locale con link dashboard, resto app intatto. `ErrorBoundary` estesa con prop `fallback` opzionale. ✅ 2026-09-20
+
+- [x] **UX-TOAST-FEEDBACK** ✅ — Toast aggiunti su: (1) delete archivio in `ArchiveModal` → success; (2) delete ingrediente custom in `BrowseIngredientsModal` → success/error + bottone Elimina implementato + `deleteUserIngredient` wired; (3) DB load failure in `useIngredientsDB` → error toast. ✅ 2026-09-20
+
+- [x] **UX-LOGIN-SPINNER** ✅ — Spinner SVG `animate-spin` inline nel bottone login durante loading. Button già disabled+testo cambiava, ora ha anche icona animata. ✅ 2026-09-20
 
 - [x] **UX-07** ✅ — Login: tagline + feature bullets + CTA "Richiedi accesso". ✅ 2026-09-09
 
@@ -142,9 +165,20 @@
 ### Debito tecnico
 
 - [ ] **TD-1 / COD-02** — Estrazione engine da `EtichetteCalc.tsx` (3400+ righe). Prerequisito per refactor sicuro.
+  Piano minimo: `useEtichetteForm()` hook, `usePdfExport()` hook, `AllergenManager.tsx` componente. Effort: 3-5gg.
 - [ ] **TD-2 / COD-05** — Ridurre duplicazione desktop/mobile NutrizionaleCalc (~2000 righe).
 - [x] **TD-4 / E2E-1** ✅ — E2E test Playwright: `lasagna.spec.ts` + `auth.spec.ts` (login fallito/corretto/logout) + `archive.spec.ts` (salva/carica/elimina). ✅ 2026-09-10
+- [ ] **PERF-LAZY-PDF** 🟡 — `jspdf` + `html2canvas` ≈ 650KB caricati eager. Rallentano primo caricamento app.
+  **Fix:** `React.lazy(() => import('./PdfExporter'))` — carica solo su click "Stampa PDF". Effort: 3h.
+- [ ] **ARCH-ROUND-UTIL** 🟡 — ~125 righe di logica arrotondamento quasi identica in `Tab{UE,USA,Canada,Australia,Arabi}.tsx`.
+  **Fix:** singola funzione `roundByRegion(value, region, nutrient)` in `src/utils/rounding.ts`. Effort: 4h.
+- [ ] **ARCH-API-VERSION** 🟡 — Nessun versionamento API. Ogni breaking change rompe backward compat.
+  **Fix:** prefissare `/api/v1/` nei prossimi 3 mesi prima del lancio commerciale. Effort: 1gg.
+- [ ] **UX-FORM-ZOD** 🟡 — Validazione form inconsistente: alcuni real-time, alcuni solo su submit, errori API non sempre inline.
+  **Fix:** schema Zod unificato per ogni form, errori sempre sotto il campo. Effort: 1gg.
 - [ ] **A11Y-1** — Audit accessibilità completo.
+- [ ] **A11Y-ARIA** 🟠 — Bottoni icona (edit, delete, promuovi) senza `aria-label` → screen reader inutilizzabile.
+  Focus trap mancante nei modal. **Fix:** audit `eslint-plugin-jsx-a11y` + `aria-label` su tutti i bottoni icona. Effort: 2h.
 
 ### Dati
 

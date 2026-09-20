@@ -1,6 +1,6 @@
 
-import { lazy, Suspense } from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { lazy, Suspense, type ReactNode } from 'react';
+import { BrowserRouter, Routes, Route, Navigate, Link } from 'react-router-dom';
 import { AuthProvider } from './auth/AuthContext';
 import { ProtectedRoute } from './auth/ProtectedRoute';
 import { LoginPage } from './components/LoginPage';
@@ -35,6 +35,22 @@ const SchedeCompleteCalc = lazy(() =>
 const SchedaProcessoCalc = lazy(() =>
     import('./calculators/SchedaProcessoCalc/SchedaProcessoCalc').then(m => ({ default: m.SchedaProcessoCalc }))
 );
+
+function ToolError() {
+    return (
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '60vh', gap: 12, padding: 24, textAlign: 'center' }}>
+            <p style={{ fontWeight: 600, fontSize: 16 }}>Errore nel caricamento dello strumento.</p>
+            <p style={{ color: 'var(--color-muted, #6b7280)', fontSize: 13 }}>
+                Se il problema persiste, contatta l'assistenza.
+            </p>
+            <Link to="/dashboard" className="btn">Torna alla Dashboard</Link>
+        </div>
+    );
+}
+
+function ToolBoundary({ children }: { children: ReactNode }) {
+    return <ErrorBoundary fallback={<ToolError />}>{children}</ErrorBoundary>;
+}
 
 function NutrizionaleCalcEntry() {
     const isMobile = useMobile();
@@ -90,7 +106,7 @@ export default function App() {
                 path="tool/nutrizionale"
                 element={
                   <ProtectedRoute requiredTool="nutrizionale">
-                    <NutrizionaleCalcEntry />
+                    <ToolBoundary><NutrizionaleCalcEntry /></ToolBoundary>
                   </ProtectedRoute>
                 }
               />
@@ -98,7 +114,7 @@ export default function App() {
                 path="tool/etichette"
                 element={
                   <ProtectedRoute requiredTool="etichette">
-                    <EtichetteCalc />
+                    <ToolBoundary><EtichetteCalc /></ToolBoundary>
                   </ProtectedRoute>
                 }
               />
@@ -106,7 +122,7 @@ export default function App() {
                 path="tool/etichette-vini"
                 element={
                   <ProtectedRoute requiredTool="etichette-vini">
-                    <EtichetteViniCalc />
+                    <ToolBoundary><EtichetteViniCalc /></ToolBoundary>
                   </ProtectedRoute>
                 }
               />
@@ -114,7 +130,7 @@ export default function App() {
                 path="tool/rintracciabilita"
                 element={
                   <ProtectedRoute requiredTool="rintracciabilita">
-                    <RintracciabilitaCalc />
+                    <ToolBoundary><RintracciabilitaCalc /></ToolBoundary>
                   </ProtectedRoute>
                 }
               />
@@ -122,7 +138,7 @@ export default function App() {
                 path="tool/trattamento-termico"
                 element={
                   <ProtectedRoute requiredTool="trattamento-termico">
-                    <TrattamentoTermicoCalc />
+                    <ToolBoundary><TrattamentoTermicoCalc /></ToolBoundary>
                   </ProtectedRoute>
                 }
               />
@@ -130,7 +146,7 @@ export default function App() {
                 path="tool/schede-complete"
                 element={
                   <ProtectedRoute requiredTool="schede-complete">
-                    <SchedeCompleteCalc />
+                    <ToolBoundary><SchedeCompleteCalc /></ToolBoundary>
                   </ProtectedRoute>
                 }
               />
@@ -138,7 +154,7 @@ export default function App() {
                 path="tool/scheda-processo"
                 element={
                   <ProtectedRoute requiredTool="scheda-processo">
-                    <SchedaProcessoCalc />
+                    <ToolBoundary><SchedaProcessoCalc /></ToolBoundary>
                   </ProtectedRoute>
                 }
               />

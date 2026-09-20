@@ -91,8 +91,14 @@ export function LoginPage() {
                                 autoComplete="current-password"
                             />
                         </div>
-                        <button type="submit" className="btn-primary" disabled={loading}>
-                            {loading ? 'Accesso in corso...' : 'Accedi →'}
+                        <button type="submit" className="btn-primary" disabled={loading} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+                            {loading && (
+                                <svg className="animate-spin" width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                                    <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" strokeOpacity="0.25" />
+                                    <path d="M12 2a10 10 0 0 1 10 10" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
+                                </svg>
+                            )}
+                            {loading ? 'Accesso in corso…' : 'Accedi →'}
                         </button>
                     </form>
 

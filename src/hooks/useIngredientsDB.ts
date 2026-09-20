@@ -3,11 +3,13 @@ import { apiFetch } from '../api/client';
 import { listUserIngredients } from '../api/ingredients';
 import { isValidDBIngredient } from '../utils/validation';
 import { type DBIngredient } from '../engines/nutrizionaleCalcEngine';
+import { useToast } from '../components/ui/Toast';
 
 export function useIngredientsDB(errorMessage = 'Impossibile caricare il database ingredienti.') {
     const [db, setDb] = useState<DBIngredient[]>([]);
     const [loadingDB, setLoadingDB] = useState(true);
     const [dbError, setDbError] = useState<string | null>(null);
+    const { error: toastError } = useToast();
 
     const loadDB = useCallback(() => {
         setLoadingDB(true);
@@ -56,6 +58,7 @@ export function useIngredientsDB(errorMessage = 'Impossibile caricare il databas
                 } catch { /* noop */ }
                 setLoadingDB(false);
                 setDbError(errorMessage);
+                toastError(errorMessage);
             });
     }, [errorMessage]);
 
