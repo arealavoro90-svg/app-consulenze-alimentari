@@ -12,30 +12,19 @@
 > **Sessione 2026-09-14: UserIngredient feature completa (backend + frontend). Admin crea ingredienti ufficiali, utenti salvano ingredienti privati (_custom), admin promuove _custom a ufficiale. Deploy prod frontend+backend.**
 > **Sessione 2026-09-14 (cont.): ING-SEC-1/2/3/4 verificati via curl+Django shell (locale). Fix test useIngredientsDB (mockImplementation per URL). 266/266 test verdi.**
 > **Sessione 2026-09-16: Audit 360° elite-team (PM+Architect+UI/UX+Security). 5 critici sicurezza identificati, god component EtichetteCalc 3475L, bundle 650KB lazy-load mancante, UX feedback gaps. Roadmap aggiornata.**
+> **Sessione 2026-09-20: Fase 1 Blindatura completata (SEC-JWT-ROT, SEC-MIGRATE-RUNTIME, SEC-ARCHIVE-PERM, UX-ERROR-BOUNDARY, UX-TOAST-FEEDBACK, UX-LOGIN-SPINNER, A11Y-ARIA, PERF-LAZY-PDF, ARCH-ROUND-UTIL, USDA-CREA-SYNC). Fase 2: ARCH-API-VERSION completato (/api/v1/). 266/266 test.**
 > Production URL: **https://app-consulenze-alimentari.vercel.app**
 
 ---
 
-## 🧪 TEST DA ESEGUIRE (sessione 2026-09-14)
+## 🧪 TEST DA ESEGUIRE — dopo prossimo deploy (sessione 2026-09-20)
 
-### UserIngredient — E2E manuale
-- [x] **ING-E2E-1** ✅ — Admin crea ingrediente ufficiale → restituito id e dati corretti. ✅ 2026-09-16 (curl)
-- [x] **ING-E2E-2** ✅ — Admin: "Modifica" visibile su ingredienti DB ufficiali. Playwright pass. ✅ 2026-09-16
-- [x] **ING-E2E-3** ✅ — User crea ingrediente → categoria `_custom`, visibile solo a quell'utente. ✅ 2026-09-16 (curl)
-- [x] **ING-E2E-4** ✅ — Client: nessun "Modifica" su DB ufficiali, "Promuovi" assente. Playwright pass. ✅ 2026-09-16
-- [x] **ING-E2E-5** ✅ — Admin promuove `_custom` → 201 con nuovo id ufficiale. ✅ 2026-09-16 (curl)
-- [x] **ING-E2E-6** ✅ — Dopo promozione → nuovo ingrediente ufficiale creato nel DB. ✅ 2026-09-16 (curl)
-
-### UserIngredient — Security
-- [x] **ING-SEC-1** ✅ — User non autenticato → 401 su `GET /api/ingredients/user/`. ✅ 2026-09-14
-- [x] **ING-SEC-2** ✅ — IDOR safe: lista filtrata per owner; PATCH/DELETE su ing altrui → 404. ✅ 2026-09-14
-- [x] **ING-SEC-3** ✅ — User normale → 403 su `POST /api/ingredients/user/{id}/promote/`. ✅ 2026-09-14
-- [x] **ING-SEC-4** ✅ — User normale → 401/403 su `POST /api/ingredients/` (crea ingrediente ufficiale). ✅ 2026-09-14
-
-### UserIngredient — Infra
-- [x] **ING-DATA-1** ✅ — Migrazione `0008_user_ingredient` applicata in prod. Tabella `ingredients_useringredient` operativa. CRUD + promote admin verificati via curl. ✅ 2026-09-16
-- [x] **ING-PERF-1** ✅ — Cold start misurato: 6.5s. Fix: cron warm-up `/api/ping/` ogni 5 min in vercel.json backend. ✅ 2026-09-16
-- [x] **ING-UX-1** ✅ — Admin non vede custom di user2; user2 vede solo i propri. Isolamento confermato via curl prod. ✅ 2026-09-16
+### ARCH-API-VERSION — Smoke test manuale prod (**solo tuo**, dopo deploy backend)
+- [ ] **V1-1** — Login funziona: `POST /api/v1/auth/login/` → 200 + cookie httpOnly
+- [ ] **V1-2** — Vecchio path rifiutato: `POST /api/auth/login/` → 404
+- [ ] **V1-3** — Infra intatta: `GET /api/ping/` → `{"status":"ok"}` (non versionato)
+- [ ] **V1-4** — Archivio funziona: carica/salva ricetta in NutrizionaleCalc senza errori
+- [ ] **V1-5** — Ingredienti custom: crea ingrediente custom → visibile nella lista
 
 ---
 
