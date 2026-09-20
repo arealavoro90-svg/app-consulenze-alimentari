@@ -22,7 +22,7 @@ export function useIngredientsDB(errorMessage = 'Impossibile caricare il databas
             promise = import('../data/ingredientsDB.json').then(m => (m as { default: DBIngredient[] }).default);
         } else {
             // Load official + user custom in parallel
-            const official = apiFetch<DBIngredient[]>('/api/ingredients/');
+            const official = apiFetch<DBIngredient[]>('/api/v1/ingredients/');
             const custom = listUserIngredients().catch(() => [] as DBIngredient[]);
             promise = Promise.all([official, custom]).then(([off, cust]) => [...off, ...cust]);
 

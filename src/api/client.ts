@@ -32,9 +32,9 @@ export async function apiFetch<T>(
     // Auto-refresh: se il server risponde 401 e non siamo già in un retry,
     // tentiamo di rinnovare i cookie tramite /api/auth/refresh/ e riproviamo una volta.
     // Se il refresh fallisce, l'errore propaga → AuthContext imposta user=null → redirect login.
-    if (res.status === 401 && !_isRetry && path !== '/api/auth/refresh/') {
+    if (res.status === 401 && !_isRetry && path !== '/api/v1/auth/refresh/') {
         if (!_refreshPromise) {
-            _refreshPromise = fetch(`${BASE_URL}/api/auth/refresh/`, {
+            _refreshPromise = fetch(`${BASE_URL}/api/v1/auth/refresh/`, {
                 method: 'POST',
                 credentials: 'include',
                 headers: { 'Content-Type': 'application/json' },

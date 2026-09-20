@@ -39,9 +39,9 @@ function mapUser(u: BackendUser): User {
     };
 }
 
-/** Chiama /api/auth/login/. Se il backend rifiuta le credenziali o non risponde, l'errore propaga: nessun accesso. */
+/** Chiama /api/v1/auth/login/. Se il backend rifiuta le credenziali o non risponde, l'errore propaga: nessun accesso. */
 export async function apiLogin(email: string, password: string): Promise<User> {
-    const data = await apiFetch<BackendLoginResponse>('/api/auth/login/', {
+    const data = await apiFetch<BackendLoginResponse>('/api/v1/auth/login/', {
         method: 'POST',
         body:   JSON.stringify({ email, password }),
     });
@@ -49,11 +49,11 @@ export async function apiLogin(email: string, password: string): Promise<User> {
 }
 
 /**
- * Chiama /api/auth/logout/ — Django cancella i cookie httpOnly e blacklista il refresh.
+ * Chiama /api/v1/auth/logout/ — Django cancella i cookie httpOnly e blacklista il refresh.
  */
 export async function apiLogout(): Promise<void> {
     try {
-        await apiFetch('/api/auth/logout/', { method: 'POST' });
+        await apiFetch('/api/v1/auth/logout/', { method: 'POST' });
     } catch {
         // Cookie scaduti o backend irraggiungibile — non critico
     }
@@ -61,19 +61,19 @@ export async function apiLogout(): Promise<void> {
 
 /** Verifica il token corrente. Se il backend non risponde o lo rifiuta, l'errore propaga: sessione considerata scaduta. */
 export async function apiMe(): Promise<User> {
-    const data = await apiFetch<BackendUser>('/api/auth/me/');
+    const data = await apiFetch<BackendUser>('/api/v1/auth/me/');
     return mapUser(data);
 }
 
 /** GDPR-2 Art.17 — cancella l'account corrente. Backend blacklista il token e cancella l'utente. */
 export async function apiDeleteAccount(): Promise<void> {
-    await apiFetch('/api/auth/me/delete/', { method: 'DELETE' });
+    await apiFetch('/api/v1/auth/me/delete/', { method: 'DELETE' });
 }
 
 /** GDPR-4 Art.20 — scarica tutti i dati dell'utente come JSON. */
 export async function apiExportData(): Promise<void> {
     const BASE_URL = (import.meta.env.VITE_API_URL as string | undefined) ?? '';
-    const res = await fetch(`${BASE_URL}/api/auth/me/export/`, { credentials: 'include' });
+    const res = await fetch(`${BASE_URL}/api/v1/auth/me/export/`, { credentials: 'include' });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const blob = await res.blob();
     const url = URL.createObjectURL(blob);

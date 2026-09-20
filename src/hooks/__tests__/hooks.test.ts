@@ -212,7 +212,7 @@ describe('useIngredientsDB', () => {
     beforeEach(() => {
         localStorage.clear();
         vi.mocked(apiFetch).mockImplementation((url: string) =>
-            Promise.resolve(url === '/api/ingredients/user/' ? [] : MOCK_INGREDIENTS)
+            Promise.resolve(url === '/api/v1/ingredients/user/' ? [] : MOCK_INGREDIENTS)
         );
     });
     afterEach(() => vi.restoreAllMocks());

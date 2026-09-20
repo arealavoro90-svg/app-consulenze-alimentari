@@ -10,23 +10,23 @@ export interface BackendArchiveItem {
 }
 
 export function listArchive(tool: string): Promise<BackendArchiveItem[]> {
-    return apiFetch<BackendArchiveItem[]>(`/api/calc/archive/?tool=${encodeURIComponent(tool)}`);
+    return apiFetch<BackendArchiveItem[]>(`/api/v1/calc/archive/?tool=${encodeURIComponent(tool)}`);
 }
 
 export function createArchive(tool: string, name: string, data: unknown): Promise<BackendArchiveItem> {
-    return apiFetch<BackendArchiveItem>('/api/calc/archive/', {
+    return apiFetch<BackendArchiveItem>('/api/v1/calc/archive/', {
         method: 'POST',
         body: JSON.stringify({ tool, name, data }),
     });
 }
 
 export function updateArchive(id: number, name: string, data: unknown): Promise<BackendArchiveItem> {
-    return apiFetch<BackendArchiveItem>(`/api/calc/archive/${id}/`, {
+    return apiFetch<BackendArchiveItem>(`/api/v1/calc/archive/${id}/`, {
         method: 'PATCH',
         body: JSON.stringify({ name, data }),
     });
 }
 
 export function deleteArchive(id: number): Promise<void> {
-    return apiFetch<void>(`/api/calc/archive/${id}/`, { method: 'DELETE' });
+    return apiFetch<void>(`/api/v1/calc/archive/${id}/`, { method: 'DELETE' });
 }
