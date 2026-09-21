@@ -424,16 +424,16 @@ export function RintracciabilitaCalc() {
                 <h3 style={{ fontWeight: 700, marginBottom: 16 }}>🏭 Dati di Produzione</h3>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 12 }}>
                     <div className="form-field" style={{ marginBottom: 0 }}>
-                        <label className="form-label">Nome prodotto</label>
-                        <input className="form-input" type="text" value={data.productName} onChange={e => set('productName', e.target.value)} placeholder="es. Lasagna alla Bolognese" />
+                        <label className="form-label" htmlFor="rt-nome-prodotto">Nome prodotto</label>
+                        <input id="rt-nome-prodotto" className="form-input" type="text" value={data.productName} onChange={e => set('productName', e.target.value)} placeholder="es. Lasagna alla Bolognese" />
                     </div>
                     <div className="form-field" style={{ marginBottom: 0 }}>
-                        <label className="form-label">N° confezioni</label>
-                        <input className="form-input" type="number" min={0} value={data.nConf} onChange={e => set('nConf', e.target.value)} placeholder="es. 1000" />
+                        <label className="form-label" htmlFor="rt-n-confezioni">N° confezioni</label>
+                        <input id="rt-n-confezioni" className="form-input" type="number" min={0} value={data.nConf} onChange={e => set('nConf', e.target.value)} placeholder="es. 1000" />
                     </div>
                     <div className="form-field" style={{ marginBottom: 0 }}>
-                        <label className="form-label">Peso netto UV (g)</label>
-                        <input className="form-input" type="number" min={0} value={data.pesoNettoG} onChange={e => set('pesoNettoG', e.target.value)} placeholder="es. 500" />
+                        <label className="form-label" htmlFor="rt-peso-netto">Peso netto UV (g)</label>
+                        <input id="rt-peso-netto" className="form-input" type="number" min={0} value={data.pesoNettoG} onChange={e => set('pesoNettoG', e.target.value)} placeholder="es. 500" />
                     </div>
                     <div className="form-field" style={{ marginBottom: 0 }}>
                         <label className="form-label" style={{ color: 'var(--color-text-muted)' }}>Kg totali da produrre</label>

@@ -361,8 +361,8 @@ export function SchedaProcessoCalc() {
                         ['pesoNettoG', 'Peso netto UV (g)', 'number', 'es. 500'],
                     ] as const).map(([field, label, type, placeholder]) => (
                         <div key={field} className="form-field" style={{ marginBottom: 0 }}>
-                            <label className="form-label">{label}</label>
-                            <input className="form-input" type={type} value={(data as unknown as Record<string, string>)[field]} onChange={e => setField(field as keyof SchedaData, e.target.value)} placeholder={placeholder} />
+                            <label className="form-label" htmlFor={`sp-${field}`}>{label}</label>
+                            <input id={`sp-${field}`} className="form-input" type={type} value={(data as unknown as Record<string, string>)[field]} onChange={e => setField(field as keyof SchedaData, e.target.value)} placeholder={placeholder} />
                         </div>
                     ))}
                 </div>
@@ -446,8 +446,8 @@ export function SchedaProcessoCalc() {
                         <div style={{ padding: 16 }}>
                             {/* Modalità operative */}
                             <div className="form-field" style={{ marginBottom: 16 }}>
-                                <label className="form-label">Modalità operative</label>
-                                <textarea className="form-input" rows={3} value={fase.modalita} onChange={e => updateFase(fase.id, 'modalita', e.target.value)} placeholder="Descrivi le modalità operative per questa fase..." style={{ width: '100%', resize: 'vertical' }} />
+                                <label className="form-label" htmlFor={`sp-modalita-${fase.id}`}>Modalità operative</label>
+                                <textarea id={`sp-modalita-${fase.id}`} className="form-input" rows={3} value={fase.modalita} onChange={e => updateFase(fase.id, 'modalita', e.target.value)} placeholder="Descrivi le modalità operative per questa fase..." style={{ width: '100%', resize: 'vertical' }} />
                             </div>
 
                             {/* Parametri CCP */}
@@ -477,8 +477,8 @@ export function SchedaProcessoCalc() {
 
                             {/* Note */}
                             <div className="form-field" style={{ marginBottom: 16 }}>
-                                <label className="form-label">Note</label>
-                                <input className="form-input" type="text" value={fase.note} onChange={e => updateFase(fase.id, 'note', e.target.value)} placeholder="Note aggiuntive..." />
+                                <label className="form-label" htmlFor={`sp-note-${fase.id}`}>Note</label>
+                                <input id={`sp-note-${fase.id}`} className="form-input" type="text" value={fase.note} onChange={e => updateFase(fase.id, 'note', e.target.value)} placeholder="Note aggiuntive..." />
                             </div>
 
                             {/* Coadiuvanti */}

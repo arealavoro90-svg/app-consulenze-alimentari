@@ -440,10 +440,11 @@ export function CalcoloTab({
             {/* ── Card: Nome prodotto ── */}
             <div className="m-card" style={{ marginBottom: 10 }}>
                 <div className="m-card__body">
-                    <label className="m-label" style={{ display: 'flex', alignItems: 'center', gap: 4, marginBottom: 5 }}>
+                    <label className="m-label" htmlFor="ct-nome-prodotto" style={{ display: 'flex', alignItems: 'center', gap: 4, marginBottom: 5 }}>
                         Nome prodotto *
                     </label>
                     <input
+                        id="ct-nome-prodotto"
                         ref={denominazioneRef}
                         className="m-input"
                         type="text"
@@ -464,10 +465,11 @@ export function CalcoloTab({
                 <div className="m-card__body" style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                     <div style={{ display: 'flex', gap: 8 }}>
                         <div style={{ flex: 1 }}>
-                            <label className="m-label" style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                            <label className="m-label" htmlFor="ct-peso-finito" style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
                                 Peso finito (g) <InfoTooltip text="Peso del prodotto dopo cottura/lavorazione." />
                             </label>
                             <input
+                                id="ct-peso-finito"
                                 className="m-input m-input--num"
                                 type="number"
                                 inputMode="decimal"
@@ -481,10 +483,11 @@ export function CalcoloTab({
                             {(() => { const r = form.pesoFinito_g !== '' ? validateFinishedWeight(parseDecimalIT(String(form.pesoFinito_g))) : null; return <ValidationError message={r?.error} visible={!!(r && !r.isValid)} />; })()}
                         </div>
                         <div style={{ flex: 1 }}>
-                            <label className="m-label">
+                            <label className="m-label" htmlFor="ct-porzione">
                                 Porzione (g) <InfoTooltip text="Per la colonna 'per porzione' in etichetta." />
                             </label>
                             <input
+                                id="ct-porzione"
                                 className="m-input m-input--num"
                                 type="number"
                                 inputMode="decimal"
@@ -517,8 +520,9 @@ export function CalcoloTab({
                     </div>
                     {showLiquid && (
                         <div>
-                            <label className="m-label">Peso specifico (g/ml)</label>
+                            <label className="m-label" htmlFor="ct-peso-specifico">Peso specifico (g/ml)</label>
                             <input
+                                id="ct-peso-specifico"
                                 className="m-input m-input--num"
                                 type="number"
                                 inputMode="decimal"

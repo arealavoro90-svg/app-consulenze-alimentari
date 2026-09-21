@@ -316,38 +316,38 @@ export function SchedeCompleteCalc() {
                     <div className="card">
                         <h3 style={{ fontWeight: 700, marginBottom: 18 }}>Scheda Tecnica del Prodotto</h3>
                         <div className="form-field">
-                            <label>Nome prodotto *</label>
-                            <input className="form-input" type="text" value={data.productName} onChange={(e) => set('productName', e.target.value)} placeholder="es. Crema di Peperoni Arrostiti" />
+                            <label htmlFor="sc-productName">Nome prodotto *</label>
+                            <input id="sc-productName" className="form-input" type="text" value={data.productName} onChange={(e) => set('productName', e.target.value)} placeholder="es. Crema di Peperoni Arrostiti" />
                         </div>
                         <div className="form-row">
                             <div className="form-field">
-                                <label>Categoria merceologica</label>
-                                <input className="form-input" type="text" value={data.category} onChange={(e) => set('category', e.target.value)} placeholder="es. Conserve vegetali" />
+                                <label htmlFor="sc-category">Categoria merceologica</label>
+                                <input id="sc-category" className="form-input" type="text" value={data.category} onChange={(e) => set('category', e.target.value)} placeholder="es. Conserve vegetali" />
                             </div>
                             <div className="form-field">
-                                <label>Shelf life</label>
-                                <input className="form-input" type="text" value={data.shelfLife} onChange={(e) => set('shelfLife', e.target.value)} placeholder="es. 24 mesi dalla data produzione" />
+                                <label htmlFor="sc-shelfLife">Shelf life</label>
+                                <input id="sc-shelfLife" className="form-input" type="text" value={data.shelfLife} onChange={(e) => set('shelfLife', e.target.value)} placeholder="es. 24 mesi dalla data produzione" />
                             </div>
                         </div>
                         <div className="form-row">
                             <div className="form-field">
-                                <label>Temperatura di conservazione</label>
-                                <input className="form-input" type="text" value={data.storageTemp} onChange={(e) => set('storageTemp', e.target.value)} placeholder="es. +4°C / +20°C" />
+                                <label htmlFor="sc-storageTemp">Temperatura di conservazione</label>
+                                <input id="sc-storageTemp" className="form-input" type="text" value={data.storageTemp} onChange={(e) => set('storageTemp', e.target.value)} placeholder="es. +4°C / +20°C" />
                             </div>
                             <div className="form-field">
-                                <label>Tipo di imballaggio</label>
-                                <input className="form-input" type="text" value={data.packaging} onChange={(e) => set('packaging', e.target.value)} placeholder="es. Vasetto vetro 200g, tappo twist-off" />
+                                <label htmlFor="sc-packaging">Tipo di imballaggio</label>
+                                <input id="sc-packaging" className="form-input" type="text" value={data.packaging} onChange={(e) => set('packaging', e.target.value)} placeholder="es. Vasetto vetro 200g, tappo twist-off" />
                             </div>
                         </div>
                         <div className="form-field">
-                            <label>Descrizione prodotto</label>
-                            <textarea rows={3} value={data.description} onChange={(e) => set('description', e.target.value)}
+                            <label htmlFor="sc-description">Descrizione prodotto</label>
+                            <textarea id="sc-description" rows={3} value={data.description} onChange={(e) => set('description', e.target.value)}
                                 placeholder="Descrizione organolettica, aspetto, colore, odore, sapore..."
                                 style={{ width: '100%', background: 'var(--color-bg-input)', border: '1.5px solid var(--color-border)', borderRadius: 6, color: 'var(--color-text)', padding: '10px 14px', fontFamily: 'inherit', fontSize: 13, resize: 'vertical', outline: 'none' }} />
                         </div>
                         <div className="form-field">
-                            <label>Collega ricetta (dal tool Valori Nutrizionali)</label>
-                            <select className="form-input" value={data.recipeId} onChange={e => set('recipeId', e.target.value)}>
+                            <label htmlFor="sc-recipeId">Collega ricetta (dal tool Valori Nutrizionali)</label>
+                            <select id="sc-recipeId" className="form-input" value={data.recipeId} onChange={e => set('recipeId', e.target.value)}>
                                 <option value="">— Nessuna ricetta collegata —</option>
                                 {recipeItems.map(r => (
                                     <option key={r.id} value={r.id}>{r.name}</option>
@@ -358,8 +358,9 @@ export function SchedeCompleteCalc() {
                             )}
                         </div>
                         <div className="form-field">
-                            <label>Elenco ingredienti {linkedRecipe ? <span style={{ fontWeight: 400, fontSize: 11, color: 'var(--color-accent)' }}>(auto da ricetta — modifica disabilitata)</span> : ''}</label>
+                            <label htmlFor="sc-ingredienti">Elenco ingredienti {linkedRecipe ? <span style={{ fontWeight: 400, fontSize: 11, color: 'var(--color-accent)' }}>(auto da ricetta — modifica disabilitata)</span> : ''}</label>
                             <textarea
+                                id="sc-ingredienti"
                                 rows={3}
                                 value={linkedRecipe ? autoIngredients : data.ingredienti}
                                 onChange={linkedRecipe ? undefined : (e) => set('ingredienti', e.target.value)}
@@ -369,8 +370,8 @@ export function SchedeCompleteCalc() {
                             />
                         </div>
                         <div className="form-field">
-                            <label>Certificazioni / standard qualità</label>
-                            <input className="form-input" type="text" value={data.certifications} onChange={(e) => set('certifications', e.target.value)} placeholder="es. BRC, IFS, Bio, DOP..." />
+                            <label htmlFor="sc-certifications">Certificazioni / standard qualità</label>
+                            <input id="sc-certifications" className="form-input" type="text" value={data.certifications} onChange={(e) => set('certifications', e.target.value)} placeholder="es. BRC, IFS, Bio, DOP..." />
                         </div>
 
                         {/* OGM */}
@@ -390,18 +391,18 @@ export function SchedeCompleteCalc() {
                         <h4 style={{ fontWeight: 700, marginTop: 24, marginBottom: 14, fontSize: 14 }}>📦 Packaging — Unità di vendita</h4>
                         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(160px,1fr))', gap: 10 }}>
                             <div className="form-field" style={{ marginBottom: 0, gridColumn: 'span 2' }}>
-                                <label className="form-label">Descrizione UV</label>
-                                <input className="form-input" type="text" value={data.uvDescrizione} onChange={e => set('uvDescrizione', e.target.value)} placeholder="es. Vasetto vetro 200g con tappo" />
+                                <label className="form-label" htmlFor="sc-uvDescrizione">Descrizione UV</label>
+                                <input id="sc-uvDescrizione" className="form-input" type="text" value={data.uvDescrizione} onChange={e => set('uvDescrizione', e.target.value)} placeholder="es. Vasetto vetro 200g con tappo" />
                             </div>
                             {([['uvPesoNettoG','Peso netto nominale (g)'], ['uvLmm','Lunghezza (mm)'], ['uvLargmm','Larghezza (mm)'], ['uvHmm','Altezza (mm)'], ['uvPesoImb','Peso imballo (g)'], ['uvEan','Codice EAN']] as const).map(([f, lbl]) => (
                                 <div key={f} className="form-field" style={{ marginBottom: 0 }}>
-                                    <label className="form-label" style={{ fontSize: 11 }}>{lbl}</label>
-                                    <input className="form-input" type={f === 'uvEan' ? 'text' : 'number'} value={(data as unknown as Record<string, string>)[f]} onChange={e => set(f, e.target.value)} />
+                                    <label className="form-label" htmlFor={`sc-${f}`} style={{ fontSize: 11 }}>{lbl}</label>
+                                    <input id={`sc-${f}`} className="form-input" type={f === 'uvEan' ? 'text' : 'number'} value={(data as unknown as Record<string, string>)[f]} onChange={e => set(f, e.target.value)} />
                                 </div>
                             ))}
                             <div className="form-field" style={{ marginBottom: 0 }}>
-                                <label className="form-label" style={{ fontSize: 11 }}>Peso lordo (g) — auto</label>
-                                <input className="form-input" readOnly value={((parseFloat(data.uvPesoNettoG)||0)+(parseFloat(data.uvPesoImb)||0)).toFixed(0)} style={{ background: '#f5f5f5' }} />
+                                <label className="form-label" htmlFor="sc-uvPesoLordo" style={{ fontSize: 11 }}>Peso lordo (g) — auto</label>
+                                <input id="sc-uvPesoLordo" className="form-input" readOnly value={((parseFloat(data.uvPesoNettoG)||0)+(parseFloat(data.uvPesoImb)||0)).toFixed(0)} style={{ background: '#f5f5f5' }} />
                             </div>
                         </div>
 
@@ -409,22 +410,22 @@ export function SchedeCompleteCalc() {
                         <h4 style={{ fontWeight: 700, marginTop: 24, marginBottom: 14, fontSize: 14 }}>📦 Packaging — Imballo secondario (cartone)</h4>
                         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(160px,1fr))', gap: 10 }}>
                             <div className="form-field" style={{ marginBottom: 0, gridColumn: 'span 2' }}>
-                                <label className="form-label">Descrizione</label>
-                                <input className="form-input" type="text" value={data.ctDescrizione} onChange={e => set('ctDescrizione', e.target.value)} placeholder="es. Cartone americano" />
+                                <label className="form-label" htmlFor="sc-ctDescrizione">Descrizione</label>
+                                <input id="sc-ctDescrizione" className="form-input" type="text" value={data.ctDescrizione} onChange={e => set('ctDescrizione', e.target.value)} placeholder="es. Cartone americano" />
                             </div>
                             {([['ctNUV','N° UV per cartone'],['ctLmm','Lun. mm'],['ctLargmm','Larg. mm'],['ctHmm','H mm'],['ctPesoVuoto','Peso vuoto (g)']] as const).map(([f,lbl]) => (
                                 <div key={f} className="form-field" style={{ marginBottom: 0 }}>
-                                    <label className="form-label" style={{ fontSize: 11 }}>{lbl}</label>
-                                    <input className="form-input" type="number" value={(data as unknown as Record<string, string>)[f]} onChange={e => set(f, e.target.value)} />
+                                    <label className="form-label" htmlFor={`sc-${f}`} style={{ fontSize: 11 }}>{lbl}</label>
+                                    <input id={`sc-${f}`} className="form-input" type="number" value={(data as unknown as Record<string, string>)[f]} onChange={e => set(f, e.target.value)} />
                                 </div>
                             ))}
                             <div className="form-field" style={{ marginBottom: 0 }}>
-                                <label className="form-label" style={{ fontSize: 11 }}>Peso netto cartone (kg) — auto</label>
-                                <input className="form-input" readOnly value={((parseFloat(data.ctNUV)||0)*(parseFloat(data.uvPesoNettoG)||0)/1000).toFixed(3)} style={{ background: '#f5f5f5' }} />
+                                <label className="form-label" htmlFor="sc-ctPesoNetto" style={{ fontSize: 11 }}>Peso netto cartone (kg) — auto</label>
+                                <input id="sc-ctPesoNetto" className="form-input" readOnly value={((parseFloat(data.ctNUV)||0)*(parseFloat(data.uvPesoNettoG)||0)/1000).toFixed(3)} style={{ background: '#f5f5f5' }} />
                             </div>
                             <div className="form-field" style={{ marginBottom: 0 }}>
-                                <label className="form-label" style={{ fontSize: 11 }}>Peso lordo cartone (kg) — auto</label>
-                                <input className="form-input" readOnly value={((parseFloat(data.ctNUV)||0)*(parseFloat(data.uvPesoNettoG)||0)/1000+(parseFloat(data.ctPesoVuoto)||0)/1000).toFixed(3)} style={{ background: '#f5f5f5' }} />
+                                <label className="form-label" htmlFor="sc-ctPesoLordo" style={{ fontSize: 11 }}>Peso lordo cartone (kg) — auto</label>
+                                <input id="sc-ctPesoLordo" className="form-input" readOnly value={((parseFloat(data.ctNUV)||0)*(parseFloat(data.uvPesoNettoG)||0)/1000+(parseFloat(data.ctPesoVuoto)||0)/1000).toFixed(3)} style={{ background: '#f5f5f5' }} />
                             </div>
                         </div>
 
@@ -433,8 +434,8 @@ export function SchedeCompleteCalc() {
                         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(160px,1fr))', gap: 10 }}>
                             {([['bancStrato','N° cartoni per strato'],['bancStrati','N° strati']] as const).map(([f,lbl]) => (
                                 <div key={f} className="form-field" style={{ marginBottom: 0 }}>
-                                    <label className="form-label" style={{ fontSize: 11 }}>{lbl}</label>
-                                    <input className="form-input" type="number" value={(data as unknown as Record<string, string>)[f]} onChange={e => set(f, e.target.value)} />
+                                    <label className="form-label" htmlFor={`sc-${f}`} style={{ fontSize: 11 }}>{lbl}</label>
+                                    <input id={`sc-${f}`} className="form-input" type="number" value={(data as unknown as Record<string, string>)[f]} onChange={e => set(f, e.target.value)} />
                                 </div>
                             ))}
                             {(() => {
@@ -452,12 +453,15 @@ export function SchedeCompleteCalc() {
                                     ['N° UV per bancale', uvBancale.toFixed(0)],
                                     ['Altezza bancale (mm)', altBancale.toFixed(0)],
                                     ['Peso bancale (kg)', pesoBancale.toFixed(2)],
-                                ].map(([lbl,val]) => (
+                                ].map(([lbl,val]) => {
+                                    const slug = `sc-banc-${lbl.replace(/[^a-z0-9]/gi,'-').toLowerCase()}`;
+                                    return (
                                     <div key={lbl} className="form-field" style={{ marginBottom: 0 }}>
-                                        <label className="form-label" style={{ fontSize: 11 }}>{lbl} — auto</label>
-                                        <input className="form-input" readOnly value={val} style={{ background: '#f5f5f5' }} />
+                                        <label className="form-label" htmlFor={slug} style={{ fontSize: 11 }}>{lbl} — auto</label>
+                                        <input id={slug} className="form-input" readOnly value={val} style={{ background: '#f5f5f5' }} />
                                     </div>
-                                ));
+                                    );
+                                });
                             })()}
                         </div>
 
@@ -466,8 +470,8 @@ export function SchedeCompleteCalc() {
                         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(200px,1fr))', gap: 10 }}>
                             {([['prodRagione','Ragione sociale e sede'],['prodTel','Telefono'],['prodEmail','Email'],['prodSito','Sito web']] as const).map(([f,lbl]) => (
                                 <div key={f} className="form-field" style={{ marginBottom: 0 }}>
-                                    <label className="form-label" style={{ fontSize: 11 }}>{lbl}</label>
-                                    <input className="form-input" type="text" value={(data as unknown as Record<string, string>)[f]} onChange={e => set(f, e.target.value)} />
+                                    <label className="form-label" htmlFor={`sc-${f}`} style={{ fontSize: 11 }}>{lbl}</label>
+                                    <input id={`sc-${f}`} className="form-input" type="text" value={(data as unknown as Record<string, string>)[f]} onChange={e => set(f, e.target.value)} />
                                 </div>
                             ))}
                         </div>

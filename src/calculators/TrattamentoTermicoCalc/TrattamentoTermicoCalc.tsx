@@ -635,27 +635,27 @@ export function TrattamentoTermicoCalc() {
                 <h3 style={{ fontWeight: 700, marginBottom: 16, fontSize: 15 }}>📋 Dati Prodotto</h3>
                 <div className="form-row">
                     <div className="form-field">
-                        <label className="form-label">Prodotto</label>
-                        <input className="form-input" type="text" value={product.prodotto} onChange={e => setProduct(p => ({ ...p, prodotto: e.target.value }))} placeholder="Es. Ragù di carne" />
+                        <label className="form-label" htmlFor="tt-prodotto">Prodotto</label>
+                        <input id="tt-prodotto" className="form-input" type="text" value={product.prodotto} onChange={e => setProduct(p => ({ ...p, prodotto: e.target.value }))} placeholder="Es. Ragù di carne" />
                     </div>
                     <div className="form-field">
-                        <label className="form-label">Formato</label>
-                        <input className="form-input" type="text" value={product.formato} onChange={e => setProduct(p => ({ ...p, formato: e.target.value }))} placeholder="Es. Vasetto 200g" />
+                        <label className="form-label" htmlFor="tt-formato">Formato</label>
+                        <input id="tt-formato" className="form-input" type="text" value={product.formato} onChange={e => setProduct(p => ({ ...p, formato: e.target.value }))} placeholder="Es. Vasetto 200g" />
                     </div>
                 </div>
                 <div className="form-row">
                     <div className="form-field">
-                        <label className="form-label">Data di produzione</label>
-                        <input className="form-input" type="date" value={product.dataProduzioneInput} onChange={e => setProduct(p => ({ ...p, dataProduzioneInput: e.target.value }))} />
+                        <label className="form-label" htmlFor="tt-data-prod">Data di produzione</label>
+                        <input id="tt-data-prod" className="form-input" type="date" value={product.dataProduzioneInput} onChange={e => setProduct(p => ({ ...p, dataProduzioneInput: e.target.value }))} />
                     </div>
                     <div className="form-field">
-                        <label className="form-label">Lotto</label>
-                        <input className="form-input" type="text" value={product.lotto} onChange={e => setProduct(p => ({ ...p, lotto: e.target.value }))} placeholder="Es. L240319" />
+                        <label className="form-label" htmlFor="tt-lotto">Lotto</label>
+                        <input id="tt-lotto" className="form-input" type="text" value={product.lotto} onChange={e => setProduct(p => ({ ...p, lotto: e.target.value }))} placeholder="Es. L240319" />
                     </div>
                 </div>
                 <div className="form-field" style={{ marginBottom: 0 }}>
-                    <label className="form-label">T.M.C. (Termine Minimo di Conservazione)</label>
-                    <input className="form-input" type="text" value={product.tmc} onChange={e => setProduct(p => ({ ...p, tmc: e.target.value }))} placeholder="Es. 31/12/2026" />
+                    <label className="form-label" htmlFor="tt-tmc">T.M.C. (Termine Minimo di Conservazione)</label>
+                    <input id="tt-tmc" className="form-input" type="text" value={product.tmc} onChange={e => setProduct(p => ({ ...p, tmc: e.target.value }))} placeholder="Es. 31/12/2026" />
                 </div>
             </div>
 
@@ -702,26 +702,26 @@ export function TrattamentoTermicoCalc() {
 
                 <div className="form-row">
                     <div className="form-field" style={{ gridColumn: 'span 2' }}>
-                        <label className="form-label">Microrganismo</label>
-                        <input className="form-input" type="text" value={microorg.microrganismo} onChange={e => setMicroorg(m => ({ ...m, microrganismo: e.target.value }))} />
+                        <label className="form-label" htmlFor="tt-microrganismo">Microrganismo</label>
+                        <input id="tt-microrganismo" className="form-input" type="text" value={microorg.microrganismo} onChange={e => setMicroorg(m => ({ ...m, microrganismo: e.target.value }))} />
                     </div>
                 </div>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: 14, marginBottom: 16 }}>
                     <div className="form-field" style={{ marginBottom: 0 }}>
-                        <label className="form-label">T riferimento (°C)</label>
-                        <input className="form-input" type="number" step={0.1} value={microorg.tRif} onChange={e => setMicroorg(m => ({ ...m, tRif: e.target.value }))} />
+                        <label className="form-label" htmlFor="tt-t-rif">T riferimento (°C)</label>
+                        <input id="tt-t-rif" className="form-input" type="number" step={0.1} value={microorg.tRif} onChange={e => setMicroorg(m => ({ ...m, tRif: e.target.value }))} />
                     </div>
                     <div className="form-field" style={{ marginBottom: 0 }}>
-                        <label className="form-label">Valore D (min)</label>
-                        <input className="form-input" type="number" step={0.01} value={microorg.dValue} onChange={e => setMicroorg(m => ({ ...m, dValue: e.target.value }))} />
+                        <label className="form-label" htmlFor="tt-valore-d">Valore D (min)</label>
+                        <input id="tt-valore-d" className="form-input" type="number" step={0.01} value={microorg.dValue} onChange={e => setMicroorg(m => ({ ...m, dValue: e.target.value }))} />
                     </div>
                     <div className="form-field" style={{ marginBottom: 0 }}>
-                        <label className="form-label">Valore Z (°C)</label>
-                        <input className="form-input" type="number" step={0.5} value={microorg.zValue} onChange={e => setMicroorg(m => ({ ...m, zValue: e.target.value }))} />
+                        <label className="form-label" htmlFor="tt-valore-z">Valore Z (°C)</label>
+                        <input id="tt-valore-z" className="form-input" type="number" step={0.5} value={microorg.zValue} onChange={e => setMicroorg(m => ({ ...m, zValue: e.target.value }))} />
                     </div>
                     <div className="form-field" style={{ marginBottom: 0 }}>
-                        <label className="form-label">N° riduzioni decimali</label>
-                        <input className="form-input" type="number" step={1} value={microorg.nRiduzioni} onChange={e => setMicroorg(m => ({ ...m, nRiduzioni: e.target.value }))} />
+                        <label className="form-label" htmlFor="tt-riduzioni">N° riduzioni decimali</label>
+                        <input id="tt-riduzioni" className="form-input" type="number" step={1} value={microorg.nRiduzioni} onChange={e => setMicroorg(m => ({ ...m, nRiduzioni: e.target.value }))} />
                     </div>
                 </div>
 
@@ -757,12 +757,12 @@ export function TrattamentoTermicoCalc() {
                 <h3 style={{ fontWeight: 700, fontSize: 15, marginBottom: 14 }}>⏱️ Ora Inizio / Ora Fine</h3>
                 <div className="form-row" style={{ marginBottom: 0 }}>
                     <div className="form-field" style={{ marginBottom: 0 }}>
-                        <label className="form-label">Ora inizio (HH:MM)</label>
-                        <input className="form-input" type="time" value={oraInizio} onChange={e => setOraInizio(e.target.value)} />
+                        <label className="form-label" htmlFor="tt-ora-inizio">Ora inizio (HH:MM)</label>
+                        <input id="tt-ora-inizio" className="form-input" type="time" value={oraInizio} onChange={e => setOraInizio(e.target.value)} />
                     </div>
                     <div className="form-field" style={{ marginBottom: 0 }}>
-                        <label className="form-label">Ora fine (HH:MM)</label>
-                        <input className="form-input" type="time" value={oraFine} onChange={e => setOraFine(e.target.value)} />
+                        <label className="form-label" htmlFor="tt-ora-fine">Ora fine (HH:MM)</label>
+                        <input id="tt-ora-fine" className="form-input" type="time" value={oraFine} onChange={e => setOraFine(e.target.value)} />
                     </div>
                 </div>
             </div>
