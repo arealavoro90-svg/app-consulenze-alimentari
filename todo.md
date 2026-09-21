@@ -161,7 +161,7 @@
   **Fix:** singola funzione `roundByRegion(value, region, nutrient)` in `src/utils/rounding.ts`. Effort: 4h.
 - [x] **ARCH-API-VERSION** ✅ — Prefissati 7 endpoint business con `/api/v1/`. Infra endpoints invariati (cron). ✅ 2026-09-20
 - [x] **UX-FORM-ZOD** ✅ — Skip Zod (no nuova dep). Fix mirati: (1) LoginPage: errore si azzera su onChange + aria-live="polite"; (2) CustomIngredientModal: toast warning quando saveToBackend() fallisce e cade su localStorage. ✅ 2026-09-21
-- [ ] **A11Y-1** — Audit accessibilità completo.
+- [x] **A11Y-1** ✅ — Audit WCAG 2.1 AA completo (3 round, 3 commit). Fix: skip link, role=dialog su 3 modal, keyboard nav CollapsibleSection+TabellaTab, gerarchia heading, 45+ coppie label/input con htmlFor/id, aria-label search input, NotificationBell keyboard, focus ring mobile box-shadow, aria-labelledby ArchiveModal, aria-required EtichetteCalc. ✅ 2026-09-21
 - [x] **A11Y-ARIA** ✅ — Bottoni icona già tutti con aria-label (verificato). Focus trap implementato: hook `useFocusTrap` + applicato a ArchiveModal, BrowseIngredientsModal, CustomIngredientModal. ✅ 2026-09-20
 
 ### Dati
