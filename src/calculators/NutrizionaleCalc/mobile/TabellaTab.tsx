@@ -121,7 +121,15 @@ function ServingSection({ title, fields, form, onChange, open, onToggle }: {
 
     return (
         <div className="m-section">
-            <div className="m-section__header" onClick={onToggle} style={{ cursor: 'pointer' }}>
+            <div
+                className="m-section__header"
+                onClick={onToggle}
+                role="button"
+                tabIndex={0}
+                aria-expanded={open}
+                style={{ cursor: 'pointer' }}
+                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onToggle(); } }}
+            >
                 <div className="m-section__line" />
                 <span className="m-section__title">{title}</span>
                 <span style={{ transform: open ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s', fontSize: 14 }}>▾</span>

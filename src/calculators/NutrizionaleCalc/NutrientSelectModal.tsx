@@ -87,6 +87,9 @@ export function NutrientSelectModal({ open, onClose, selected, onChange }: Nutri
       onClick={onClose}
     >
       <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="nutrient-select-title"
         style={{
           background: 'white',
           borderRadius: isMobile ? '16px 16px 0 0' : 10,
@@ -107,7 +110,7 @@ export function NutrientSelectModal({ open, onClose, selected, onChange }: Nutri
 
         {/* Header fisso */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: isMobile ? '10px 20px 12px' : '20px 24px 16px', borderBottom: '1px solid var(--color-border)', flexShrink: 0 }}>
-          <h3 style={{ margin: 0, fontSize: 16, fontWeight: 700, color: 'var(--color-navy)' }}>
+          <h3 id="nutrient-select-title" style={{ margin: 0, fontSize: 16, fontWeight: 700, color: 'var(--color-navy)' }}>
             Nutrienti facoltativi
           </h3>
           <button

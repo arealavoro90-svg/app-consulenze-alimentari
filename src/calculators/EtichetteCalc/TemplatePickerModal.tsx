@@ -22,6 +22,9 @@ export function TemplatePickerModal({ templates, onSelect, onClose }: Props) {
             onClick={onClose}
         >
             <div
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="template-picker-title"
                 style={{
                     background: 'var(--color-bg)', borderRadius: 12,
                     padding: 24, maxWidth: 540, width: '100%',
@@ -32,7 +35,7 @@ export function TemplatePickerModal({ templates, onSelect, onClose }: Props) {
             >
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
                     <div>
-                        <h3 style={{ margin: 0, fontSize: 16, fontWeight: 700 }}>Inizia da un template</h3>
+                        <h3 id="template-picker-title" style={{ margin: 0, fontSize: 16, fontWeight: 700 }}>Inizia da un template</h3>
                         <p style={{ margin: '4px 0 0', fontSize: 13, color: 'var(--color-text-muted)' }}>
                             Pre-compila i campi più comuni per la tua categoria
                         </p>

@@ -42,7 +42,14 @@ export function CollapsibleSection({
 
     return (
         <div className="comp-card" style={{ marginBottom: 10 }}>
-            <div className="comp-card-header" onClick={toggle}>
+            <div
+                className="comp-card-header"
+                onClick={toggle}
+                role="button"
+                tabIndex={0}
+                aria-expanded={open}
+                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle(); } }}
+            >
                 <div style={{ flex: 1, minWidth: 0 }}>
                     <h3 className="comp-card-title" style={{ margin: 0 }}>{title}</h3>
                     {subtitle && <p className="hint" style={{ margin: '2px 0 0', fontSize: 11 }}>{subtitle}</p>}

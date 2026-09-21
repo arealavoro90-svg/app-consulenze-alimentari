@@ -223,10 +223,14 @@ export function WelcomeModal({ onClose, onNeverShow, onLoadDemo, slides = NUTRIZ
     const current = slides[slide];
 
     return (
-        <div style={{
-            position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', zIndex: 2000,
-            display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16,
-        }}>
+        <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="welcome-modal-title"
+            style={{
+                position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', zIndex: 2000,
+                display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16,
+            }}>
             <div style={{
                 background: 'var(--color-bg-card)', borderRadius: 14, boxShadow: '0 8px 40px rgba(0,0,0,0.2)',
                 width: '100%', maxWidth: 420, display: 'flex', flexDirection: 'column', overflow: 'hidden',
@@ -240,7 +244,7 @@ export function WelcomeModal({ onClose, onNeverShow, onLoadDemo, slides = NUTRIZ
                         <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--color-text-muted)', marginBottom: 2 }}>
                             Guida rapida · Passo {slide + 1} di {slides.length}
                         </div>
-                        <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--color-navy, #1a2e4a)', lineHeight: 1.2 }}>
+                        <div id="welcome-modal-title" style={{ fontSize: 15, fontWeight: 700, color: 'var(--color-navy, #1a2e4a)', lineHeight: 1.2 }}>
                             {current.title}
                         </div>
                     </div>

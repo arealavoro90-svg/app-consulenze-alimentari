@@ -117,7 +117,7 @@ export function Dashboard() {
             </div>
 
             <div className="page-header">
-                <h1 style={{ fontSize: 'var(--text-2xl)' }}>I tuoi strumenti</h1>
+                <h2 style={{ fontSize: 'var(--text-2xl)' }}>I tuoi strumenti</h2>
                 <p>Clicca su uno strumento per accedere al calcolatore</p>
             </div>
 

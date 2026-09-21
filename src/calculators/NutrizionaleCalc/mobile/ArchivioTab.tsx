@@ -95,6 +95,7 @@ export function ArchivioTab({ items, onLoad, onDelete, onNewRecipe }: Props) {
                     <Search size={16} color="var(--m-text-muted)" />
                     <input
                         type="search"
+                        aria-label="Cerca prodotto nell'archivio"
                         placeholder="Cerca prodotto…"
                         value={query}
                         onChange={e => setQuery(e.target.value)}

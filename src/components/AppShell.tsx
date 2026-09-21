@@ -38,6 +38,7 @@ export function AppShell() {
 
     return (
         <div className={`app-shell${sidebarOpen ? ' sidebar-open' : ''}`}>
+            <a href="#main-content" className="skip-link">Vai al contenuto principale</a>
             <div
                 className="sidebar-backdrop"
                 onClick={() => setSidebarOpen(false)}
@@ -48,7 +49,7 @@ export function AppShell() {
 
             <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
-            <main className="main-content" style={{ display: 'flex', flexDirection: 'column' }}>
+            <main id="main-content" className="main-content" style={{ display: 'flex', flexDirection: 'column' }}>
                 <div className="topbar">
                     <div className="topbar-left">
                         <button

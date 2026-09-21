@@ -136,6 +136,10 @@ export function NotificationBell() {
                                 <div
                                     key={u.id}
                                     onClick={() => markRead(u.id)}
+                                    role={isRead ? undefined : 'button'}
+                                    tabIndex={isRead ? undefined : 0}
+                                    onKeyDown={isRead ? undefined : (e) => { if (e.key === 'Enter' || e.key === ' ') markRead(u.id); }}
+                                    aria-label={isRead ? undefined : `Segna come letto: ${u.title ?? ''}`}
                                     style={{
                                         padding: '10px 14px',
                                         borderBottom: '1px solid var(--color-border)',
