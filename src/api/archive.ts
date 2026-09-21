@@ -30,3 +30,20 @@ export function updateArchive(id: number, name: string, data: unknown): Promise<
 export function deleteArchive(id: number): Promise<void> {
     return apiFetch<void>(`/api/v1/calc/archive/${id}/`, { method: 'DELETE' });
 }
+
+export interface BackendRevision {
+    id: number;
+    name: string;
+    saved_at: string;
+}
+
+export function getRevisions(id: number): Promise<BackendRevision[]> {
+    return apiFetch<BackendRevision[]>(`/api/v1/calc/archive/${id}/revisions/`);
+}
+
+export function restoreRevision(id: number, revisionId: number): Promise<BackendArchiveItem> {
+    return apiFetch<BackendArchiveItem>(`/api/v1/calc/archive/${id}/restore/`, {
+        method: 'POST',
+        body: JSON.stringify({ revision_id: revisionId }),
+    });
+}

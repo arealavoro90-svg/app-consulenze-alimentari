@@ -1,9 +1,10 @@
 import { useRef, useState } from 'react';
-import { Archive, X, Search, Calendar, Trash2, Copy, Download, Upload } from 'lucide-react';
+import { Archive, X, Search, Calendar, Trash2, Copy, Download, Upload, Clock } from 'lucide-react';
 import type { ArchiveItem } from '../hooks/useArchive';
 import { ConfirmDialog } from './ui/ConfirmDialog';
 import { useToast } from './ui/Toast';
 import { useFocusTrap } from '../hooks/useFocusTrap';
+import { RevisionHistoryModal } from './RevisionHistoryModal';
 
 export function ArchiveModal<T>({
     items,
@@ -16,6 +17,7 @@ export function ArchiveModal<T>({
     renderItemDetails,
     searchData,
     exportFilename = 'archivio',
+    onItemsChange,
 }: {
     items: ArchiveItem<T>[];
     currentId?: string;
@@ -28,8 +30,11 @@ export function ArchiveModal<T>({
     /** Restituisce una stringa ricercabile dai campi dati del documento. */
     searchData?: (data: T) => string;
     exportFilename?: string;
+    /** Chiamato dopo ripristino revisione — usare per ri-fetchare l'archivio. */
+    onItemsChange?: () => void;
 }) {
     const [search, setSearch] = useState('');
+    const [revisionItem, setRevisionItem] = useState<ArchiveItem<T> | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const { success } = useToast();
     const trapRef = useFocusTrap<HTMLDivElement>(true);
@@ -179,6 +184,17 @@ export function ArchiveModal<T>({
                                                     <Copy size={14} />
                                                 </button>
                                             )}
+                                            {!isNaN(Number(item.id)) && (
+                                                <button
+                                                    className="btn btn-outline"
+                                                    style={{ padding: '6px 12px', fontSize: 12, display: 'flex', alignItems: 'center' }}
+                                                    title="Cronologia revisioni"
+                                                    aria-label={`Cronologia revisioni di ${item.name}`}
+                                                    onClick={() => setRevisionItem(item)}
+                                                >
+                                                    <Clock size={14} />
+                                                </button>
+                                            )}
                                             <button
                                                 className="btn btn-danger"
                                                 style={{ padding: '6px 12px', fontSize: 12, display: 'flex', alignItems: 'center' }}
@@ -195,6 +211,15 @@ export function ArchiveModal<T>({
                     </div>
                 </div>
             </div>
+
+            {revisionItem && !isNaN(Number(revisionItem.id)) && (
+                <RevisionHistoryModal
+                    itemId={Number(revisionItem.id)}
+                    itemName={revisionItem.name}
+                    onClose={() => setRevisionItem(null)}
+                    onRestored={() => { setRevisionItem(null); onItemsChange?.(); }}
+                />
+            )}
 
             {pendingDelete && (
                 <ConfirmDialog

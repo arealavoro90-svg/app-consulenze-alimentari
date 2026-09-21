@@ -56,6 +56,7 @@ export function useArchive<T>(storageKey: string, tool?: string) {
 
     const [items, setItems] = useState<ArchiveItem<T>[]>([]);
     const [loading, setLoading] = useState(false);
+    const [refreshToken, setRefreshToken] = useState(0);
 
     // Dati locali non ancora migrati (mostrati al chiamante per proporre migrazione).
     const [pendingMigration, setPendingMigration] = useState<ArchiveItem<T>[]>([]);
@@ -110,7 +111,7 @@ export function useArchive<T>(storageKey: string, tool?: string) {
                 setItems(readLocal<T>(storageKey));
             })
             .finally(() => setLoading(false));
-    }, [useBackend, tool, storageKey]);
+    }, [useBackend, tool, storageKey, refreshToken]);
 
     const saveItem = useCallback(
         async (name: string, data: T, existingId?: string): Promise<string> => {
@@ -218,6 +219,8 @@ export function useArchive<T>(storageKey: string, tool?: string) {
         setPendingMigration([]);
     }, [tool]);
 
+    const refresh = useCallback(() => setRefreshToken(t => t + 1), []);
+
     return {
         items,
         loading,
@@ -226,5 +229,6 @@ export function useArchive<T>(storageKey: string, tool?: string) {
         pendingMigration,
         migrateLocalToBackend,
         dismissMigration,
+        refresh,
     };
 }
