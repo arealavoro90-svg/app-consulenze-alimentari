@@ -92,7 +92,7 @@ export function SchedeCompleteCalc() {
     const [activeTab, setActiveTab] = useState<'tecnica' | 'processo' | 'costi'>('tecnica');
 
     // Archive state
-    const { items: savedItems, saveItem, deleteItem } = useArchive<SchedaCompleta>('aea_archive_schede', 'schede-complete');
+    const { items: savedItems, saveItem, deleteItem, refresh } = useArchive<SchedaCompleta>('aea_archive_schede', 'schede-complete');
     const [isArchiveOpen, setIsArchiveOpen] = useState(false);
     const [currentId, setCurrentId] = useState<string | undefined>(undefined);
     const [currentName, setCurrentName] = useState('');
@@ -247,6 +247,7 @@ export function SchedeCompleteCalc() {
                     onClose={() => setIsArchiveOpen(false)}
                     onLoad={handleLoad}
                     onDelete={deleteItem}
+                    onItemsChange={refresh}
                     renderItemDetails={(d) => (
                         <>
                             <span><strong>Prodotto:</strong> {d.productName || '-'}</span><br />

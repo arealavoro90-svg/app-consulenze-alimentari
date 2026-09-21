@@ -770,7 +770,7 @@ export function EtichetteCalc() {
     const swipeStartY = useRef<number | null>(null);
 
     // Archive state
-    const { items: savedLabels, saveItem, deleteItem } = useArchive<LabelData>('aea_archive_etichette', 'etichette');
+    const { items: savedLabels, saveItem, deleteItem, refresh } = useArchive<LabelData>('aea_archive_etichette', 'etichette');
     const [isArchiveOpen, setIsArchiveOpen] = useState(false);
     const [currentId, setCurrentId] = useState<string | undefined>(undefined);
     const [currentName, setCurrentName] = useState('');
@@ -3277,6 +3277,7 @@ export function EtichetteCalc() {
                     onDelete={deleteItem}
                     onDuplicate={(item) => { void saveItem(item.name + ' (Copia)', item.data); }}
                     onImport={(imported) => { imported.forEach(it => { void saveItem(it.name, it.data); }); }}
+                    onItemsChange={refresh}
                     exportFilename="archivio_etichette"
                     renderItemDetails={(d) => (
                         <>

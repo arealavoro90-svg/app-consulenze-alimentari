@@ -186,7 +186,7 @@ function ProgressBar({ color, pct, label }: { color: string; pct: number; label:
 export function RintracciabilitaCalc() {
     const { user } = useAuth();
     const [data, setData] = useState<CostiData>(DEFAULT);
-    const { items: savedItems, saveItem, deleteItem } = useArchive<CostiData>('aea_archive_rintracciabilita', 'rintracciabilita');
+    const { items: savedItems, saveItem, deleteItem, refresh } = useArchive<CostiData>('aea_archive_rintracciabilita', 'rintracciabilita');
     const [isArchiveOpen, setIsArchiveOpen] = useState(false);
     const [currentId, setCurrentId] = useState<string | undefined>(undefined);
     const [currentName, setCurrentName] = useState('');
@@ -351,6 +351,7 @@ export function RintracciabilitaCalc() {
             {isArchiveOpen && (
                 <ArchiveModal items={savedItems} currentId={currentId}
                     onClose={() => setIsArchiveOpen(false)} onLoad={handleLoad} onDelete={deleteItem}
+                    onItemsChange={refresh}
                     renderItemDetails={(d: CostiData) => (
                         <><span><strong>Prodotto:</strong> {d.productName || '—'}</span><br />
                             <span><strong>Confezioni:</strong> {d.nConf || '—'} × {d.pesoNettoG || '—'} g</span></>

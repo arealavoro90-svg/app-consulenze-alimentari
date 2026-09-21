@@ -250,7 +250,7 @@ export function NutrizionaleCalc() {
     // ponytail: servingsGridOpen rimosso — porzioni ora sempre visibili in colonna fissa
     // ponytail: servingValsRef / auto-open effect rimossi — porzioni sempre visibili
 
-    const { items: archiveItems, saveItem, deleteItem, pendingMigration, migrateLocalToBackend, dismissMigration } = useArchive<ArchiveData>('nutrizionale-v3', 'nutrizionale');
+    const { items: archiveItems, saveItem, deleteItem, pendingMigration, migrateLocalToBackend, dismissMigration, refresh } = useArchive<ArchiveData>('nutrizionale-v3', 'nutrizionale');
     const [currentId, setCurrentId] = useState<string | undefined>(undefined);
     const [, setCurrentName] = useState('');
     const [isFlashing, setIsFlashing] = useState(false);
@@ -1308,6 +1308,7 @@ export function NutrizionaleCalc() {
                     onDelete={deleteItem}
                     onDuplicate={(item) => { void saveItem(item.name + ' (Copia)', item.data); }}
                     onImport={(imported) => { imported.forEach(it => { void saveItem(it.name, it.data); }); }}
+                    onItemsChange={refresh}
                     exportFilename="archivio_nutrizionale"
                     renderItemDetails={(d) => {
                         // eslint-disable-next-line @typescript-eslint/no-explicit-any

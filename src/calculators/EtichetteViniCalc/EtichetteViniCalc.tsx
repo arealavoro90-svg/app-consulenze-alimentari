@@ -209,7 +209,7 @@ export function EtichetteViniCalc() {
     const [label, setLabel] = useState<LabelData>(defaultLabel);
 
     // Archive
-    const { items: savedItems, saveItem, deleteItem } = useArchive<ViniArchiveData>('aea_archive_vini', 'etichette-vini');
+    const { items: savedItems, saveItem, deleteItem, refresh } = useArchive<ViniArchiveData>('aea_archive_vini', 'etichette-vini');
     const [isArchiveOpen, setIsArchiveOpen] = useState(false);
     const [currentId, setCurrentId] = useState<string | undefined>(undefined);
     const [currentName, setCurrentName] = useState('');
@@ -399,6 +399,7 @@ export function EtichetteViniCalc() {
                     onClose={() => setIsArchiveOpen(false)}
                     onLoad={handleLoad}
                     onDelete={deleteItem}
+                    onItemsChange={refresh}
                     renderItemDetails={(d: ViniArchiveData) => (
                         <>
                             <span><strong>Brand:</strong> {d.label?.nomeCommerciale || '—'}</span><br />

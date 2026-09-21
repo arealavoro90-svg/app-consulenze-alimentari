@@ -170,7 +170,7 @@ export function TrattamentoTermicoCalc() {
     const toggleGuide = () => setGuideOpen(prev => !prev);
 
     // Archive
-    const { items: savedItems, saveItem, deleteItem } = useArchive<F0ArchiveData>('aea_archive_f0', 'trattamento-termico');
+    const { items: savedItems, saveItem, deleteItem, refresh } = useArchive<F0ArchiveData>('aea_archive_f0', 'trattamento-termico');
     const [isArchiveOpen, setIsArchiveOpen] = useState(false);
     const [currentId, setCurrentId] = useState<string | undefined>(undefined);
     const [currentName, setCurrentName] = useState('');
@@ -463,6 +463,7 @@ export function TrattamentoTermicoCalc() {
                     onClose={() => setIsArchiveOpen(false)}
                     onLoad={handleLoad}
                     onDelete={deleteItem}
+                    onItemsChange={refresh}
                     renderItemDetails={(d) => (
                         <>
                             <span><strong>Tipo:</strong> {d.mode}</span><br />

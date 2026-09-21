@@ -69,7 +69,7 @@ function GuideCard({ n, icon, title, desc, badge, badgeColor }: { n: number; ico
 export function SchedaProcessoCalc() {
     const { user } = useAuth();
     const [data, setData] = useState<SchedaData>(DEFAULT);
-    const { items: savedItems, saveItem, deleteItem } = useArchive<SchedaData>('aea_archive_scheda_processo', 'scheda-processo');
+    const { items: savedItems, saveItem, deleteItem, refresh } = useArchive<SchedaData>('aea_archive_scheda_processo', 'scheda-processo');
     const [isArchiveOpen, setIsArchiveOpen] = useState(false);
     const [currentId, setCurrentId] = useState<string | undefined>(undefined);
     const [currentName, setCurrentName] = useState('');
@@ -279,6 +279,7 @@ export function SchedaProcessoCalc() {
             {isArchiveOpen && (
                 <ArchiveModal items={savedItems} currentId={currentId}
                     onClose={() => setIsArchiveOpen(false)} onLoad={handleLoad} onDelete={deleteItem}
+                    onItemsChange={refresh}
                     renderItemDetails={(d: SchedaData) => (
                         <><span><strong>Prodotto:</strong> {d.nomeProdotto || '—'}</span><br />
                             <span><strong>Lotto:</strong> {d.lotto || '—'}</span><br />
