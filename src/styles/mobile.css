@@ -129,7 +129,7 @@
   transition: border-color 0.15s;
   box-sizing: border-box;
 }
-.m-input:focus  { border-color: var(--m-orange); }
+.m-input:focus  { border-color: var(--m-orange); box-shadow: 0 0 0 2px rgba(232,90,12,0.25); }
 .m-input--num   { font-family: 'Courier New', monospace; font-size: 17px; font-weight: 700; }
 /* Niente frecce spinner sugli input numerici: rubano spazio e schiacciano il valore */
 .m-input--num::-webkit-outer-spin-button,

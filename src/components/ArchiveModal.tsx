@@ -82,9 +82,9 @@ export function ArchiveModal<T>({
                 backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 1000,
                 display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16
             }}>
-                <div ref={trapRef} className="card" role="dialog" aria-modal="true" aria-label="Archivio" style={{ width: '100%', maxWidth: 'min(600px, calc(100vw - 32px))', maxHeight: '85vh', display: 'flex', flexDirection: 'column' }}>
+                <div ref={trapRef} className="card" role="dialog" aria-modal="true" aria-labelledby="archive-modal-title" style={{ width: '100%', maxWidth: 'min(600px, calc(100vw - 32px))', maxHeight: '85vh', display: 'flex', flexDirection: 'column' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-                        <h2 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <h2 id="archive-modal-title" style={{ margin: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
                             <Archive size={20} /> Archivio
                         </h2>
                         <div style={{ display: 'flex', gap: 8 }}>

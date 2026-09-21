@@ -1879,7 +1879,7 @@ export function EtichetteCalc() {
 
                         <div className="form-field">
                             <label htmlFor="et-nome">Denominazione del prodotto *</label>
-                            <input id="et-nome" type="text" value={data.productName} onChange={(e) => set('productName', e.target.value)} placeholder="es. Pomodori pelati in succo di pomodoro" style={missingIds.has('et-nome') ? { borderColor: '#e53e3e' } : undefined} />
+                            <input id="et-nome" type="text" aria-required="true" value={data.productName} onChange={(e) => set('productName', e.target.value)} placeholder="es. Pomodori pelati in succo di pomodoro" style={missingIds.has('et-nome') ? { borderColor: '#e53e3e' } : undefined} />
                         </div>
                         <div className="form-field">
                             <label htmlFor="et-denom-legale" style={{ display: 'flex', alignItems: 'center' }}>
