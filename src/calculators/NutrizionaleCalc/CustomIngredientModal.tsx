@@ -7,6 +7,7 @@ import { ALLERGEN_FIELDS, CROSS_FIELDS } from './shared/constants';
 import { useAuth } from '../../auth/AuthContext';
 import { createUserIngredient, updateUserIngredient, createOfficialIngredient, updateOfficialIngredient } from '../../api/ingredients';
 import { useFocusTrap } from '../../hooks/useFocusTrap';
+import { useToast } from '../../components/ui/Toast';
 
 // AUDIT E4 — queste quattro liste erano ricopiate a mano qui e avevano già divergito
 // dalla fonte condivisa: mancava `all_grano`/`cross_grano`, quindi un ingrediente creato
@@ -104,6 +105,7 @@ export function CustomIngredientModal({ onClose, onSave, initialIngredient, orig
     originalNome?: string; // nome dell'ingrediente originale da rimuovere in caso di modifica
 }) {
     const { user } = useAuth();
+    const { warning } = useToast();
     const isAdmin = user?.role === 'admin';
     const trapRef = useFocusTrap<HTMLDivElement>(true);
 
@@ -348,6 +350,7 @@ export function CustomIngredientModal({ onClose, onSave, initialIngredient, orig
                     if (originalNome) ex = ex.filter(i => i.nome !== originalNome);
                     localStorage.setItem('custom_ingredients', JSON.stringify([...ex, ing]));
                 } catch { /* noop */ }
+                warning('Salvataggio su server non riuscito: ingrediente salvato localmente. Riprova più tardi.');
             }
             onSave(result);
             onClose();

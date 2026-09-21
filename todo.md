@@ -160,8 +160,7 @@
 - [x] **ARCH-ROUND-UTIL** ✅ — `scaleResult` estratta come funzione generica in `nutritionalRounding.ts`. Rimosso da 5 Tab file, ~40 righe di duplicazione eliminate. 266/266 test verdi. ✅ 2026-09-20
   **Fix:** singola funzione `roundByRegion(value, region, nutrient)` in `src/utils/rounding.ts`. Effort: 4h.
 - [x] **ARCH-API-VERSION** ✅ — Prefissati 7 endpoint business con `/api/v1/`. Infra endpoints invariati (cron). ✅ 2026-09-20
-- [ ] **UX-FORM-ZOD** 🟡 — Validazione form inconsistente: alcuni real-time, alcuni solo su submit, errori API non sempre inline.
-  **Fix:** schema Zod unificato per ogni form, errori sempre sotto il campo. Effort: 1gg.
+- [x] **UX-FORM-ZOD** ✅ — Skip Zod (no nuova dep). Fix mirati: (1) LoginPage: errore si azzera su onChange + aria-live="polite"; (2) CustomIngredientModal: toast warning quando saveToBackend() fallisce e cade su localStorage. ✅ 2026-09-21
 - [ ] **A11Y-1** — Audit accessibilità completo.
 - [x] **A11Y-ARIA** ✅ — Bottoni icona già tutti con aria-label (verificato). Focus trap implementato: hook `useFocusTrap` + applicato a ArchiveModal, BrowseIngredientsModal, CustomIngredientModal. ✅ 2026-09-20
 

@@ -64,7 +64,7 @@ export function LoginPage() {
                     <h2 className="login-title">Accedi al portale</h2>
                     <p className="login-subtitle">Inserisci le credenziali ricevute da AEA</p>
 
-                    {error && <div className="login-error">{error}</div>}
+                    {error && <div className="login-error" role="alert" aria-live="polite">{error}</div>}
 
                     <form onSubmit={handleSubmit}>
                         <div className="form-group">
@@ -73,7 +73,7 @@ export function LoginPage() {
                                 id="email"
                                 type="email"
                                 value={email}
-                                onChange={(e) => setEmail(e.target.value)}
+                                onChange={(e) => { setEmail(e.target.value); setError(''); }}
                                 placeholder="tuaemail@azienda.it"
                                 required
                                 autoComplete="email"
@@ -85,7 +85,7 @@ export function LoginPage() {
                                 id="password"
                                 type="password"
                                 value={password}
-                                onChange={(e) => setPassword(e.target.value)}
+                                onChange={(e) => { setPassword(e.target.value); setError(''); }}
                                 placeholder="••••••••"
                                 required
                                 autoComplete="current-password"
