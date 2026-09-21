@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
+import { RequestAccessModal } from './RequestAccessModal';
 
 export function LoginPage() {
     useEffect(() => { document.title = 'Accedi — AEA Consulenze'; }, []);
@@ -8,6 +9,7 @@ export function LoginPage() {
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
+    const [showRequestModal, setShowRequestModal] = useState(false);
     const { login } = useAuth();
     const navigate = useNavigate();
 
@@ -111,21 +113,25 @@ export function LoginPage() {
                         <p style={{ fontSize: 12, color: 'var(--color-text-dim)', marginBottom: 8 }}>
                             Non hai ancora un account?
                         </p>
-                        <a
-                            href="mailto:info@aeaconsulenze.it?subject=Richiesta%20accesso%20portale%20AEA"
+                        <button
+                            type="button"
+                            onClick={() => setShowRequestModal(true)}
                             style={{
-                                display: 'inline-block',
+                                background: 'none',
+                                border: 'none',
+                                cursor: 'pointer',
                                 fontSize: 13,
                                 fontWeight: 600,
                                 color: 'var(--color-orange)',
-                                textDecoration: 'none',
+                                padding: 0,
                             }}
                         >
                             Richiedi accesso →
-                        </a>
+                        </button>
                     </div>
                 </div>
             </div>
+            {showRequestModal && <RequestAccessModal onClose={() => setShowRequestModal(false)} />}
         </div>
     );
 }
