@@ -1,12 +1,7 @@
 import { useState, useEffect } from 'react';
 import { X, CheckCircle } from 'lucide-react';
 import { useFocusTrap } from '../hooks/useFocusTrap';
-
-// ⚠️ Sostituire con il proprio Form ID da https://formspree.io
-// 1. Registrarsi su formspree.io (piano Free: 50 submit/mese)
-// 2. Creare un nuovo form → copiare l'ID (es. "xpzgkwld")
-// 3. Sostituire la stringa qui sotto
-const FORMSPREE_ENDPOINT = 'https://formspree.io/f/SOSTITUIRE_CON_FORM_ID';
+import { apiFetch } from '../api/client';
 
 export function RequestAccessModal({ onClose }: { onClose: () => void }) {
     const trapRef = useFocusTrap<HTMLDivElement>(true);
@@ -26,12 +21,10 @@ export function RequestAccessModal({ onClose }: { onClose: () => void }) {
         e.preventDefault();
         setStatus('sending');
         try {
-            const res = await fetch(FORMSPREE_ENDPOINT, {
+            await apiFetch('/api/v1/contact/request-access/', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
                 body: JSON.stringify({ name, email, company, message }),
             });
-            if (!res.ok) throw new Error();
             setStatus('ok');
         } catch {
             setStatus('error');
