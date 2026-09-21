@@ -144,7 +144,7 @@
 
 - [x] **FEAT-GS1** ✅ — Export JSON/XML GS1-like per GDO. Bottoni "GS1 JSON" e "GS1 XML" in EtichetteCalc footer. `src/utils/exportGS1.ts`. ✅ 2026-09-10
 - [x] **FEAT-EXCEL** ✅ — Export Excel tabella nutrizionale (colonne: Nutriente/Unità/Per 100g/Per porzione/%VNR). Bottone accanto a "Scarica ufficiale". ✅ 2026-09-10
-- [ ] **UX-12** — Versioning ricette/etichette (storico revisioni). Richiesto da consulenti + conformità HACCP.
+- [x] **UX-12** ✅ — Versioning automatico archivio. Backend: ArchiveEntryRevision (snapshot ad ogni PATCH, max 20), endpoint revisions+restore. Frontend: RevisionHistoryModal, bottone orologio in ArchiveModal, useArchive.refresh(). Calcolatori: passare onItemsChange={archive.refresh} per auto-refresh post-restore. ✅ 2026-09-21
 - [ ] **TD-7** — Export vettoriale PDF 300dpi (sostituire `html2canvas` 96dpi non professionale per tipografia).
 - [ ] **P7-MULTIUTENTE** — Multi-utente con ruoli (consulente + aziende clienti). Tutti i competitor ce l'hanno.
 - [x] **P9-DASHBOARD** ✅ — Dashboard con 3 KPI: Strumenti / Ricette salvate / Etichette salvate. ✅ 2026-09-10
