@@ -4,8 +4,6 @@ import {
     Plus, Archive, BookOpen, Save, Sparkles, ImageDown,
     RefreshCw, X, Image, Building2, CheckCircle2, AlertTriangle, FileText, Eye,
 } from 'lucide-react';
-import QRCode from 'qrcode';
-import JsBarcode from 'jsbarcode';
 // html2canvas: caricato dinamicamente in exportFace per evitare ~650KB nel bundle iniziale
 import { useAuth } from '../../auth/AuthContext';
 import { useMobile } from '../../hooks/useMobile';
@@ -34,6 +32,19 @@ import { rAU_kj, rAU_kcal, rAU_g1, rAU_mg, rArabi_energy, rArabi_g, rArabi_mg } 
 import { PACKAGING_MATERIALS } from './packagingMaterials';
 import { TemplatePickerModal } from './TemplatePickerModal';
 import { PRODUCT_TEMPLATES } from '../../data/productTemplates';
+import { SliderControl } from './SliderControl';
+import { CodeCanvas } from './CodeCanvas';
+import {
+    barcodeMetrics, shouldShareBarcodeRow,
+    BARCODE_MIN_MAGNIFICATION, BARCODE_MAX_MAGNIFICATION, EAN13_TRUNCATED_MIN_HEIGHT_MM,
+} from './barcodeUtils';
+// Re-export per compatibilità con i test esistenti
+export {
+    EAN13_MODULE_MM, EAN13_QUIET_MODULES, EAN13_BAR_MODULES, EAN13_HEIGHT_MM,
+    BARCODE_MIN_MAGNIFICATION, BARCODE_MAX_MAGNIFICATION, EAN13_TRUNCATED_MIN_HEIGHT_MM,
+    barcodeMetrics, BARCODE_SHARED_ROW_THRESHOLD, shouldShareBarcodeRow,
+} from './barcodeUtils';
+export type { BarcodeMetrics } from './barcodeUtils';
 
 /** Placeholder discreto per campo vuoto nell'anteprima live (mai più gated da un bottone). */
 function ph(val: string, placeholder: string) {
@@ -76,75 +87,6 @@ export function visualFontScale(renderedWidthPx: number, renderedHeightPx: numbe
     return Math.min(renderedWidthPx, renderedHeightPx) / (100 * CSS_PX_PER_MM);
 }
 
-// GS1 General Specifications — EAN-13: X-dimension nominale 0,330mm a magnificazione 100%,
-// intervallo di magnificazione ammesso 80%-200% (sotto 80% il simbolo non è più garantito
-// scansionabile da uno scanner reale). Simbolo = 95 moduli di barre + quiet zone 11X sinistra/7X
-// destra = 113 moduli di larghezza totale; altezza barre nominale 22,85mm. Confidenza alta
-// (coerenza interna verificata: 113 × 0,33mm = 37,29mm, dimensione nominale nota del simbolo).
-// Stessi numeri riusati anche per CODE128 come floor pratico (non-GS1, nessun minimo normativo
-// stringente noto con la stessa confidenza — vedi analisi 2026-08-25) invece di duplicare la
-// formula: la differenza pratica è trascurabile.
-export const EAN13_MODULE_MM = 0.330;
-export const EAN13_QUIET_MODULES = 11 + 7;
-export const EAN13_BAR_MODULES = 95;
-export const EAN13_HEIGHT_MM = 22.85;
-export const BARCODE_MIN_MAGNIFICATION = 0.80;
-export const BARCODE_MAX_MAGNIFICATION = 2.00;
-// Altezza barre "troncata" (ridotta rispetto al nominale 22,85mm per occupare meno spazio
-// verticale): GS1 vieta di scendere sotto l'altezza corrispondente all'80% di magnificazione,
-// qualunque sia la magnificazione orizzontale usata — 22,85 × 0,80 = 18,28mm, comunemente
-// citato come 18,29mm. Fonte: GS1 UK / GS1 General Specifications (verificato via ricerca web
-// 2026-08-25, convergente su più fonti secondarie, coerente col calcolo). Sotto questo valore
-// l'affidabilità di scansione peggiora sensibilmente — GS1 la sconsiglia comunque, qui è il
-// pavimento assoluto, mai il default.
-export const EAN13_TRUNCATED_MIN_HEIGHT_MM = 18.29;
-
-export interface BarcodeMetrics {
-    modulePx: number;
-    symbolWidthPx: number;
-    barHeightPx: number;
-    magnification: number;
-    clampedToMin: boolean;
-}
-
-// CodeCanvas disegnava il barcode a px fissi derivati solo dallo slider utente (`scale`),
-// scollegati dalla dimensione reale del riquadro etichetta — su formati piccoli il canvas
-// restava più largo del box e veniva tagliato dall'overflow:hidden dell'antenato (bug reale
-// 2026-08-25). Qui la dimensione nasce dai mm fisici reali (pxPerMm, stesso principio di
-// visualFontScale) invece che da px arbitrari — ma con un CLAMP che il testo non ha: sotto
-// l'80% di magnificazione GS1 un EAN-13 rischia di non essere scansionabile, quindi la
-// LARGHEZZA/modulo non si rimpicciolisce oltre quella soglia (si taglierà comunque se il box è
-// troppo piccolo, ma un banner lo segnala esplicitamente invece di lasciarlo silenzioso).
-// L'ALTEZZA invece è sempre "troncata" al minimo GS1 (18,29mm), indipendente dalla
-// magnificazione orizzontale — su richiesta esplicita 2026-08-25: il barcode risultava troppo
-// dominante verticalmente su etichette piccole; l'altezza più bassa lo fa "integrare" meglio
-// col resto del contenuto senza intaccare la leggibilità del pattern di barre (che dipende
-// dalla larghezza del modulo, non dall'altezza).
-// eslint-disable-next-line react-refresh/only-export-components
-export function barcodeMetrics(userScalePercent: number, pxPerMm: number): BarcodeMetrics {
-    const requestedMag = userScalePercent / 100;
-    const magnification = Math.min(Math.max(requestedMag, BARCODE_MIN_MAGNIFICATION), BARCODE_MAX_MAGNIFICATION);
-    const modulePx = EAN13_MODULE_MM * magnification * pxPerMm;
-    const symbolWidthPx = (EAN13_BAR_MODULES + EAN13_QUIET_MODULES) * modulePx;
-    const barHeightPx = EAN13_TRUNCATED_MIN_HEIGHT_MM * pxPerMm;
-    return { modulePx, symbolWidthPx, barHeightPx, magnification, clampedToMin: requestedMag < BARCODE_MIN_MAGNIFICATION };
-}
-
-// Impaginazione responsive (analisi 2026-08-25, framework "colonna unica di zone, riflusso
-// interno alla zona" — stessa gerarchia/ordine su etichette quadrate/verticali/orizzontali,
-// cambia solo se una zona ha riga propria o condivide riga con la vicina): fontScale è isotropo
-// (min(W,H)) ma barcodeMetrics è ancorato ai mm fisici assoluti GS1 — su un'etichetta stretta il
-// barcode occupa per costruzione una quota enorme della larghezza e nessuna scala del testo può
-// compensarlo (il barcode non va MAI rimpicciolito sotto l'80% GS1). L'unica leva è lo SLOT: se
-// il barcode da solo supererebbe questa quota della larghezza etichetta, condivide la riga con
-// peso/lotto invece di avere una riga centrata tutta sua (che lo farebbe sembrare ancora più
-// dominante). Soglia 0,55 = punto in cui, in pratica, il barcode inizia a "schiacciare" il resto
-// della riga legale se ci stesse assieme — sopra quella quota va isolato in coda, sotto entra.
-export const BARCODE_SHARED_ROW_THRESHOLD = 0.55;
-// eslint-disable-next-line react-refresh/only-export-components
-export function shouldShareBarcodeRow(symbolWidthPx: number, availableWidthPx: number): boolean {
-    return availableWidthPx > 0 && (symbolWidthPx / availableWidthPx) > BARCODE_SHARED_ROW_THRESHOLD;
-}
 
 // Stesso framework, per la zona CORPO (ingredienti/allergeni/produttore/…) vs TABELLA+IMBALLI:
 // su formati orizzontali larghi (aspect ratio > soglia) le due zone si affiancano invece di
@@ -648,115 +590,6 @@ const BACK_MOVABLE_FIELDS: { key: string; label: string }[] = [
     { key: 'nutritionTable', label: 'Tabella valori nutrizionali' },
     { key: 'imballi', label: 'Raccolta differenziata imballi' },
 ];
-
-let sliderUid = 0;
-function SliderControl({ label, value, min, max, onChange, unit = '%' }: { label: string, value: number, min: number, max: number, onChange: (v: number) => void, unit?: string }) {
-    const [id] = useState(() => `slider-${++sliderUid}`);
-    return (
-        <div className="form-field" style={{ marginBottom: 12 }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
-                <label htmlFor={id} style={{ margin: 0, fontSize: 12 }}>{label}</label>
-                <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--color-accent)' }}>{value}{unit}</span>
-            </div>
-            <input
-                id={id}
-                type="range"
-                min={min}
-                max={max}
-                value={value}
-                aria-valuenow={value}
-                aria-valuemin={min}
-                aria-valuemax={max}
-                onChange={(e) => onChange(Number(e.target.value))}
-                style={{ width: '100%', height: 4, background: '#eee', borderRadius: 2, appearance: 'none', cursor: 'pointer' }}
-            />
-        </div>
-    );
-}
-
-/**
- * Scala il contenuto (larghezza fissa, es. tabelle valori nutrizionali ~800px pensate per
- * desktop) alla larghezza reale disponibile nell'etichetta — mai sopra il 100%. Senza questo,
- * su un formato mm piccolo la tabella viene tagliata sia a schermo che nell'export PNG
- * (html2canvas cattura solo il bounding box del contenitore, non lo scroll orizzontale).
- */
-/**
- * Renderizza QR code, barcode Code128 o EAN-13.
- * - QR → canvas (QRCode.toCanvas API nativa)
- * - EAN-13 / Code128 → SVG vettoriale (JsBarcode su <svg>): la scala avviene ridimensionando
- *   il viewBox/width/height del SVG intero, NON il parametro `width` di JsBarcode che allarga
- *   le singole barre distorcendo il simbolo. Risultato: fedele alle spec GS1, nessuna perdita
- *   di definizione nell'export perché SVG è risoluzione-indipendente.
- */
-function CodeCanvas({ type, value, scale, pxPerMm }: { type: 'qr' | 'barcode' | 'ean13'; value: string; scale: number; pxPerMm: number }) {
-    const svgRef = useRef<SVGSVGElement>(null);
-    const canvasRef = useRef<HTMLCanvasElement>(null);
-    const [error, setError] = useState('');
-
-    // QR: canvas
-    useEffect(() => {
-        if (type !== 'qr') return;
-        const canvas = canvasRef.current;
-        if (!canvas || !value) return;
-        // eslint-disable-next-line react-hooks/set-state-in-effect
-        setError('');
-        const sidePx = Math.round(20 * (scale / 100) * pxPerMm);
-        QRCode.toCanvas(canvas, value, { width: sidePx, margin: 0 })
-            .catch(() => setError('Valore non valido per QR'));
-    }, [type, value, scale, pxPerMm]);
-
-    // EAN-13 / Code128: SVG — renderizza con width=1 (1px per modulo base) per avere le
-    // proporzioni native del simbolo, poi imposta viewBox da quelle dimensioni e sovrascrive
-    // width/height con i px target calcolati da barcodeMetrics. Scaling uniforme sull'intero
-    // simbolo, senza toccare la larghezza delle singole barre.
-    useEffect(() => {
-        if (type === 'qr') return;
-        const svg = svgRef.current;
-        if (!svg || !value) return;
-        // eslint-disable-next-line react-hooks/set-state-in-effect
-        setError('');
-        if (type === 'ean13' && !/^\d{12,13}$/.test(value)) {
-            setError('EAN-13 richiede 12 o 13 cifre numeriche');
-            return;
-        }
-        const m = barcodeMetrics(scale, pxPerMm);
-        try {
-            JsBarcode(svg, value, {
-                format: type === 'ean13' ? 'EAN13' : 'CODE128',
-                width: 1,
-                height: 50,
-                displayValue: true,
-                fontSize: 9,
-                textMargin: 2,
-                marginTop: 0,
-                marginBottom: 2,
-                marginLeft: type === 'ean13' ? 11 : 2,
-                marginRight: type === 'ean13' ? 7 : 2,
-                background: '#fff',
-                lineColor: '#000',
-            });
-            const nW = parseFloat(svg.getAttribute('width') || '0');
-            const nH = parseFloat(svg.getAttribute('height') || '0');
-            if (nW > 0 && nH > 0) {
-                svg.setAttribute('viewBox', `0 0 ${nW} ${nH}`);
-                svg.setAttribute('width', String(Math.round(m.symbolWidthPx)));
-                // height proporzionale all'aspect ratio naturale del SVG — così il resize
-                // tramite maniglia scala l'intero simbolo uniformemente, non solo la larghezza.
-                svg.setAttribute('height', String(Math.round(m.symbolWidthPx * nH / nW)));
-            }
-        } catch {
-            setError(type === 'ean13' ? 'Codice EAN-13 non valido (check digit errato)' : 'Valore non valido per barcode');
-        }
-    }, [type, value, scale, pxPerMm]);
-
-    if (!value) return null;
-    return (
-        <div style={{ display: 'inline-block' }}>
-            {type === 'qr' ? <canvas ref={canvasRef} /> : <svg ref={svgRef} />}
-            {error && <div style={{ fontSize: 9, color: '#c53030' }}>{error}</div>}
-        </div>
-    );
-}
 
 export function EtichetteCalc() {
     const { user } = useAuth();
