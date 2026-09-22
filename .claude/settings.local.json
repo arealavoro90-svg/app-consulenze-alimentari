@@ -163,7 +163,9 @@
       "Bash(awk 'NR>=308,NR>=322' /Users/novanta/Desktop/APP/App_prova/src/styles/mobile.css)",
       "Bash(awk 'NR>=122 && NR<=135')",
       "Bash(awk 'NR>=308 && NR<=322')",
-      "Bash(awk 'NR>=310 && NR<=320')"
+      "Bash(awk 'NR>=310 && NR<=320')",
+      "WebFetch(domain:food-nutrition.canada.ca)",
+      "Bash(python manage.py check)"
     ]
   },
   "hooks": {
