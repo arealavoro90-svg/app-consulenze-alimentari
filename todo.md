@@ -13,6 +13,7 @@
 > **Sessione 2026-09-14 (cont.): ING-SEC-1/2/3/4 verificati via curl+Django shell (locale). Fix test useIngredientsDB (mockImplementation per URL). 266/266 test verdi.**
 > **Sessione 2026-09-16: Audit 360° elite-team (PM+Architect+UI/UX+Security). 5 critici sicurezza identificati, god component EtichetteCalc 3475L, bundle 650KB lazy-load mancante, UX feedback gaps. Roadmap aggiornata.**
 > **Sessione 2026-09-20: Fase 1 Blindatura completata (SEC-JWT-ROT, SEC-MIGRATE-RUNTIME, SEC-ARCHIVE-PERM, UX-ERROR-BOUNDARY, UX-TOAST-FEEDBACK, UX-LOGIN-SPINNER, A11Y-ARIA, PERF-LAZY-PDF, ARCH-ROUND-UTIL, USDA-CREA-SYNC). Fase 2: ARCH-API-VERSION completato (/api/v1/). 266/266 test.**
+> **Sessione 2026-09-22: INFRA-WARMUP fix (trailing slash cron-job.org), TD-1 Fase A (SliderControl/CodeCanvas/barcodeUtils estratti, 3479→3312 righe), DATA-2/SYNC-CNF (migration 0009, sync_cnf command, endpoint, cron Vercel, sync iniziale ~5700 alimenti completato). CRON_SECRET configurato. 266/266 test.**
 > Production URL: **https://app-consulenze-alimentari.vercel.app**
 
 ---
@@ -168,7 +169,7 @@
 
 - [x] **DATA-1** ✅ — Validazione 20 ingredienti vs CREA (alimentinutrizione.it). 9/20 divergono >10% (aglio, farina 00, pollo). Report: `docs/data-validation-crea.md`. Fix: `sync_crea.py` su cat. 01/03/06/12. ✅ 2026-09-10
 - [x] **USDA-CREA-SYNC** ✅ — migrate 0006 in prod (auto). Endpoint `/api/sync-crea/` + cron Vercel mensile `0 3 1 * *`. Sync iniziale manuale per categoria (vedi MEMORY). ✅ 2026-09-20
-- [ ] **DATA-2/SYNC-CNF** — Canada Nutrient File
+- [x] **DATA-2/SYNC-CNF** ✅ — Canada Nutrient File. Migration 0009, sync_cnf command (30 nutrienti), endpoint /api/sync-cnf/, cron Vercel mensile, sync iniziale ~5700 alimenti. ✅ 2026-09-22
 - [ ] **DATA-3/SYNC-AUSNUT** — Australia AUSNUT 2011-13
 
 ### Pagamenti / crescita
