@@ -636,7 +636,7 @@ export function EtichetteCalc() {
     // Sola lettura: nessun tocco a NutrizionaleCalc.tsx. Si rilegge sempre
     // dall'archivio al link/cambio ricetta, mai snapshot statico salvato qui.
     const { db, loadingDB, dbError } = useIngredientsDB();
-    const { items: nutritionalRecipes } = useArchive<ArchiveData>('nutrizionale-v3');
+    const { items: nutritionalRecipes } = useArchive<ArchiveData>('nutrizionale-v3', 'nutrizionale');
     // Auto-fit: formato tabella scelto automaticamente in base a superficie e spazio disponibile.
     const [autoLabelMode, setAutoLabelMode] = useState<'completa' | 'semplificata' | 'solo_energia'>('completa');
     // Scala aggiuntiva di emergenza quando anche solo_energia non entra (0.45–1.0).
@@ -992,6 +992,7 @@ export function EtichetteCalc() {
     const requiredFields: { id: string; label: string; ok: boolean }[] = [
         { id: 'et-nome', label: 'Denominazione del prodotto', ok: !!data.productName },
         { id: 'et-produttore', label: 'Produttore / Responsabile', ok: !!data.producer },
+        { id: 'et-indirizzo', label: 'Indirizzo stabilimento', ok: !!data.address },
         { id: 'et-peso-netto', label: 'Quantità netta', ok: !!data.netWeight },
         { id: 'et-scadenza', label: 'TMC / data di scadenza', ok: !!data.bestBefore },
         // Art. 16(2): sotto i 10cm² l'elenco ingredienti non è dovuto.

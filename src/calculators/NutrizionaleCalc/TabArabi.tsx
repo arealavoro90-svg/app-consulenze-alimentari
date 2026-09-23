@@ -19,7 +19,7 @@ export type USAMeasure = 'g' | 'tazze' | 'cucchiai' | 'pezzi';
 // ─── DV Gulf ──────────────────────────────────────────────────────────────────
 const DV_GULF = {
     energyKcal: 2000, grassi: 70, saturi: 20, colesterolo: 300,
-    sodio_mg: 2400, carboidratiTot: 260, fibre: 28, zuccheri_agg: 50,
+    sodio_mg: 2300, carboidratiTot: 260, fibre: 28, zuccheri_agg: 50,
 };
 
 // ─── Scale helper ─────────────────────────────────────────────────────────────
