@@ -14,6 +14,7 @@
 > **Sessione 2026-09-16: Audit 360° elite-team (PM+Architect+UI/UX+Security). 5 critici sicurezza identificati, god component EtichetteCalc 3475L, bundle 650KB lazy-load mancante, UX feedback gaps. Roadmap aggiornata.**
 > **Sessione 2026-09-20: Fase 1 Blindatura completata (SEC-JWT-ROT, SEC-MIGRATE-RUNTIME, SEC-ARCHIVE-PERM, UX-ERROR-BOUNDARY, UX-TOAST-FEEDBACK, UX-LOGIN-SPINNER, A11Y-ARIA, PERF-LAZY-PDF, ARCH-ROUND-UTIL, USDA-CREA-SYNC). Fase 2: ARCH-API-VERSION completato (/api/v1/). 266/266 test.**
 > **Sessione 2026-09-22: INFRA-WARMUP fix (trailing slash cron-job.org), TD-1 Fase A (SliderControl/CodeCanvas/barcodeUtils estratti, 3479→3312 righe), DATA-2/SYNC-CNF (migration 0009, sync_cnf command, endpoint, cron Vercel, sync iniziale ~5700 alimenti completato). CRON_SECRET configurato. 266/266 test.**
+> **Sessione 2026-09-23: Force-sync CREA tutte 19 categorie prod (871 ingredienti con macro=0 corretti). Fix BUG ricette salvate "ingredienti non trovati" (resolve endpoint POST + lookup case-insensitive). Fix nome "Caramelle tipo \"mou\"". clean_ingredients --apply: 354 duplicati eliminati (1903→~1549 ingredienti). CRON_SECRET ruotato. Sessione review: GULF-ARABO e DATI-REV (D1-EXCEL+USDA-IT-NAMES+AUSNUT) rinviati a confronto con padre. TD-1 rinviato (no feature attive su EtichetteCalc).**
 > Production URL: **https://app-consulenze-alimentari.vercel.app**
 
 ---
@@ -67,8 +68,7 @@
 
 ### Normativa
 
-- [ ] **NORM-09** — Gulf/Arabi: verificare clausola small-package su fonte primaria SFDA/GSO (**solo tuo**).
-  Confidenza normativa bassa nel codice. Verificare GSO 2233/2012 + SFDA prima di vendere a clienti Gulf.
+- [x] **NORM-09** ✅ — GSO 2233:2021 cl.1.2.7: esenzione totale <25cm² (coincide con UE). Nessun formato lineare obbligatorio per small-package. Commento codice aggiornato. ✅ 2026-09-23
 
 - [ ] **GULF-ARABO** — Tabella nutrizionale Gulf solo in inglese — non conforme per export Golfo.
   GSO 2233/2012 richiede lingua araba. Da verificare prima di commercializzare verso clienti Gulf.
@@ -110,8 +110,14 @@
 
 ### Dati
 
-- [ ] **D1-EXCEL** — 4 celle errate Excel (colonna HO, righe 331, 485, 625, 824).
-  ⚠️ Leggere trappola in `AUDIT-2026-09-03.md` prima di toccare.
+- [ ] **DATI-REV** 🔵 — **Da discutere con padre** (blocco ingredienti — non toccare fino ad accordo):
+  - **D1-EXCEL** — Correggere `all_grano=true` su 4 ingredienti grano saraceno (non contiene grano).
+    Excel: col HO, righe 331 (farina g.s.), 485 (grano saraceno), 624 (mix GF), 824 (preparato g.s. tartufo).
+    Fix lato dev: management command patch allergens in prod. Fix lato Excel: togliere `1` da quelle 4 celle HO.
+    ⚠️ Leggere trappola `AUDIT-2026-09-03.md` prima di toccare.
+  - **USDA-IT-NAMES** — ~5700 ingredienti USDA/CNF nel DB ma nascosti perché nomi inglesi.
+    Opzioni: (A) campo `nome_it` nullable + frontend mostra `nome_it || nome`; (B) flag `visibile` per escluderli/includerli; (C) lasciarli nascosti e non fare nulla.
+  - **DATA-3/SYNC-AUSNUT** — Dataset Australia AUSNUT 2011-13 da aggiungere (formato simile a CNF).
 
 ---
 
@@ -167,12 +173,10 @@
 
 ### Dati
 
-- [ ] **USDA-IT-NAMES** — Backend serve ~5700 ingredienti USDA/CNF con nomi inglesi (es. "acerola juice, raw", "beef ground 80% lean"). PMI italiane non trovano ingredienti per nome. Soluzione da decidere: (A) campo `nome_it` nullable nel modello Django + frontend mostra `nome_it || nome`; (B) flag `visibile=false` per default su USDA/CNF, visibili solo su filtro esplicito; (C) entrambi. Vedi analisi sessione 2026-09-23.
-
 - [x] **DATA-1** ✅ — Validazione 20 ingredienti vs CREA (alimentinutrizione.it). 9/20 divergono >10% (aglio, farina 00, pollo). Report: `docs/data-validation-crea.md`. Fix: `sync_crea.py` su cat. 01/03/06/12. ✅ 2026-09-10
 - [x] **USDA-CREA-SYNC** ✅ — migrate 0006 in prod (auto). Endpoint `/api/sync-crea/` + cron Vercel mensile `0 3 1 * *`. Sync iniziale manuale per categoria (vedi MEMORY). ✅ 2026-09-20
 - [x] **DATA-2/SYNC-CNF** ✅ — Canada Nutrient File. Migration 0009, sync_cnf command (30 nutrienti), endpoint /api/sync-cnf/, cron Vercel mensile, sync iniziale ~5700 alimenti. ✅ 2026-09-22
-- [ ] **DATA-3/SYNC-AUSNUT** — Australia AUSNUT 2011-13
+- [ ] **DATA-3/SYNC-AUSNUT** — Australia AUSNUT 2011-13 → vedi DATI-REV
 
 ### Pagamenti / crescita
 

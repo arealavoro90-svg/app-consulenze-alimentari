@@ -168,9 +168,9 @@ export function buildAULinear(p: CalcResult): string {
         `Sodium: ${rAU_mg(p.sodio_mg)} mg`,
     ].join(', ');
 }
-// Gulf/GSO: GSO 2233/2012 adotta Codex CAC/GL 2-1985 (principio analogo, testo della clausola
-// small-package non verificato con la stessa certezza di UE/AU — vedi nota nel report). Stesso
-// set/ordine di TabArabi.tsx.
+// Gulf/GSO: GSO 2233:2021 (sostituisce 2012), clausola 1.2.7 — esenzione totale sotto 25cm²
+// (coincide con UE). Nessun formato lineare obbligatorio per piccole confezioni: sotto 25cm²
+// l'etichettatura nutrizionale è semplicemente omessa. Stesso set/ordine di TabArabi.tsx.
 // eslint-disable-next-line react-refresh/only-export-components
 export function buildArabiLinear(p: CalcResult): string {
     return [
