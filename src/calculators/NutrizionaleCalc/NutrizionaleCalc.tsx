@@ -16,6 +16,7 @@ import { IngSearch } from './IngSearch';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import { useArchive } from '../../hooks/useArchive';
+import { resolveIngredients } from '../../api/ingredients';
 import { useLocalStorage } from '../../hooks/useLocalStorage';
 import { useAutosave } from '../../hooks/useAutosave';
 import { useIngredientsDB } from '../../hooks/useIngredientsDB';
@@ -615,7 +616,7 @@ export function NutrizionaleCalc() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [handleSave]);
 
-    const handleLoad = (item: typeof archiveItems[0]) => {
+    const handleLoad = async (item: typeof archiveItems[0]) => {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any -- legacy archive shape is unknown
         const d = item.data as any; // Allow legacy fallback
         setProductName(d.nome_prodotto || d.productName || '');
@@ -630,6 +631,24 @@ export function NutrizionaleCalc() {
         setArabi(serv.Arabi || d.arabi || {});
 
         const rawComps = d.componenti || d.components || [];
+
+        // Collect all ingredient names referenced in the archive item
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any -- legacy archive shape
+        const allNames: string[] = rawComps.flatMap((sc: any) =>
+            (sc.ingredienti || sc.rows || []).map((sr: any) => sr.nome || sr.name).filter(Boolean)
+        );
+        const dbNamesLower = new Set(db.map(d => d.nome.toLowerCase()));
+        const missingNames = [...new Set(allNames.filter(n => !dbNamesLower.has(n.toLowerCase())))];
+
+        // Resolve missing ingredients from backend (bypasses CNF/USDA filter)
+        let augmentedDb = db;
+        if (missingNames.length > 0) {
+            try {
+                const resolved = await resolveIngredients(missingNames);
+                if (resolved.length > 0) augmentedDb = [...db, ...resolved];
+            } catch { /* fallback: proceed with current db */ }
+        }
+
         const skippedLoad: string[] = [];
         // eslint-disable-next-line @typescript-eslint/no-explicit-any -- legacy archive deserialization
         const loadedComps: Component[] = rawComps.map((sc: any) => {
@@ -641,8 +660,9 @@ export function NutrizionaleCalc() {
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any -- legacy archive deserialization
                 rows: rowData.flatMap((sr: any) => {
                     const ingName = sr.nome || sr.name;
+                    const ingNameLower = ingName?.toLowerCase();
                     const grams = typeof sr.grammi === 'number' ? sr.grammi : (sr.grams || 0);
-                    const found = db.find(dbi => dbi.nome === ingName);
+                    const found = augmentedDb.find(dbi => dbi.nome.toLowerCase() === ingNameLower);
                     if (!found) { skippedLoad.push(ingName); return []; }
                     return [{
                         id: String(Date.now() + Math.random()),
@@ -1304,7 +1324,7 @@ export function NutrizionaleCalc() {
                 <ArchiveModal
                     items={archiveItems}
                     onClose={() => setArchiveOpen(false)}
-                    onLoad={(item) => { handleLoad(item); setArchiveOpen(false); }}
+                    onLoad={(item) => { void handleLoad(item).then(() => setArchiveOpen(false)); }}
                     onDelete={deleteItem}
                     onDuplicate={(item) => { void saveItem(item.name + ' (Copia)', item.data); }}
                     onImport={(imported) => { imported.forEach(it => { void saveItem(it.name, it.data); }); }}

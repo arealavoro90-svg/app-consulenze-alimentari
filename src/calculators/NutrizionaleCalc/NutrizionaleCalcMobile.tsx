@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { useNavigate } from 'react-router-dom';
 import { Salad, ClipboardList, Globe, Archive } from 'lucide-react';
 import { useAuth } from '../../auth/AuthContext';
+import { resolveIngredients } from '../../api/ingredients';
 import { useArchive } from '../../hooks/useArchive';
 import { useAutosave } from '../../hooks/useAutosave';
 import { useIngredientsDB } from '../../hooks/useIngredientsDB';
@@ -318,15 +319,28 @@ export function NutrizionaleCalcMobile() {
 
     // Carica dallo schema unificato ArchiveData: gli ingredienti sono salvati per
     // nome e risolti contro il DB (stesso pattern di handleLoad desktop).
-    const loadFromArchive = (d: ArchiveData) => {
+    const loadFromArchive = async (d: ArchiveData) => {
         const rnd = () => String(Date.now() + Math.random());
+
+        // Pre-fetch nomi mancanti (es. ingredienti CNF/USDA filtrati dal browse)
+        const allNames = (d.componenti ?? []).flatMap(sc => (sc.ingredienti ?? []).map(sr => sr.nome).filter(Boolean));
+        const dbNamesLower = new Set(db.map(i => i.nome.toLowerCase()));
+        const missingNames = [...new Set(allNames.filter(n => !dbNamesLower.has(n.toLowerCase())))];
+        let augmentedDb = db;
+        if (missingNames.length > 0) {
+            try {
+                const resolved = await resolveIngredients(missingNames);
+                if (resolved.length > 0) augmentedDb = [...db, ...resolved];
+            } catch { /* fallback: usa db attuale */ }
+        }
+
         const skipped: string[] = [];
         const comps: MobileComponent[] = (d.componenti ?? []).map(sc => ({
             id: rnd(),
             name: sc.nome || '',
             pzUV: sc.pz_uv || 1,
             rows: (sc.ingredienti ?? []).flatMap(sr => {
-                const found = db.find(i => i.nome === sr.nome);
+                const found = augmentedDb.find(i => i.nome.toLowerCase() === sr.nome?.toLowerCase());
                 if (!found) { skipped.push(sr.nome); return []; }
                 return [{
                     id: rnd(),
@@ -512,7 +526,7 @@ export function NutrizionaleCalcMobile() {
                     <div className="m-slide-panel">
                         <ArchivioTab
                             items={archive.items}
-                            onLoad={(entry) => loadFromArchive(entry)}
+                            onLoad={(entry) => { void loadFromArchive(entry); }}
                             onDelete={(id) => archive.deleteItem(id)}
                             onNewRecipe={() => { handleNewRecipe(); goToSection('ricetta'); }}
                         />

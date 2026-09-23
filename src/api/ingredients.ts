@@ -27,6 +27,15 @@ export async function promoteUserIngredient(uid: string): Promise<DBIngredient> 
     return apiFetch<DBIngredient>(`/api/v1/ingredients/user/${uid}/promote/`, { method: 'POST' });
 }
 
+/** Risolve nomi ingredienti senza filtro CNF/USDA — fallback per ricette salvate. */
+export async function resolveIngredients(names: string[]): Promise<DBIngredient[]> {
+    if (names.length === 0) return [];
+    return apiFetch<DBIngredient[]>('/api/v1/ingredients/resolve/', {
+        method: 'POST',
+        body: JSON.stringify(names),
+    });
+}
+
 export async function createOfficialIngredient(ing: DBIngredient): Promise<DBIngredient> {
     return apiFetch<DBIngredient>('/api/v1/ingredients/', {
         method: 'POST',
