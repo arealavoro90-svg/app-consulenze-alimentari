@@ -390,7 +390,7 @@ export function BrowseIngredientsModal({ onClose, db, onEditIngredient, onPromot
                                     {/* Mini valori — nascosti sotto 560px: sul mobile schiacciavano il nome, i valori
                                         sono comunque disponibili tappando la riga per espandere (ExpandedDetails). */}
                                     <span className="bim-mini-val" style={miniValStyle}>
-                                        {ing.kcal} kcal &nbsp;|&nbsp;
+                                        {fmt(ing.kcal)} kcal &nbsp;|&nbsp;
                                         G {fmt(ing.grassi)} g &nbsp;|&nbsp;
                                         C {fmt(ing.carboidrati)} g &nbsp;|&nbsp;
                                         P {fmt(ing.proteine)} g

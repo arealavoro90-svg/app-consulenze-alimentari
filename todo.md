@@ -167,6 +167,8 @@
 
 ### Dati
 
+- [ ] **USDA-IT-NAMES** — Backend serve ~5700 ingredienti USDA/CNF con nomi inglesi (es. "acerola juice, raw", "beef ground 80% lean"). PMI italiane non trovano ingredienti per nome. Soluzione da decidere: (A) campo `nome_it` nullable nel modello Django + frontend mostra `nome_it || nome`; (B) flag `visibile=false` per default su USDA/CNF, visibili solo su filtro esplicito; (C) entrambi. Vedi analisi sessione 2026-09-23.
+
 - [x] **DATA-1** ✅ — Validazione 20 ingredienti vs CREA (alimentinutrizione.it). 9/20 divergono >10% (aglio, farina 00, pollo). Report: `docs/data-validation-crea.md`. Fix: `sync_crea.py` su cat. 01/03/06/12. ✅ 2026-09-10
 - [x] **USDA-CREA-SYNC** ✅ — migrate 0006 in prod (auto). Endpoint `/api/sync-crea/` + cron Vercel mensile `0 3 1 * *`. Sync iniziale manuale per categoria (vedi MEMORY). ✅ 2026-09-20
 - [x] **DATA-2/SYNC-CNF** ✅ — Canada Nutrient File. Migration 0009, sync_cnf command (30 nutrienti), endpoint /api/sync-cnf/, cron Vercel mensile, sync iniziale ~5700 alimenti. ✅ 2026-09-22
