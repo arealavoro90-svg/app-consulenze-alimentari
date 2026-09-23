@@ -633,10 +633,11 @@ export function NutrizionaleCalc() {
         const rawComps = d.componenti || d.components || [];
 
         // Collect all ingredient names referenced in the archive item
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any -- legacy archive shape
+        /* eslint-disable @typescript-eslint/no-explicit-any */ // legacy archive shape
         const allNames: string[] = rawComps.flatMap((sc: any) =>
             (sc.ingredienti || sc.rows || []).map((sr: any) => sr.nome || sr.name).filter(Boolean)
         );
+        /* eslint-enable @typescript-eslint/no-explicit-any */
         const dbNamesLower = new Set(db.map(d => d.nome.toLowerCase()));
         const missingNames = [...new Set(allNames.filter(n => !dbNamesLower.has(n.toLowerCase())))];
 

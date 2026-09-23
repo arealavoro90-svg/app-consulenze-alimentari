@@ -39,12 +39,14 @@ import {
     BARCODE_MIN_MAGNIFICATION, BARCODE_MAX_MAGNIFICATION, EAN13_TRUNCATED_MIN_HEIGHT_MM,
 } from './barcodeUtils';
 // Re-export per compatibilità con i test esistenti
+/* eslint-disable react-refresh/only-export-components */
 export {
     EAN13_MODULE_MM, EAN13_QUIET_MODULES, EAN13_BAR_MODULES, EAN13_HEIGHT_MM,
     BARCODE_MIN_MAGNIFICATION, BARCODE_MAX_MAGNIFICATION, EAN13_TRUNCATED_MIN_HEIGHT_MM,
     barcodeMetrics, BARCODE_SHARED_ROW_THRESHOLD, shouldShareBarcodeRow,
 } from './barcodeUtils';
 export type { BarcodeMetrics } from './barcodeUtils';
+/* eslint-enable react-refresh/only-export-components */
 
 /** Placeholder discreto per campo vuoto nell'anteprima live (mai più gated da un bottone). */
 function ph(val: string, placeholder: string) {
