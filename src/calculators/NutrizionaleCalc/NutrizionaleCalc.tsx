@@ -320,7 +320,7 @@ export function NutrizionaleCalc() {
     const totalGramsRaw = components.reduce((s, c) =>
         s + c.rows.reduce((rs, r) => rs + r.grams, 0)
           + c.additiveRows.reduce((rs, r) => rs + (r.grams || 0), 0), 0);
-    const fw = parseFloat(finishedWeight) || 0;
+    const fw = parseDecimalIT(finishedWeight) || 0;
     const pesoTotale = fw > 0 ? fw : totalGramsRaw;
 
     // All rows combined for rendering
@@ -352,7 +352,9 @@ export function NutrizionaleCalc() {
     const totGrammiXpzuv = useMemo(() => mergedIngredients.reduce((s, r) => s + r.grammiXpzuv, 0) + totAdditiveGramsXpzuv, [mergedIngredients, totAdditiveGramsXpzuv]);
 
     // Calculation
-    const per100g = useMemo(() => calcNutrients(components, fw), [components, fw]);
+    // Peso finito > totale ingredienti è un errore già segnalato (fwWarning): non va applicato al calcolo.
+    const fwApplied = fw > 0 && Math.round(fw) > Math.round(totGrammiXpzuv) ? 0 : fw;
+    const per100g = useMemo(() => calcNutrients(components, fwApplied), [components, fwApplied]);
 
     useEffect(() => {
         if (!flashInitRef.current) { flashInitRef.current = true; return; }
@@ -363,7 +365,7 @@ export function NutrizionaleCalc() {
 
     // Se peso specifico inserito, i valori per 100ml = valori per 100g × densità
     const per100display = useMemo(() => {
-        const sgVal = parseFloat(specificGravity) || 0;
+        const sgVal = parseDecimalIT(specificGravity) || 0;
         return sgVal > 0 ? scaleResult(per100g, sgVal * 100) : per100g;
     }, [per100g, specificGravity]);
 
@@ -559,7 +561,7 @@ export function NutrizionaleCalc() {
     // Re-valida peso finito ogni volta che cambia totGrammiXpzuv (es. si aggiungono ingredienti)
     useEffect(() => {
         const errorKey = 'finished-weight';
-        const parsed = parseFloat(finishedWeight) || 0;
+        const parsed = parseDecimalIT(finishedWeight) || 0;
         if (parsed <= 0 || totGrammiXpzuv <= 0) { setFwWarning(false); setFieldErrors(prev => ({...prev, [errorKey]: ''})); return; }
         if (Math.round(parsed) > Math.round(totGrammiXpzuv)) {
             setFwWarning(true);
@@ -572,6 +574,10 @@ export function NutrizionaleCalc() {
 
     // Archive save/load
     const handleSave = async () => {
+        if (allRows.length === 0) {
+            toast.error('Aggiungi almeno un ingrediente prima di salvare.');
+            return;
+        }
         const name = productName || 'Ricetta';
         const existing = currentId
             ? archiveItems.find(i => i.id === currentId)
@@ -789,7 +795,7 @@ export function NutrizionaleCalc() {
             if (y > 245) { doc.addPage(); y = 15; }
             doc.setFontSize(11); doc.setFont('helvetica', 'bold'); doc.setTextColor(12, 19, 38);
             const p = per100display;
-            const sgVal = parseFloat(specificGravity) || 0;
+            const sgVal = parseDecimalIT(specificGravity) || 0;
             const pdfLabel = sgVal > 0 ? `Valori Nutrizionali per 100ml (peso specifico: ${sgVal})` : 'Valori Nutrizionali per 100g';
             doc.text(pdfLabel + ' (tutti i dati calcolati)', M, y); y += 5;
             doc.setDrawColor(220, 220, 220); doc.line(M, y, W - M, y); y += 5;
@@ -891,7 +897,7 @@ export function NutrizionaleCalc() {
                     <TabUE
                         p={per100display}
                         ue={ue}
-                        specificGravity={parseFloat(specificGravity) || 0}
+                        specificGravity={parseDecimalIT(specificGravity) || 0}
                         selectedOptionals={selectedOptionals}
                         showOptionals={showOptionals}
                         activeSubTab={state.euSubTab}
@@ -899,7 +905,7 @@ export function NutrizionaleCalc() {
                 );
             case 'USA':
                 return (
-                    <TabUSA p={per100display} usa={usa} specificGravity={parseFloat(specificGravity) || 0}
+                    <TabUSA p={per100display} usa={usa} specificGravity={parseDecimalIT(specificGravity) || 0}
                         servingRef={state.servingRef} measure={state.measure} subTab={state.subTab} />
                 );
             case 'Canada':
@@ -914,7 +920,7 @@ export function NutrizionaleCalc() {
             case 'Arabi':
                 return (
                     <TabArabi p={per100display} arabi={arabi} servingRef={state.servingRef} measure={state.measure}
-                        specificGravity={parseFloat(specificGravity) || 0} />
+                        specificGravity={parseDecimalIT(specificGravity) || 0} />
                 );
         }
     };
@@ -948,7 +954,7 @@ export function NutrizionaleCalc() {
                             <TabUE
                                 p={per100display}
                                 ue={ue}
-                                specificGravity={parseFloat(specificGravity) || 0}
+                                specificGravity={parseDecimalIT(specificGravity) || 0}
                                 selectedOptionals={selectedOptionals}
                                 showOptionals={showOptionals}
                                 activeSubTab="100g"
@@ -957,7 +963,7 @@ export function NutrizionaleCalc() {
                     )}
                     {activeTab === 'USA' && (
                         <div className="table-wrap-center animate-fade-up" style={{ border: '1px solid var(--color-border)', borderRadius: 'var(--radius-md)', overflow: 'hidden', marginTop: 8 }}>
-                            <TabUSA p={per100display} usa={usa} specificGravity={parseFloat(specificGravity) || 0}
+                            <TabUSA p={per100display} usa={usa} specificGravity={parseDecimalIT(specificGravity) || 0}
                                 servingRef="serving" measure="g" subTab="verticale" />
                         </div>
                     )}
@@ -975,7 +981,7 @@ export function NutrizionaleCalc() {
                     )}
                     {activeTab === 'Arabi' && (
                         <div className="table-wrap-center animate-fade-up" style={{ border: '1px solid var(--color-border)', borderRadius: 'var(--radius-md)', overflow: 'hidden', marginTop: 8 }}>
-                            <TabArabi p={per100display} arabi={arabi} servingRef="serving" measure="g" specificGravity={parseFloat(specificGravity) || 0} />
+                            <TabArabi p={per100display} arabi={arabi} servingRef="serving" measure="g" specificGravity={parseDecimalIT(specificGravity) || 0} />
                         </div>
                     )}
                 </div>
@@ -1007,7 +1013,10 @@ export function NutrizionaleCalc() {
                         </div>
                         {/* ── Claim nutrizionali EU (Reg. 2006/1924) ──────── */}
                         {(() => {
-                            const claims = calcClaims(per100display, isLiquid);
+                            // Peso specifico inserito ⇒ prodotto liquido (valori per 100 ml, soglie Reg. 1924/2006 dei liquidi)
+                            const sgLiquid = parseDecimalIT(specificGravity) > 0;
+                            const liquid = isLiquid || sgLiquid;
+                            const claims = calcClaims(per100display, liquid);
                             return (
                                 <div style={{
                                     marginTop: 10,
@@ -1022,7 +1031,8 @@ export function NutrizionaleCalc() {
                                         <label style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 11, cursor: 'pointer', color: 'var(--color-text-muted)', marginLeft: 'auto' }}>
                                             <input
                                                 type="checkbox"
-                                                checked={isLiquid}
+                                                checked={liquid}
+                                                disabled={sgLiquid}
                                                 onChange={e => setIsLiquid(e.target.checked)}
                                                 style={{ width: 12, height: 12, cursor: 'pointer', accentColor: 'var(--color-orange)' }}
                                             />

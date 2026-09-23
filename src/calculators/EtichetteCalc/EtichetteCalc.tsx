@@ -877,7 +877,7 @@ export function EtichetteCalc() {
         if (orderedIngredientsWithQuid.length === 0) return '';
         const ingredientsPart = orderedIngredientsWithQuid
             .map(r => {
-                const testo = highlightAllergens(r.etichetta);
+                const testo = highlightAllergens(r.etichetta.replace(/[\s,:;]+$/, ''));
                 return data.characterizingIngredients.includes(r.nome)
                     ? `${testo} (${r.quid.toFixed(1).replace('.', ',')}%)`
                     : testo;
@@ -993,7 +993,7 @@ export function EtichetteCalc() {
         { id: 'et-nome', label: 'Denominazione del prodotto', ok: !!data.productName },
         { id: 'et-produttore', label: 'Produttore / Responsabile', ok: !!data.producer },
         { id: 'et-indirizzo', label: 'Indirizzo stabilimento', ok: !!data.address },
-        { id: 'et-peso-netto', label: 'Quantità netta', ok: !!data.netWeight },
+        { id: 'et-peso-netto', label: 'Quantità netta', ok: /[1-9]/.test(data.netWeight) && !/^\s*-/.test(data.netWeight) },
         { id: 'et-scadenza', label: 'TMC / data di scadenza', ok: !!data.bestBefore },
         // Art. 16(2): sotto i 10cm² l'elenco ingredienti non è dovuto.
         ...(isMostFieldsExempt ? [] : [
@@ -1023,6 +1023,7 @@ export function EtichetteCalc() {
     const FIELD_SECTION: Record<string, string> = {
         'et-nome': 'dati-prodotto',
         'et-produttore': 'dati-prodotto',
+        'et-indirizzo': 'dati-prodotto',
         'et-peso-netto': 'dati-prodotto',
         'et-ingredienti': 'ingredienti',
         'et-scadenza': 'conservazione',
@@ -1761,8 +1762,8 @@ export function EtichetteCalc() {
                                 <input id="et-produttore" type="text" value={data.producer} onChange={(e) => set('producer', e.target.value)} placeholder="Ragione sociale" style={missingIds.has('et-produttore') ? { borderColor: '#e53e3e' } : undefined} />
                             </div>
                             <div className="form-field">
-                                <label htmlFor="et-indirizzo">Indirizzo stabilimento</label>
-                                <input id="et-indirizzo" type="text" value={data.address} onChange={(e) => set('address', e.target.value)} placeholder="Via, CAP, Città" />
+                                <label htmlFor="et-indirizzo">Indirizzo stabilimento *</label>
+                                <input id="et-indirizzo" type="text" value={data.address} onChange={(e) => set('address', e.target.value)} placeholder="Via, CAP, Città" style={missingIds.has('et-indirizzo') ? { borderColor: '#e53e3e' } : undefined} />
                             </div>
                         </div>
                         <div className="form-row">
@@ -1949,7 +1950,7 @@ export function EtichetteCalc() {
                                     <option value="preferibilmente">Preferibilmente entro</option>
                                     <option value="entro">Da consumarsi entro</option>
                                 </select>
-                                <input id="et-tmc-date" type="date" value={tmcDate}
+                                <input id="et-tmc-date" aria-label="Data di scadenza o TMC" type="date" value={tmcDate}
                                     onChange={(e) => { setTmcDate(e.target.value); applyTmc(tmcType, e.target.value, tmcGranularity); }} />
                                 <select value={tmcGranularity} onChange={(e) => { const v = e.target.value as typeof tmcGranularity; setTmcGranularity(v); applyTmc(tmcType, tmcDate, v); }}
                                     style={{ padding: '8px 10px', borderRadius: 6, border: '1.5px solid var(--color-border)', background: 'var(--color-bg-input)', color: 'var(--color-text)', fontSize: 12 }}>
@@ -2294,6 +2295,7 @@ export function EtichetteCalc() {
     const renderImballiList = () => (
         <div>
             <strong>Imballi:</strong> {data.imballi
+                .filter(i => i.descrizione || i.codice || i.raccolta)
                 .map(i => `${i.descrizione || '—'} (${i.codice || '—'}) — ${i.raccolta || '—'}`)
                 .join('; ')}. Verifica le disposizioni del tuo Comune.
         </div>
@@ -2340,7 +2342,7 @@ export function EtichetteCalc() {
             const ref = MINERAL_VITAMIN_AR[k]!;
             const v = per100[ref.field] as number;
             const isMicro = MICRO_KEYS.has(k);
-            rows.push({ label: k, value: `${isMicro ? rUE_micro(v) : rUE_macro(v)} ${isMicro ? 'µg' : 'mg'}`, ar: `${Math.round(v / ref.ar * 100)}%` });
+            rows.push({ label: k.startsWith('vit') ? `Vitamina ${k.slice(3)}` : k.charAt(0).toUpperCase() + k.slice(1), value: `${rUE_micro(v)} ${isMicro ? 'µg' : 'mg'}`, ar: `${Math.round(v / ref.ar * 100)}%` });
         }
         return (
             <table style={{ width: '100%', borderCollapse: 'collapse' }}>

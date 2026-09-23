@@ -1,4 +1,4 @@
-import React, { useState, useRef, type ReactNode } from 'react';
+import React, { useState, useRef, useEffect, type ReactNode } from 'react';
 import html2canvas from 'html2canvas';
 import { useToast } from '../../components/ui/Toast';
 import type { EUSubTab } from './TabUE';
@@ -54,6 +54,12 @@ export function DownloadTableModal({
 }: Props) {
     const toast = useToast();
     const previewRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
+        window.addEventListener('keydown', onKey);
+        return () => window.removeEventListener('keydown', onKey);
+    }, [onClose]);
 
     // ─── Format state (all local) ─────────────────────────────────────────────
     const [subTab, setSubTab] = useState<SubTab>('verticale');

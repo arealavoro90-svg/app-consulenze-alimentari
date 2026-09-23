@@ -15,6 +15,7 @@
 > **Sessione 2026-09-20: Fase 1 Blindatura completata (SEC-JWT-ROT, SEC-MIGRATE-RUNTIME, SEC-ARCHIVE-PERM, UX-ERROR-BOUNDARY, UX-TOAST-FEEDBACK, UX-LOGIN-SPINNER, A11Y-ARIA, PERF-LAZY-PDF, ARCH-ROUND-UTIL, USDA-CREA-SYNC). Fase 2: ARCH-API-VERSION completato (/api/v1/). 266/266 test.**
 > **Sessione 2026-09-22: INFRA-WARMUP fix (trailing slash cron-job.org), TD-1 Fase A (SliderControl/CodeCanvas/barcodeUtils estratti, 3479→3312 righe), DATA-2/SYNC-CNF (migration 0009, sync_cnf command, endpoint, cron Vercel, sync iniziale ~5700 alimenti completato). CRON_SECRET configurato. 266/266 test.**
 > **Sessione 2026-09-23: Force-sync CREA tutte 19 categorie prod (871 ingredienti con macro=0 corretti). Fix BUG ricette salvate "ingredienti non trovati" (resolve endpoint POST + lookup case-insensitive). Fix nome "Caramelle tipo \"mou\"". clean_ingredients --apply: 354 duplicati eliminati (1903→~1549 ingredienti). CRON_SECRET ruotato. NORM-09 chiuso (GSO 2233:2021 cl.1.2.7 — esenzione totale <25cm², coincide con UE). Fix CI: 3 errori ESLint risolti (react-refresh/only-export-components + no-explicit-any). DATI-REV consolidato. TD-1 rinviato. GULF-ARABO rinviato a confronto padre.**
+> **Sessione 2026-09-23 (sera): Audit 5 agenti → `docs/audit/AUDIT-2026-09-23.md` (80 voci). Fix rapidi non invasivi in corso (vedi sezione AUDIT-0923). NON committato/pushato.**
 > Production URL: **https://app-consulenze-alimentari.vercel.app**
 
 ---
@@ -246,3 +247,25 @@
 6. **Throttling prod richiede Redis** — `LocMemCache` non persiste tra worker Gunicorn.
 
 7. **Deploy prod:** `vercel deploy --prod --scope team_o6LXdelylqAyfa6pmdWBwa2m`
+
+---
+
+## 🔎 AUDIT-0923 — stato (dettaglio in `docs/audit/AUDIT-2026-09-23.md`)
+
+**Fatti (locali, non committati; tsc/lint verdi, test 264/266 invariati):**
+- [x] **XL-1** — Excel %VNR energia: riferimenti 2000 kcal / 8400 kJ (`src/utils/exportExcel.ts`)
+- [x] **M1-VIRGOLA** — peso specifico e peso finito accettano la virgola (`parseDecimalIT`, `NutrizionaleCalc.tsx`)
+- [x] **M3-ENGINE** — `calcNutrients` ignora grammi NaN/negativi (`nutrizionaleCalcEngine.ts`)
+- [x] **ETI-A5** — indirizzo stabilimento: asterisco, bordo rosso, `FIELD_SECTION` (`EtichetteCalc.tsx`)
+- [x] **N-A1** — peso specifico > 0 ⇒ prodotto liquido per i claim (soglie liquidi Reg. 1924/2006); checkbox "Liquido" bloccata e spuntata (`NutrizionaleCalc.tsx`, `mobile/TabellaTab.tsx`)
+- [x] **SAVE-EMPTY** — salvataggio ricetta senza ingredienti bloccato con toast errore (`NutrizionaleCalc.tsx` `handleSave`)
+- [x] **ING-1** — lista ingredienti: tolti "," ":" ";" finali dai nomi (`EtichetteCalc.tsx` `generatedIngredientsText`)
+- [x] **PDF-1** — scheda PDF: vitamine "Vitamina B1…", minerali capitalizzati, valori con `rUE_micro` (no più "0 mg")
+- [x] **FW-1** — peso finito > totale ingredienti non più applicato al calcolo (`NutrizionaleCalc.tsx` `fwApplied`)
+- [x] **NET-1** — quantità netta "abc", "0 g", "-250 g" ora contate come mancanti (`EtichetteCalc.tsx` `requiredFields`)
+- [x] **LOGOUT-CACHE** — logout pulisce archivi, ingredienti custom e bozze in localStorage (`AuthContext.tsx`)
+- [x] **UX-ESC / A11Y** — Esc chiude "Scarica tabella"; `aria-label` su `#et-tmc-date`
+- [x] **IMB-1** — righe imballo vuote non stampate
+
+**Da fare (ordine consigliato):** vedi Parte 1 e 2 del file audit. Blocchi: (1) CSRF; (2) allergeni nel codice AL-5/6, ET-1/2; (3) US-1 + PDF-1 + ING-1 + GS1-1; (4) dati DB con padre + dump prod.
+**Note aperte:** `TabUE`/`exportExcel` fibre 25 g: l'All. XIII Reg. 1169 non ha VNR per le fibre → DA VERIFICARE; 2 test Gulf rossi (`TabGolden` 8%→9%, snapshot `TabIntl`) in attesa fonte GSO 2233:2021.

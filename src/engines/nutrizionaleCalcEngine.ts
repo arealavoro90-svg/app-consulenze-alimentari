@@ -110,7 +110,7 @@ export function calcNutrients(components: Component[], pesoFinitoVal: number): C
     for (const c of components) {
         const pzUV = c.pzUV || 1;
         for (const r of c.rows) {
-            const g_raw = r.grams / pzUV;
+            const g_raw = (Number.isFinite(r.grams) && r.grams > 0 ? r.grams : 0) / pzUV;
             const g_cooked = g_raw * (((r.resa && r.resa > 0) ? r.resa : 100) / 100); // ponytail: resa applicata solo al denominatore; nutrienti restano su g_raw (valori DB sono per 100g crudi)
             peso_totale_pz += g_cooked;
             g_per_pz_list.push({ ing: r.ing, g: g_raw, postCottura: r.postCottura, acquaAggiunta: r.acquaAggiunta });

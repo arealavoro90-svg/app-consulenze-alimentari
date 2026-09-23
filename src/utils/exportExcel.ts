@@ -6,8 +6,8 @@ import type { CalcResult } from '../engines/nutrizionaleCalcEngine';
 
 // VNR EU Reg 1169/2011 Allegato XIII — µg/mg/g come da tabella ufficiale
 const VNR: Partial<Record<keyof CalcResult, { value: number; unit: string }>> = {
-    energyKcal: { value: 8400,  unit: 'kcal' },  // kJ: 8400 kcal / 2000 kcal = stessa riga
-    energyKj:   { value: 35000, unit: 'kJ'   },
+    energyKcal: { value: 2000,  unit: 'kcal' },
+    energyKj:   { value: 8400,  unit: 'kJ'   },
     grassi:     { value: 70,    unit: 'g'     },
     saturi:     { value: 20,    unit: 'g'     },
     carboidrati:{ value: 260,   unit: 'g'     },

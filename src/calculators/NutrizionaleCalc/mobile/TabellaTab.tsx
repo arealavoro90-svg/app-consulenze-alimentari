@@ -351,7 +351,9 @@ export function TabellaTab({ calcResult, form, onChange, onSave, hasIngredients,
                             </TablePreviewWrap>
                             {/* ── Claim nutrizionali EU (Reg. 2006/1924) ──── */}
                             {(() => {
-                                const claims = calcClaims(calcResult as Parameters<typeof calcClaims>[0], isLiquid);
+                                // Peso specifico inserito ⇒ liquido (soglie Reg. 1924/2006 dei liquidi)
+                                const liquid = isLiquid || sg > 0;
+                                const claims = calcClaims(calcResult as Parameters<typeof calcClaims>[0], liquid);
                                 return (
                                     <div style={{ padding: '12px 16px 0', borderTop: '1px solid #eaecf0' }}>
                                         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
@@ -359,7 +361,8 @@ export function TabellaTab({ calcResult, form, onChange, onSave, hasIngredients,
                                             <label style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 12, cursor: 'pointer', color: 'var(--m-text-muted)' }}>
                                                 <input
                                                     type="checkbox"
-                                                    checked={isLiquid}
+                                                    checked={liquid}
+                                                    disabled={sg > 0}
                                                     onChange={e => setIsLiquid(e.target.checked)}
                                                     style={{ width: 14, height: 14, cursor: 'pointer', accentColor: 'var(--m-orange, #ff7e2e)' }}
                                                 />

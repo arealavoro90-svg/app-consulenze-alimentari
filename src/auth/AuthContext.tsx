@@ -91,6 +91,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const logout = (): void => {
         setUser(null);
         localStorage.removeItem(CACHE_KEY);
+        // Dati utente in cache locale (archivi, ingredienti custom, bozze): non devono restare visibili al prossimo login
+        try {
+            Object.keys(localStorage)
+                .filter(k => /^(aea_archive_|aea_last_recipe$|nutrizionale-v3$|custom_ingredients$|nut_draft$|nut_mobile_autosave_v1$)/.test(k))
+                .forEach(k => localStorage.removeItem(k));
+        } catch { /* localStorage non disponibile */ }
         void apiLogout(); // fire-and-forget: blacklist refresh token sul server
     };
 

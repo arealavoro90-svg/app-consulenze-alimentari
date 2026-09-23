@@ -314,3 +314,35 @@ describe('calcQuid', () => {
         expect(tot).toBeLessThanOrEqual(100.1);
     });
 });
+
+// ─── AUDIT-0923: input non validi e claim liquidi ─────────────────────────────
+
+describe('calcNutrients — grammi non validi', () => {
+    const olio = makeIng({ kcal: 900, kj: 3700, grassi: 100 });
+    const riga = (grams: number, id: string) => ({ id, ing: olio, grams, eurKg: 0, resa: 100 });
+
+    it('grammi NaN vengono ignorati (nessun NaN nel risultato)', () => {
+        const r = calcNutrients([makeComp([riga(100, 'a'), riga(NaN, 'b')])], 100);
+        expect(Number.isNaN(r.energyKj)).toBe(false);
+        expect(r.grassi).toBeCloseTo(100, 2);
+    });
+
+    it('grammi negativi vengono trattati come 0 (mai grassi negativi)', () => {
+        const r = calcNutrients([makeComp([riga(100, 'a'), riga(-50, 'b')])], 100);
+        expect(r.grassi).toBeCloseTo(100, 2);
+        expect(r.energyKcal).toBeGreaterThanOrEqual(0);
+    });
+});
+
+describe('calcClaims — liquidi vs solidi (Reg. 1924/2006)', () => {
+    // latte: ~4,3 g zuccheri/100 ml → oltre soglia liquidi (2,5), sotto soglia solidi (5)
+    const latte: CalcResult = { ...ZERO_CALC, energyKcal: 46, zuccheri: 4.3 };
+
+    it('come solido esce "A BASSO CONTENUTO DI ZUCCHERI"', () => {
+        expect(calcClaims(latte, false)).toContain('A BASSO CONTENUTO DI ZUCCHERI');
+    });
+
+    it('come liquido NON esce il claim zuccheri (4,3 g > 2,5 g)', () => {
+        expect(calcClaims(latte, true)).not.toContain('A BASSO CONTENUTO DI ZUCCHERI');
+    });
+});
