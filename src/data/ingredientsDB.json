@@ -3663,7 +3663,8 @@
     "rame": 0.01,
     "manganese": 0.01,
     "selenio": 1,
-    "iodio": 10.5
+    "iodio": 10.5,
+    "all_latte": "1"
   },
   {
     "nome": "burro bio",
@@ -3699,7 +3700,8 @@
     "vitB9": 0,
     "vitB12": 0.17,
     "cross_latte": "1",
-    "categoria": "ingrediente"
+    "categoria": "ingrediente",
+    "all_latte": "1"
   },
   {
     "nome": "burro chiarificato",
@@ -3718,7 +3720,8 @@
     "sale": 0,
     "vitA_eq": 0,
     "cross_latte": "1",
-    "categoria": "semilavorato"
+    "categoria": "semilavorato",
+    "all_latte": "1"
   },
   {
     "nome": "burro delattosato",
@@ -3738,7 +3741,8 @@
     "sale": 0.05,
     "vitA_eq": 0,
     "cross_latte": "1",
-    "categoria": "ingrediente"
+    "categoria": "ingrediente",
+    "all_latte": "1"
   },
   {
     "nome": "burro di arachidi",
@@ -5450,7 +5454,9 @@
     "sodio_mg": 72,
     "sale": 0.18,
     "vitA_eq": 0,
-    "categoria": "ingrediente"
+    "categoria": "ingrediente",
+    "all_latte": "1",
+    "cross_latte": "1"
   },
   {
     "nome": "castagne",
@@ -16449,7 +16455,8 @@
     "vitB9": 59,
     "vitB12": 0,
     "cross_lupini": "1",
-    "categoria": "ingrediente"
+    "categoria": "ingrediente",
+    "all_lupini": "1"
   },
   {
     "nome": "lupini secchi",
@@ -16473,7 +16480,8 @@
     "sale": 0.04,
     "vitA_eq": 0,
     "cross_lupini": "1",
-    "categoria": "ingrediente"
+    "categoria": "ingrediente",
+    "all_lupini": "1"
   },
   {
     "nome": "maca in polvere",
@@ -20399,7 +20407,8 @@
     "sale": 0.1,
     "vitA_eq": 0,
     "cross_latte": "1",
-    "categoria": "ingrediente"
+    "categoria": "ingrediente",
+    "all_latte": "1"
   },
   {
     "nome": "panna 26% di grasso",
@@ -20425,7 +20434,8 @@
     "zinco": 0.28,
     "vitA_eq": 0,
     "cross_latte": "1",
-    "categoria": "ingrediente"
+    "categoria": "ingrediente",
+    "all_latte": "1"
   },
   {
     "nome": "panna 35% di grasso",
@@ -20448,7 +20458,8 @@
     "ferro": 0,
     "vitA_eq": 0,
     "cross_latte": "1",
-    "categoria": "ingrediente"
+    "categoria": "ingrediente",
+    "all_latte": "1"
   },
   {
     "nome": "panna da siero di latte di bufala",
@@ -26530,7 +26541,8 @@
     "zinco": 16,
     "vitA_eq": 0,
     "cross_sedano": "1",
-    "categoria": "ingrediente"
+    "categoria": "ingrediente",
+    "all_sedano": "1"
   },
   {
     "nome": "sedano fresco",
@@ -26570,7 +26582,8 @@
     "vitB9": 56.8,
     "vitB12": 0,
     "cross_sedano": "1",
-    "categoria": "ingrediente"
+    "categoria": "ingrediente",
+    "all_sedano": "1"
   },
   {
     "nome": "segale",
@@ -30333,7 +30346,8 @@
     "vitB9": 57,
     "vitB12": 0,
     "cross_uova": "1",
-    "categoria": "ingrediente"
+    "categoria": "ingrediente",
+    "all_uova": "1"
   },
   {
     "nome": "uova BIO",
@@ -30368,7 +30382,8 @@
     "vitB9": 57,
     "vitB12": 0,
     "cross_uova": "1",
-    "categoria": "ingrediente"
+    "categoria": "ingrediente",
+    "all_uova": "1"
   },
   {
     "nome": "uova di riccio di mare",
