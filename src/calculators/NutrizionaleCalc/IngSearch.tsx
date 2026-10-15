@@ -101,7 +101,11 @@ export function IngSearch({ onAdd, db, loading, error, onRetry }: { onAdd: (ing:
 
     useEffect(() => {
         if (!dropOpen) return;
-        const close = () => setDropOpen(false);
+        // Lo scroll interno alla lista non deve chiuderla; lo scroll della pagina sì (dropdown è position: fixed)
+        const close = (e: Event) => {
+            if (listRef.current?.contains(e.target as Node)) return;
+            setDropOpen(false);
+        };
         window.addEventListener('scroll', close, { passive: true, capture: true });
         return () => window.removeEventListener('scroll', close, true);
     }, [dropOpen]);
