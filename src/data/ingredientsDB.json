@@ -311,7 +311,8 @@
     "ferro": 0.41,
     "vitA_eq": 0,
     "vitD": 0.25,
-    "categoria": "ingrediente"
+    "categoria": "ingrediente",
+    "all_glutine": "1"
   },
   {
     "nome": "aceto di malto di orzo fermentato",
@@ -329,7 +330,8 @@
     "sodio_mg": 20,
     "sale": 0.05,
     "vitA_eq": 0,
-    "categoria": "ingrediente"
+    "categoria": "ingrediente",
+    "all_glutine": "1"
   },
   {
     "nome": "aceto di mele",
@@ -2754,7 +2756,8 @@
     "vitB6": 0.12,
     "vitB9": 56,
     "vitB12": 0,
-    "categoria": "ingrediente"
+    "categoria": "ingrediente",
+    "all_glutine": "1"
   },
   {
     "nome": "avocado fresco",
@@ -2819,7 +2822,8 @@
     "vitD": 1,
     "all_grano": "1",
     "cross_uova": "1",
-    "categoria": "semilavorato"
+    "categoria": "semilavorato",
+    "all_uova": "1"
   },
   {
     "nome": "baccalà dissalato ed ammollato",
@@ -3314,7 +3318,8 @@
     "cross_uova": "1",
     "cross_soia": "1",
     "categoria": "semilavorato",
-    "all_soia": "1"
+    "all_soia": "1",
+    "all_uova": "1"
   },
   {
     "nome": "birra",
@@ -8715,7 +8720,8 @@
     "sodio_mg": 4,
     "sale": 0.01,
     "vitA_eq": 0,
-    "categoria": "ingrediente"
+    "categoria": "ingrediente",
+    "all_glutine": "1"
   },
   {
     "nome": "estratto di vino bianco",
@@ -9589,7 +9595,8 @@
     "vitB6": 0.15,
     "vitB9": 35,
     "vitB12": 0,
-    "categoria": "ingrediente"
+    "categoria": "ingrediente",
+    "all_glutine": "1"
   },
   {
     "nome": "farina di canihua",
@@ -9813,7 +9820,8 @@
     "vitB3": 0.64,
     "vitB6": 0.21,
     "vitB9": 59.3,
-    "categoria": "ingrediente"
+    "categoria": "ingrediente",
+    "all_glutine": "1"
   },
   {
     "nome": "farina di Farro Integrale",
@@ -9838,7 +9846,8 @@
     "ferro": 0.9,
     "vitA_eq": 0,
     "vitD": 0,
-    "categoria": "ingrediente"
+    "categoria": "ingrediente",
+    "all_glutine": "1"
   },
   {
     "nome": "farina di fonio",
@@ -10460,7 +10469,8 @@
     "sodio_mg": 16,
     "sale": 0.04,
     "vitA_eq": 0,
-    "categoria": "ingrediente"
+    "categoria": "ingrediente",
+    "all_glutine": "1"
   },
   {
     "nome": "farina di lenticchie rosse bio",
@@ -10607,7 +10617,8 @@
     "sodio_mg": 0,
     "sale": 0,
     "vitA_eq": 0,
-    "categoria": "ingrediente"
+    "categoria": "ingrediente",
+    "all_glutine": "1"
   },
   {
     "nome": "farina di malto di orzo torrefatto",
@@ -10630,7 +10641,8 @@
     "sodio_mg": 0,
     "sale": 0,
     "vitA_eq": 0,
-    "categoria": "ingrediente"
+    "categoria": "ingrediente",
+    "all_glutine": "1"
   },
   {
     "nome": "farina di mandorle",
@@ -10852,7 +10864,8 @@
     "vitB6": 0.36,
     "vitB9": 8,
     "vitB12": 0,
-    "categoria": "ingrediente"
+    "categoria": "ingrediente",
+    "all_glutine": "1"
   },
   {
     "nome": "farina di quinoa",
@@ -10989,7 +11002,8 @@
     "sodio_mg": 0,
     "sale": 0,
     "vitA_eq": 0,
-    "categoria": "ingrediente"
+    "categoria": "ingrediente",
+    "all_glutine": "1"
   },
   {
     "nome": "farina di segale integrale",
@@ -11027,7 +11041,8 @@
     "vitB6": 0.23,
     "vitB9": 23,
     "vitB12": 0,
-    "categoria": "ingrediente"
+    "categoria": "ingrediente",
+    "all_glutine": "1"
   },
   {
     "nome": "farina di semi di canapa",
@@ -11307,7 +11322,8 @@
     "fosforo": 420,
     "ferro": 0.7,
     "vitA_eq": 0,
-    "categoria": "ingrediente"
+    "categoria": "ingrediente",
+    "all_glutine": "1"
   },
   {
     "nome": "farro perlato",
@@ -11337,7 +11353,8 @@
     "vitD": 0,
     "vitC": 0,
     "vitB9": 31,
-    "categoria": "ingrediente"
+    "categoria": "ingrediente",
+    "all_glutine": "1"
   },
   {
     "nome": "fave crude secche",
@@ -11978,7 +11995,8 @@
     "vitB6": 0.12,
     "vitB9": 39.6,
     "vitB12": 0,
-    "categoria": "ingrediente"
+    "categoria": "ingrediente",
+    "all_glutine": "1"
   },
   {
     "nome": "fiocchi di patate",
@@ -20305,7 +20323,8 @@
     "vitB6": 0.26,
     "vitB9": 23,
     "vitB12": 0,
-    "categoria": "ingrediente"
+    "categoria": "ingrediente",
+    "all_glutine": "1"
   },
   {
     "nome": "orzo solubile",
@@ -20328,7 +20347,8 @@
     "sodio_mg": 52,
     "sale": 0.13,
     "vitA_eq": 0,
-    "categoria": "ingrediente"
+    "categoria": "ingrediente",
+    "all_glutine": "1"
   },
   {
     "nome": "pancetta tesa dolce",
@@ -26621,7 +26641,8 @@
     "vitB6": 0.29,
     "vitB9": 47,
     "vitB12": 0,
-    "categoria": "ingrediente"
+    "categoria": "ingrediente",
+    "all_glutine": "1"
   },
   {
     "nome": "semi di canapa",
@@ -28778,7 +28799,8 @@
     "vitB12": 0,
     "all_grano": "1",
     "cross_uova": "1",
-    "categoria": "semilavorato"
+    "categoria": "semilavorato",
+    "all_uova": "1"
   },
   {
     "nome": "tartufo bianchetto (tuber borchii o albidum pico)",
@@ -32207,6 +32229,7 @@
     "proteine": 33,
     "sale": 2.8,
     "sodio_mg": 1120,
-    "categoria": "ingrediente"
+    "categoria": "ingrediente",
+    "all_latte": "1"
   }
 ]

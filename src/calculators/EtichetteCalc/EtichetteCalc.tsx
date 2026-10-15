@@ -207,10 +207,74 @@ export function highlightAllergens(nome: string): string {
     let out = nome;
     for (const { label } of ALLERGEN_FIELDS) {
         const word = matchWord(label);
-        const re = new RegExp(`\\b${word.toLowerCase()}\\b`, 'gi');
-        out = out.replace(re, word.toUpperCase());
+        out = out.replace(allergenRegex(word), word.toUpperCase());
     }
     return out;
+}
+
+// AL-6 — parole allergene che NON lo sono in questi contesti: grano saraceno (poligonacea,
+// senza glutine) e latti vegetali (l'eventuale allergene è il vegetale, es. SOIA, MANDORLE).
+const NOT_ALLERGEN_AFTER: Record<string, string> = {
+    GRANO: '\\s+saraceno',
+    LATTE: "\\s+(?:di|d')\\s*(?:cocco|riso|soia|avena|mandorl[ae])",
+};
+
+// eslint-disable-next-line react-refresh/only-export-components
+export function allergenRegex(word: string): RegExp {
+    const not = NOT_ALLERGEN_AFTER[word];
+    return new RegExp(`\\b${word.toLowerCase()}\\b${not ? `(?!${not})` : ''}`, 'gi');
+}
+
+// AL-6 — allergeni della ricetta che non compaiono in MAIUSCOLO nel testo ingredienti
+// (es. testo riscritto a mano). Parole accettate per gruppo: in etichetta si scrive il
+// cereale/derivato (ORZO, BURRO), non per forza il nome del gruppo. Pesce/crostacei/
+// molluschi esclusi: si scrive la specie (ACCIUGHE, GAMBERI, COZZE), non verificabile per parola.
+const HIGHLIGHT_WORDS: Record<string, string[]> = {
+    GLUTINE: ['GLUTINE', 'GRANO', 'FRUMENTO', 'ORZO', 'SEGALE', 'AVENA', 'FARRO', 'KAMUT', 'SPELTA'],
+    GRANO: ['GRANO', 'FRUMENTO'],
+    UOVA: ['UOVA', 'UOVO'],
+    LATTE: ['LATTE', 'BURRO', 'PANNA', 'CASEINA', 'FORMAGGIO', 'FORMAGGI', 'SIERO', 'YOGURT'],
+    'FRUTTA A GUSCIO': ['FRUTTA A GUSCIO', 'MANDORLE', 'MANDORLA', 'NOCCIOLE', 'NOCCIOLA', 'NOCI', 'NOCE',
+        'ANACARDI', 'ANACARDO', 'PISTACCHI', 'PISTACCHIO', 'PECAN', 'BRASILE', 'MACADAMIA'],
+    MANDORLE: ['MANDORLE', 'MANDORLA'],
+    NOCCIOLE: ['NOCCIOLE', 'NOCCIOLA'],
+    NOCI: ['NOCI', 'NOCE'],
+    ANACARDI: ['ANACARDI', 'ANACARDO'],
+    PISTACCHI: ['PISTACCHI', 'PISTACCHIO'],
+    'NOCI DI PECAN': ['PECAN'],
+    'NOCI DEL BRASILE': ['BRASILE'],
+    'NOCI DI MACADAMIA': ['MACADAMIA'],
+    LUPINI: ['LUPINI', 'LUPINO'],
+    SOLFITI: ['SOLFITI', 'SOLFITO', 'METABISOLFITO', 'BISOLFITO', 'SOLFOROSA'],
+};
+const SPECIES_NAMED = ['PESCE', 'CROSTACEI', 'MOLLUSCHI'];
+
+// eslint-disable-next-line react-refresh/only-export-components
+export function unhighlightedAllergens(text: string, present: readonly string[]): string[] {
+    return present
+        .map(matchWord)
+        .filter(w => !SPECIES_NAMED.includes(w))
+        .filter(w => !(HIGHLIGHT_WORDS[w] ?? [w]).some(v => new RegExp(`\\b${v}\\b`).test(text)));
+}
+
+// AL-5 — additivi che sono (o derivano da) allergeni All. II Reg. 1169/2011: prima
+// lisozima, solfiti e lecitina di soia non entravano in "Contiene:" né erano evidenziati.
+// "Lecitina (E322)" generica esclusa: origine (soia/girasole/uovo) non nota.
+const allergenLabel = (key: keyof DBIngredient) => ALLERGEN_FIELDS.find(f => f.key === key)!.label;
+const ADDITIVE_ALLERGENS: { re: RegExp; key: keyof DBIngredient; mark: (n: string) => string }[] = [
+    { re: /lisozima/i, key: 'all_uova', mark: n => `${n} da UOVO` },
+    { re: /albumina d'uovo/i, key: 'all_uova', mark: n => n.replace(/uovo/i, 'UOVO') },
+    { re: /\(E22[0-8]\)/, key: 'all_solfiti', mark: n => `${n} - SOLFITI` },
+    { re: /soia/i, key: 'all_soia', mark: n => n.replace(/soia/i, 'SOIA') },
+];
+
+// eslint-disable-next-line react-refresh/only-export-components
+export function markAdditive(nomeSpecifico: string): { labels: string[]; text: string } {
+    const hits = ADDITIVE_ALLERGENS.filter(a => a.re.test(nomeSpecifico));
+    return {
+        labels: hits.map(a => allergenLabel(a.key)),
+        text: hits.reduce((t, a) => a.mark(t), nomeSpecifico),
+    };
 }
 
 export interface LabelData {
@@ -784,10 +848,11 @@ export function EtichetteCalc() {
         () => loadedComponents.flatMap(c => c.rows.map(r => ({ ing: r.ing }))),
         [loadedComponents]
     );
-    const presentAllergens = useMemo(
-        () => collectAllergenLabels(allRowsForAllergens.map(r => r.ing), ALLERGEN_FIELDS),
-        [allRowsForAllergens],
-    );
+    const presentAllergens = useMemo(() => {
+        const fromIngredients = collectAllergenLabels(allRowsForAllergens.map(r => r.ing), ALLERGEN_FIELDS);
+        const fromAdditives = recipeAdditives.flatMap(a => markAdditive(a.nomeSpecifico).labels);
+        return [...new Set([...fromIngredients, ...fromAdditives])];
+    }, [allRowsForAllergens, recipeAdditives]);
     const crossAllergensList = useMemo(
         () => collectAllergenLabels(allRowsForAllergens.map(r => r.ing), CROSS_FIELDS, presentAllergens),
         [allRowsForAllergens, presentAllergens],
@@ -860,14 +925,18 @@ export function EtichetteCalc() {
         const issues: string[] = [];
         for (const { label } of ALLERGEN_FIELDS) {
             const word = matchWord(label);
-            const re = new RegExp(`\\b${word.toLowerCase()}\\b`, 'gi');
-            const matches = data.ingredients.match(re);
+            const matches = data.ingredients.match(allergenRegex(word));
             if (matches && matches.some(m => m !== word)) {
                 issues.push(word);
             }
         }
         return issues;
     }, [data.ingredients]);
+
+    const missingHighlights = useMemo(
+        () => data.ingredients ? unhighlightedAllergens(data.ingredients, presentAllergens) : [],
+        [data.ingredients, presentAllergens],
+    );
 
     // QUID% stampato solo sugli ingredienti "caratterizzanti" selezionati dall'utente
     // (ordinamento!H9/BZ nell'Excel) — non su tutti, come richiesto da Art. 22 + All. VIII
@@ -884,7 +953,7 @@ export function EtichetteCalc() {
             })
             .join(', ');
         // M5: additivi in coda, "categoria (nome specifico)" — Art. 18(1) + All. VII Parte C.
-        const additivesPart = recipeAdditives.map(a => `${a.categoria} (${a.nomeSpecifico})`).join(', ');
+        const additivesPart = recipeAdditives.map(a => `${a.categoria} (${markAdditive(a.nomeSpecifico).text})`).join(', ');
         return additivesPart ? `${ingredientsPart}, ${additivesPart}` : ingredientsPart;
     }, [orderedIngredientsWithQuid, data.characterizingIngredients, recipeAdditives]);
 
@@ -1856,6 +1925,11 @@ export function EtichetteCalc() {
                                         onClick={() => set('ingredients', highlightAllergens(data.ingredients))}
                                     >Evidenzia automaticamente</button>
                                 </>
+                            )}
+                            {missingHighlights.length > 0 && (
+                                <ValidationError type="warning"
+                                    message={`Allergeni della ricetta non evidenziati nel testo: «${missingHighlights.join('», «')}» — verifica che compaiano in MAIUSCOLO (Art. 21 Reg. 1169/2011).`}
+                                />
                             )}
                         </div>
 

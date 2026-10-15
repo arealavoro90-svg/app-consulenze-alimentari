@@ -5,7 +5,7 @@
 // pubbliche.
 import { describe, it, expect } from 'vitest';
 import {
-    matchWord, highlightAllergens, readComponenti, readRows,
+    matchWord, highlightAllergens, unhighlightedAllergens, markAdditive, readComponenti, readRows,
     buildEULinear, buildAULinear, buildArabiLinear, HEALTH_CLAIMS_432_2012,
     calcAdditionalClaims, relabelClaim, shouldFlagNutritionOverflow,
     visualFontScale, CSS_PX_PER_MM, barcodeMetrics, EAN13_MODULE_MM,
@@ -89,6 +89,28 @@ describe('Reg. (UE) 1169/2011 Art. 21 + All. II — 14 allergeni obbligatori', (
         // canary: se qualcuno rimette la label cruda nella regex, questo torna a fallire
         const bugRegex = /\bsolfiti \(>10 ppm\)\b/i;
         expect(bugRegex.test('aceto di vino (contiene solfiti)')).toBe(false);
+    });
+
+    it('AL-6: grano saraceno e latti vegetali non vengono evidenziati come allergeni', () => {
+        const out = highlightAllergens('farina di grano saraceno, latte di cocco, latte di riso, grano tenero, latte intero');
+        expect(out).toBe('farina di grano saraceno, latte di cocco, latte di riso, GRANO tenero, LATTE intero');
+    });
+
+    it('AL-6: unhighlightedAllergens segnala allergeni della ricetta assenti in MAIUSCOLO', () => {
+        expect(unhighlightedAllergens('farina di ORZO, BURRO, uova', ['GLUTINE', 'LATTE', 'UOVA'])).toEqual(['UOVA']);
+        // pesce/crostacei/molluschi: si scrive la specie, non verificabile per parola
+        expect(unhighlightedAllergens('acciughe', ['PESCE'])).toEqual([]);
+        expect(unhighlightedAllergens('vino (SOLFITI)', ['SOLFITI (>10 ppm)'])).toEqual([]);
+    });
+
+    it('AL-5: additivi allergenici entrano nella dichiarazione e nel testo', () => {
+        expect(markAdditive('Lisozima (E1105)')).toEqual({ labels: ['UOVA'], text: 'Lisozima (E1105) da UOVO' });
+        expect(markAdditive('Metabisolfito di potassio (E224)').labels).toEqual(['SOLFITI (>10 ppm)']);
+        expect(markAdditive('Lecitina di soia bio')).toEqual({ labels: ['SOIA'], text: 'Lecitina di SOIA bio' });
+        expect(markAdditive("Albumina d'uovo").text).toBe("Albumina d'UOVO");
+        // origine non nota → nessun allergene dedotto
+        expect(markAdditive('Lecitina (E322)').labels).toEqual([]);
+        expect(markAdditive('Sorbato di potassio (E202)').labels).toEqual([]);
     });
 
     it('CROSS_FIELDS (può contenere tracce) copre gli stessi 3 allergeni aggiunti a ALLERGEN_FIELDS', () => {
