@@ -275,6 +275,7 @@
 - [x] **AL-6** — no MAIUSCOLO su grano saraceno e latti vegetali (`allergenRegex`); avviso se allergene della ricetta non evidenziato nel testo (`unhighlightedAllergens`; pesce/crostacei/molluschi esclusi).
 - [x] **DATI-FLAG** — rimossi flag errati: `Latte di cocco` (latte), `cavolo riccio`, `pesce ricciola` (molluschi).
 - [x] **AL-PROD** ✅ — migrazione `0010_patch_allergens` applicata da `migrate` all'avvio; backend deployato 2026-10-15 (ping 200). Da confermare a vista: "burro" in etichetta → "Contiene: LATTE".
+- [x] **SEC-1 CSRF** ✅ — `CookieJWTAuthentication`: POST/PUT/PATCH/DELETE con cookie accettate solo se Origin (o Referer) ∈ `CORS_ALLOWED_ORIGINS`, altrimenti 403. `role` già scrivibile solo da admin (`UserViewSet` IsAdminUser). 4 test. ⚠️ 12 test backend vecchi rotti (URL `/api/` senza `v1`), preesistenti.
 - [ ] **AL-3 / AL-4** — allergeni lato backend: `sync_crea` crea voci con `allergens={}`; `clean_ingredients` non ha unito gli allergeni dei 354 duplicati cancellati.
 
 **Da fare (ordine consigliato):** vedi Parte 1 e 2 del file audit. Blocchi: (1) CSRF (SEC-1); (2) ET-1/2; (3) US-1 + GS1-1; (4) AL-3/4 + dati DB con padre + dump prod.
