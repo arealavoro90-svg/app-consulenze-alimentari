@@ -5766,9 +5766,7 @@
     "vitB6": 0.31,
     "vitB9": 101,
     "vitB12": 0,
-    "cross_molluschi": "1",
-    "categoria": "ingrediente",
-    "all_molluschi": "1"
+    "categoria": "ingrediente"
   },
   {
     "nome": "cavolo verde disidratato (verza) (yes spices)",
@@ -14886,8 +14884,6 @@
     "vitB6": 0.03,
     "vitB9": 14,
     "vitB12": 0,
-    "all_latte": "1",
-    "cross_latte": "1",
     "categoria": "ingrediente"
   },
   {
@@ -22018,10 +22014,8 @@
     "vitD": 0,
     "vitB2": 0.04,
     "cross_pesci": "1",
-    "cross_molluschi": "1",
     "categoria": "prodotto",
-    "all_pesci": "1",
-    "all_molluschi": "1"
+    "all_pesci": "1"
   },
   {
     "nome": "pesce salmone affumicato",

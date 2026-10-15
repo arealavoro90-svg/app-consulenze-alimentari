@@ -15,7 +15,8 @@
 > **Sessione 2026-09-20: Fase 1 Blindatura completata (SEC-JWT-ROT, SEC-MIGRATE-RUNTIME, SEC-ARCHIVE-PERM, UX-ERROR-BOUNDARY, UX-TOAST-FEEDBACK, UX-LOGIN-SPINNER, A11Y-ARIA, PERF-LAZY-PDF, ARCH-ROUND-UTIL, USDA-CREA-SYNC). Fase 2: ARCH-API-VERSION completato (/api/v1/). 266/266 test.**
 > **Sessione 2026-09-22: INFRA-WARMUP fix (trailing slash cron-job.org), TD-1 Fase A (SliderControl/CodeCanvas/barcodeUtils estratti, 3479→3312 righe), DATA-2/SYNC-CNF (migration 0009, sync_cnf command, endpoint, cron Vercel, sync iniziale ~5700 alimenti completato). CRON_SECRET configurato. 266/266 test.**
 > **Sessione 2026-09-23: Force-sync CREA tutte 19 categorie prod (871 ingredienti con macro=0 corretti). Fix BUG ricette salvate "ingredienti non trovati" (resolve endpoint POST + lookup case-insensitive). Fix nome "Caramelle tipo \"mou\"". clean_ingredients --apply: 354 duplicati eliminati (1903→~1549 ingredienti). CRON_SECRET ruotato. NORM-09 chiuso (GSO 2233:2021 cl.1.2.7 — esenzione totale <25cm², coincide con UE). Fix CI: 3 errori ESLint risolti (react-refresh/only-export-components + no-explicit-any). DATI-REV consolidato. TD-1 rinviato. GULF-ARABO rinviato a confronto padre.**
-> **Sessione 2026-09-23 (sera): Audit 5 agenti → `docs/audit/AUDIT-2026-09-23.md` (80 voci). Fix rapidi non invasivi in corso (vedi sezione AUDIT-0923). NON committato/pushato.**
+> **Sessione 2026-09-23 (sera): Audit 5 agenti → `docs/audit/AUDIT-2026-09-23.md` (80 voci). Fix rapidi committati in `6b2b3ac`.**
+> **Sessioni 2026-10-07/15: blocco allergeni AL-1/AL-2/AL-5/AL-6 chiuso nel codice + 3 flag errati rimossi. Comando backend `patch_allergens` (41 modifiche) DA LANCIARE SU PROD. 271/273 test (2 Gulf noti).**
 > Production URL: **https://app-consulenze-alimentari.vercel.app**
 
 ---
@@ -252,7 +253,7 @@
 
 ## 🔎 AUDIT-0923 — stato (dettaglio in `docs/audit/AUDIT-2026-09-23.md`)
 
-**Fatti (locali, non committati; tsc/lint verdi, test 264/266 invariati):**
+**Fatti (committati in `6b2b3ac`; tsc/lint verdi, test 264/266 invariati):**
 - [x] **XL-1** — Excel %VNR energia: riferimenti 2000 kcal / 8400 kJ (`src/utils/exportExcel.ts`)
 - [x] **M1-VIRGOLA** — peso specifico e peso finito accettano la virgola (`parseDecimalIT`, `NutrizionaleCalc.tsx`)
 - [x] **M3-ENGINE** — `calcNutrients` ignora grammi NaN/negativi (`nutrizionaleCalcEngine.ts`)
@@ -267,5 +268,14 @@
 - [x] **UX-ESC / A11Y** — Esc chiude "Scarica tabella"; `aria-label` su `#et-tmc-date`
 - [x] **IMB-1** — righe imballo vuote non stampate
 
-**Da fare (ordine consigliato):** vedi Parte 1 e 2 del file audit. Blocchi: (1) CSRF; (2) allergeni nel codice AL-5/6, ET-1/2; (3) US-1 + PDF-1 + ING-1 + GS1-1; (4) dati DB con padre + dump prod.
+**Allergeni (sessioni 2026-10-07/15, commit `2ee977f`, `a776772` + backend `756f8e9`, `2274ce8`):**
+- [x] **AL-1** — `all_*` su burro (4), panna (3), caseina, uova (2), sedano (2), lupini (2), babà, bignè, tartellette, formaggio grattugiato. Per scelta dell'utente: lattosio NON flaggato (intolleranza, non allergia), cioccolato bianco non toccato.
+- [x] **AL-2** — `all_glutine` su 19 cereali (avena, orzo, segale, farro, kamut, malti, aceti di malto d'orzo). Esclusi maltodestrine/malto di riso. Nessun campo nuovo: il testo `etichetta` ha già il cereale in MAIUSCOLO.
+- [x] **AL-5** — additivi allergenici in "Contiene:" e nel testo: lisozima/albumina → UOVA, E220-E228 → SOLFITI, lecitina di soia → SOIA (`markAdditive`). Lecitina E322 generica esclusa.
+- [x] **AL-6** — no MAIUSCOLO su grano saraceno e latti vegetali (`allergenRegex`); avviso se allergene della ricetta non evidenziato nel testo (`unhighlightedAllergens`; pesce/crostacei/molluschi esclusi).
+- [x] **DATI-FLAG** — rimossi flag errati: `Latte di cocco` (latte), `cavolo riccio`, `pesce ricciola` (molluschi).
+- [ ] **AL-PROD** 🔴 — lanciare su prod: `python manage.py patch_allergens` (dry-run) poi `--apply`, con DATABASE_URL Neon.
+- [ ] **AL-3 / AL-4** — allergeni lato backend: `sync_crea` crea voci con `allergens={}`; `clean_ingredients` non ha unito gli allergeni dei 354 duplicati cancellati.
+
+**Da fare (ordine consigliato):** vedi Parte 1 e 2 del file audit. Blocchi: (1) CSRF (SEC-1); (2) ET-1/2; (3) US-1 + GS1-1; (4) AL-3/4 + dati DB con padre + dump prod.
 **Note aperte:** `TabUE`/`exportExcel` fibre 25 g: l'All. XIII Reg. 1169 non ha VNR per le fibre → DA VERIFICARE; 2 test Gulf rossi (`TabGolden` 8%→9%, snapshot `TabIntl`) in attesa fonte GSO 2233:2021.
