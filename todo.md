@@ -274,7 +274,7 @@
 - [x] **AL-5** — additivi allergenici in "Contiene:" e nel testo: lisozima/albumina → UOVA, E220-E228 → SOLFITI, lecitina di soia → SOIA (`markAdditive`). Lecitina E322 generica esclusa.
 - [x] **AL-6** — no MAIUSCOLO su grano saraceno e latti vegetali (`allergenRegex`); avviso se allergene della ricetta non evidenziato nel testo (`unhighlightedAllergens`; pesce/crostacei/molluschi esclusi).
 - [x] **DATI-FLAG** — rimossi flag errati: `Latte di cocco` (latte), `cavolo riccio`, `pesce ricciola` (molluschi).
-- [ ] **AL-PROD** 🔴 — lanciare su prod: `python manage.py patch_allergens` (dry-run) poi `--apply`, con DATABASE_URL Neon.
+- [x] **AL-PROD** ✅ — migrazione `0010_patch_allergens` applicata da `migrate` all'avvio; backend deployato 2026-10-15 (ping 200). Da confermare a vista: "burro" in etichetta → "Contiene: LATTE".
 - [ ] **AL-3 / AL-4** — allergeni lato backend: `sync_crea` crea voci con `allergens={}`; `clean_ingredients` non ha unito gli allergeni dei 354 duplicati cancellati.
 
 **Da fare (ordine consigliato):** vedi Parte 1 e 2 del file audit. Blocchi: (1) CSRF (SEC-1); (2) ET-1/2; (3) US-1 + GS1-1; (4) AL-3/4 + dati DB con padre + dump prod.
